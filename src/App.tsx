@@ -38,7 +38,7 @@ type KursantAdmin = {
   nazwisko: string;
   grupa_id: number;
   user_id: string;
-  grupy: { nazwa: string } | null;
+  grupy: { nazwa: string }[] | null;
 };
 
 type Grupa = {
@@ -386,7 +386,7 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
             {kursanci.map(k => (
               <div key={k.id} className="profil-card" style={{marginBottom:'8px'}}>
                 <div className="profil-row"><span className="profil-lbl">Imie i nazwisko</span><span className="profil-val">{k.imie} {k.nazwisko}</span></div>
-                <div className="profil-row"><span className="profil-lbl">Grupa</span><span className="profil-val">{k.grupy?.nazwa || '-'}</span></div>
+                <div className="profil-row"><span className="profil-lbl">Grupa</span><span className="profil-val">{k.grupy?.[0]?.nazwa || '-'}</span></div>
               </div>
             ))}
           </>
