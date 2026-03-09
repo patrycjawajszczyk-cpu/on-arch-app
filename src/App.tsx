@@ -354,7 +354,7 @@ export default function App() {
     async function pobierzDane() {
       const { data: kursantData } = await supabase
         .from('kursanci')
-        .select('imie, nazwisko, grupa_id, grupy(nazwa, miasto, edycja)')
+        .select('imie, nazwisko, grupa_id, grupy!grupa_id(nazwa, miasto, edycja)')
         .eq('user_id', user!.id)
         .single();
       setKursant(kursantData as Kursant | null);
