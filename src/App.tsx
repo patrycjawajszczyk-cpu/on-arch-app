@@ -503,12 +503,13 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
             </form>
             <h2 className="page-title" style={{marginTop:'24px'}}>Lista grup</h2>
             {grupy.map(g => (
-              <div key={g.id} className="profil-card" style={{marginBottom:'8px'}}>
-                <div className="profil-row"><span className="profil-lbl">Nazwa</span><span className="profil-val">{g.nazwa}</span></div>
-                <div className="profil-row"><span className="profil-lbl">Miasto</span><span className="profil-val">{g.miasto}</span></div>
-                <div className="profil-row"><span className="profil-lbl">Edycja</span><span className="profil-val">{g.edycja}</span></div>
-              </div>
-            ))}
+  <div key={g.id} className="profil-card" style={{marginBottom:'8px'}}>
+    <div className="profil-row"><span className="profil-lbl">ID do CSV</span><span className="profil-val" style={{fontWeight:'700', color:'var(--brand)'}}>{g.id}</span></div>
+    <div className="profil-row"><span className="profil-lbl">Nazwa</span><span className="profil-val">{g.nazwa}</span></div>
+    <div className="profil-row"><span className="profil-lbl">Miasto</span><span className="profil-val">{g.miasto}</span></div>
+    <div className="profil-row"><span className="profil-lbl">Edycja</span><span className="profil-val">{g.edycja}</span></div>
+  </div>
+))}
           </>
         )}
 
