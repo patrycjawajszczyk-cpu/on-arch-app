@@ -23,6 +23,13 @@ type Zjazd = {
   data_zjazdu: string;
 };
 
+type Kursant = {
+  imie: string;
+  nazwisko: string;
+  grupa_id: number;
+  grupy: { nazwa: string; miasto: string; edycja: string };
+};
+
 type User = {
   id: string;
   email: string;
@@ -225,8 +232,8 @@ function EkranSzczegoly({ o, onWroc }: { o: Ogloszenie; onWroc: () => void }) {
   );
 }
 
-function EkranGlowny({ ogloszenia, zjazdy, onOtworzOgloszenie, user }: { ogloszenia: Ogloszenie[]; zjazdy: Zjazd[]; onOtworzOgloszenie: (o: Ogloszenie) => void; user: User }) {
-  const imie = user.email.split('@')[0];
+function EkranGlowny({ ogloszenia, zjazdy, onOtworzOgloszenie, user, kursant }: { ogloszenia: Ogloszenie[]; zjazdy: Zjazd[]; onOtworzOgloszenie: (o: Ogloszenie) => void; user: User; kursant: Kursant | null }) {
+  const imie = kursant ? kursant.imie : user.email.split('@')[0];
   const najblizszy = zjazdy.find(z => z.status === 'nadchodzący');
   return (
     <>
@@ -239,7 +246,7 @@ function EkranGlowny({ ogloszenia, zjazdy, onOtworzOgloszenie, user }: { oglosze
           <div className="hero-card">
             <div className="hero-label">Zjazd {najblizszy.nr}</div>
             <div className="hero-date">{najblizszy.daty}</div>
-            <div className="hero-sub">Warszawa</div>
+            <div className="hero-sub">{kursant?.grupy?.miasto || 'Warszawa'}</div>
             <div className="hero-pills">
               <span className="pill">🏛 {najblizszy.sala}</span>
               <span className="pill">📍 {najblizszy.adres}</span>
@@ -294,19 +301,23 @@ function EkranOgloszenia({ ogloszenia, onOtworzOgloszenie }: { ogloszenia: Oglos
   );
 }
 
-function EkranProfil({ user, onWyloguj }: { user: User; onWyloguj: () => void }) {
+function EkranProfil({ user, kursant, onWyloguj }: { user: User; kursant: Kursant | null; onWyloguj: () => void }) {
+  const inicjal = kursant ? kursant.imie[0] : user.email[0].toUpperCase();
+  const nazwaGrupy = kursant?.grupy?.nazwa || 'Brak przypisania do grupy';
+  const miasto = kursant?.grupy?.miasto || '';
+  const edycja = kursant?.grupy?.edycja || '';
   return (
     <>
       <div className="profil-header">
-        <div className="profil-avatar">{user.email[0].toUpperCase()}</div>
-        <div className="profil-name">{user.email}</div>
-        <div className="profil-group">Grupa II · Edycja 2024/2025</div>
+        <div className="profil-avatar">{inicjal.toUpperCase()}</div>
+        <div className="profil-name">{kursant ? `${kursant.imie} ${kursant.nazwisko}` : user.email}</div>
+        <div className="profil-group">{nazwaGrupy}</div>
       </div>
       <div className="profil-card">
         <div className="profil-row"><span className="profil-lbl">Kurs</span><span className="profil-val">Projektowanie wnętrz</span></div>
-        <div className="profil-row"><span className="profil-lbl">Forma</span><span className="profil-val">Stacjonarnie – Łódź</span></div>
-        <div className="profil-row"><span className="profil-lbl">Edycja</span><span className="profil-val">2024 / 2025</span></div>
-        <div className="profil-row"><span className="profil-lbl">Zaliczone zjazdy</span><span className="profil-val">3 / 8</span></div>
+        <div className="profil-row"><span className="profil-lbl">Miasto</span><span className="profil-val">{miasto}</span></div>
+        <div className="profil-row"><span className="profil-lbl">Edycja</span><span className="profil-val">{edycja}</span></div>
+        <div className="profil-row"><span className="profil-lbl">Email</span><span className="profil-val">{user.email}</span></div>
         <div className="profil-row"><span className="profil-lbl">Telefon biura</span><span className="profil-val">883 659 069</span></div>
       </div>
       <button className="btn-wyloguj" onClick={onWyloguj}>Wyloguj się</button>
@@ -316,6 +327,7 @@ function EkranProfil({ user, onWyloguj }: { user: User; onWyloguj: () => void })
 
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
+  const [kursant, setKursant] = useState<Kursant | null>(null);
   const [aktywnaZakladka, setAktywnaZakladka] = useState('home');
   const [aktywneOgloszenie, setAktywneOgloszenie] = useState<Ogloszenie | null>(null);
   const [ogloszenia, setOgloszenia] = useState<Ogloszenie[]>([]);
@@ -340,9 +352,20 @@ export default function App() {
   useEffect(() => {
     if (!user) return;
     async function pobierzDane() {
+      const { data: kursantData } = await supabase
+        .from('kursanci')
+        .select('imie, nazwisko, grupa_id, grupy(nazwa, miasto, edycja)')
+        .eq('user_id', user!.id)
+        .single();
+      setKursant(kursantData as Kursant | null);
+
+      const grupaId = kursantData?.grupa_id;
+
       const [{ data: og }, { data: zj }] = await Promise.all([
         supabase.from('ogloszenia').select('*').order('data_utworzenia', { ascending: false }),
-        supabase.from('zjazdy').select('*').order('data_zjazdu', { ascending: true }),
+        grupaId
+          ? supabase.from('zjazdy').select('*').eq('grupa_id', grupaId).order('data_zjazdu', { ascending: true })
+          : supabase.from('zjazdy').select('*').order('data_zjazdu', { ascending: true }),
       ]);
       setOgloszenia(og || []);
       setZjazdy(zj || []);
@@ -353,6 +376,7 @@ export default function App() {
   async function wyloguj() {
     await supabase.auth.signOut();
     setUser(null);
+    setKursant(null);
     setResetMode(false);
   }
 
@@ -366,17 +390,17 @@ export default function App() {
     <div className="app">
       <header className="header">
         <div className="logo">On<span>-Arch</span></div>
-        <div className="avatar">{user.email[0].toUpperCase()}</div>
+        <div className="avatar">{(kursant ? kursant.imie[0] : user.email[0]).toUpperCase()}</div>
       </header>
       <main className="main">
         {aktywneOgloszenie ? (
           <EkranSzczegoly o={aktywneOgloszenie} onWroc={() => setAktywneOgloszenie(null)} />
         ) : (
           <>
-            {aktywnaZakladka === 'home' && <EkranGlowny ogloszenia={ogloszenia} zjazdy={zjazdy} onOtworzOgloszenie={setAktywneOgloszenie} user={user} />}
+            {aktywnaZakladka === 'home' && <EkranGlowny ogloszenia={ogloszenia} zjazdy={zjazdy} onOtworzOgloszenie={setAktywneOgloszenie} user={user} kursant={kursant} />}
             {aktywnaZakladka === 'zjazdy' && <EkranZjazdy zjazdy={zjazdy} />}
             {aktywnaZakladka === 'ogloszenia' && <EkranOgloszenia ogloszenia={ogloszenia} onOtworzOgloszenie={setAktywneOgloszenie} />}
-            {aktywnaZakladka === 'profil' && <EkranProfil user={user} onWyloguj={wyloguj} />}
+            {aktywnaZakladka === 'profil' && <EkranProfil user={user} kursant={kursant} onWyloguj={wyloguj} />}
           </>
         )}
       </main>
