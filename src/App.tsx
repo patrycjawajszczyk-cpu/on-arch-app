@@ -18,33 +18,9 @@ type User = {
 };
 
 const zjazdy = [
-  {
-    id: 1,
-    nr: 4,
-    daty: '22–23 marca 2025',
-    sala: 'Sala 204',
-    adres: 'ul. Złota 59, Warszawa',
-    tematy: 'Prawo budowlane, BIM, Warsztaty',
-    status: 'nadchodzący',
-  },
-  {
-    id: 2,
-    nr: 5,
-    daty: '12–13 kwietnia 2025',
-    sala: 'Sala 201',
-    adres: 'ul. Złota 59, Warszawa',
-    tematy: 'Kosztorysowanie, Prawo pracy',
-    status: 'nadchodzący',
-  },
-  {
-    id: 3,
-    nr: 3,
-    daty: '22–23 lutego 2025',
-    sala: 'Sala 201',
-    adres: 'ul. Złota 59, Warszawa',
-    tematy: 'Instalacje, Konstrukcje, Prawo',
-    status: 'zakończony',
-  },
+  { id: 1, nr: 4, daty: '22–23 marca 2025', sala: 'Sala 204', adres: 'ul. Złota 59, Warszawa', tematy: 'Prawo budowlane, BIM, Warsztaty', status: 'nadchodzący' },
+  { id: 2, nr: 5, daty: '12–13 kwietnia 2025', sala: 'Sala 201', adres: 'ul. Złota 59, Warszawa', tematy: 'Kosztorysowanie, Prawo pracy', status: 'nadchodzący' },
+  { id: 3, nr: 3, daty: '22–23 lutego 2025', sala: 'Sala 201', adres: 'ul. Złota 59, Warszawa', tematy: 'Instalacje, Konstrukcje, Prawo', status: 'zakończony' },
 ];
 
 function EkranLogowania({ onZalogowano }: { onZalogowano: () => void }) {
@@ -57,10 +33,7 @@ function EkranLogowania({ onZalogowano }: { onZalogowano: () => void }) {
     e.preventDefault();
     setLadowanie(true);
     setBlad('');
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password: haslo,
-    });
+    const { error } = await supabase.auth.signInWithPassword({ email, password: haslo });
     if (error) {
       setBlad('Nieprawidłowy email lub hasło');
     } else {
@@ -72,53 +45,29 @@ function EkranLogowania({ onZalogowano }: { onZalogowano: () => void }) {
   return (
     <div className="login-screen">
       <div className="login-card">
-        <div className="login-logo">
-          On<span>-Arch</span>
-        </div>
+        <div className="login-logo">On<span>-Arch</span></div>
         <p className="login-sub">Panel kursanta</p>
         <form className="login-form" onSubmit={zaloguj}>
           <div className="login-field">
             <label>Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="twoj@email.pl"
-              required
-            />
+            <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="twoj@email.pl" required />
           </div>
           <div className="login-field">
             <label>Hasło</label>
-            <input
-              type="password"
-              value={haslo}
-              onChange={(e) => setHaslo(e.target.value)}
-              placeholder="••••••••"
-              required
-            />
+            <input type="password" value={haslo} onChange={e => setHaslo(e.target.value)} placeholder="••••••••" required />
           </div>
           {blad && <div className="login-error">{blad}</div>}
           <button className="login-btn" type="submit" disabled={ladowanie}>
             {ladowanie ? 'Logowanie...' : 'Zaloguj się'}
           </button>
         </form>
-        <p className="login-kontakt">
-          Problemy z logowaniem? Zadzwoń do biura:
-          <br />
-          <strong>883 659 069</strong>
-        </p>
+        <p className="login-kontakt">Problemy z logowaniem? Zadzwoń do biura:<br/><strong>883 659 069</strong></p>
       </div>
     </div>
   );
 }
 
-function KartaOgloszenia({
-  o,
-  onClick,
-}: {
-  o: Ogloszenie;
-  onClick: () => void;
-}) {
+function KartaOgloszenia({ o, onClick }: { o: Ogloszenie; onClick: () => void }) {
   return (
     <div className="ann-card" onClick={onClick}>
       <div className="ann-top">
@@ -130,9 +79,7 @@ function KartaOgloszenia({
       </div>
       <div className="ann-title">{o.tytul}</div>
       <div className="ann-preview">{o.tresc}</div>
-      <div className="ann-date">
-        {new Date(o.data_utworzenia).toLocaleDateString('pl-PL')}
-      </div>
+      <div className="ann-date">{new Date(o.data_utworzenia).toLocaleDateString('pl-PL')}</div>
     </div>
   );
 }
@@ -140,31 +87,18 @@ function KartaOgloszenia({
 function EkranSzczegoly({ o, onWroc }: { o: Ogloszenie; onWroc: () => void }) {
   return (
     <>
-      <button className="btn-wroc" onClick={onWroc}>
-        ‹ Wróć
-      </button>
+      <button className="btn-wroc" onClick={onWroc}>‹ Wróć</button>
       <div className="szczegoly-header">
         <span className={`badge badge-${o.typ.toLowerCase()}`}>{o.typ}</span>
         <h2 className="szczegoly-tytul">{o.tytul}</h2>
-        <p className="szczegoly-meta">
-          Biuro On-Arch ·{' '}
-          {new Date(o.data_utworzenia).toLocaleDateString('pl-PL')}
-        </p>
+        <p className="szczegoly-meta">Biuro On-Arch · {new Date(o.data_utworzenia).toLocaleDateString('pl-PL')}</p>
       </div>
       <div className="szczegoly-tresc">{o.szczegoly}</div>
     </>
   );
 }
 
-function EkranGlowny({
-  ogloszenia,
-  onOtworzOgloszenie,
-  user,
-}: {
-  ogloszenia: Ogloszenie[];
-  onOtworzOgloszenie: (o: Ogloszenie) => void;
-  user: User;
-}) {
+function EkranGlowny({ ogloszenia, onOtworzOgloszenie, user }: { ogloszenia: Ogloszenie[]; onOtworzOgloszenie: (o: Ogloszenie) => void; user: User }) {
   const imie = user.email.split('@')[0];
   return (
     <>
@@ -189,11 +123,7 @@ function EkranGlowny({
           <span className="section-title">Ogłoszenia biura</span>
         </div>
         {ogloszenia.slice(0, 3).map((o) => (
-          <KartaOgloszenia
-            key={o.id}
-            o={o}
-            onClick={() => onOtworzOgloszenie(o)}
-          />
+          <KartaOgloszenia key={o.id} o={o} onClick={() => onOtworzOgloszenie(o)} />
         ))}
       </section>
     </>
@@ -208,9 +138,7 @@ function EkranZjazdy() {
         <div key={z.id} className={`sess-card ${z.status}`}>
           <div className="sess-top">
             <span className="sess-nr">Zjazd {z.nr}</span>
-            <span className={`s-badge s-${z.status}`}>
-              {z.status === 'nadchodzący' ? 'Nadchodzący' : 'Zakończony'}
-            </span>
+            <span className={`s-badge s-${z.status}`}>{z.status === 'nadchodzący' ? 'Nadchodzący' : 'Zakończony'}</span>
           </div>
           <div className="sess-date">{z.daty}</div>
           <div className="sess-rows">
@@ -224,34 +152,18 @@ function EkranZjazdy() {
   );
 }
 
-function EkranOgloszenia({
-  ogloszenia,
-  onOtworzOgloszenie,
-}: {
-  ogloszenia: Ogloszenie[];
-  onOtworzOgloszenie: (o: Ogloszenie) => void;
-}) {
+function EkranOgloszenia({ ogloszenia, onOtworzOgloszenie }: { ogloszenia: Ogloszenie[]; onOtworzOgloszenie: (o: Ogloszenie) => void }) {
   return (
     <>
       <h2 className="page-title">Ogłoszenia</h2>
       {ogloszenia.map((o) => (
-        <KartaOgloszenia
-          key={o.id}
-          o={o}
-          onClick={() => onOtworzOgloszenie(o)}
-        />
+        <KartaOgloszenia key={o.id} o={o} onClick={() => onOtworzOgloszenie(o)} />
       ))}
     </>
   );
 }
 
-function EkranProfil({
-  user,
-  onWyloguj,
-}: {
-  user: User;
-  onWyloguj: () => void;
-}) {
+function EkranProfil({ user, onWyloguj }: { user: User; onWyloguj: () => void }) {
   return (
     <>
       <div className="profil-header">
@@ -260,30 +172,13 @@ function EkranProfil({
         <div className="profil-group">Grupa II · Edycja 2024/2025</div>
       </div>
       <div className="profil-card">
-        <div className="profil-row">
-          <span className="profil-lbl">Kurs</span>
-          <span className="profil-val">Projektowanie wnętrz</span>
-        </div>
-        <div className="profil-row">
-          <span className="profil-lbl">Forma</span>
-          <span className="profil-val">Stacjonarnie – Łódź</span>
-        </div>
-        <div className="profil-row">
-          <span className="profil-lbl">Edycja</span>
-          <span className="profil-val">2024 / 2025</span>
-        </div>
-        <div className="profil-row">
-          <span className="profil-lbl">Zaliczone zjazdy</span>
-          <span className="profil-val">3 / 8</span>
-        </div>
-        <div className="profil-row">
-          <span className="profil-lbl">Telefon biura</span>
-          <span className="profil-val">883 659 069</span>
-        </div>
+        <div className="profil-row"><span className="profil-lbl">Kurs</span><span className="profil-val">Projektowanie wnętrz</span></div>
+        <div className="profil-row"><span className="profil-lbl">Forma</span><span className="profil-val">Stacjonarnie – Łódź</span></div>
+        <div className="profil-row"><span className="profil-lbl">Edycja</span><span className="profil-val">2024 / 2025</span></div>
+        <div className="profil-row"><span className="profil-lbl">Zaliczone zjazdy</span><span className="profil-val">3 / 8</span></div>
+        <div className="profil-row"><span className="profil-lbl">Telefon biura</span><span className="profil-val">883 659 069</span></div>
       </div>
-      <button className="btn-wyloguj" onClick={onWyloguj}>
-        Wyloguj się
-      </button>
+      <button className="btn-wyloguj" onClick={onWyloguj}>Wyloguj się</button>
     </>
   );
 }
@@ -291,29 +186,17 @@ function EkranProfil({
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
   const [aktywnaZakladka, setAktywnaZakladka] = useState('home');
-  const [aktywneOgloszenie, setAktywneOgloszenie] = useState<Ogloszenie | null>(
-    null
-  );
+  const [aktywneOgloszenie, setAktywneOgloszenie] = useState<Ogloszenie | null>(null);
   const [ogloszenia, setOgloszenia] = useState<Ogloszenie[]>([]);
   const [ladowanie, setLadowanie] = useState(true);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(
-        session?.user
-          ? { id: session.user.id, email: session.user.email! }
-          : null
-      );
+      setUser(session?.user ? { id: session.user.id, email: session.user.email! } : null);
       setLadowanie(false);
     });
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(
-        session?.user
-          ? { id: session.user.id, email: session.user.email! }
-          : null
-      );
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ? { id: session.user.id, email: session.user.email! } : null);
     });
     return () => subscription.unsubscribe();
   }, []);
@@ -343,82 +226,34 @@ export default function App() {
   return (
     <div className="app">
       <header className="header">
-        <div className="logo">
-          On<span>-Arch</span>
-        </div>
+        <div className="logo">On<span>-Arch</span></div>
         <div className="avatar">{user.email[0].toUpperCase()}</div>
       </header>
       <main className="main">
         {aktywneOgloszenie ? (
-          <EkranSzczegoly
-            o={aktywneOgloszenie}
-            onWroc={() => setAktywneOgloszenie(null)}
-          />
+          <EkranSzczegoly o={aktywneOgloszenie} onWroc={() => setAktywneOgloszenie(null)} />
         ) : (
           <>
-            {aktywnaZakladka === 'home' && (
-              <EkranGlowny
-                ogloszenia={ogloszenia}
-                onOtworzOgloszenie={setAktywneOgloszenie}
-                user={user}
-              />
-            )}
+            {aktywnaZakladka === 'home' && <EkranGlowny ogloszenia={ogloszenia} onOtworzOgloszenie={setAktywneOgloszenie} user={user} />}
             {aktywnaZakladka === 'zjazdy' && <EkranZjazdy />}
-            {aktywnaZakladka === 'ogloszenia' && (
-              <EkranOgloszenia
-                ogloszenia={ogloszenia}
-                onOtworzOgloszenie={setAktywneOgloszenie}
-              />
-            )}
-            {aktywnaZakladka === 'profil' && (
-              <EkranProfil user={user} onWyloguj={wyloguj} />
-            )}
+            {aktywnaZakladka === 'ogloszenia' && <EkranOgloszenia ogloszenia={ogloszenia} onOtworzOgloszenie={setAktywneOgloszenie} />}
+            {aktywnaZakladka === 'profil' && <EkranProfil user={user} onWyloguj={wyloguj} />}
           </>
         )}
       </main>
       <nav className="bottom-nav">
-        <button
-          className={`nav-item ${aktywnaZakladka === 'home' ? 'active' : ''}`}
-          onClick={() => {
-            setAktywneOgloszenie(null);
-            setAktywnaZakladka('home');
-          }}
-        >
-          <span className="nav-icon">🏠</span>
-          <span className="nav-label">Główna</span>
+        <button className={`nav-item ${aktywnaZakladka === 'home' ? 'active' : ''}`} onClick={() => { setAktywneOgloszenie(null); setAktywnaZakladka('home'); }}>
+          <span className="nav-icon">🏠</span><span className="nav-label">Główna</span>
         </button>
-        <button
-          className={`nav-item ${aktywnaZakladka === 'zjazdy' ? 'active' : ''}`}
-          onClick={() => {
-            setAktywneOgloszenie(null);
-            setAktywnaZakladka('zjazdy');
-          }}
-        >
-          <span className="nav-icon">📅</span>
-          <span className="nav-label">Zjazdy</span>
+        <button className={`nav-item ${aktywnaZakladka === 'zjazdy' ? 'active' : ''}`} onClick={() => { setAktywneOgloszenie(null); setAktywnaZakladka('zjazdy'); }}>
+          <span className="nav-icon">📅</span><span className="nav-label">Zjazdy</span>
         </button>
-        <button
-          className={`nav-item ${
-            aktywnaZakladka === 'ogloszenia' ? 'active' : ''
-          }`}
-          onClick={() => {
-            setAktywneOgloszenie(null);
-            setAktywnaZakladka('ogloszenia');
-          }}
-        >
-          <span className="nav-icon">🔔</span>
-          <span className="nav-label">Ogłoszenia</span>
+        <button className={`nav-item ${aktywnaZakladka === 'ogloszenia' ? 'active' : ''}`} onClick={() => { setAktywneOgloszenie(null); setAktywnaZakladka('ogloszenia'); }}>
+          <span className="nav-icon">🔔</span><span className="nav-label">Ogłoszenia</span>
           {noweCount > 0 && <span className="nav-badge">{noweCount}</span>}
         </button>
-        <button
-          className={`nav-item ${aktywnaZakladka === 'profil' ? 'active' : ''}`}
-          onClick={() => {
-            setAktywneOgloszenie(null);
-            setAktywnaZakladka('profil');
-          }}
-        >
-          <span className="nav-icon">👤</span>
-          <span className="nav-label">Profil</span>
+        <button className={`nav-item ${aktywnaZakladka === 'profil' ? 'active' : ''}`} onClick={() => { setAktywneOgloszenie(null); setAktywnaZakladka('profil'); }}>
+          <span className="nav-icon">👤</span><span className="nav-label">Profil</span>
         </button>
       </nav>
     </div>
