@@ -214,15 +214,7 @@ export default function App() {
   useEffect(() => {
     if (!user) return;
     async function pobierzDane() {
-      const [{ data: og, error: ogErr }, { data: zj, error: zjErr }] = await Promise.all([
-        supabase.from('ogloszenia').select('*').order('data_utworzenia', { ascending: false }),
-        supabase.from('zjazdy').select('*').order('data_zjazdu', { ascending: true }),
-      ]);
-      console.log('zjazdy:', zj, 'error:', zjErr);
-      console.log('ogloszenia:', og, 'error:', ogErr);
-      setOgloszenia(og || []);
-      setZjazdy(zj || []);
-    }
+      const [{ data: og }, { data: zj }] = await Promise.all([
         supabase.from('ogloszenia').select('*').order('data_utworzenia', { ascending: false }),
         supabase.from('zjazdy').select('*').order('data_zjazdu', { ascending: true }),
       ]);
