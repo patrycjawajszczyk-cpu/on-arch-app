@@ -231,7 +231,7 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
 
   useEffect(() => {
     supabase.from('grupy').select('*').then(({ data }) => setGrupy(data || []));
-    supabase.from('kursanci').select('id, imie, nazwisko, grupa_id, user_id, grupy(nazwa)').then(({ data }) => setKursanci((data || []) as KursantAdmin[]));
+    supabase.from('kursanci').select('id, imie, nazwisko, grupa_id, user_id, grupy(nazwa)').then(({ data }) => setKursanci((data || []) as unknown as KursantAdmin[]));
   }, []);
 
   async function dodajOgloszenie(e: React.FormEvent) {
@@ -250,16 +250,16 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
 
   async function dodajKursanta(e: React.FormEvent) {
     e.preventDefault();
-    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+    const { data: authData, error: authError } = await supabase.auth.signUp({
       email: nowyKursant.email,
-      email_confirm: true,
+      password: Math.random().toString(36).slice(-10),
     });
     if (authError) { setKomunikat('Blad tworzenia konta: ' + authError.message); return; }
     const { error } = await supabase.from('kursanci').insert([{
       imie: nowyKursant.imie,
       nazwisko: nowyKursant.nazwisko,
       grupa_id: parseInt(nowyKursant.grupa_id),
-      user_id: authData.user.id,
+      user_id: authData.user!.id,
       rola: 'kursant',
     }]);
     if (error) { setKomunikat('Blad: ' + error.message); }
@@ -267,7 +267,7 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
       setKomunikat('Kursant dodany! Email z linkiem zostal wyslany.');
       setNowyKursant({ imie: '', nazwisko: '', email: '', grupa_id: '' });
       const { data } = await supabase.from('kursanci').select('id, imie, nazwisko, grupa_id, user_id, grupy(nazwa)');
-      setKursanci((data || []) as KursantAdmin[]);
+      setKursanci((data || []) as unknown as KursantAdmin[]);
     }
   }
 
