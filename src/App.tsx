@@ -354,13 +354,24 @@ export default function App() {
     async function pobierzDane() {
       const { data: kursantData } = await supabase
         .from('kursanci')
-        .select('imie, nazwisko, grupa_id, grupy!grupa_id(nazwa, miasto, edycja)')
+        .select('imie, nazwisko, grupa_id')
         .eq('user_id', user!.id)
         .single();
-      setKursant(kursantData as Kursant | null);
-
+    
+      let grupaData = null;
+      if (kursantData?.grupa_id) {
+        const { data } = await supabase
+          .from('grupy')
+          .select('nazwa, miasto, edycja')
+          .eq('id', kursantData.grupa_id)
+          .single();
+        grupaData = data;
+      }
+    
+      const kursantZGrupa = kursantData ? { ...kursantData, grupy: grupaData } : null;
+      setKursant(kursantZGrupa as Kursant | null);
+    
       const grupaId = kursantData?.grupa_id;
-
       const [{ data: og }, { data: zj }] = await Promise.all([
         supabase.from('ogloszenia').select('*').order('data_utworzenia', { ascending: false }),
         grupaId
@@ -370,9 +381,6 @@ export default function App() {
       setOgloszenia(og || []);
       setZjazdy(zj || []);
     }
-    pobierzDane();
-  }, [user]);
-
   async function wyloguj() {
     await supabase.auth.signOut();
     setUser(null);
