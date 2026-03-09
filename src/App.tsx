@@ -28,6 +28,70 @@ type User = {
   email: string;
 };
 
+function EkranZmianaHasla() {
+  const [haslo, setHaslo] = useState('');
+  const [haslo2, setHaslo2] = useState('');
+  const [blad, setBlad] = useState('');
+  const [sukces, setSukces] = useState(false);
+  const [ladowanie, setLadowanie] = useState(false);
+
+  async function zmienHaslo(e: React.FormEvent) {
+    e.preventDefault();
+    if (haslo !== haslo2) { setBlad('Hasła nie są identyczne'); return; }
+    if (haslo.length < 6) { setBlad('Hasło musi mieć minimum 6 znaków'); return; }
+    setLadowanie(true);
+    setBlad('');
+    const { error } = await supabase.auth.updateUser({ password: haslo });
+    if (error) {
+      setBlad('Błąd zmiany hasła. Spróbuj ponownie.');
+    } else {
+      setSukces(true);
+    }
+    setLadowanie(false);
+  }
+
+  if (sukces) {
+    return (
+      <div className="login-screen">
+        <div className="login-card">
+          <div className="login-logo">On<span>-Arch</span></div>
+          <div className="reset-success">
+            <div className="reset-icon">✅</div>
+            <h3>Hasło zostało zmienione!</h3>
+            <p>Możesz teraz zalogować się nowym hasłem.</p>
+          </div>
+          <button className="login-btn" style={{marginTop: '20px'}} onClick={() => window.location.href = '/'}>
+            Przejdź do logowania
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="login-screen">
+      <div className="login-card">
+        <div className="login-logo">On<span>-Arch</span></div>
+        <p className="login-sub">Ustaw nowe hasło</p>
+        <form className="login-form" onSubmit={zmienHaslo}>
+          <div className="login-field">
+            <label>Nowe hasło</label>
+            <input type="password" value={haslo} onChange={e => setHaslo(e.target.value)} placeholder="••••••••" required />
+          </div>
+          <div className="login-field">
+            <label>Powtórz hasło</label>
+            <input type="password" value={haslo2} onChange={e => setHaslo2(e.target.value)} placeholder="••••••••" required />
+          </div>
+          {blad && <div className="login-error">{blad}</div>}
+          <button className="login-btn" type="submit" disabled={ladowanie}>
+            {ladowanie ? 'Zapisywanie...' : 'Ustaw hasło'}
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 function EkranLogowania({ onZalogowano }: { onZalogowano: () => void }) {
   const [email, setEmail] = useState('');
   const [haslo, setHaslo] = useState('');
@@ -257,13 +321,17 @@ export default function App() {
   const [ogloszenia, setOgloszenia] = useState<Ogloszenie[]>([]);
   const [zjazdy, setZjazdy] = useState<Zjazd[]>([]);
   const [ladowanie, setLadowanie] = useState(true);
+  const [resetMode, setResetMode] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ? { id: session.user.id, email: session.user.email! } : null);
       setLadowanie(false);
     });
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        setResetMode(true);
+      }
       setUser(session?.user ? { id: session.user.id, email: session.user.email! } : null);
     });
     return () => subscription.unsubscribe();
@@ -285,11 +353,13 @@ export default function App() {
   async function wyloguj() {
     await supabase.auth.signOut();
     setUser(null);
+    setResetMode(false);
   }
 
   const noweCount = ogloszenia.filter((o) => o.nowe).length;
 
   if (ladowanie) return <div className="ladowanie">Ładowanie...</div>;
+  if (resetMode) return <EkranZmianaHasla />;
   if (!user) return <EkranLogowania onZalogowano={() => {}} />;
 
   return (
