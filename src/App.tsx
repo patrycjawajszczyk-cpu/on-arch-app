@@ -38,7 +38,6 @@ type KursantAdmin = {
   nazwisko: string;
   grupa_id: number;
   user_id: string;
-  grupy: { nazwa: string }[] | null;
 };
 
 type Grupa = {
@@ -67,11 +66,8 @@ function EkranZmianaHasla() {
     setLadowanie(true);
     setBlad('');
     const { error } = await supabase.auth.updateUser({ password: haslo });
-    if (error) {
-      setBlad('Blad zmiany hasla. Sprobuj ponownie.');
-    } else {
-      setSukces(true);
-    }
+    if (error) { setBlad('Blad zmiany hasla. Sprobuj ponownie.'); }
+    else { setSukces(true); }
     setLadowanie(false);
   }
 
@@ -85,9 +81,7 @@ function EkranZmianaHasla() {
             <h3>Haslo zostalo zmienione!</h3>
             <p>Mozesz teraz zalogowac sie nowym haslem.</p>
           </div>
-          <button className="login-btn" style={{marginTop: '20px'}} onClick={() => window.location.href = '/'}>
-            Przejdz do logowania
-          </button>
+          <button className="login-btn" style={{marginTop: '20px'}} onClick={() => window.location.href = '/'}>Przejdz do logowania</button>
         </div>
       </div>
     );
@@ -108,9 +102,7 @@ function EkranZmianaHasla() {
             <input type="password" value={haslo2} onChange={e => setHaslo2(e.target.value)} placeholder="password" required />
           </div>
           {blad && <div className="login-error">{blad}</div>}
-          <button className="login-btn" type="submit" disabled={ladowanie}>
-            {ladowanie ? 'Zapisywanie...' : 'Ustaw haslo'}
-          </button>
+          <button className="login-btn" type="submit" disabled={ladowanie}>{ladowanie ? 'Zapisywanie...' : 'Ustaw haslo'}</button>
         </form>
       </div>
     </div>
@@ -130,11 +122,8 @@ function EkranLogowania({ onZalogowano }: { onZalogowano: () => void }) {
     setLadowanie(true);
     setBlad('');
     const { error } = await supabase.auth.signInWithPassword({ email, password: haslo });
-    if (error) {
-      setBlad('Nieprawidlowy email lub haslo');
-    } else {
-      onZalogowano();
-    }
+    if (error) { setBlad('Nieprawidlowy email lub haslo'); }
+    else { onZalogowano(); }
     setLadowanie(false);
   }
 
@@ -142,14 +131,9 @@ function EkranLogowania({ onZalogowano }: { onZalogowano: () => void }) {
     e.preventDefault();
     setLadowanie(true);
     setBlad('');
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: 'https://on-arch-7afx.vercel.app',
-    });
-    if (error) {
-      setBlad('Blad wysylania emaila. Sprawdz adres.');
-    } else {
-      setResetWyslany(true);
-    }
+    const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: 'https://on-arch-7afx.vercel.app' });
+    if (error) { setBlad('Blad wysylania emaila. Sprawdz adres.'); }
+    else { setResetWyslany(true); }
     setLadowanie(false);
   }
 
@@ -161,11 +145,9 @@ function EkranLogowania({ onZalogowano }: { onZalogowano: () => void }) {
           <div className="reset-success">
             <div className="reset-icon">✉️</div>
             <h3>Sprawdz skrzynke</h3>
-            <p>Wyslalismy link do resetowania hasla na adres <strong>{email}</strong></p>
+            <p>Wyslalismy link na adres <strong>{email}</strong></p>
           </div>
-          <button className="login-btn" style={{marginTop: '20px'}} onClick={() => { setResetMode(false); setResetWyslany(false); }}>
-            Wroce do logowania
-          </button>
+          <button className="login-btn" style={{marginTop: '20px'}} onClick={() => { setResetMode(false); setResetWyslany(false); }}>Wroce do logowania</button>
         </div>
       </div>
     );
@@ -183,9 +165,7 @@ function EkranLogowania({ onZalogowano }: { onZalogowano: () => void }) {
               <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="twoj@email.pl" required />
             </div>
             {blad && <div className="login-error">{blad}</div>}
-            <button className="login-btn" type="submit" disabled={ladowanie}>
-              {ladowanie ? 'Wysylanie...' : 'Wyslij link resetujacy'}
-            </button>
+            <button className="login-btn" type="submit" disabled={ladowanie}>{ladowanie ? 'Wysylanie...' : 'Wyslij link resetujacy'}</button>
           </form>
           <button className="btn-link" onClick={() => setResetMode(false)}>Wroce do logowania</button>
         </div>
@@ -208,9 +188,7 @@ function EkranLogowania({ onZalogowano }: { onZalogowano: () => void }) {
             <input type="password" value={haslo} onChange={e => setHaslo(e.target.value)} placeholder="password" required />
           </div>
           {blad && <div className="login-error">{blad}</div>}
-          <button className="login-btn" type="submit" disabled={ladowanie}>
-            {ladowanie ? 'Logowanie...' : 'Zaloguj sie'}
-          </button>
+          <button className="login-btn" type="submit" disabled={ladowanie}>{ladowanie ? 'Logowanie...' : 'Zaloguj sie'}</button>
         </form>
         <button className="btn-link" onClick={() => setResetMode(true)}>Nie pamietasz hasla?</button>
         <p className="login-kontakt">Problemy z logowaniem? Zadzwon do biura:<br/><strong>883 659 069</strong></p>
@@ -223,6 +201,8 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
   const [aktywnaZakladka, setAktywnaZakladka] = useState('ogloszenia');
   const [grupy, setGrupy] = useState<Grupa[]>([]);
   const [kursanci, setKursanci] = useState<KursantAdmin[]>([]);
+  const [ogloszenia, setOgloszenia] = useState<Ogloszenie[]>([]);
+  const [edytowane, setEdytowane] = useState<Ogloszenie | null>(null);
 
   const [noweOgl, setNoweOgl] = useState({ typ: 'Informacja', tytul: '', tresc: '', szczegoly: '', nowe: true });
   const [nowyZjazd, setNowyZjazd] = useState({ nr: '', daty: '', sala: '', adres: '', tematy: '', status: 'nadchodzacy', data_zjazdu: '', grupa_id: '' });
@@ -232,13 +212,39 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
   useEffect(() => {
     supabase.from('grupy').select('*').then(({ data }) => setGrupy(data || []));
     supabase.from('kursanci').select('id, imie, nazwisko, grupa_id, user_id').then(({ data }) => setKursanci((data || []) as unknown as KursantAdmin[]));
+    pobierzOgloszenia();
   }, []);
+
+  async function pobierzOgloszenia() {
+    const { data } = await supabase.from('ogloszenia').select('*').order('data_utworzenia', { ascending: false });
+    setOgloszenia(data || []);
+  }
 
   async function dodajOgloszenie(e: React.FormEvent) {
     e.preventDefault();
     const { error } = await supabase.from('ogloszenia').insert([{ ...noweOgl, data_utworzenia: new Date().toISOString() }]);
     if (error) { setKomunikat('Blad: ' + error.message); }
-    else { setKomunikat('Ogloszenie dodane!'); setNoweOgl({ typ: 'Informacja', tytul: '', tresc: '', szczegoly: '', nowe: true }); }
+    else { setKomunikat('Ogloszenie dodane!'); setNoweOgl({ typ: 'Informacja', tytul: '', tresc: '', szczegoly: '', nowe: true }); pobierzOgloszenia(); }
+  }
+
+  async function zapiszEdycje(e: React.FormEvent) {
+    e.preventDefault();
+    if (!edytowane) return;
+    const { error } = await supabase.from('ogloszenia').update({
+      typ: edytowane.typ,
+      tytul: edytowane.tytul,
+      tresc: edytowane.tresc,
+      szczegoly: edytowane.szczegoly,
+    }).eq('id', edytowane.id);
+    if (error) { setKomunikat('Blad: ' + error.message); }
+    else { setKomunikat('Ogloszenie zaktualizowane!'); setEdytowane(null); pobierzOgloszenia(); }
+  }
+
+  async function usunOgloszenie(id: string) {
+    if (!window.confirm('Czy na pewno chcesz usunac to ogloszenie?')) return;
+    const { error } = await supabase.from('ogloszenia').delete().eq('id', id);
+    if (error) { setKomunikat('Blad: ' + error.message); }
+    else { setKomunikat('Ogloszenie usuniete!'); pobierzOgloszenia(); }
   }
 
   async function dodajZjazd(e: React.FormEvent) {
@@ -266,7 +272,7 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
     else {
       setKomunikat('Kursant dodany! Email z linkiem zostal wyslany.');
       setNowyKursant({ imie: '', nazwisko: '', email: '', grupa_id: '' });
-      const { data } = await supabase.from('kursanci').select('id, imie, nazwisko, grupa_id, user_id, grupy(nazwa)');
+      const { data } = await supabase.from('kursanci').select('id, imie, nazwisko, grupa_id, user_id');
       setKursanci((data || []) as unknown as KursantAdmin[]);
     }
   }
@@ -282,30 +288,74 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
 
         {aktywnaZakladka === 'ogloszenia' && (
           <>
-            <h2 className="page-title">Nowe ogloszenie</h2>
-            <form className="admin-form" onSubmit={dodajOgloszenie}>
-              <div className="login-field">
-                <label>Typ</label>
-                <select value={noweOgl.typ} onChange={e => setNoweOgl({...noweOgl, typ: e.target.value})}>
-                  <option>Informacja</option>
-                  <option>Pilne</option>
-                  <option>Zmiana</option>
-                </select>
-              </div>
-              <div className="login-field">
-                <label>Tytul</label>
-                <input type="text" value={noweOgl.tytul} onChange={e => setNoweOgl({...noweOgl, tytul: e.target.value})} required />
-              </div>
-              <div className="login-field">
-                <label>Krotki opis</label>
-                <input type="text" value={noweOgl.tresc} onChange={e => setNoweOgl({...noweOgl, tresc: e.target.value})} required />
-              </div>
-              <div className="login-field">
-                <label>Pelna tresc</label>
-                <textarea value={noweOgl.szczegoly} onChange={e => setNoweOgl({...noweOgl, szczegoly: e.target.value})} rows={4} />
-              </div>
-              <button className="login-btn" type="submit">Dodaj ogloszenie</button>
-            </form>
+            {edytowane ? (
+              <>
+                <h2 className="page-title">Edytuj ogloszenie</h2>
+                <form className="admin-form" onSubmit={zapiszEdycje}>
+                  <div className="login-field">
+                    <label>Typ</label>
+                    <select value={edytowane.typ} onChange={e => setEdytowane({...edytowane, typ: e.target.value})}>
+                      <option>Informacja</option>
+                      <option>Pilne</option>
+                      <option>Zmiana</option>
+                    </select>
+                  </div>
+                  <div className="login-field">
+                    <label>Tytul</label>
+                    <input type="text" value={edytowane.tytul} onChange={e => setEdytowane({...edytowane, tytul: e.target.value})} required />
+                  </div>
+                  <div className="login-field">
+                    <label>Krotki opis</label>
+                    <input type="text" value={edytowane.tresc} onChange={e => setEdytowane({...edytowane, tresc: e.target.value})} required />
+                  </div>
+                  <div className="login-field">
+                    <label>Pelna tresc</label>
+                    <textarea value={edytowane.szczegoly} onChange={e => setEdytowane({...edytowane, szczegoly: e.target.value})} rows={4} />
+                  </div>
+                  <button className="login-btn" type="submit">Zapisz zmiany</button>
+                  <button className="btn-link" onClick={() => setEdytowane(null)}>Anuluj</button>
+                </form>
+              </>
+            ) : (
+              <>
+                <h2 className="page-title">Nowe ogloszenie</h2>
+                <form className="admin-form" onSubmit={dodajOgloszenie}>
+                  <div className="login-field">
+                    <label>Typ</label>
+                    <select value={noweOgl.typ} onChange={e => setNoweOgl({...noweOgl, typ: e.target.value})}>
+                      <option>Informacja</option>
+                      <option>Pilne</option>
+                      <option>Zmiana</option>
+                    </select>
+                  </div>
+                  <div className="login-field">
+                    <label>Tytul</label>
+                    <input type="text" value={noweOgl.tytul} onChange={e => setNoweOgl({...noweOgl, tytul: e.target.value})} required />
+                  </div>
+                  <div className="login-field">
+                    <label>Krotki opis</label>
+                    <input type="text" value={noweOgl.tresc} onChange={e => setNoweOgl({...noweOgl, tresc: e.target.value})} required />
+                  </div>
+                  <div className="login-field">
+                    <label>Pelna tresc</label>
+                    <textarea value={noweOgl.szczegoly} onChange={e => setNoweOgl({...noweOgl, szczegoly: e.target.value})} rows={4} />
+                  </div>
+                  <button className="login-btn" type="submit">Dodaj ogloszenie</button>
+                </form>
+
+                <h2 className="page-title" style={{marginTop:'24px'}}>Lista ogloszen</h2>
+                {ogloszenia.map(o => (
+                  <div key={o.id} className="profil-card" style={{marginBottom:'8px'}}>
+                    <div className="profil-row"><span className="profil-lbl">Tytul</span><span className="profil-val">{o.tytul}</span></div>
+                    <div className="profil-row"><span className="profil-lbl">Typ</span><span className="profil-val">{o.typ}</span></div>
+                    <div style={{display:'flex', gap:'8px', marginTop:'8px'}}>
+                      <button className="login-btn" style={{flex:1, padding:'8px'}} onClick={() => { setEdytowane(o); setKomunikat(''); }}>Edytuj</button>
+                      <button className="btn-wyloguj" style={{flex:1, padding:'8px'}} onClick={() => usunOgloszenie(o.id)}>Usun</button>
+                    </div>
+                  </div>
+                ))}
+              </>
+            )}
           </>
         )}
 
@@ -393,7 +443,7 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
         )}
       </main>
       <nav className="bottom-nav">
-        <button className={`nav-item ${aktywnaZakladka === 'ogloszenia' ? 'active' : ''}`} onClick={() => { setKomunikat(''); setAktywnaZakladka('ogloszenia'); }}>
+        <button className={`nav-item ${aktywnaZakladka === 'ogloszenia' ? 'active' : ''}`} onClick={() => { setKomunikat(''); setEdytowane(null); setAktywnaZakladka('ogloszenia'); }}>
           <span className="nav-icon">🔔</span><span className="nav-label">Ogloszenia</span>
         </button>
         <button className={`nav-item ${aktywnaZakladka === 'zjazdy' ? 'active' : ''}`} onClick={() => { setKomunikat(''); setAktywnaZakladka('zjazdy'); }}>
@@ -547,9 +597,7 @@ export default function App() {
       setLadowanie(false);
     });
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'PASSWORD_RECOVERY') {
-        setResetMode(true);
-      }
+      if (event === 'PASSWORD_RECOVERY') setResetMode(true);
       setUser(session?.user ? { id: session.user.id, email: session.user.email! } : null);
     });
     return () => subscription.unsubscribe();
@@ -566,16 +614,11 @@ export default function App() {
 
       let grupaData = null;
       if (kursantData?.grupa_id) {
-        const { data } = await supabase
-          .from('grupy')
-          .select('nazwa, miasto, edycja')
-          .eq('id', kursantData.grupa_id)
-          .single();
+        const { data } = await supabase.from('grupy').select('nazwa, miasto, edycja').eq('id', kursantData.grupa_id).single();
         grupaData = data;
       }
 
-      const kursantZGrupa = kursantData ? { ...kursantData, grupy: grupaData } : null;
-      setKursant(kursantZGrupa as Kursant | null);
+      setKursant(kursantData ? { ...kursantData, grupy: grupaData } as Kursant : null);
 
       const grupaId = kursantData?.grupa_id;
       const [{ data: og }, { data: zj }] = await Promise.all([
