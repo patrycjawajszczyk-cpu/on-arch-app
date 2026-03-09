@@ -13,7 +13,7 @@ type Ogloszenie = {
 };
 
 type Zjazd = {
-  id: string;
+  id: number;
   nr: number;
   daty: string;
   sala: string;
@@ -105,9 +105,7 @@ function EkranSzczegoly({ o, onWroc }: { o: Ogloszenie; onWroc: () => void }) {
 
 function EkranGlowny({ ogloszenia, zjazdy, onOtworzOgloszenie, user }: { ogloszenia: Ogloszenie[]; zjazdy: Zjazd[]; onOtworzOgloszenie: (o: Ogloszenie) => void; user: User }) {
   const imie = user.email.split('@')[0];
-  const nadchodzace = zjazdy.filter(z => z.status === 'nadchodzący');
-  const najblizszy = nadchodzace[0];
-
+  const najblizszy = zjazdy.find(z => z.status === 'nadchodzący');
   return (
     <>
       <p className="greeting">Dzień dobry, {imie} 👋</p>
@@ -126,7 +124,7 @@ function EkranGlowny({ ogloszenia, zjazdy, onOtworzOgloszenie, user }: { oglosze
             </div>
           </div>
         ) : (
-          <p style={{color: 'var(--text-muted)', fontSize: '14px'}}>Brak nadchodzących zjazdów</p>
+          <div className="hero-card"><div className="hero-date">Brak nadchodzących zjazdów</div></div>
         )}
       </section>
       <section className="section">
@@ -145,7 +143,6 @@ function EkranZjazdy({ zjazdy }: { zjazdy: Zjazd[] }) {
   return (
     <>
       <h2 className="page-title">Plan zjazdów</h2>
-      {zjazdy.length === 0 && <p style={{color: 'var(--text-muted)', fontSize: '14px'}}>Brak zjazdów</p>}
       {zjazdy.map((z) => (
         <div key={z.id} className={`sess-card ${z.status}`}>
           <div className="sess-top">
@@ -225,7 +222,6 @@ export default function App() {
       setZjazdy(zj || []);
     }
     pobierzDane();
-  
   }, [user]);
 
   async function wyloguj() {
