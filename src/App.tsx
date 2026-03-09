@@ -231,7 +231,7 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
 
   useEffect(() => {
     supabase.from('grupy').select('*').then(({ data }) => setGrupy(data || []));
-    supabase.from('kursanci').select('id, imie, nazwisko, grupa_id, user_id, grupy(nazwa)').then(({ data }) => setKursanci((data || []) as unknown as KursantAdmin[]));
+    supabase.from('kursanci').select('id, imie, nazwisko, grupa_id, user_id').then(({ data }) => setKursanci((data || []) as unknown as KursantAdmin[]));
   }, []);
 
   async function dodajOgloszenie(e: React.FormEvent) {
@@ -386,7 +386,7 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
             {kursanci.map(k => (
               <div key={k.id} className="profil-card" style={{marginBottom:'8px'}}>
                 <div className="profil-row"><span className="profil-lbl">Imie i nazwisko</span><span className="profil-val">{k.imie} {k.nazwisko}</span></div>
-                <div className="profil-row"><span className="profil-lbl">Grupa</span><span className="profil-val">{k.grupy?.[0]?.nazwa || '-'}</span></div>
+                <div className="profil-row"><span className="profil-lbl">Grupa</span><span className="profil-val">{grupy.find(g => g.id === k.grupa_id)?.nazwa || '-'}</span></div>
               </div>
             ))}
           </>
