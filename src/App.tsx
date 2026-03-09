@@ -666,7 +666,13 @@ export default function App() {
     setKursant(null);
     setResetMode(false);
   }
-
+  async function otworzOgloszenie(o: Ogloszenie) {
+    setAktywneOgloszenie(o);
+    if (o.nowe) {
+      await supabase.from('ogloszenia').update({ nowe: false }).eq('id', o.id);
+      setOgloszenia(prev => prev.map(og => og.id === o.id ? { ...og, nowe: false } : og));
+    }
+  }
   const noweCount = ogloszenia.filter((o) => o.nowe).length;
 
   if (ladowanie) return <div className="ladowanie">Ladowanie...</div>;
@@ -685,9 +691,9 @@ export default function App() {
           <EkranSzczegoly o={aktywneOgloszenie} onWroc={() => setAktywneOgloszenie(null)} />
         ) : (
           <>
-            {aktywnaZakladka === 'home' && <EkranGlowny ogloszenia={ogloszenia} zjazdy={zjazdy} onOtworzOgloszenie={setAktywneOgloszenie} user={user} kursant={kursant} />}
+            {aktywnaZakladka === 'home' && <EkranGlowny ogloszenia={ogloszenia} zjazdy={zjazdy} onOtworzOgloszenie={otworzOgloszenie} user={user} kursant={kursant} />}
             {aktywnaZakladka === 'zjazdy' && <EkranZjazdy zjazdy={zjazdy} />}
-            {aktywnaZakladka === 'ogloszenia' && <EkranOgloszenia ogloszenia={ogloszenia} onOtworzOgloszenie={setAktywneOgloszenie} />}
+            {aktywnaZakladka === 'ogloszenia' && <EkranOgloszenia ogloszenia={ogloszenia} onOtworzOgloszenie={otworzOgloszenie} />}
             {aktywnaZakladka === 'profil' && <EkranProfil user={user} kursant={kursant} onWyloguj={wyloguj} />}
           </>
         )}
