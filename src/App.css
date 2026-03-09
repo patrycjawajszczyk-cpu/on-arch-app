@@ -226,3 +226,67 @@ h1 {
   color: var(--text-muted);
   line-height: 1.6;
 }
+.sess-card {
+  background: white;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 12px;
+  border: 1px solid #eee;
+}
+
+.sess-card.zakonczony {
+  opacity: 0.5;
+}
+
+.sess-card.nadchodzacy {
+  opacity: 1;
+  border-left: 3px solid var(--brand);
+}
+
+.sess-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.sess-nr {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--text);
+}
+
+.sess-date {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+
+.sess-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sess-row {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.s-badge {
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 20px;
+  font-weight: 500;
+}
+
+.s-nadchodzacy {
+  background: #e8f5e9;
+  color: #2e7d32;
+}
+
+.s-zakonczony {
+  background: #f5f5f5;
+  color: #999;
+}
