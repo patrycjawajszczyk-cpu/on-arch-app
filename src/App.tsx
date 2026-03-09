@@ -27,7 +27,7 @@ type Kursant = {
   imie: string;
   nazwisko: string;
   grupa_id: number;
-  grupy: { nazwa: string; miasto: string; edycja: string };
+  grupy: { nazwa: string; miasto: string; edycja: string } | null;
 };
 
 type User = {
@@ -44,13 +44,13 @@ function EkranZmianaHasla() {
 
   async function zmienHaslo(e: React.FormEvent) {
     e.preventDefault();
-    if (haslo !== haslo2) { setBlad('Hasła nie są identyczne'); return; }
-    if (haslo.length < 6) { setBlad('Hasło musi mieć minimum 6 znaków'); return; }
+    if (haslo !== haslo2) { setBlad('Hasla nie sa identyczne'); return; }
+    if (haslo.length < 6) { setBlad('Haslo musi miec minimum 6 znakow'); return; }
     setLadowanie(true);
     setBlad('');
     const { error } = await supabase.auth.updateUser({ password: haslo });
     if (error) {
-      setBlad('Błąd zmiany hasła. Spróbuj ponownie.');
+      setBlad('Blad zmiany hasla. Sprobuj ponownie.');
     } else {
       setSukces(true);
     }
@@ -64,11 +64,11 @@ function EkranZmianaHasla() {
           <div className="login-logo">On<span>-Arch</span></div>
           <div className="reset-success">
             <div className="reset-icon">✅</div>
-            <h3>Hasło zostało zmienione!</h3>
-            <p>Możesz teraz zalogować się nowym hasłem.</p>
+            <h3>Haslo zostalo zmienione!</h3>
+            <p>Mozesz teraz zalogowac sie nowym haslem.</p>
           </div>
           <button className="login-btn" style={{marginTop: '20px'}} onClick={() => window.location.href = '/'}>
-            Przejdź do logowania
+            Przejdz do logowania
           </button>
         </div>
       </div>
@@ -79,19 +79,19 @@ function EkranZmianaHasla() {
     <div className="login-screen">
       <div className="login-card">
         <div className="login-logo">On<span>-Arch</span></div>
-        <p className="login-sub">Ustaw nowe hasło</p>
+        <p className="login-sub">Ustaw nowe haslo</p>
         <form className="login-form" onSubmit={zmienHaslo}>
           <div className="login-field">
-            <label>Nowe hasło</label>
-            <input type="password" value={haslo} onChange={e => setHaslo(e.target.value)} placeholder="••••••••" required />
+            <label>Nowe haslo</label>
+            <input type="password" value={haslo} onChange={e => setHaslo(e.target.value)} placeholder="password" required />
           </div>
           <div className="login-field">
-            <label>Powtórz hasło</label>
-            <input type="password" value={haslo2} onChange={e => setHaslo2(e.target.value)} placeholder="••••••••" required />
+            <label>Powtorz haslo</label>
+            <input type="password" value={haslo2} onChange={e => setHaslo2(e.target.value)} placeholder="password" required />
           </div>
           {blad && <div className="login-error">{blad}</div>}
           <button className="login-btn" type="submit" disabled={ladowanie}>
-            {ladowanie ? 'Zapisywanie...' : 'Ustaw hasło'}
+            {ladowanie ? 'Zapisywanie...' : 'Ustaw haslo'}
           </button>
         </form>
       </div>
@@ -113,7 +113,7 @@ function EkranLogowania({ onZalogowano }: { onZalogowano: () => void }) {
     setBlad('');
     const { error } = await supabase.auth.signInWithPassword({ email, password: haslo });
     if (error) {
-      setBlad('Nieprawidłowy email lub hasło');
+      setBlad('Nieprawidlowy email lub haslo');
     } else {
       onZalogowano();
     }
@@ -128,7 +128,7 @@ function EkranLogowania({ onZalogowano }: { onZalogowano: () => void }) {
       redirectTo: 'https://on-arch-7afx.vercel.app',
     });
     if (error) {
-      setBlad('Błąd wysyłania emaila. Sprawdź adres.');
+      setBlad('Blad wysylania emaila. Sprawdz adres.');
     } else {
       setResetWyslany(true);
     }
@@ -142,11 +142,11 @@ function EkranLogowania({ onZalogowano }: { onZalogowano: () => void }) {
           <div className="login-logo">On<span>-Arch</span></div>
           <div className="reset-success">
             <div className="reset-icon">✉️</div>
-            <h3>Sprawdź skrzynkę</h3>
-            <p>Wysłaliśmy link do resetowania hasła na adres <strong>{email}</strong></p>
+            <h3>Sprawdz skrzynke</h3>
+            <p>Wyslalismy link do resetowania hasla na adres <strong>{email}</strong></p>
           </div>
           <button className="login-btn" style={{marginTop: '20px'}} onClick={() => { setResetMode(false); setResetWyslany(false); }}>
-            Wróć do logowania
+            Wroce do logowania
           </button>
         </div>
       </div>
@@ -158,7 +158,7 @@ function EkranLogowania({ onZalogowano }: { onZalogowano: () => void }) {
       <div className="login-screen">
         <div className="login-card">
           <div className="login-logo">On<span>-Arch</span></div>
-          <p className="login-sub">Resetowanie hasła</p>
+          <p className="login-sub">Resetowanie hasla</p>
           <form className="login-form" onSubmit={resetHasla}>
             <div className="login-field">
               <label>Email</label>
@@ -166,10 +166,10 @@ function EkranLogowania({ onZalogowano }: { onZalogowano: () => void }) {
             </div>
             {blad && <div className="login-error">{blad}</div>}
             <button className="login-btn" type="submit" disabled={ladowanie}>
-              {ladowanie ? 'Wysyłanie...' : 'Wyślij link resetujący'}
+              {ladowanie ? 'Wysylanie...' : 'Wyslij link resetujacy'}
             </button>
           </form>
-          <button className="btn-link" onClick={() => setResetMode(false)}>← Wróć do logowania</button>
+          <button className="btn-link" onClick={() => setResetMode(false)}>Wroce do logowania</button>
         </div>
       </div>
     );
@@ -186,16 +186,16 @@ function EkranLogowania({ onZalogowano }: { onZalogowano: () => void }) {
             <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="twoj@email.pl" required />
           </div>
           <div className="login-field">
-            <label>Hasło</label>
-            <input type="password" value={haslo} onChange={e => setHaslo(e.target.value)} placeholder="••••••••" required />
+            <label>Haslo</label>
+            <input type="password" value={haslo} onChange={e => setHaslo(e.target.value)} placeholder="password" required />
           </div>
           {blad && <div className="login-error">{blad}</div>}
           <button className="login-btn" type="submit" disabled={ladowanie}>
-            {ladowanie ? 'Logowanie...' : 'Zaloguj się'}
+            {ladowanie ? 'Logowanie...' : 'Zaloguj sie'}
           </button>
         </form>
-        <button className="btn-link" onClick={() => setResetMode(true)}>Nie pamiętasz hasła?</button>
-        <p className="login-kontakt">Problemy z logowaniem? Zadzwoń do biura:<br/><strong>883 659 069</strong></p>
+        <button className="btn-link" onClick={() => setResetMode(true)}>Nie pamietasz hasla?</button>
+        <p className="login-kontakt">Problemy z logowaniem? Zadzwon do biura:<br/><strong>883 659 069</strong></p>
       </div>
     </div>
   );
@@ -221,11 +221,11 @@ function KartaOgloszenia({ o, onClick }: { o: Ogloszenie; onClick: () => void })
 function EkranSzczegoly({ o, onWroc }: { o: Ogloszenie; onWroc: () => void }) {
   return (
     <>
-      <button className="btn-wroc" onClick={onWroc}>‹ Wróć</button>
+      <button className="btn-wroc" onClick={onWroc}>Wroc</button>
       <div className="szczegoly-header">
         <span className={`badge badge-${o.typ.toLowerCase()}`}>{o.typ}</span>
         <h2 className="szczegoly-tytul">{o.tytul}</h2>
-        <p className="szczegoly-meta">Biuro On-Arch · {new Date(o.data_utworzenia).toLocaleDateString('pl-PL')}</p>
+        <p className="szczegoly-meta">Biuro On-Arch - {new Date(o.data_utworzenia).toLocaleDateString('pl-PL')}</p>
       </div>
       <div className="szczegoly-tresc">{o.szczegoly}</div>
     </>
@@ -234,13 +234,13 @@ function EkranSzczegoly({ o, onWroc }: { o: Ogloszenie; onWroc: () => void }) {
 
 function EkranGlowny({ ogloszenia, zjazdy, onOtworzOgloszenie, user, kursant }: { ogloszenia: Ogloszenie[]; zjazdy: Zjazd[]; onOtworzOgloszenie: (o: Ogloszenie) => void; user: User; kursant: Kursant | null }) {
   const imie = kursant ? kursant.imie : user.email.split('@')[0];
-  const najblizszy = zjazdy.find(z => z.status === 'nadchodzący');
+  const najblizszy = zjazdy.find(z => z.status === 'nadchodzacy');
   return (
     <>
-      <p className="greeting">Dzień dobry, {imie} 👋</p>
+      <p className="greeting">Dzien dobry, {imie}</p>
       <section className="section">
         <div className="section-header">
-          <span className="section-title">Najbliższy zjazd</span>
+          <span className="section-title">Najblizszy zjazd</span>
         </div>
         {najblizszy ? (
           <div className="hero-card">
@@ -248,17 +248,17 @@ function EkranGlowny({ ogloszenia, zjazdy, onOtworzOgloszenie, user, kursant }: 
             <div className="hero-date">{najblizszy.daty}</div>
             <div className="hero-sub">{kursant?.grupy?.miasto || 'Warszawa'}</div>
             <div className="hero-pills">
-              <span className="pill">🏛 {najblizszy.sala}</span>
-              <span className="pill">📍 {najblizszy.adres}</span>
+              <span className="pill">{najblizszy.sala}</span>
+              <span className="pill">{najblizszy.adres}</span>
             </div>
           </div>
         ) : (
-          <div className="hero-card"><div className="hero-date">Brak nadchodzących zjazdów</div></div>
+          <div className="hero-card"><div className="hero-date">Brak nadchodzacych zjazdow</div></div>
         )}
       </section>
       <section className="section">
         <div className="section-header">
-          <span className="section-title">Ogłoszenia biura</span>
+          <span className="section-title">Ogloszenia biura</span>
         </div>
         {ogloszenia.slice(0, 3).map((o) => (
           <KartaOgloszenia key={o.id} o={o} onClick={() => onOtworzOgloszenie(o)} />
@@ -271,18 +271,18 @@ function EkranGlowny({ ogloszenia, zjazdy, onOtworzOgloszenie, user, kursant }: 
 function EkranZjazdy({ zjazdy }: { zjazdy: Zjazd[] }) {
   return (
     <>
-      <h2 className="page-title">Plan zjazdów</h2>
+      <h2 className="page-title">Plan zjazdow</h2>
       {zjazdy.map((z) => (
         <div key={z.id} className={`sess-card ${z.status}`}>
           <div className="sess-top">
             <span className="sess-nr">Zjazd {z.nr}</span>
-            <span className={`s-badge s-${z.status}`}>{z.status === 'nadchodzący' ? 'Nadchodzący' : 'Zakończony'}</span>
+            <span className={`s-badge s-${z.status}`}>{z.status === 'nadchodzacy' ? 'Nadchodzacy' : 'Zakonczony'}</span>
           </div>
           <div className="sess-date">{z.daty}</div>
           <div className="sess-rows">
-            <div className="sess-row">🏛 {z.sala}</div>
-            <div className="sess-row">📍 {z.adres}</div>
-            <div className="sess-row">📚 {z.tematy}</div>
+            <div className="sess-row">{z.sala}</div>
+            <div className="sess-row">{z.adres}</div>
+            <div className="sess-row">{z.tematy}</div>
           </div>
         </div>
       ))}
@@ -293,7 +293,7 @@ function EkranZjazdy({ zjazdy }: { zjazdy: Zjazd[] }) {
 function EkranOgloszenia({ ogloszenia, onOtworzOgloszenie }: { ogloszenia: Ogloszenie[]; onOtworzOgloszenie: (o: Ogloszenie) => void }) {
   return (
     <>
-      <h2 className="page-title">Ogłoszenia</h2>
+      <h2 className="page-title">Ogloszenia</h2>
       {ogloszenia.map((o) => (
         <KartaOgloszenia key={o.id} o={o} onClick={() => onOtworzOgloszenie(o)} />
       ))}
@@ -314,13 +314,13 @@ function EkranProfil({ user, kursant, onWyloguj }: { user: User; kursant: Kursan
         <div className="profil-group">{nazwaGrupy}</div>
       </div>
       <div className="profil-card">
-        <div className="profil-row"><span className="profil-lbl">Kurs</span><span className="profil-val">Projektowanie wnętrz</span></div>
+        <div className="profil-row"><span className="profil-lbl">Kurs</span><span className="profil-val">Projektowanie wnetrz</span></div>
         <div className="profil-row"><span className="profil-lbl">Miasto</span><span className="profil-val">{miasto}</span></div>
         <div className="profil-row"><span className="profil-lbl">Edycja</span><span className="profil-val">{edycja}</span></div>
         <div className="profil-row"><span className="profil-lbl">Email</span><span className="profil-val">{user.email}</span></div>
         <div className="profil-row"><span className="profil-lbl">Telefon biura</span><span className="profil-val">883 659 069</span></div>
       </div>
-      <button className="btn-wyloguj" onClick={onWyloguj}>Wyloguj się</button>
+      <button className="btn-wyloguj" onClick={onWyloguj}>Wyloguj sie</button>
     </>
   );
 }
@@ -357,7 +357,7 @@ export default function App() {
         .select('imie, nazwisko, grupa_id')
         .eq('user_id', user!.id)
         .single();
-    
+
       let grupaData = null;
       if (kursantData?.grupa_id) {
         const { data } = await supabase
@@ -367,10 +367,10 @@ export default function App() {
           .single();
         grupaData = data;
       }
-    
+
       const kursantZGrupa = kursantData ? { ...kursantData, grupy: grupaData } : null;
       setKursant(kursantZGrupa as Kursant | null);
-    
+
       const grupaId = kursantData?.grupa_id;
       const [{ data: og }, { data: zj }] = await Promise.all([
         supabase.from('ogloszenia').select('*').order('data_utworzenia', { ascending: false }),
@@ -381,6 +381,9 @@ export default function App() {
       setOgloszenia(og || []);
       setZjazdy(zj || []);
     }
+    pobierzDane();
+  }, [user]);
+
   async function wyloguj() {
     await supabase.auth.signOut();
     setUser(null);
@@ -390,7 +393,7 @@ export default function App() {
 
   const noweCount = ogloszenia.filter((o) => o.nowe).length;
 
-  if (ladowanie) return <div className="ladowanie">Ładowanie...</div>;
+  if (ladowanie) return <div className="ladowanie">Ladowanie...</div>;
   if (resetMode) return <EkranZmianaHasla />;
   if (!user) return <EkranLogowania onZalogowano={() => {}} />;
 
@@ -414,13 +417,13 @@ export default function App() {
       </main>
       <nav className="bottom-nav">
         <button className={`nav-item ${aktywnaZakladka === 'home' ? 'active' : ''}`} onClick={() => { setAktywneOgloszenie(null); setAktywnaZakladka('home'); }}>
-          <span className="nav-icon">🏠</span><span className="nav-label">Główna</span>
+          <span className="nav-icon">🏠</span><span className="nav-label">Glowna</span>
         </button>
         <button className={`nav-item ${aktywnaZakladka === 'zjazdy' ? 'active' : ''}`} onClick={() => { setAktywneOgloszenie(null); setAktywnaZakladka('zjazdy'); }}>
           <span className="nav-icon">📅</span><span className="nav-label">Zjazdy</span>
         </button>
         <button className={`nav-item ${aktywnaZakladka === 'ogloszenia' ? 'active' : ''}`} onClick={() => { setAktywneOgloszenie(null); setAktywnaZakladka('ogloszenia'); }}>
-          <span className="nav-icon">🔔</span><span className="nav-label">Ogłoszenia</span>
+          <span className="nav-icon">🔔</span><span className="nav-label">Ogloszenia</span>
           {noweCount > 0 && <span className="nav-badge">{noweCount}</span>}
         </button>
         <button className={`nav-item ${aktywnaZakladka === 'profil' ? 'active' : ''}`} onClick={() => { setAktywneOgloszenie(null); setAktywnaZakladka('profil'); }}>
