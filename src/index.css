@@ -1,0 +1,467 @@
+:root {
+  --text: #6b6375;
+  --text-h: #08060d;
+  --bg: #fff;
+  --border: #e5e4e7;
+  --code-bg: #f4f3ec;
+  --accent: #aa3bff;
+  --accent-bg: rgba(170, 59, 255, 0.1);
+  --accent-border: rgba(170, 59, 255, 0.5);
+  --social-bg: rgba(244, 243, 236, 0.5);
+  --shadow: rgba(0, 0, 0, 0.1) 0 10px 15px -3px,
+    rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+
+  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
+  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
+  --mono: ui-monospace, Consolas, monospace;
+
+  font: 18px/145% var(--sans);
+  letter-spacing: 0.18px;
+  color-scheme: light dark;
+  color: var(--text);
+  background: var(--bg);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  @media (max-width: 1024px) {
+    font-size: 16px;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --text: #9ca3af;
+    --text-h: #f3f4f6;
+    --bg: #16171d;
+    --border: #2e303a;
+    --code-bg: #1f2028;
+    --accent: #c084fc;
+    --accent-bg: rgba(192, 132, 252, 0.15);
+    --accent-border: rgba(192, 132, 252, 0.5);
+    --social-bg: rgba(47, 48, 58, 0.5);
+    --shadow: rgba(0, 0, 0, 0.4) 0 10px 15px -3px,
+      rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
+  }
+
+  #social .button-icon {
+    filter: invert(1) brightness(2);
+  }
+}
+
+#root {
+  width: 1126px;
+  max-width: 100%;
+  margin: 0 auto;
+  text-align: center;
+  border-inline: 1px solid var(--border);
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+h1,
+h2 {
+  font-family: var(--heading);
+  font-weight: 500;
+  color: var(--text-h);
+}
+
+h1 {
+  font-size: 56px;
+  letter-spacing: -1.68px;
+  margin: 32px 0;
+  @media (max-width: 1024px) {
+    font-size: 36px;
+    margin: 20px 0;
+  }
+}
+h2 {
+  font-size: 24px;
+  line-height: 118%;
+  letter-spacing: -0.24px;
+  margin: 0 0 8px;
+  @media (max-width: 1024px) {
+    font-size: 20px;
+  }
+}
+p {
+  margin: 0;
+}
+
+code,
+.counter {
+  font-family: var(--mono);
+  display: inline-flex;
+  border-radius: 4px;
+  color: var(--text-h);
+}
+
+code {
+  font-size: 15px;
+  line-height: 135%;
+  padding: 4px 8px;
+  background: var(--code-bg);
+}
+.ann-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 10px;
+  cursor: pointer;
+}
+
+.ann-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.ann-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.unread-dot {
+  width: 7px;
+  height: 7px;
+  background: var(--brand);
+  border-radius: 50%;
+}
+
+.badge {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 3px 9px;
+  border-radius: 20px;
+}
+
+.badge-ważne {
+  background: #fde8e8;
+  color: var(--brand-dark);
+}
+
+.badge-aktualizacja {
+  background: #eaf2ed;
+  color: #4a7c59;
+}
+
+.badge-info {
+  background: #eef1ff;
+  color: #4f6bd8;
+}
+
+.ann-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.ann-preview {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+.ann-date {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.arr {
+  color: var(--text-muted);
+  font-size: 18px;
+}
+.page-title {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 20px;
+}
+
+.sess-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 16px;
+  margin-bottom: 10px;
+}
+
+.sess-card.nadchodzący {
+  border-left: 3px solid var(--brand);
+}
+
+.sess-card.zakończony {
+  opacity: 0.5;
+}
+
+.sess-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.sess-nr {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+
+.s-badge {
+  font-size: 10px;
+  padding: 3px 9px;
+  border-radius: 20px;
+  font-weight: 600;
+}
+
+.s-nadchodzący {
+  background: #fde8e8;
+  color: var(--brand-dark);
+}
+
+.s-zakończony {
+  background: #f3f0ee;
+  color: var(--text-muted);
+}
+
+.sess-date {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 10px;
+}
+
+.sess-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.sess-row {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.profil-header {
+  background: linear-gradient(135deg, #7d3f3f, #a05c5c);
+  border-radius: 16px;
+  padding: 24px;
+  text-align: center;
+  color: white;
+  margin-bottom: 16px;
+}
+
+.profil-avatar {
+  width: 64px;
+  height: 64px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  font-weight: 600;
+  margin: 0 auto 12px;
+}
+
+.profil-name {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.profil-group {
+  font-size: 13px;
+  opacity: 0.7;
+}
+
+.profil-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.profil-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 13px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.profil-row:last-child {
+  border-bottom: none;
+}
+
+.profil-lbl {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.profil-val {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+.btn-wroc {
+  background: none;
+  border: none;
+  color: var(--brand);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 0;
+  margin-bottom: 16px;
+}
+
+.szczegoly-header {
+  background: linear-gradient(135deg, #7d3f3f, #a05c5c);
+  border-radius: 16px;
+  padding: 20px;
+  color: white;
+  margin-bottom: 16px;
+}
+
+.szczegoly-tytul {
+  font-size: 20px;
+  font-weight: 700;
+  margin: 10px 0 6px;
+}
+
+.szczegoly-meta {
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+.szczegoly-tresc {
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--text);
+  background: var(--surface);
+  border-radius: 14px;
+  padding: 18px;
+  border: 1px solid var(--border);
+}
+.login-screen {
+  min-height: 100vh;
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.login-card {
+  background: white;
+  border-radius: 20px;
+  padding: 36px 28px;
+  width: 100%;
+  max-width: 360px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+  text-align: center;
+}
+.login-logo {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 32px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+.login-logo span {
+  color: var(--brand);
+}
+.login-sub {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-bottom: 28px;
+}
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  text-align: left;
+}
+.login-field label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+.login-field input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  font-size: 14px;
+  font-family: 'Jost', sans-serif;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.login-field input:focus {
+  border-color: var(--brand);
+}
+.login-error {
+  background: #fef2f2;
+  color: #c0392b;
+  font-size: 13px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  text-align: center;
+}
+.login-btn {
+  background: var(--brand);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  padding: 14px;
+  font-size: 15px;
+  font-weight: 600;
+  font-family: 'Jost', sans-serif;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.login-btn:hover {
+  background: var(--brand-dark);
+}
+.login-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.login-kontakt {
+  margin-top: 24px;
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+.btn-wyloguj {
+  width: 100%;
+  margin-top: 20px;
+  background: none;
+  border: 1.5px solid var(--border);
+  border-radius: 12px;
+  padding: 12px;
+  font-size: 14px;
+  font-family: 'Jost', sans-serif;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-wyloguj:hover {
+  border-color: var(--brand);
+  color: var(--brand);
+}
