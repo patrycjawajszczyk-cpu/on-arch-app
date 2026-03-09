@@ -203,17 +203,22 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
   const [kursanci, setKursanci] = useState<KursantAdmin[]>([]);
   const [ogloszenia, setOgloszenia] = useState<Ogloszenie[]>([]);
   const [edytowane, setEdytowane] = useState<Ogloszenie | null>(null);
-
   const [noweOgl, setNoweOgl] = useState({ typ: 'Informacja', tytul: '', tresc: '', szczegoly: '', nowe: true });
   const [nowyZjazd, setNowyZjazd] = useState({ nr: '', daty: '', sala: '', adres: '', tematy: '', status: 'nadchodzacy', data_zjazdu: '', grupa_id: '' });
   const [nowyKursant, setNowyKursant] = useState({ imie: '', nazwisko: '', email: '', grupa_id: '' });
+  const [nowaGrupa, setNowaGrupa] = useState({ nazwa: '', miasto: '', edycja: '' });
   const [komunikat, setKomunikat] = useState('');
 
   useEffect(() => {
-    supabase.from('grupy').select('*').then(({ data }) => setGrupy(data || []));
+    pobierzGrupy();
     supabase.from('kursanci').select('id, imie, nazwisko, grupa_id, user_id').then(({ data }) => setKursanci((data || []) as unknown as KursantAdmin[]));
     pobierzOgloszenia();
   }, []);
+
+  async function pobierzGrupy() {
+    const { data } = await supabase.from('grupy').select('*');
+    setGrupy(data || []);
+  }
 
   async function pobierzOgloszenia() {
     const { data } = await supabase.from('ogloszenia').select('*').order('data_utworzenia', { ascending: false });
@@ -230,12 +235,7 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
   async function zapiszEdycje(e: React.FormEvent) {
     e.preventDefault();
     if (!edytowane) return;
-    const { error } = await supabase.from('ogloszenia').update({
-      typ: edytowane.typ,
-      tytul: edytowane.tytul,
-      tresc: edytowane.tresc,
-      szczegoly: edytowane.szczegoly,
-    }).eq('id', edytowane.id);
+    const { error } = await supabase.from('ogloszenia').update({ typ: edytowane.typ, tytul: edytowane.tytul, tresc: edytowane.tresc, szczegoly: edytowane.szczegoly }).eq('id', edytowane.id);
     if (error) { setKomunikat('Blad: ' + error.message); }
     else { setKomunikat('Ogloszenie zaktualizowane!'); setEdytowane(null); pobierzOgloszenia(); }
   }
@@ -261,13 +261,7 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
       password: Math.random().toString(36).slice(-10),
     });
     if (authError) { setKomunikat('Blad tworzenia konta: ' + authError.message); return; }
-    const { error } = await supabase.from('kursanci').insert([{
-      imie: nowyKursant.imie,
-      nazwisko: nowyKursant.nazwisko,
-      grupa_id: parseInt(nowyKursant.grupa_id),
-      user_id: authData.user!.id,
-      rola: 'kursant',
-    }]);
+    const { error } = await supabase.from('kursanci').insert([{ imie: nowyKursant.imie, nazwisko: nowyKursant.nazwisko, grupa_id: parseInt(nowyKursant.grupa_id), user_id: authData.user!.id, rola: 'kursant' }]);
     if (error) { setKomunikat('Blad: ' + error.message); }
     else {
       setKomunikat('Kursant dodany! Email z linkiem zostal wyslany.');
@@ -275,6 +269,13 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
       const { data } = await supabase.from('kursanci').select('id, imie, nazwisko, grupa_id, user_id');
       setKursanci((data || []) as unknown as KursantAdmin[]);
     }
+  }
+
+  async function dodajGrupe(e: React.FormEvent) {
+    e.preventDefault();
+    const { error } = await supabase.from('grupy').insert([{ ...nowaGrupa }]);
+    if (error) { setKomunikat('Blad: ' + error.message); }
+    else { setKomunikat('Grupa dodana!'); setNowaGrupa({ nazwa: '', miasto: '', edycja: '' }); pobierzGrupy(); }
   }
 
   return (
@@ -295,9 +296,7 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
                   <div className="login-field">
                     <label>Typ</label>
                     <select value={edytowane.typ} onChange={e => setEdytowane({...edytowane, typ: e.target.value})}>
-                      <option>Informacja</option>
-                      <option>Pilne</option>
-                      <option>Zmiana</option>
+                      <option>Informacja</option><option>Pilne</option><option>Zmiana</option>
                     </select>
                   </div>
                   <div className="login-field">
@@ -323,9 +322,7 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
                   <div className="login-field">
                     <label>Typ</label>
                     <select value={noweOgl.typ} onChange={e => setNoweOgl({...noweOgl, typ: e.target.value})}>
-                      <option>Informacja</option>
-                      <option>Pilne</option>
-                      <option>Zmiana</option>
+                      <option>Informacja</option><option>Pilne</option><option>Zmiana</option>
                     </select>
                   </div>
                   <div className="login-field">
@@ -342,7 +339,6 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
                   </div>
                   <button className="login-btn" type="submit">Dodaj ogloszenie</button>
                 </form>
-
                 <h2 className="page-title" style={{marginTop:'24px'}}>Lista ogloszen</h2>
                 {ogloszenia.map(o => (
                   <div key={o.id} className="profil-card" style={{marginBottom:'8px'}}>
@@ -431,12 +427,40 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
               </div>
               <button className="login-btn" type="submit">Dodaj kursanta</button>
             </form>
-
             <h2 className="page-title" style={{marginTop:'24px'}}>Lista kursantow</h2>
             {kursanci.map(k => (
               <div key={k.id} className="profil-card" style={{marginBottom:'8px'}}>
                 <div className="profil-row"><span className="profil-lbl">Imie i nazwisko</span><span className="profil-val">{k.imie} {k.nazwisko}</span></div>
                 <div className="profil-row"><span className="profil-lbl">Grupa</span><span className="profil-val">{grupy.find(g => g.id === k.grupa_id)?.nazwa || '-'}</span></div>
+              </div>
+            ))}
+          </>
+        )}
+
+        {aktywnaZakladka === 'grupy' && (
+          <>
+            <h2 className="page-title">Nowa grupa</h2>
+            <form className="admin-form" onSubmit={dodajGrupe}>
+              <div className="login-field">
+                <label>Nazwa grupy</label>
+                <input type="text" value={nowaGrupa.nazwa} onChange={e => setNowaGrupa({...nowaGrupa, nazwa: e.target.value})} placeholder="np. Grupa III Warszawa 2025/2026" required />
+              </div>
+              <div className="login-field">
+                <label>Miasto</label>
+                <input type="text" value={nowaGrupa.miasto} onChange={e => setNowaGrupa({...nowaGrupa, miasto: e.target.value})} placeholder="np. Warszawa" required />
+              </div>
+              <div className="login-field">
+                <label>Edycja</label>
+                <input type="text" value={nowaGrupa.edycja} onChange={e => setNowaGrupa({...nowaGrupa, edycja: e.target.value})} placeholder="np. 2025/2026" required />
+              </div>
+              <button className="login-btn" type="submit">Dodaj grupe</button>
+            </form>
+            <h2 className="page-title" style={{marginTop:'24px'}}>Lista grup</h2>
+            {grupy.map(g => (
+              <div key={g.id} className="profil-card" style={{marginBottom:'8px'}}>
+                <div className="profil-row"><span className="profil-lbl">Nazwa</span><span className="profil-val">{g.nazwa}</span></div>
+                <div className="profil-row"><span className="profil-lbl">Miasto</span><span className="profil-val">{g.miasto}</span></div>
+                <div className="profil-row"><span className="profil-lbl">Edycja</span><span className="profil-val">{g.edycja}</span></div>
               </div>
             ))}
           </>
@@ -451,6 +475,9 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
         </button>
         <button className={`nav-item ${aktywnaZakladka === 'kursanci' ? 'active' : ''}`} onClick={() => { setKomunikat(''); setAktywnaZakladka('kursanci'); }}>
           <span className="nav-icon">👥</span><span className="nav-label">Kursanci</span>
+        </button>
+        <button className={`nav-item ${aktywnaZakladka === 'grupy' ? 'active' : ''}`} onClick={() => { setKomunikat(''); setAktywnaZakladka('grupy'); }}>
+          <span className="nav-icon">🏫</span><span className="nav-label">Grupy</span>
         </button>
       </nav>
     </div>
