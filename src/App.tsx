@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import './App.css';
 import { supabase } from './supabase';
 
@@ -208,6 +208,9 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
   const [nowyKursant, setNowyKursant] = useState({ imie: '', nazwisko: '', email: '', grupa_id: '' });
   const [nowaGrupa, setNowaGrupa] = useState({ nazwa: '', miasto: '', edycja: '' });
   const [komunikat, setKomunikat] = useState('');
+  const [importStatus, setImportStatus] = useState<{imie: string; nazwisko: string; email: string; status: string}[]>([]);
+  const [importowanie, setImportowanie] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     pobierzGrupy();
@@ -264,7 +267,7 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
     const { error } = await supabase.from('kursanci').insert([{ imie: nowyKursant.imie, nazwisko: nowyKursant.nazwisko, grupa_id: parseInt(nowyKursant.grupa_id), user_id: authData.user!.id, rola: 'kursant' }]);
     if (error) { setKomunikat('Blad: ' + error.message); }
     else {
-      setKomunikat('Kursant dodany! Email z linkiem zostal wyslany.');
+      setKomunikat('Kursant dodany!');
       setNowyKursant({ imie: '', nazwisko: '', email: '', grupa_id: '' });
       const { data } = await supabase.from('kursanci').select('id, imie, nazwisko, grupa_id, user_id');
       setKursanci((data || []) as unknown as KursantAdmin[]);
@@ -276,6 +279,49 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
     const { error } = await supabase.from('grupy').insert([{ ...nowaGrupa }]);
     if (error) { setKomunikat('Blad: ' + error.message); }
     else { setKomunikat('Grupa dodana!'); setNowaGrupa({ nazwa: '', miasto: '', edycja: '' }); pobierzGrupy(); }
+  }
+
+  async function importujCSV(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImportowanie(true);
+    setImportStatus([]);
+
+    const text = await file.text();
+    const rows = text.trim().split('\n').slice(1);
+    const wyniki: {imie: string; nazwisko: string; email: string; status: string}[] = [];
+
+    for (const row of rows) {
+      const [imie, nazwisko, email, grupa_id] = row.split(',').map(s => s.trim());
+      if (!imie || !nazwisko || !email || !grupa_id) continue;
+
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email,
+        password: Math.random().toString(36).slice(-10),
+      });
+
+      if (authError) {
+        wyniki.push({ imie, nazwisko, email, status: 'Blad: ' + authError.message });
+        continue;
+      }
+
+      const { error } = await supabase.from('kursanci').insert([{
+        imie, nazwisko,
+        grupa_id: parseInt(grupa_id),
+        user_id: authData.user!.id,
+        rola: 'kursant',
+      }]);
+
+      wyniki.push({ imie, nazwisko, email, status: error ? 'Blad: ' + error.message : 'Dodano!' });
+      setImportStatus([...wyniki]);
+
+      await new Promise(r => setTimeout(r, 1000));
+    }
+
+    setImportowanie(false);
+    const { data } = await supabase.from('kursanci').select('id, imie, nazwisko, grupa_id, user_id');
+    setKursanci((data || []) as unknown as KursantAdmin[]);
+    if (fileRef.current) fileRef.current.value = '';
   }
 
   return (
@@ -465,8 +511,35 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
             ))}
           </>
         )}
+
+        {aktywnaZakladka === 'import' && (
+          <>
+            <h2 className="page-title">Import kursantow z CSV</h2>
+            <div className="profil-card" style={{marginBottom:'16px'}}>
+              <p style={{fontSize:'13px', color:'var(--text-muted)', marginBottom:'8px'}}>Format pliku CSV (pierwsza linia to naglowek):</p>
+              <code style={{fontSize:'12px', background:'#f5f5f5', padding:'8px', borderRadius:'6px', display:'block', whiteSpace:'pre'}}>imie,nazwisko,email,grupa_id{'\n'}Anna,Kowalska,a.kowalska@email.pl,1{'\n'}Jan,Nowak,j.nowak@email.pl,1</code>
+              <p style={{fontSize:'12px', color:'var(--text-muted)', marginTop:'8px'}}>grupa_id znajdziesz w zakladce Grupy (numer przy nazwie grupy)</p>
+            </div>
+            <div className="login-field">
+              <label>Wybierz plik CSV</label>
+              <input ref={fileRef} type="file" accept=".csv" onChange={importujCSV} disabled={importowanie} style={{padding:'8px', border:'1px solid #ddd', borderRadius:'8px', width:'100%'}} />
+            </div>
+            {importowanie && <div style={{textAlign:'center', padding:'12px', color:'var(--brand)'}}>Importowanie... nie zamykaj tej strony</div>}
+            {importStatus.length > 0 && (
+              <>
+                <h2 className="page-title" style={{marginTop:'16px'}}>Wyniki importu</h2>
+                {importStatus.map((s, i) => (
+                  <div key={i} className="profil-card" style={{marginBottom:'6px', borderLeft: s.status === 'Dodano!' ? '3px solid #2e7d32' : '3px solid #c62828'}}>
+                    <div className="profil-row"><span className="profil-lbl">{s.imie} {s.nazwisko}</span><span className="profil-val" style={{color: s.status === 'Dodano!' ? '#2e7d32' : '#c62828'}}>{s.status}</span></div>
+                    <div style={{fontSize:'12px', color:'var(--text-muted)'}}>{s.email}</div>
+                  </div>
+                ))}
+              </>
+            )}
+          </>
+        )}
       </main>
-      <nav className="bottom-nav">
+      <nav className="bottom-nav" style={{overflowX:'auto'}}>
         <button className={`nav-item ${aktywnaZakladka === 'ogloszenia' ? 'active' : ''}`} onClick={() => { setKomunikat(''); setEdytowane(null); setAktywnaZakladka('ogloszenia'); }}>
           <span className="nav-icon">🔔</span><span className="nav-label">Ogloszenia</span>
         </button>
@@ -478,6 +551,9 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
         </button>
         <button className={`nav-item ${aktywnaZakladka === 'grupy' ? 'active' : ''}`} onClick={() => { setKomunikat(''); setAktywnaZakladka('grupy'); }}>
           <span className="nav-icon">🏫</span><span className="nav-label">Grupy</span>
+        </button>
+        <button className={`nav-item ${aktywnaZakladka === 'import' ? 'active' : ''}`} onClick={() => { setKomunikat(''); setAktywnaZakladka('import'); }}>
+          <span className="nav-icon">📂</span><span className="nav-label">Import</span>
         </button>
       </nav>
     </div>
@@ -666,6 +742,7 @@ export default function App() {
     setKursant(null);
     setResetMode(false);
   }
+
   async function otworzOgloszenie(o: Ogloszenie) {
     setAktywneOgloszenie(o);
     if (o.nowe) {
@@ -673,6 +750,7 @@ export default function App() {
       setOgloszenia(prev => prev.map(og => og.id === o.id ? { ...og, nowe: false } : og));
     }
   }
+
   const noweCount = ogloszenia.filter((o) => o.nowe).length;
 
   if (ladowanie) return <div className="ladowanie">Ladowanie...</div>;
