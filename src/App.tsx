@@ -12,16 +12,21 @@ type Ogloszenie = {
   data_utworzenia: string;
 };
 
+type Zjazd = {
+  id: string;
+  nr: number;
+  daty: string;
+  sala: string;
+  adres: string;
+  tematy: string;
+  status: string;
+  data_zjazdu: string;
+};
+
 type User = {
   id: string;
   email: string;
 };
-
-const zjazdy = [
-  { id: 1, nr: 4, daty: '22–23 marca 2025', sala: 'Sala 204', adres: 'ul. Złota 59, Warszawa', tematy: 'Prawo budowlane, BIM, Warsztaty', status: 'nadchodzący' },
-  { id: 2, nr: 5, daty: '12–13 kwietnia 2025', sala: 'Sala 201', adres: 'ul. Złota 59, Warszawa', tematy: 'Kosztorysowanie, Prawo pracy', status: 'nadchodzący' },
-  { id: 3, nr: 3, daty: '22–23 lutego 2025', sala: 'Sala 201', adres: 'ul. Złota 59, Warszawa', tematy: 'Instalacje, Konstrukcje, Prawo', status: 'zakończony' },
-];
 
 function EkranLogowania({ onZalogowano }: { onZalogowano: () => void }) {
   const [email, setEmail] = useState('');
@@ -98,8 +103,11 @@ function EkranSzczegoly({ o, onWroc }: { o: Ogloszenie; onWroc: () => void }) {
   );
 }
 
-function EkranGlowny({ ogloszenia, onOtworzOgloszenie, user }: { ogloszenia: Ogloszenie[]; onOtworzOgloszenie: (o: Ogloszenie) => void; user: User }) {
+function EkranGlowny({ ogloszenia, zjazdy, onOtworzOgloszenie, user }: { ogloszenia: Ogloszenie[]; zjazdy: Zjazd[]; onOtworzOgloszenie: (o: Ogloszenie) => void; user: User }) {
   const imie = user.email.split('@')[0];
+  const nadchodzace = zjazdy.filter(z => z.status === 'nadchodzący');
+  const najblizszy = nadchodzace[0];
+
   return (
     <>
       <p className="greeting">Dzień dobry, {imie} 👋</p>
@@ -107,16 +115,19 @@ function EkranGlowny({ ogloszenia, onOtworzOgloszenie, user }: { ogloszenia: Ogl
         <div className="section-header">
           <span className="section-title">Najbliższy zjazd</span>
         </div>
-        <div className="hero-card">
-          <div className="hero-label">Zjazd 4 · Za 12 dni</div>
-          <div className="hero-date">22–23 marca 2025</div>
-          <div className="hero-sub">Sobota – Niedziela · Warszawa</div>
-          <div className="hero-pills">
-            <span className="pill">🏛 Sala 204</span>
-            <span className="pill">📍 ul. Złota 59</span>
-            <span className="pill">9:00–17:00</span>
+        {najblizszy ? (
+          <div className="hero-card">
+            <div className="hero-label">Zjazd {najblizszy.nr}</div>
+            <div className="hero-date">{najblizszy.daty}</div>
+            <div className="hero-sub">Warszawa</div>
+            <div className="hero-pills">
+              <span className="pill">🏛 {najblizszy.sala}</span>
+              <span className="pill">📍 {najblizszy.adres}</span>
+            </div>
           </div>
-        </div>
+        ) : (
+          <p style={{color: 'var(--text-muted)', fontSize: '14px'}}>Brak nadchodzących zjazdów</p>
+        )}
       </section>
       <section className="section">
         <div className="section-header">
@@ -130,10 +141,11 @@ function EkranGlowny({ ogloszenia, onOtworzOgloszenie, user }: { ogloszenia: Ogl
   );
 }
 
-function EkranZjazdy() {
+function EkranZjazdy({ zjazdy }: { zjazdy: Zjazd[] }) {
   return (
     <>
       <h2 className="page-title">Plan zjazdów</h2>
+      {zjazdy.length === 0 && <p style={{color: 'var(--text-muted)', fontSize: '14px'}}>Brak zjazdów</p>}
       {zjazdy.map((z) => (
         <div key={z.id} className={`sess-card ${z.status}`}>
           <div className="sess-top">
@@ -188,6 +200,7 @@ export default function App() {
   const [aktywnaZakladka, setAktywnaZakladka] = useState('home');
   const [aktywneOgloszenie, setAktywneOgloszenie] = useState<Ogloszenie | null>(null);
   const [ogloszenia, setOgloszenia] = useState<Ogloszenie[]>([]);
+  const [zjazdy, setZjazdy] = useState<Zjazd[]>([]);
   const [ladowanie, setLadowanie] = useState(true);
 
   useEffect(() => {
@@ -203,14 +216,16 @@ export default function App() {
 
   useEffect(() => {
     if (!user) return;
-    async function pobierzOgloszenia() {
-      const { data, error } = await supabase
-        .from('ogloszenia')
-        .select('*')
-        .order('data_utworzenia', { ascending: false });
-      if (!error) setOgloszenia(data || []);
+    async function pobierzDane() {
+      const [{ data: og }, { data: zj }] = await Promise.all([
+        supabase.from('ogloszenia').select('*').order('data_utworzenia', { ascending: false }),
+        supabase.from('zjazdy').select('*').order('data_zjazdu', { ascending: true }),
+      ]);
+      setOgloszenia(og || []);
+      setZjazdy(zj || []);
     }
-    pobierzOgloszenia();
+    pobierzDane();
+  
   }, [user]);
 
   async function wyloguj() {
@@ -234,8 +249,8 @@ export default function App() {
           <EkranSzczegoly o={aktywneOgloszenie} onWroc={() => setAktywneOgloszenie(null)} />
         ) : (
           <>
-            {aktywnaZakladka === 'home' && <EkranGlowny ogloszenia={ogloszenia} onOtworzOgloszenie={setAktywneOgloszenie} user={user} />}
-            {aktywnaZakladka === 'zjazdy' && <EkranZjazdy />}
+            {aktywnaZakladka === 'home' && <EkranGlowny ogloszenia={ogloszenia} zjazdy={zjazdy} onOtworzOgloszenie={setAktywneOgloszenie} user={user} />}
+            {aktywnaZakladka === 'zjazdy' && <EkranZjazdy zjazdy={zjazdy} />}
             {aktywnaZakladka === 'ogloszenia' && <EkranOgloszenia ogloszenia={ogloszenia} onOtworzOgloszenie={setAktywneOgloszenie} />}
             {aktywnaZakladka === 'profil' && <EkranProfil user={user} onWyloguj={wyloguj} />}
           </>
