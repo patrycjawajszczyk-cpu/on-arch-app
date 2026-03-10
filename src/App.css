@@ -413,3 +413,7 @@ h1 {
   opacity: 0.5;
   cursor: not-allowed;
 }
+.profil-lbl {
+  flex-shrink: 0;
+  min-width: 90px;
+}
