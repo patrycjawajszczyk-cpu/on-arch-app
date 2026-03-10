@@ -52,6 +52,15 @@ type User = {
   email: string;
 };
 
+type Wiadomosc = {
+  id: number;
+  grupa_id: number;
+  user_id: string;
+  imie: string;
+  tresc: string;
+  created_at: string;
+};
+
 function EkranZmianaHasla() {
   const [haslo, setHaslo] = useState('');
   const [haslo2, setHaslo2] = useState('');
@@ -193,6 +202,78 @@ function EkranLogowania({ onZalogowano }: { onZalogowano: () => void }) {
         <button className="btn-link" onClick={() => setResetMode(true)}>Nie pamietasz hasla?</button>
         <p className="login-kontakt">Problemy z logowaniem? Zadzwon do biura:<br/><strong>883 659 069</strong></p>
       </div>
+    </div>
+  );
+}
+
+function EkranCzat({ user, kursant }: { user: User; kursant: Kursant | null }) {
+  const [wiadomosci, setWiadomosci] = useState<Wiadomosc[]>([]);
+  const [nowa, setNowa] = useState('');
+  const [wysylanie, setWysylanie] = useState(false);
+  const doRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!kursant?.grupa_id) return;
+    supabase.from('wiadomosci').select('*').eq('grupa_id', kursant.grupa_id).order('created_at', { ascending: true }).then(({ data }) => {
+      setWiadomosci(data || []);
+      setTimeout(() => doRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
+    });
+
+    const channel = supabase.channel('czat-' + kursant.grupa_id)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'wiadomosci', filter: `grupa_id=eq.${kursant.grupa_id}` }, (payload) => {
+        setWiadomosci(prev => [...prev, payload.new as Wiadomosc]);
+        setTimeout(() => doRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [kursant?.grupa_id]);
+
+  async function wyslij(e: React.FormEvent) {
+    e.preventDefault();
+    if (!nowa.trim() || !kursant) return;
+    setWysylanie(true);
+    await supabase.from('wiadomosci').insert([{
+      grupa_id: kursant.grupa_id,
+      user_id: user.id,
+      imie: kursant.imie,
+      tresc: nowa.trim(),
+    }]);
+    setNowa('');
+    setWysylanie(false);
+  }
+
+  if (!kursant?.grupa_id) {
+    return <div style={{padding:'24px', textAlign:'center', color:'var(--text-muted)'}}>Nie jestes przypisany do zadnej grupy.</div>;
+  }
+
+  return (
+    <div className="czat-container">
+      <h2 className="page-title">Czat grupy</h2>
+      <div className="czat-nazwa">{kursant.grupy?.nazwa || 'Twoja grupa'}</div>
+      <div className="czat-wiadomosci">
+        {wiadomosci.length === 0 && <div className="czat-puste">Brak wiadomosci. Napisz pierwsza!</div>}
+        {wiadomosci.map(w => (
+          <div key={w.id} className={`czat-msg ${w.user_id === user.id ? 'moja' : 'obca'}`}>
+            {w.user_id !== user.id && <div className="czat-imie">{w.imie}</div>}
+            <div className="czat-buble">{w.tresc}</div>
+            <div className="czat-czas">{new Date(w.created_at).toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' })}</div>
+          </div>
+        ))}
+        <div ref={doRef} />
+      </div>
+      <form className="czat-form" onSubmit={wyslij}>
+        <input
+          className="czat-input"
+          type="text"
+          value={nowa}
+          onChange={e => setNowa(e.target.value)}
+          placeholder="Napisz wiadomosc..."
+          disabled={wysylanie}
+          maxLength={500}
+        />
+        <button className="czat-btn" type="submit" disabled={wysylanie || !nowa.trim()}>➤</button>
+      </form>
     </div>
   );
 }
@@ -762,6 +843,7 @@ export default function App() {
             {aktywnaZakladka === 'home' && <EkranGlowny ogloszenia={ogloszenia} zjazdy={zjazdy} onOtworzOgloszenie={otworzOgloszenie} user={user} kursant={kursant} />}
             {aktywnaZakladka === 'zjazdy' && <EkranZjazdy zjazdy={zjazdy} />}
             {aktywnaZakladka === 'ogloszenia' && <EkranOgloszenia ogloszenia={ogloszenia} onOtworzOgloszenie={otworzOgloszenie} />}
+            {aktywnaZakladka === 'czat' && <EkranCzat user={user} kursant={kursant} />}
             {aktywnaZakladka === 'profil' && <EkranProfil user={user} kursant={kursant} onWyloguj={wyloguj} />}
           </>
         )}
@@ -776,6 +858,9 @@ export default function App() {
         <button className={`nav-item ${aktywnaZakladka === 'ogloszenia' ? 'active' : ''}`} onClick={() => { setAktywneOgloszenie(null); setAktywnaZakladka('ogloszenia'); }}>
           <span className="nav-icon">🔔</span><span className="nav-label">Ogloszenia</span>
           {noweCount > 0 && <span className="nav-badge">{noweCount}</span>}
+        </button>
+        <button className={`nav-item ${aktywnaZakladka === 'czat' ? 'active' : ''}`} onClick={() => { setAktywneOgloszenie(null); setAktywnaZakladka('czat'); }}>
+          <span className="nav-icon">💬</span><span className="nav-label">Czat</span>
         </button>
         <button className={`nav-item ${aktywnaZakladka === 'profil' ? 'active' : ''}`} onClick={() => { setAktywneOgloszenie(null); setAktywnaZakladka('profil'); }}>
           <span className="nav-icon">👤</span><span className="nav-label">Profil</span>

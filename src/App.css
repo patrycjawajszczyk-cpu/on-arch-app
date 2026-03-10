@@ -290,3 +290,121 @@ h1 {
   background: #f5f5f5;
   color: #999;
 }
+.czat-container {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 130px);
+}
+
+.czat-nazwa {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+}
+
+.czat-wiadomosci {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-bottom: 8px;
+}
+
+.czat-puste {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 13px;
+  padding: 24px;
+}
+
+.czat-msg {
+  display: flex;
+  flex-direction: column;
+  max-width: 75%;
+}
+
+.czat-msg.moja {
+  align-self: flex-end;
+  align-items: flex-end;
+}
+
+.czat-msg.obca {
+  align-self: flex-start;
+  align-items: flex-start;
+}
+
+.czat-imie {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-bottom: 2px;
+  padding-left: 4px;
+}
+
+.czat-buble {
+  padding: 10px 14px;
+  border-radius: 18px;
+  font-size: 14px;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.czat-msg.moja .czat-buble {
+  background: var(--brand);
+  color: white;
+  border-bottom-right-radius: 4px;
+}
+
+.czat-msg.obca .czat-buble {
+  background: #f0f0f0;
+  color: var(--text);
+  border-bottom-left-radius: 4px;
+}
+
+.czat-czas {
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-top: 2px;
+  padding: 0 4px;
+}
+
+.czat-form {
+  display: flex;
+  gap: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #eee;
+}
+
+.czat-input {
+  flex: 1;
+  padding: 10px 14px;
+  border: 1px solid #ddd;
+  border-radius: 24px;
+  font-size: 14px;
+  outline: none;
+  font-family: 'Jost', sans-serif;
+}
+
+.czat-input:focus {
+  border-color: var(--brand);
+}
+
+.czat-btn {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: var(--brand);
+  color: white;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.czat-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
