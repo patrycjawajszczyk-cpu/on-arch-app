@@ -748,7 +748,7 @@ function EkranProfil({ user, kursant, onWyloguj }: { user: User; kursant: Kursan
         <div className="profil-row"><span className="profil-lbl">Kurs</span><span className="profil-val">Projektowanie wnetrz</span></div>
         <div className="profil-row"><span className="profil-lbl">Miasto</span><span className="profil-val">{miasto}</span></div>
         <div className="profil-row"><span className="profil-lbl">Edycja</span><span className="profil-val">{edycja}</span></div>
-        <div className="profil-row"><span className="profil-lbl">Email</span><span className="profil-val">{user.email}</span></div>
+        <div className="profil-row"><span className="profil-lbl">Email</span><span className="profil-val"> {user.email}</span></div>
         <div className="profil-row"><span className="profil-lbl">Telefon biura</span><span className="profil-val">883 659 069</span></div>
       </div>
       <button className="btn-wyloguj" onClick={onWyloguj}>Wyloguj sie</button>
