@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
-import { Home, Calendar, Bell, MessageCircle, User } from 'lucide-react';
 import './App.css';
 import { supabase } from './supabase';
+import { Home, Calendar, Bell, MessageCircle, User } from 'lucide-react';
 
 type Ogloszenie = {
   id: string;
@@ -30,6 +30,7 @@ type Kursant = {
   nazwisko: string;
   grupa_id: number;
   rola: string;
+  avatar_url: string | null;
   grupy: { nazwa: string; miasto: string; edycja: string } | null;
 };
 
@@ -85,7 +86,7 @@ function EkranZmianaHasla() {
     return (
       <div className="login-screen">
         <div className="login-card">
-          <div className="login-logo"><div className="logo"><img src="/on arch circle icon red.png" alt="On-Arch" /></div></div>
+          <div className="login-logo">On<span>-Arch</span></div>
           <div className="reset-success">
             <div className="reset-icon">✅</div>
             <h3>Haslo zostalo zmienione!</h3>
@@ -100,7 +101,7 @@ function EkranZmianaHasla() {
   return (
     <div className="login-screen">
       <div className="login-card">
-        <div className="login-logo"><div className="logo"><img src="/on arch circle icon red.png" alt="On-Arch" /></div></div>
+        <div className="login-logo">On<span>-Arch</span></div>
         <p className="login-sub">Ustaw nowe haslo</p>
         <form className="login-form" onSubmit={zmienHaslo}>
           <div className="login-field">
@@ -264,15 +265,7 @@ function EkranCzat({ user, kursant }: { user: User; kursant: Kursant | null }) {
         <div ref={doRef} />
       </div>
       <form className="czat-form" onSubmit={wyslij}>
-        <input
-          className="czat-input"
-          type="text"
-          value={nowa}
-          onChange={e => setNowa(e.target.value)}
-          placeholder="Napisz wiadomosc..."
-          disabled={wysylanie}
-          maxLength={500}
-        />
+        <input className="czat-input" type="text" value={nowa} onChange={e => setNowa(e.target.value)} placeholder="Napisz wiadomosc..." disabled={wysylanie} maxLength={500} />
         <button className="czat-btn" type="submit" disabled={wysylanie || !nowa.trim()}>➤</button>
       </form>
     </div>
@@ -617,19 +610,19 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
       </main>
       <nav className="bottom-nav" style={{overflowX:'auto'}}>
         <button className={`nav-item ${aktywnaZakladka === 'ogloszenia' ? 'active' : ''}`} onClick={() => { setKomunikat(''); setEdytowane(null); setAktywnaZakladka('ogloszenia'); }}>
-          🔔<span className="nav-label">Ogloszenia</span>
+          <Bell size={20} /><span className="nav-label">Ogloszenia</span>
         </button>
         <button className={`nav-item ${aktywnaZakladka === 'zjazdy' ? 'active' : ''}`} onClick={() => { setKomunikat(''); setEdytowanyZjazd(null); setAktywnaZakladka('zjazdy'); }}>
-          📅<span className="nav-label">Zjazdy</span>
+          <Calendar size={20} /><span className="nav-label">Zjazdy</span>
         </button>
         <button className={`nav-item ${aktywnaZakladka === 'kursanci' ? 'active' : ''}`} onClick={() => { setKomunikat(''); setAktywnaZakladka('kursanci'); }}>
-          👥<span className="nav-label">Kursanci</span>
+          <User size={20} /><span className="nav-label">Kursanci</span>
         </button>
         <button className={`nav-item ${aktywnaZakladka === 'grupy' ? 'active' : ''}`} onClick={() => { setKomunikat(''); setAktywnaZakladka('grupy'); }}>
-          🏫<span className="nav-label">Grupy</span>
+          <Home size={20} /><span className="nav-label">Grupy</span>
         </button>
         <button className={`nav-item ${aktywnaZakladka === 'import' ? 'active' : ''}`} onClick={() => { setKomunikat(''); setAktywnaZakladka('import'); }}>
-          📂<span className="nav-label">Import</span>
+          <MessageCircle size={20} /><span className="nav-label">Import</span>
         </button>
       </nav>
     </div>
@@ -732,15 +725,41 @@ function EkranOgloszenia({ ogloszenia, onOtworzOgloszenie }: { ogloszenia: Oglos
   );
 }
 
-function EkranProfil({ user, kursant, onWyloguj }: { user: User; kursant: Kursant | null; onWyloguj: () => void }) {
+function EkranProfil({ user, kursant, onWyloguj, onAvatarZmieniony }: { user: User; kursant: Kursant | null; onWyloguj: () => void; onAvatarZmieniony: (url: string) => void }) {
+  const [uploadowanie, setUploadowanie] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
   const inicjal = kursant ? kursant.imie[0] : user.email[0].toUpperCase();
   const nazwaGrupy = kursant?.grupy?.nazwa || 'Brak przypisania do grupy';
   const miasto = kursant?.grupy?.miasto || '';
   const edycja = kursant?.grupy?.edycja || '';
+
+  async function wgrajZdjecie(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadowanie(true);
+    const ext = file.name.split('.').pop();
+    const path = `${user.id}.${ext}`;
+    const { error: uploadError } = await supabase.storage.from('avatars').upload(path, file, { upsert: true });
+    if (uploadError) { alert('Blad wgrywania: ' + uploadError.message); setUploadowanie(false); return; }
+    const { data } = supabase.storage.from('avatars').getPublicUrl(path);
+    const url = data.publicUrl;
+    await supabase.from('kursanci').update({ avatar_url: url }).eq('user_id', user.id);
+    onAvatarZmieniony(url);
+    setUploadowanie(false);
+  }
+
   return (
     <>
       <div className="profil-header">
-        <div className="profil-avatar">{inicjal.toUpperCase()}</div>
+        <div className="profil-avatar-wrap" onClick={() => fileRef.current?.click()}>
+          {kursant?.avatar_url ? (
+            <img src={kursant.avatar_url} alt="avatar" className="profil-avatar-img" />
+          ) : (
+            <div className="profil-avatar">{inicjal.toUpperCase()}</div>
+          )}
+          <div className="profil-avatar-edit">{uploadowanie ? '...' : '📷'}</div>
+        </div>
+        <input ref={fileRef} type="file" accept="image/*" onChange={wgrajZdjecie} style={{display:'none'}} />
         <div className="profil-name">{kursant ? `${kursant.imie} ${kursant.nazwisko}` : user.email}</div>
         <div className="profil-group">{nazwaGrupy}</div>
       </div>
@@ -783,7 +802,7 @@ export default function App() {
     async function pobierzDane() {
       const { data: kursantData } = await supabase
         .from('kursanci')
-        .select('imie, nazwisko, grupa_id, rola')
+        .select('imie, nazwisko, grupa_id, rola, avatar_url')
         .eq('user_id', user!.id)
         .single();
 
@@ -823,7 +842,13 @@ export default function App() {
     }
   }
 
+  function onAvatarZmieniony(url: string) {
+    setKursant(prev => prev ? { ...prev, avatar_url: url } : prev);
+  }
+
   const noweCount = ogloszenia.filter((o) => o.nowe).length;
+  const avatarUrl = kursant?.avatar_url;
+  const inicjal = kursant ? kursant.imie[0] : user?.email?.[0]?.toUpperCase() || '?';
 
   if (ladowanie) return <div className="ladowanie">Ladowanie...</div>;
   if (resetMode) return <EkranZmianaHasla />;
@@ -834,7 +859,11 @@ export default function App() {
     <div className="app">
       <header className="header">
         <div className="logo">On<span>-Arch</span></div>
-        <div className="avatar">{(kursant ? kursant.imie[0] : user.email[0]).toUpperCase()}</div>
+        {avatarUrl ? (
+          <img src={avatarUrl} alt="avatar" className="avatar-img" />
+        ) : (
+          <div className="avatar">{inicjal.toUpperCase()}</div>
+        )}
       </header>
       <main className="main">
         {aktywneOgloszenie ? (
@@ -845,19 +874,19 @@ export default function App() {
             {aktywnaZakladka === 'zjazdy' && <EkranZjazdy zjazdy={zjazdy} />}
             {aktywnaZakladka === 'ogloszenia' && <EkranOgloszenia ogloszenia={ogloszenia} onOtworzOgloszenie={otworzOgloszenie} />}
             {aktywnaZakladka === 'czat' && <EkranCzat user={user} kursant={kursant} />}
-            {aktywnaZakladka === 'profil' && <EkranProfil user={user} kursant={kursant} onWyloguj={wyloguj} />}
+            {aktywnaZakladka === 'profil' && <EkranProfil user={user} kursant={kursant} onWyloguj={wyloguj} onAvatarZmieniony={onAvatarZmieniony} />}
           </>
         )}
       </main>
       <nav className="bottom-nav">
         <button className={`nav-item ${aktywnaZakladka === 'home' ? 'active' : ''}`} onClick={() => { setAktywneOgloszenie(null); setAktywnaZakladka('home'); }}>
-        <Home size={20} /><span className="nav-label">Glowna</span>
+          <Home size={20} /><span className="nav-label">Glowna</span>
         </button>
         <button className={`nav-item ${aktywnaZakladka === 'zjazdy' ? 'active' : ''}`} onClick={() => { setAktywneOgloszenie(null); setAktywnaZakladka('zjazdy'); }}>
-        <Calendar size={20} /><span className="nav-label">Zjazdy</span>
+          <Calendar size={20} /><span className="nav-label">Zjazdy</span>
         </button>
         <button className={`nav-item ${aktywnaZakladka === 'ogloszenia' ? 'active' : ''}`} onClick={() => { setAktywneOgloszenie(null); setAktywnaZakladka('ogloszenia'); }}>
-        <Bell size={20} /><span className="nav-label">Ogloszenia</span>
+          <Bell size={20} /><span className="nav-label">Ogloszenia</span>
           {noweCount > 0 && <span className="nav-badge">{noweCount}</span>}
         </button>
         <button className={`nav-item ${aktywnaZakladka === 'czat' ? 'active' : ''}`} onClick={() => { setAktywneOgloszenie(null); setAktywnaZakladka('czat'); }}>

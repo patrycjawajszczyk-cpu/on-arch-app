@@ -417,3 +417,39 @@ h1 {
   flex-shrink: 0;
   min-width: 90px;
 }
+.profil-avatar-wrap {
+  position: relative;
+  cursor: pointer;
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 12px;
+}
+
+.profil-avatar-img {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.profil-avatar-edit {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  background: white;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+}
+
+.avatar-img {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+}
