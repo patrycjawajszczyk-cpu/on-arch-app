@@ -57,7 +57,7 @@ type Wiadomosc = {
   grupa_id: number;
   user_id: string;
   imie: string;
-  tresc: string;
+  tekst: string;
   created_at: string;
 };
 
@@ -237,7 +237,7 @@ function EkranCzat({ user, kursant }: { user: User; kursant: Kursant | null }) {
       grupa_id: kursant.grupa_id,
       user_id: user.id,
       imie: kursant.imie,
-      tresc: nowa.trim(),
+      tekst: nowa.trim(),
     }]);
     setNowa('');
     setWysylanie(false);
@@ -256,7 +256,7 @@ function EkranCzat({ user, kursant }: { user: User; kursant: Kursant | null }) {
         {wiadomosci.map(w => (
           <div key={w.id} className={`czat-msg ${w.user_id === user.id ? 'moja' : 'obca'}`}>
             {w.user_id !== user.id && <div className="czat-imie">{w.imie}</div>}
-            <div className="czat-buble">{w.tresc}</div>
+            <div className="czat-buble">{w.tekst}</div>
             <div className="czat-czas">{new Date(w.created_at).toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' })}</div>
           </div>
         ))}
