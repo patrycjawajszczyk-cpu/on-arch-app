@@ -196,7 +196,7 @@ function EkranLogowania({ onZalogowano }: { onZalogowano: () => void }) {
     e.preventDefault();
     setLadowanie(true);
     setBlad('');
-    const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: 'https://on-arch-7afx.vercel.app' });
+    const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: 'https://on-arch-akademia.vercel.app' });
     if (error) { setBlad('Blad wysylania emaila. Sprawdz adres.'); }
     else { setResetWyslany(true); }
     setLadowanie(false);
