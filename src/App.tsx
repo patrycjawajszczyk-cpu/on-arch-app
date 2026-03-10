@@ -257,8 +257,8 @@ if (pokazRegulamin) return <EkranRegulamin onWroc={() => setPokazRegulamin(false
           {blad && <div className="login-error">{blad}</div>}
           <div style={{display:'flex', alignItems:'flex-start', gap:'8px', margin:'12px 0'}}>
   <input type="checkbox" id="zgoda" checked={zgodaRodo} onChange={e => setZgodaRodo(e.target.checked)} style={{marginTop:'3px', accentColor:'var(--brand)'}} />
-  <label htmlFor="zgoda" style={{fontSize:'12px', color:'var(--text-muted)', lineHeight:'1.5'}}>
-    Zapoznałam/em się z <button type="button" className="btn-link" style={{display:'inline', fontSize:'12px'}} onClick={() => setPokazRegulamin(true)}>Regulaminem</button> i <button type="button" className="btn-link" style={{display:'inline', fontSize:'12px'}} onClick={() => setPokazPolityka(true)}>Polityką Prywatności</button> i akceptuję ich warunki.
+  <label htmlFor="zgoda" style={{fontSize:'12px', color:'var(--text-muted)', lineHeight:'1.6'}}>
+    Akceptuję <button type="button" className="btn-link" style={{display:'inline', fontSize:'12px'}} onClick={() => setPokazRegulamin(true)}>Regulamin</button> oraz <button type="button" className="btn-link" style={{display:'inline', fontSize:'12px'}} onClick={() => setPokazPolityka(true)}>Politykę Prywatności</button>
   </label>
 </div>
 <button className="login-btn" type="submit" disabled={ladowanie || !zgodaRodo}>{ladowanie ? 'Logowanie...' : 'Zaloguj sie'}</button>
