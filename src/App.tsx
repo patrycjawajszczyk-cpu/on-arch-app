@@ -119,6 +119,57 @@ function EkranZmianaHasla() {
     </div>
   );
 }
+function EkranPolitykaPrywatnosci({ onWroc }: { onWroc: () => void }) {
+  return (
+    <div className="login-screen" style={{overflowY:'auto', alignItems:'flex-start', padding:'24px'}}>
+      <button className="btn-wroc" onClick={onWroc} style={{marginBottom:'16px'}}>← Wróć</button>
+      <h2 style={{fontFamily:'Cormorant Garamond, serif', fontSize:'22px', marginBottom:'16px'}}>Polityka Prywatności</h2>
+      <div style={{fontSize:'13px', lineHeight:'1.7', color:'var(--text)'}}>
+        <p style={{marginBottom:'12px'}}><strong>Administrator danych osobowych:</strong><br/>On-Arch Barbara Szczęsna-Dyńska<br/>ul. Tymienieckiego 25D/53, 90-350 Łódź<br/>Email: biuro@on-arch.pl</p>
+        <p style={{marginBottom:'8px'}}><strong>1. Jakie dane zbieramy?</strong></p>
+        <p style={{marginBottom:'12px'}}>W ramach aplikacji On-Arch przetwarzamy następujące dane osobowe: imię i nazwisko, adres e-mail, numer telefonu, zdjęcie profilowe (opcjonalne).</p>
+        <p style={{marginBottom:'8px'}}><strong>2. W jakim celu?</strong></p>
+        <p style={{marginBottom:'12px'}}>Dane są przetwarzane wyłącznie w celu umożliwienia korzystania z aplikacji On-Arch — dostępu do informacji o zjazdach, ogłoszeń biura oraz komunikacji w ramach grupy kursantów.</p>
+        <p style={{marginBottom:'8px'}}><strong>3. Podstawa prawna</strong></p>
+        <p style={{marginBottom:'12px'}}>Przetwarzanie danych odbywa się na podstawie art. 6 ust. 1 lit. b RODO (wykonanie umowy) oraz art. 6 ust. 1 lit. a RODO (zgoda użytkownika).</p>
+        <p style={{marginBottom:'8px'}}><strong>4. Jak długo przechowujemy dane?</strong></p>
+        <p style={{marginBottom:'12px'}}>Dane są przechowywane przez czas trwania kursu oraz do 12 miesięcy po jego zakończeniu, chyba że wyrazisz wolę wcześniejszego usunięcia.</p>
+        <p style={{marginBottom:'8px'}}><strong>5. Twoje prawa</strong></p>
+        <p style={{marginBottom:'12px'}}>Masz prawo do: dostępu do swoich danych, ich sprostowania, usunięcia, ograniczenia przetwarzania, przenoszenia danych oraz wniesienia skargi do Prezesa UODO (ul. Stawki 2, 00-193 Warszawa).</p>
+        <p style={{marginBottom:'8px'}}><strong>6. Bezpieczeństwo</strong></p>
+        <p style={{marginBottom:'12px'}}>Dane są przechowywane na serwerach Supabase (UE, Frankfurt) z zastosowaniem szyfrowania i zabezpieczeń zgodnych z RODO.</p>
+        <p style={{marginBottom:'8px'}}><strong>7. Kontakt</strong></p>
+        <p>W sprawach dotyczących danych osobowych skontaktuj się z nami: biuro@on-arch.pl lub tel. 883 659 069.</p>
+      </div>
+    </div>
+  );
+}
+
+function EkranRegulamin({ onWroc }: { onWroc: () => void }) {
+  return (
+    <div className="login-screen" style={{overflowY:'auto', alignItems:'flex-start', padding:'24px'}}>
+      <button className="btn-wroc" onClick={onWroc} style={{marginBottom:'16px'}}>← Wróć</button>
+      <h2 style={{fontFamily:'Cormorant Garamond, serif', fontSize:'22px', marginBottom:'16px'}}>Regulamin aplikacji</h2>
+      <div style={{fontSize:'13px', lineHeight:'1.7', color:'var(--text)'}}>
+        <p style={{marginBottom:'12px'}}><strong>Aplikacja On-Arch</strong> — regulamin korzystania z aplikacji mobilnej dla kursantów.</p>
+        <p style={{marginBottom:'8px'}}><strong>1. Postanowienia ogólne</strong></p>
+        <p style={{marginBottom:'12px'}}>Aplikacja On-Arch jest przeznaczona wyłącznie dla kursantów On-Arch Barbara Szczęsna-Dyńska. Korzystanie z aplikacji jest dobrowolne i bezpłatne.</p>
+        <p style={{marginBottom:'8px'}}><strong>2. Konto użytkownika</strong></p>
+        <p style={{marginBottom:'12px'}}>Dostęp do aplikacji wymaga założenia konta przez biuro On-Arch. Kursant zobowiązuje się do nieudostępniania danych logowania osobom trzecim.</p>
+        <p style={{marginBottom:'8px'}}><strong>3. Czat grupowy</strong></p>
+        <p style={{marginBottom:'12px'}}>Kursanci zobowiązują się do kulturalnego i zgodnego z prawem korzystania z czatu grupowego. Zabrania się publikowania treści obraźliwych, niezgodnych z prawem lub naruszających prawa osób trzecich. Biuro On-Arch zastrzega sobie prawo do usuwania nieodpowiednich treści.</p>
+        <p style={{marginBottom:'8px'}}><strong>4. Zdjęcie profilowe</strong></p>
+        <p style={{marginBottom:'12px'}}>Kursant wgrywając zdjęcie profilowe wyraża zgodę na jego przechowywanie i wyświetlanie innym kursantom w ramach grupy.</p>
+        <p style={{marginBottom:'8px'}}><strong>5. Odpowiedzialność</strong></p>
+        <p style={{marginBottom:'12px'}}>On-Arch dokłada starań, aby informacje w aplikacji były aktualne i rzetelne. Nie ponosimy odpowiedzialności za skutki działań podjętych na podstawie błędnie wprowadzonych danych.</p>
+        <p style={{marginBottom:'8px'}}><strong>6. Zmiany regulaminu</strong></p>
+        <p style={{marginBottom:'12px'}}>On-Arch zastrzega sobie prawo do zmiany regulaminu. O zmianach kursanci zostaną poinformowani przez ogłoszenie w aplikacji.</p>
+        <p style={{marginBottom:'8px'}}><strong>7. Kontakt</strong></p>
+        <p>On-Arch Barbara Szczęsna-Dyńska<br/>ul. Tymienieckiego 25D/53, 90-350 Łódź<br/>biuro@on-arch.pl | 883 659 069</p>
+      </div>
+    </div>
+  );
+}
 
 function EkranLogowania({ onZalogowano }: { onZalogowano: () => void }) {
   const [email, setEmail] = useState('');
@@ -127,6 +178,9 @@ function EkranLogowania({ onZalogowano }: { onZalogowano: () => void }) {
   const [ladowanie, setLadowanie] = useState(false);
   const [resetMode, setResetMode] = useState(false);
   const [resetWyslany, setResetWyslany] = useState(false);
+  const [zgodaRodo, setZgodaRodo] = useState(false);
+  const [pokazPolityka, setPokazPolityka] = useState(false);
+  const [pokazRegulamin, setPokazRegulamin] = useState(false);
 
   async function zaloguj(e: React.FormEvent) {
     e.preventDefault();
@@ -147,6 +201,8 @@ function EkranLogowania({ onZalogowano }: { onZalogowano: () => void }) {
     else { setResetWyslany(true); }
     setLadowanie(false);
   }
+  if (pokazPolityka) return <EkranPolitykaPrywatnosci onWroc={() => setPokazPolityka(false)} />;
+if (pokazRegulamin) return <EkranRegulamin onWroc={() => setPokazRegulamin(false)} />;
 
   if (resetWyslany) {
     return (
@@ -199,7 +255,13 @@ function EkranLogowania({ onZalogowano }: { onZalogowano: () => void }) {
             <input type="password" value={haslo} onChange={e => setHaslo(e.target.value)} placeholder="password" required />
           </div>
           {blad && <div className="login-error">{blad}</div>}
-          <button className="login-btn" type="submit" disabled={ladowanie}>{ladowanie ? 'Logowanie...' : 'Zaloguj sie'}</button>
+          <div style={{display:'flex', alignItems:'flex-start', gap:'8px', margin:'12px 0'}}>
+  <input type="checkbox" id="zgoda" checked={zgodaRodo} onChange={e => setZgodaRodo(e.target.checked)} style={{marginTop:'3px', accentColor:'var(--brand)'}} />
+  <label htmlFor="zgoda" style={{fontSize:'12px', color:'var(--text-muted)', lineHeight:'1.5'}}>
+    Zapoznałam/em się z <button type="button" className="btn-link" style={{display:'inline', fontSize:'12px'}} onClick={() => setPokazRegulamin(true)}>Regulaminem</button> i <button type="button" className="btn-link" style={{display:'inline', fontSize:'12px'}} onClick={() => setPokazPolityka(true)}>Polityką Prywatności</button> i akceptuję ich warunki.
+  </label>
+</div>
+<button className="login-btn" type="submit" disabled={ladowanie || !zgodaRodo}>{ladowanie ? 'Logowanie...' : 'Zaloguj sie'}</button>
         </form>
         <button className="btn-link" onClick={() => setResetMode(true)}>Nie pamietasz hasla?</button>
         <p className="login-kontakt">Problemy z logowaniem? Zadzwon do biura:<br/><strong>883 659 069</strong></p>
