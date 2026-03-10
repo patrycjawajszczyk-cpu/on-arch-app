@@ -43,6 +43,11 @@ h1 {
   font-weight: 700;
   color: var(--text);
 }
+.logo img {
+  height: 32px;
+  width: 32px;
+  border-radius: 50%;
+}
 
 .logo span {
   color: var(--brand);
