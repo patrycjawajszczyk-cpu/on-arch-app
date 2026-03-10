@@ -84,7 +84,7 @@ function EkranZmianaHasla() {
     return (
       <div className="login-screen">
         <div className="login-card">
-          <div className="login-logo"><div className="logo"><img src="/on_arch_circle_icon_red.png" alt="On-Arch" /></div></div>
+          <div className="login-logo"><div className="logo"><img src="/on arch circle icon red.png" alt="On-Arch" /></div></div>
           <div className="reset-success">
             <div className="reset-icon">✅</div>
             <h3>Haslo zostalo zmienione!</h3>
@@ -99,7 +99,7 @@ function EkranZmianaHasla() {
   return (
     <div className="login-screen">
       <div className="login-card">
-        <div className="login-logo"><div className="logo"><img src="/on_arch_circle_icon_red.png" alt="On-Arch" /></div></div>
+        <div className="login-logo"><div className="logo"><img src="/on arch circle icon red.png" alt="On-Arch" /></div></div>
         <p className="login-sub">Ustaw nowe haslo</p>
         <form className="login-form" onSubmit={zmienHaslo}>
           <div className="login-field">
