@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { Home, Calendar, Bell, MessageCircle, User } from 'lucide-react';
 import './App.css';
 import { supabase } from './supabase';
 
@@ -616,19 +617,19 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
       </main>
       <nav className="bottom-nav" style={{overflowX:'auto'}}>
         <button className={`nav-item ${aktywnaZakladka === 'ogloszenia' ? 'active' : ''}`} onClick={() => { setKomunikat(''); setEdytowane(null); setAktywnaZakladka('ogloszenia'); }}>
-          <span className="nav-icon">🔔</span><span className="nav-label">Ogloszenia</span>
+          🔔<span className="nav-label">Ogloszenia</span>
         </button>
         <button className={`nav-item ${aktywnaZakladka === 'zjazdy' ? 'active' : ''}`} onClick={() => { setKomunikat(''); setEdytowanyZjazd(null); setAktywnaZakladka('zjazdy'); }}>
-          <span className="nav-icon">📅</span><span className="nav-label">Zjazdy</span>
+          📅<span className="nav-label">Zjazdy</span>
         </button>
         <button className={`nav-item ${aktywnaZakladka === 'kursanci' ? 'active' : ''}`} onClick={() => { setKomunikat(''); setAktywnaZakladka('kursanci'); }}>
-          <span className="nav-icon">👥</span><span className="nav-label">Kursanci</span>
+          👥<span className="nav-label">Kursanci</span>
         </button>
         <button className={`nav-item ${aktywnaZakladka === 'grupy' ? 'active' : ''}`} onClick={() => { setKomunikat(''); setAktywnaZakladka('grupy'); }}>
-          <span className="nav-icon">🏫</span><span className="nav-label">Grupy</span>
+          🏫<span className="nav-label">Grupy</span>
         </button>
         <button className={`nav-item ${aktywnaZakladka === 'import' ? 'active' : ''}`} onClick={() => { setKomunikat(''); setAktywnaZakladka('import'); }}>
-          <span className="nav-icon">📂</span><span className="nav-label">Import</span>
+          📂<span className="nav-label">Import</span>
         </button>
       </nav>
     </div>
@@ -850,20 +851,20 @@ export default function App() {
       </main>
       <nav className="bottom-nav">
         <button className={`nav-item ${aktywnaZakladka === 'home' ? 'active' : ''}`} onClick={() => { setAktywneOgloszenie(null); setAktywnaZakladka('home'); }}>
-          <span className="nav-icon">🏠</span><span className="nav-label">Glowna</span>
+        <Home size={20} /><span className="nav-label">Glowna</span>
         </button>
         <button className={`nav-item ${aktywnaZakladka === 'zjazdy' ? 'active' : ''}`} onClick={() => { setAktywneOgloszenie(null); setAktywnaZakladka('zjazdy'); }}>
-          <span className="nav-icon">📅</span><span className="nav-label">Zjazdy</span>
+        <Calendar size={20} /><span className="nav-label">Zjazdy</span>
         </button>
         <button className={`nav-item ${aktywnaZakladka === 'ogloszenia' ? 'active' : ''}`} onClick={() => { setAktywneOgloszenie(null); setAktywnaZakladka('ogloszenia'); }}>
-          <span className="nav-icon">🔔</span><span className="nav-label">Ogloszenia</span>
+        <Bell size={20} /><span className="nav-label">Ogloszenia</span>
           {noweCount > 0 && <span className="nav-badge">{noweCount}</span>}
         </button>
         <button className={`nav-item ${aktywnaZakladka === 'czat' ? 'active' : ''}`} onClick={() => { setAktywneOgloszenie(null); setAktywnaZakladka('czat'); }}>
-          <span className="nav-icon">💬</span><span className="nav-label">Czat</span>
+          <MessageCircle size={20} /><span className="nav-label">Czat</span>
         </button>
         <button className={`nav-item ${aktywnaZakladka === 'profil' ? 'active' : ''}`} onClick={() => { setAktywneOgloszenie(null); setAktywnaZakladka('profil'); }}>
-          <span className="nav-icon">👤</span><span className="nav-label">Profil</span>
+          <User size={20} /><span className="nav-label">Profil</span>
         </button>
       </nav>
     </div>
