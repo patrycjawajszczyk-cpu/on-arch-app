@@ -202,7 +202,9 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
   const [grupy, setGrupy] = useState<Grupa[]>([]);
   const [kursanci, setKursanci] = useState<KursantAdmin[]>([]);
   const [ogloszenia, setOgloszenia] = useState<Ogloszenie[]>([]);
+  const [zjazdy, setZjazdy] = useState<Zjazd[]>([]);
   const [edytowane, setEdytowane] = useState<Ogloszenie | null>(null);
+  const [edytowanyZjazd, setEdytowanyZjazd] = useState<Zjazd | null>(null);
   const [noweOgl, setNoweOgl] = useState({ typ: 'Informacja', tytul: '', tresc: '', szczegoly: '', nowe: true });
   const [nowyZjazd, setNowyZjazd] = useState({ nr: '', daty: '', sala: '', adres: '', tematy: '', status: 'nadchodzacy', data_zjazdu: '', grupa_id: '' });
   const [nowyKursant, setNowyKursant] = useState({ imie: '', nazwisko: '', email: '', grupa_id: '' });
@@ -214,8 +216,9 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
 
   useEffect(() => {
     pobierzGrupy();
-    supabase.from('kursanci').select('id, imie, nazwisko, grupa_id, user_id').then(({ data }) => setKursanci((data || []) as unknown as KursantAdmin[]));
     pobierzOgloszenia();
+    pobierzZjazdy();
+    supabase.from('kursanci').select('id, imie, nazwisko, grupa_id, user_id').then(({ data }) => setKursanci((data || []) as unknown as KursantAdmin[]));
   }, []);
 
   async function pobierzGrupy() {
@@ -226,6 +229,11 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
   async function pobierzOgloszenia() {
     const { data } = await supabase.from('ogloszenia').select('*').order('data_utworzenia', { ascending: false });
     setOgloszenia(data || []);
+  }
+
+  async function pobierzZjazdy() {
+    const { data } = await supabase.from('zjazdy').select('*').order('data_zjazdu', { ascending: true });
+    setZjazdy(data || []);
   }
 
   async function dodajOgloszenie(e: React.FormEvent) {
@@ -254,7 +262,27 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
     e.preventDefault();
     const { error } = await supabase.from('zjazdy').insert([{ ...nowyZjazd, nr: parseInt(nowyZjazd.nr), grupa_id: parseInt(nowyZjazd.grupa_id) }]);
     if (error) { setKomunikat('Blad: ' + error.message); }
-    else { setKomunikat('Zjazd dodany!'); setNowyZjazd({ nr: '', daty: '', sala: '', adres: '', tematy: '', status: 'nadchodzacy', data_zjazdu: '', grupa_id: '' }); }
+    else { setKomunikat('Zjazd dodany!'); setNowyZjazd({ nr: '', daty: '', sala: '', adres: '', tematy: '', status: 'nadchodzacy', data_zjazdu: '', grupa_id: '' }); pobierzZjazdy(); }
+  }
+
+  async function zapiszEdycjeZjazdu(e: React.FormEvent) {
+    e.preventDefault();
+    if (!edytowanyZjazd) return;
+    const { error } = await supabase.from('zjazdy').update({
+      nr: edytowanyZjazd.nr, daty: edytowanyZjazd.daty, sala: edytowanyZjazd.sala,
+      adres: edytowanyZjazd.adres, tematy: edytowanyZjazd.tematy,
+      status: edytowanyZjazd.status, data_zjazdu: edytowanyZjazd.data_zjazdu,
+      grupa_id: edytowanyZjazd.grupa_id,
+    }).eq('id', edytowanyZjazd.id);
+    if (error) { setKomunikat('Blad: ' + error.message); }
+    else { setKomunikat('Zjazd zaktualizowany!'); setEdytowanyZjazd(null); pobierzZjazdy(); }
+  }
+
+  async function usunZjazd(id: number) {
+    if (!window.confirm('Czy na pewno chcesz usunac ten zjazd?')) return;
+    const { error } = await supabase.from('zjazdy').delete().eq('id', id);
+    if (error) { setKomunikat('Blad: ' + error.message); }
+    else { setKomunikat('Zjazd usuniety!'); pobierzZjazdy(); }
   }
 
   async function dodajKursanta(e: React.FormEvent) {
@@ -286,38 +314,21 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
     if (!file) return;
     setImportowanie(true);
     setImportStatus([]);
-
     const text = await file.text();
     const rows = text.trim().split('\n').slice(1);
     const wyniki: {imie: string; nazwisko: string; email: string; status: string}[] = [];
-
     for (const row of rows) {
       const [imie, nazwisko, email, grupa_id] = row.split(',').map(s => s.trim());
       if (!imie || !nazwisko || !email || !grupa_id) continue;
-
       const { data: authData, error: authError } = await supabase.auth.signUp({
-        email,
-        password: Math.random().toString(36).slice(-10),
+        email, password: Math.random().toString(36).slice(-10),
       });
-
-      if (authError) {
-        wyniki.push({ imie, nazwisko, email, status: 'Blad: ' + authError.message });
-        continue;
-      }
-
-      const { error } = await supabase.from('kursanci').insert([{
-        imie, nazwisko,
-        grupa_id: parseInt(grupa_id),
-        user_id: authData.user!.id,
-        rola: 'kursant',
-      }]);
-
+      if (authError) { wyniki.push({ imie, nazwisko, email, status: 'Blad: ' + authError.message }); continue; }
+      const { error } = await supabase.from('kursanci').insert([{ imie, nazwisko, grupa_id: parseInt(grupa_id), user_id: authData.user!.id, rola: 'kursant' }]);
       wyniki.push({ imie, nazwisko, email, status: error ? 'Blad: ' + error.message : 'Dodano!' });
       setImportStatus([...wyniki]);
-
       await new Promise(r => setTimeout(r, 1000));
     }
-
     setImportowanie(false);
     const { data } = await supabase.from('kursanci').select('id, imie, nazwisko, grupa_id, user_id');
     setKursanci((data || []) as unknown as KursantAdmin[]);
@@ -339,24 +350,14 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
               <>
                 <h2 className="page-title">Edytuj ogloszenie</h2>
                 <form className="admin-form" onSubmit={zapiszEdycje}>
-                  <div className="login-field">
-                    <label>Typ</label>
+                  <div className="login-field"><label>Typ</label>
                     <select value={edytowane.typ} onChange={e => setEdytowane({...edytowane, typ: e.target.value})}>
                       <option>Informacja</option><option>Pilne</option><option>Zmiana</option>
                     </select>
                   </div>
-                  <div className="login-field">
-                    <label>Tytul</label>
-                    <input type="text" value={edytowane.tytul} onChange={e => setEdytowane({...edytowane, tytul: e.target.value})} required />
-                  </div>
-                  <div className="login-field">
-                    <label>Krotki opis</label>
-                    <input type="text" value={edytowane.tresc} onChange={e => setEdytowane({...edytowane, tresc: e.target.value})} required />
-                  </div>
-                  <div className="login-field">
-                    <label>Pelna tresc</label>
-                    <textarea value={edytowane.szczegoly} onChange={e => setEdytowane({...edytowane, szczegoly: e.target.value})} rows={4} />
-                  </div>
+                  <div className="login-field"><label>Tytul</label><input type="text" value={edytowane.tytul} onChange={e => setEdytowane({...edytowane, tytul: e.target.value})} required /></div>
+                  <div className="login-field"><label>Krotki opis</label><input type="text" value={edytowane.tresc} onChange={e => setEdytowane({...edytowane, tresc: e.target.value})} required /></div>
+                  <div className="login-field"><label>Pelna tresc</label><textarea value={edytowane.szczegoly} onChange={e => setEdytowane({...edytowane, szczegoly: e.target.value})} rows={4} /></div>
                   <button className="login-btn" type="submit">Zapisz zmiany</button>
                   <button className="btn-link" onClick={() => setEdytowane(null)}>Anuluj</button>
                 </form>
@@ -365,24 +366,14 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
               <>
                 <h2 className="page-title">Nowe ogloszenie</h2>
                 <form className="admin-form" onSubmit={dodajOgloszenie}>
-                  <div className="login-field">
-                    <label>Typ</label>
+                  <div className="login-field"><label>Typ</label>
                     <select value={noweOgl.typ} onChange={e => setNoweOgl({...noweOgl, typ: e.target.value})}>
                       <option>Informacja</option><option>Pilne</option><option>Zmiana</option>
                     </select>
                   </div>
-                  <div className="login-field">
-                    <label>Tytul</label>
-                    <input type="text" value={noweOgl.tytul} onChange={e => setNoweOgl({...noweOgl, tytul: e.target.value})} required />
-                  </div>
-                  <div className="login-field">
-                    <label>Krotki opis</label>
-                    <input type="text" value={noweOgl.tresc} onChange={e => setNoweOgl({...noweOgl, tresc: e.target.value})} required />
-                  </div>
-                  <div className="login-field">
-                    <label>Pelna tresc</label>
-                    <textarea value={noweOgl.szczegoly} onChange={e => setNoweOgl({...noweOgl, szczegoly: e.target.value})} rows={4} />
-                  </div>
+                  <div className="login-field"><label>Tytul</label><input type="text" value={noweOgl.tytul} onChange={e => setNoweOgl({...noweOgl, tytul: e.target.value})} required /></div>
+                  <div className="login-field"><label>Krotki opis</label><input type="text" value={noweOgl.tresc} onChange={e => setNoweOgl({...noweOgl, tresc: e.target.value})} required /></div>
+                  <div className="login-field"><label>Pelna tresc</label><textarea value={noweOgl.szczegoly} onChange={e => setNoweOgl({...noweOgl, szczegoly: e.target.value})} rows={4} /></div>
                   <button className="login-btn" type="submit">Dodaj ogloszenie</button>
                 </form>
                 <h2 className="page-title" style={{marginTop:'24px'}}>Lista ogloszen</h2>
@@ -403,48 +394,69 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
 
         {aktywnaZakladka === 'zjazdy' && (
           <>
-            <h2 className="page-title">Nowy zjazd</h2>
-            <form className="admin-form" onSubmit={dodajZjazd}>
-              <div className="login-field">
-                <label>Grupa</label>
-                <select value={nowyZjazd.grupa_id} onChange={e => setNowyZjazd({...nowyZjazd, grupa_id: e.target.value})} required>
-                  <option value="">Wybierz grupe</option>
-                  {grupy.map(g => <option key={g.id} value={g.id}>{g.nazwa}</option>)}
-                </select>
-              </div>
-              <div className="login-field">
-                <label>Numer zjazdu</label>
-                <input type="number" value={nowyZjazd.nr} onChange={e => setNowyZjazd({...nowyZjazd, nr: e.target.value})} required />
-              </div>
-              <div className="login-field">
-                <label>Daty (np. 22-23 marca 2025)</label>
-                <input type="text" value={nowyZjazd.daty} onChange={e => setNowyZjazd({...nowyZjazd, daty: e.target.value})} required />
-              </div>
-              <div className="login-field">
-                <label>Data zjazdu</label>
-                <input type="date" value={nowyZjazd.data_zjazdu} onChange={e => setNowyZjazd({...nowyZjazd, data_zjazdu: e.target.value})} required />
-              </div>
-              <div className="login-field">
-                <label>Sala</label>
-                <input type="text" value={nowyZjazd.sala} onChange={e => setNowyZjazd({...nowyZjazd, sala: e.target.value})} required />
-              </div>
-              <div className="login-field">
-                <label>Adres</label>
-                <input type="text" value={nowyZjazd.adres} onChange={e => setNowyZjazd({...nowyZjazd, adres: e.target.value})} required />
-              </div>
-              <div className="login-field">
-                <label>Tematy</label>
-                <input type="text" value={nowyZjazd.tematy} onChange={e => setNowyZjazd({...nowyZjazd, tematy: e.target.value})} required />
-              </div>
-              <div className="login-field">
-                <label>Status</label>
-                <select value={nowyZjazd.status} onChange={e => setNowyZjazd({...nowyZjazd, status: e.target.value})}>
-                  <option value="nadchodzacy">Nadchodzacy</option>
-                  <option value="zakonczony">Zakonczony</option>
-                </select>
-              </div>
-              <button className="login-btn" type="submit">Dodaj zjazd</button>
-            </form>
+            {edytowanyZjazd ? (
+              <>
+                <h2 className="page-title">Edytuj zjazd</h2>
+                <form className="admin-form" onSubmit={zapiszEdycjeZjazdu}>
+                  <div className="login-field"><label>Grupa</label>
+                    <select value={edytowanyZjazd.grupa_id} onChange={e => setEdytowanyZjazd({...edytowanyZjazd, grupa_id: parseInt(e.target.value)})}>
+                      {grupy.map(g => <option key={g.id} value={g.id}>{g.nazwa}</option>)}
+                    </select>
+                  </div>
+                  <div className="login-field"><label>Numer zjazdu</label><input type="number" value={edytowanyZjazd.nr} onChange={e => setEdytowanyZjazd({...edytowanyZjazd, nr: parseInt(e.target.value)})} required /></div>
+                  <div className="login-field"><label>Daty</label><input type="text" value={edytowanyZjazd.daty} onChange={e => setEdytowanyZjazd({...edytowanyZjazd, daty: e.target.value})} required /></div>
+                  <div className="login-field"><label>Data zjazdu</label><input type="date" value={edytowanyZjazd.data_zjazdu} onChange={e => setEdytowanyZjazd({...edytowanyZjazd, data_zjazdu: e.target.value})} required /></div>
+                  <div className="login-field"><label>Sala</label><input type="text" value={edytowanyZjazd.sala} onChange={e => setEdytowanyZjazd({...edytowanyZjazd, sala: e.target.value})} required /></div>
+                  <div className="login-field"><label>Adres</label><input type="text" value={edytowanyZjazd.adres} onChange={e => setEdytowanyZjazd({...edytowanyZjazd, adres: e.target.value})} required /></div>
+                  <div className="login-field"><label>Tematy</label><input type="text" value={edytowanyZjazd.tematy} onChange={e => setEdytowanyZjazd({...edytowanyZjazd, tematy: e.target.value})} required /></div>
+                  <div className="login-field"><label>Status</label>
+                    <select value={edytowanyZjazd.status} onChange={e => setEdytowanyZjazd({...edytowanyZjazd, status: e.target.value})}>
+                      <option value="nadchodzacy">Nadchodzacy</option>
+                      <option value="zakonczony">Zakonczony</option>
+                    </select>
+                  </div>
+                  <button className="login-btn" type="submit">Zapisz zmiany</button>
+                  <button className="btn-link" onClick={() => setEdytowanyZjazd(null)}>Anuluj</button>
+                </form>
+              </>
+            ) : (
+              <>
+                <h2 className="page-title">Nowy zjazd</h2>
+                <form className="admin-form" onSubmit={dodajZjazd}>
+                  <div className="login-field"><label>Grupa</label>
+                    <select value={nowyZjazd.grupa_id} onChange={e => setNowyZjazd({...nowyZjazd, grupa_id: e.target.value})} required>
+                      <option value="">Wybierz grupe</option>
+                      {grupy.map(g => <option key={g.id} value={g.id}>{g.nazwa}</option>)}
+                    </select>
+                  </div>
+                  <div className="login-field"><label>Numer zjazdu</label><input type="number" value={nowyZjazd.nr} onChange={e => setNowyZjazd({...nowyZjazd, nr: e.target.value})} required /></div>
+                  <div className="login-field"><label>Daty (np. 22-23 marca 2025)</label><input type="text" value={nowyZjazd.daty} onChange={e => setNowyZjazd({...nowyZjazd, daty: e.target.value})} required /></div>
+                  <div className="login-field"><label>Data zjazdu</label><input type="date" value={nowyZjazd.data_zjazdu} onChange={e => setNowyZjazd({...nowyZjazd, data_zjazdu: e.target.value})} required /></div>
+                  <div className="login-field"><label>Sala</label><input type="text" value={nowyZjazd.sala} onChange={e => setNowyZjazd({...nowyZjazd, sala: e.target.value})} required /></div>
+                  <div className="login-field"><label>Adres</label><input type="text" value={nowyZjazd.adres} onChange={e => setNowyZjazd({...nowyZjazd, adres: e.target.value})} required /></div>
+                  <div className="login-field"><label>Tematy</label><input type="text" value={nowyZjazd.tematy} onChange={e => setNowyZjazd({...nowyZjazd, tematy: e.target.value})} required /></div>
+                  <div className="login-field"><label>Status</label>
+                    <select value={nowyZjazd.status} onChange={e => setNowyZjazd({...nowyZjazd, status: e.target.value})}>
+                      <option value="nadchodzacy">Nadchodzacy</option>
+                      <option value="zakonczony">Zakonczony</option>
+                    </select>
+                  </div>
+                  <button className="login-btn" type="submit">Dodaj zjazd</button>
+                </form>
+                <h2 className="page-title" style={{marginTop:'24px'}}>Lista zjazdow</h2>
+                {zjazdy.map(z => (
+                  <div key={z.id} className="profil-card" style={{marginBottom:'8px'}}>
+                    <div className="profil-row"><span className="profil-lbl">Zjazd {z.nr}</span><span className="profil-val">{z.daty}</span></div>
+                    <div className="profil-row"><span className="profil-lbl">Grupa</span><span className="profil-val">{grupy.find(g => g.id === z.grupa_id)?.nazwa || '-'}</span></div>
+                    <div className="profil-row"><span className="profil-lbl">Status</span><span className="profil-val">{z.status === 'nadchodzacy' ? 'Nadchodzacy' : 'Zakonczony'}</span></div>
+                    <div style={{display:'flex', gap:'8px', marginTop:'8px'}}>
+                      <button className="login-btn" style={{flex:1, padding:'8px'}} onClick={() => { setEdytowanyZjazd(z); setKomunikat(''); }}>Edytuj</button>
+                      <button className="btn-wyloguj" style={{flex:1, padding:'8px'}} onClick={() => usunZjazd(z.id)}>Usun</button>
+                    </div>
+                  </div>
+                ))}
+              </>
+            )}
           </>
         )}
 
@@ -452,20 +464,10 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
           <>
             <h2 className="page-title">Nowy kursant</h2>
             <form className="admin-form" onSubmit={dodajKursanta}>
-              <div className="login-field">
-                <label>Imie</label>
-                <input type="text" value={nowyKursant.imie} onChange={e => setNowyKursant({...nowyKursant, imie: e.target.value})} required />
-              </div>
-              <div className="login-field">
-                <label>Nazwisko</label>
-                <input type="text" value={nowyKursant.nazwisko} onChange={e => setNowyKursant({...nowyKursant, nazwisko: e.target.value})} required />
-              </div>
-              <div className="login-field">
-                <label>Email</label>
-                <input type="email" value={nowyKursant.email} onChange={e => setNowyKursant({...nowyKursant, email: e.target.value})} required />
-              </div>
-              <div className="login-field">
-                <label>Grupa</label>
+              <div className="login-field"><label>Imie</label><input type="text" value={nowyKursant.imie} onChange={e => setNowyKursant({...nowyKursant, imie: e.target.value})} required /></div>
+              <div className="login-field"><label>Nazwisko</label><input type="text" value={nowyKursant.nazwisko} onChange={e => setNowyKursant({...nowyKursant, nazwisko: e.target.value})} required /></div>
+              <div className="login-field"><label>Email</label><input type="email" value={nowyKursant.email} onChange={e => setNowyKursant({...nowyKursant, email: e.target.value})} required /></div>
+              <div className="login-field"><label>Grupa</label>
                 <select value={nowyKursant.grupa_id} onChange={e => setNowyKursant({...nowyKursant, grupa_id: e.target.value})} required>
                   <option value="">Wybierz grupe</option>
                   {grupy.map(g => <option key={g.id} value={g.id}>{g.nazwa}</option>)}
@@ -487,29 +489,20 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
           <>
             <h2 className="page-title">Nowa grupa</h2>
             <form className="admin-form" onSubmit={dodajGrupe}>
-              <div className="login-field">
-                <label>Nazwa grupy</label>
-                <input type="text" value={nowaGrupa.nazwa} onChange={e => setNowaGrupa({...nowaGrupa, nazwa: e.target.value})} placeholder="np. Grupa III Warszawa 2025/2026" required />
-              </div>
-              <div className="login-field">
-                <label>Miasto</label>
-                <input type="text" value={nowaGrupa.miasto} onChange={e => setNowaGrupa({...nowaGrupa, miasto: e.target.value})} placeholder="np. Warszawa" required />
-              </div>
-              <div className="login-field">
-                <label>Edycja</label>
-                <input type="text" value={nowaGrupa.edycja} onChange={e => setNowaGrupa({...nowaGrupa, edycja: e.target.value})} placeholder="np. 2025/2026" required />
-              </div>
+              <div className="login-field"><label>Nazwa grupy</label><input type="text" value={nowaGrupa.nazwa} onChange={e => setNowaGrupa({...nowaGrupa, nazwa: e.target.value})} placeholder="np. Grupa III Warszawa 2025/2026" required /></div>
+              <div className="login-field"><label>Miasto</label><input type="text" value={nowaGrupa.miasto} onChange={e => setNowaGrupa({...nowaGrupa, miasto: e.target.value})} placeholder="np. Warszawa" required /></div>
+              <div className="login-field"><label>Edycja</label><input type="text" value={nowaGrupa.edycja} onChange={e => setNowaGrupa({...nowaGrupa, edycja: e.target.value})} placeholder="np. 2025/2026" required /></div>
               <button className="login-btn" type="submit">Dodaj grupe</button>
             </form>
             <h2 className="page-title" style={{marginTop:'24px'}}>Lista grup</h2>
             {grupy.map(g => (
-  <div key={g.id} className="profil-card" style={{marginBottom:'8px'}}>
-    <div className="profil-row"><span className="profil-lbl">ID do CSV</span><span className="profil-val" style={{fontWeight:'700', color:'var(--brand)'}}>{g.id}</span></div>
-    <div className="profil-row"><span className="profil-lbl">Nazwa</span><span className="profil-val">{g.nazwa}</span></div>
-    <div className="profil-row"><span className="profil-lbl">Miasto</span><span className="profil-val">{g.miasto}</span></div>
-    <div className="profil-row"><span className="profil-lbl">Edycja</span><span className="profil-val">{g.edycja}</span></div>
-  </div>
-))}
+              <div key={g.id} className="profil-card" style={{marginBottom:'8px'}}>
+                <div className="profil-row"><span className="profil-lbl">ID do CSV</span><span className="profil-val" style={{fontWeight:'700', color:'var(--brand)'}}>{g.id}</span></div>
+                <div className="profil-row"><span className="profil-lbl">Nazwa</span><span className="profil-val">{g.nazwa}</span></div>
+                <div className="profil-row"><span className="profil-lbl">Miasto</span><span className="profil-val">{g.miasto}</span></div>
+                <div className="profil-row"><span className="profil-lbl">Edycja</span><span className="profil-val">{g.edycja}</span></div>
+              </div>
+            ))}
           </>
         )}
 
@@ -519,7 +512,7 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
             <div className="profil-card" style={{marginBottom:'16px'}}>
               <p style={{fontSize:'13px', color:'var(--text-muted)', marginBottom:'8px'}}>Format pliku CSV (pierwsza linia to naglowek):</p>
               <code style={{fontSize:'12px', background:'#f5f5f5', padding:'8px', borderRadius:'6px', display:'block', whiteSpace:'pre'}}>imie,nazwisko,email,grupa_id{'\n'}Anna,Kowalska,a.kowalska@email.pl,1{'\n'}Jan,Nowak,j.nowak@email.pl,1</code>
-              <p style={{fontSize:'12px', color:'var(--text-muted)', marginTop:'8px'}}>grupa_id znajdziesz w zakladce Grupy (numer przy nazwie grupy)</p>
+              <p style={{fontSize:'12px', color:'var(--text-muted)', marginTop:'8px'}}>grupa_id znajdziesz w zakladce Grupy</p>
             </div>
             <div className="login-field">
               <label>Wybierz plik CSV</label>
@@ -544,7 +537,7 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
         <button className={`nav-item ${aktywnaZakladka === 'ogloszenia' ? 'active' : ''}`} onClick={() => { setKomunikat(''); setEdytowane(null); setAktywnaZakladka('ogloszenia'); }}>
           <span className="nav-icon">🔔</span><span className="nav-label">Ogloszenia</span>
         </button>
-        <button className={`nav-item ${aktywnaZakladka === 'zjazdy' ? 'active' : ''}`} onClick={() => { setKomunikat(''); setAktywnaZakladka('zjazdy'); }}>
+        <button className={`nav-item ${aktywnaZakladka === 'zjazdy' ? 'active' : ''}`} onClick={() => { setKomunikat(''); setEdytowanyZjazd(null); setAktywnaZakladka('zjazdy'); }}>
           <span className="nav-icon">📅</span><span className="nav-label">Zjazdy</span>
         </button>
         <button className={`nav-item ${aktywnaZakladka === 'kursanci' ? 'active' : ''}`} onClick={() => { setKomunikat(''); setAktywnaZakladka('kursanci'); }}>
@@ -599,9 +592,7 @@ function EkranGlowny({ ogloszenia, zjazdy, onOtworzOgloszenie, user, kursant }: 
     <>
       <p className="greeting">Dzien dobry, {imie}</p>
       <section className="section">
-        <div className="section-header">
-          <span className="section-title">Najblizszy zjazd</span>
-        </div>
+        <div className="section-header"><span className="section-title">Najblizszy zjazd</span></div>
         {najblizszy ? (
           <div className="hero-card">
             <div className="hero-label">Zjazd {najblizszy.nr}</div>
@@ -617,9 +608,7 @@ function EkranGlowny({ ogloszenia, zjazdy, onOtworzOgloszenie, user, kursant }: 
         )}
       </section>
       <section className="section">
-        <div className="section-header">
-          <span className="section-title">Ogloszenia biura</span>
-        </div>
+        <div className="section-header"><span className="section-title">Ogloszenia biura</span></div>
         {ogloszenia.slice(0, 3).map((o) => (
           <KartaOgloszenia key={o.id} o={o} onClick={() => onOtworzOgloszenie(o)} />
         ))}
