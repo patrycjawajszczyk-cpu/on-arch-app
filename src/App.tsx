@@ -65,8 +65,7 @@ type Wiadomosc = {
 
 type OdpowiedziAnkiety = {
   zadowolenie: number;
-  wiedza_przed: number;
-  wiedza_po: number;
+  wiedza_wzrosla: string;
   zajecia_teoretyczne: number;
   zajecia_rysunek: number;
   zajecia_programy: number;
@@ -82,6 +81,7 @@ type OdpowiedziAnkiety = {
   przydatne_informacje: string;
   uzasadnienie_zle: string;
   inne_uwagi: string;
+  nps: string;
   plec: string;
   wyksztalcenie: string;
   wiek: string;
@@ -115,14 +115,20 @@ function EkranAnkieta({ kursant, zjazdy, user }: { kursant: Kursant | null; zjaz
   const [sukces, setSukces] = useState(false);
   const [krok, setKrok] = useState(1);
   const [odpowiedzi, setOdpowiedzi] = useState<OdpowiedziAnkiety>({
-    zadowolenie: 0, wiedza_przed: 0, wiedza_po: 0,
+    zadowolenie: 0, wiedza_wzrosla: '',
     zajecia_teoretyczne: 0, zajecia_rysunek: 0, zajecia_programy: 0,
     zakres_tematyczny: 0, org_czas: 0, org_miejsce: 0,
     org_baza: 0, org_materialy: 0, org_kadra: 0, org_dostosowanie: 0,
     stopien_oczekiwan: 0, ocena_ogolna: 0,
     przydatne_informacje: '', uzasadnienie_zle: '', inne_uwagi: '',
-    plec: '', wyksztalcenie: '', wiek: '',
+    nps: '', plec: '', wyksztalcenie: '', wiek: '',
   });
+
+  // Sprawdź czy któreś pytanie organizacyjne ma niską ocenę (1 lub 2)
+  const pokazUzasadnienie = [
+    odpowiedzi.org_czas, odpowiedzi.org_miejsce, odpowiedzi.org_baza,
+    odpowiedzi.org_materialy, odpowiedzi.org_kadra, odpowiedzi.org_dostosowanie,
+  ].some(v => v > 0 && v <= 2);
 
   // Sprawdź czy ostatni zjazd grupy już minął
   const ostatniZjazd = zjazdy.length > 0 ? zjazdy[zjazdy.length - 1] : null;
@@ -241,34 +247,92 @@ function EkranAnkieta({ kursant, zjazdy, user }: { kursant: Kursant | null; zjaz
           <>
             {sekcjaTytul('Ocena szkolenia')}
             {pytanieGwiazdki('1. Czy jest Pan/Pani zadowolony/a ze szkolenia?', 'zadowolenie')}
-            {pytanieGwiazdki('2. Jak ocenia Pan/Pani swój poziom wiedzy PRZED szkoleniem?', 'wiedza_przed')}
-            {pytanieGwiazdki('3. Jak ocenia Pan/Pani swój poziom wiedzy PO szkoleniu?', 'wiedza_po')}
+
+            <div style={{ marginBottom: '16px' }}>
+              <p style={{ fontSize: '13px', color: 'var(--text)', lineHeight: '1.5', marginBottom: '8px' }}>
+                2. Czy czujesz, że Twoja wiedza wzrosła?
+              </p>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                {(['Tak', 'Trochę', 'Nie'] as const).map(opcja => (
+                  <button
+                    key={opcja}
+                    type="button"
+                    onClick={() => ustaw('wiedza_wzrosla', opcja)}
+                    style={{
+                      flex: 1, padding: '10px 4px', borderRadius: '10px', fontSize: '13px',
+                      cursor: 'pointer', fontWeight: odpowiedzi.wiedza_wzrosla === opcja ? '600' : '400',
+                      background: odpowiedzi.wiedza_wzrosla === opcja ? '#A05C5C' : 'var(--bg-card)',
+                      color: odpowiedzi.wiedza_wzrosla === opcja ? 'white' : 'var(--text)',
+                      border: odpowiedzi.wiedza_wzrosla === opcja ? 'none' : '1px solid #ddd',
+                      transition: 'all 0.15s',
+                    }}
+                  >{opcja}</button>
+                ))}
+              </div>
+            </div>
+
             {sekcjaTytul('Prowadzenie zajęć')}
-            {pytanieGwiazdki('4a. Zajęcia teoretyczne', 'zajecia_teoretyczne')}
-            {pytanieGwiazdki('4b. Zajęcia praktyczne — Rysunek techniczny', 'zajecia_rysunek')}
-            {pytanieGwiazdki('4c. Zajęcia praktyczne — Programy komputerowe', 'zajecia_programy')}
-            {pytanieGwiazdki('5. Jak ocenia Pan/Pani zakres tematyczny szkolenia?', 'zakres_tematyczny')}
+            {pytanieGwiazdki('3a. Zajęcia teoretyczne', 'zajecia_teoretyczne')}
+            {pytanieGwiazdki('3b. Zajęcia praktyczne — Rysunek techniczny', 'zajecia_rysunek')}
+            {pytanieGwiazdki('3c. Zajęcia praktyczne — Programy komputerowe', 'zajecia_programy')}
+            {pytanieGwiazdki('4. Jak ocenia Pan/Pani zakres tematyczny szkolenia?', 'zakres_tematyczny')}
           </>
         )}
 
         {krok === 2 && (
           <>
             {sekcjaTytul('Organizacja szkolenia')}
-            {pytanieGwiazdki('6a. Czas trwania szkolenia', 'org_czas')}
-            {pytanieGwiazdki('6b. Miejsce szkolenia', 'org_miejsce')}
-            {pytanieGwiazdki('6c. Baza dydaktyczna (lokal, sprzęt)', 'org_baza')}
-            {pytanieGwiazdki('6d. Jakość i przydatność materiałów szkoleniowych', 'org_materialy')}
-            {pytanieGwiazdki('6e. Przygotowanie zawodowe kadry dydaktycznej', 'org_kadra')}
-            {pytanieGwiazdki('6f. Dostosowanie poziomu zajęć do potrzeb grupy', 'org_dostosowanie')}
-            {textarea('W przypadku oceny negatywnej — proszę o uzasadnienie:', 'uzasadnienie_zle', true)}
+            {pytanieGwiazdki('5a. Czas trwania szkolenia', 'org_czas')}
+            <div style={{ marginBottom: '16px' }}>
+              <p style={{ fontSize: '13px', color: 'var(--text)', lineHeight: '1.5', marginBottom: '4px' }}>
+                5b. Miejsce szkolenia{' '}
+                <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontStyle: 'italic' }}>(nie dotyczy kursu online)</span>
+              </p>
+              <GwiazdkiOcena wartosc={odpowiedzi.org_miejsce} onChange={v => ustaw('org_miejsce', v)} />
+            </div>
+            {pytanieGwiazdki('5c. Baza dydaktyczna (lokal, sprzęt)', 'org_baza')}
+            {pytanieGwiazdki('5d. Jakość i przydatność materiałów szkoleniowych', 'org_materialy')}
+            {pytanieGwiazdki('5e. Przygotowanie zawodowe kadry dydaktycznej', 'org_kadra')}
+            {pytanieGwiazdki('5f. Dostosowanie poziomu zajęć do potrzeb grupy', 'org_dostosowanie')}
+            {pokazUzasadnienie && (
+              <div style={{ marginBottom: '16px', padding: '12px', background: '#fff8f8', borderRadius: '10px', border: '1px solid #f5c0c0' }}>
+                {textarea('Proszę o uzasadnienie niskiej oceny:', 'uzasadnienie_zle', true)}
+              </div>
+            )}
           </>
         )}
 
         {krok === 3 && (
           <>
             {sekcjaTytul('Podsumowanie')}
-            {pytanieGwiazdki('7. W jakim stopniu szkolenie spełniło Pana/Pani oczekiwania?', 'stopien_oczekiwan')}
+            {pytanieGwiazdki('6. W jakim stopniu szkolenie spełniło Pana/Pani oczekiwania?', 'stopien_oczekiwan')}
             {pytanieGwiazdki('Ogólna ocena szkolenia', 'ocena_ogolna')}
+
+            <div style={{ marginBottom: '16px' }}>
+              <p style={{ fontSize: '13px', color: 'var(--text)', lineHeight: '1.5', marginBottom: '8px' }}>
+                7. Czy poleciłabyś/poleciłbyś ten kurs znajomym?
+              </p>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                {(['Tak', 'Może', 'Nie'] as const).map(opcja => (
+                  <button
+                    key={opcja}
+                    type="button"
+                    onClick={() => ustaw('nps', opcja)}
+                    style={{
+                      flex: 1, padding: '10px 4px', borderRadius: '10px', fontSize: '13px',
+                      cursor: 'pointer', fontWeight: odpowiedzi.nps === opcja ? '600' : '400',
+                      background: odpowiedzi.nps === opcja
+                        ? (opcja === 'Tak' ? '#4a7c59' : opcja === 'Nie' ? '#A05C5C' : '#7a6a3a')
+                        : 'var(--bg-card)',
+                      color: odpowiedzi.nps === opcja ? 'white' : 'var(--text)',
+                      border: odpowiedzi.nps === opcja ? 'none' : '1px solid #ddd',
+                      transition: 'all 0.15s',
+                    }}
+                  >{opcja}</button>
+                ))}
+              </div>
+            </div>
+
             {textarea('Które z przekazywanych informacji uważa Pan/Pani za najbardziej przydatne?', 'przydatne_informacje', true)}
             {textarea('8. Inne uwagi dotyczące szkolenia', 'inne_uwagi', true)}
           </>
@@ -726,7 +790,7 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
     const filtred = wybranaGrupaAnkiety
       ? ankiety.filter((a: any) => a.grupa_id === parseInt(wybranaGrupaAnkiety))
       : ankiety;
-    const naglowki = ['data', 'grupa_id', 'zadowolenie', 'wiedza_przed', 'wiedza_po', 'zajecia_teoretyczne', 'zajecia_rysunek', 'zajecia_programy', 'zakres_tematyczny', 'org_czas', 'org_miejsce', 'org_baza', 'org_materialy', 'org_kadra', 'org_dostosowanie', 'stopien_oczekiwan', 'ocena_ogolna', 'przydatne_informacje', 'uzasadnienie_zle', 'inne_uwagi', 'plec', 'wyksztalcenie', 'wiek'];
+    const naglowki = ['data', 'grupa_id', 'zadowolenie', 'wiedza_wzrosla', 'zajecia_teoretyczne', 'zajecia_rysunek', 'zajecia_programy', 'zakres_tematyczny', 'org_czas', 'org_miejsce', 'org_baza', 'org_materialy', 'org_kadra', 'org_dostosowanie', 'stopien_oczekiwan', 'ocena_ogolna', 'nps', 'przydatne_informacje', 'uzasadnienie_zle', 'inne_uwagi', 'plec', 'wyksztalcenie', 'wiek'];
     const wiersze = filtred.map((a: any) => naglowki.map(k => `"${(a[k] ?? '').toString().replace(/"/g, '""')}"`).join(','));
     const csv = [naglowki.join(','), ...wiersze].join('\n');
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -961,8 +1025,6 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
                 <h3 style={{fontFamily:'Cormorant Garamond, serif', fontSize:'17px', marginBottom:'12px', color:'var(--brand)'}}>Średnie oceny ({ankietyFiltrowane.length} ankiet)</h3>
                 {[
                   ['Zadowolenie ze szkolenia', 'zadowolenie'],
-                  ['Wiedza przed szkoleniem', 'wiedza_przed'],
-                  ['Wiedza po szkoleniu', 'wiedza_po'],
                   ['Zajęcia teoretyczne', 'zajecia_teoretyczne'],
                   ['Zajęcia — rysunek techniczny', 'zajecia_rysunek'],
                   ['Zajęcia — programy komputerowe', 'zajecia_programy'],
@@ -983,6 +1045,22 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
                     </span>
                   </div>
                 ))}
+                <div className="profil-row" style={{borderTop:'1px solid #eee', paddingTop:'8px', marginTop:'4px'}}>
+                  <span className="profil-lbl" style={{fontSize:'12px'}}>Wiedza wzrosła (Tak)</span>
+                  <span className="profil-val" style={{fontWeight:'700', color:'var(--brand)'}}>
+                    {ankietyFiltrowane.length > 0
+                      ? Math.round(ankietyFiltrowane.filter((a:any) => a.wiedza_wzrosla === 'Tak').length / ankietyFiltrowane.length * 100) + '%'
+                      : '—'}
+                  </span>
+                </div>
+                <div className="profil-row">
+                  <span className="profil-lbl" style={{fontSize:'12px'}}>Polecenie znajomym (Tak)</span>
+                  <span className="profil-val" style={{fontWeight:'700', color:'var(--brand)'}}>
+                    {ankietyFiltrowane.length > 0
+                      ? Math.round(ankietyFiltrowane.filter((a:any) => a.nps === 'Tak').length / ankietyFiltrowane.length * 100) + '%'
+                      : '—'}
+                  </span>
+                </div>
               </div>
             )}
           </>
