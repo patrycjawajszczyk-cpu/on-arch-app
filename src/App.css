@@ -269,8 +269,18 @@
      color: #c0453a;
    }
    
-   .badge-zmiana {
-     background: #fef6e4;
+   .szczegoly-header .badge-informacja {
+     background: rgba(255,255,255,0.92);
+     color: #4458a8;
+   }
+   
+   .szczegoly-header .badge-pilne {
+     background: rgba(255,255,255,0.92);
+     color: #c0453a;
+   }
+   
+   .szczegoly-header .badge-zmiana {
+     background: rgba(255,255,255,0.92);
      color: #a06820;
    }
    
@@ -626,29 +636,40 @@
    }
    
    .szczegoly-header {
-     margin-bottom: 20px;
+     background: var(--brand-dark);
+     border-radius: 18px;
+     padding: 28px 22px 24px;
+     margin-bottom: 16px;
+     text-align: center;
+     position: relative;
    }
    
    .szczegoly-tytul {
      font-family: 'Cormorant Garamond', serif;
-     font-size: 26px;
-     font-weight: 500;
-     color: var(--text);
-     margin: 8px 0 6px;
+     font-size: 28px;
+     font-weight: 300;
+     color: rgba(255,255,255,0.82);
+     margin: 10px 0 8px;
      line-height: 1.25;
+     letter-spacing: 0.3px;
    }
    
    .szczegoly-meta {
      font-size: 11px;
-     color: var(--text-muted);
-     letter-spacing: 0.3px;
+     color: rgba(255,255,255,0.45);
+     letter-spacing: 0.5px;
    }
    
    .szczegoly-tresc {
+     background: white;
+     border-radius: 14px;
+     padding: 20px;
      font-size: 14px;
      color: var(--text);
-     line-height: 1.75;
+     line-height: 1.8;
      white-space: pre-line;
+     text-align: left;
+     border: 0.5px solid var(--border);
    }
    
    /* ─── Chat ──────────────────────────────────────────── */

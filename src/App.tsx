@@ -1322,21 +1322,10 @@ function EkranSzczegoly({ o, onWroc }: { o: Ogloszenie; onWroc: () => void }) {
       <button className="btn-wroc" onClick={onWroc}>← Wróć</button>
       <div className="szczegoly-header">
         <span className={`badge badge-${o.typ.toLowerCase()}`}>{o.typ}</span>
-        <h2 style={{
-          fontFamily: 'Cormorant Garamond, serif',
-          fontSize: '28px',
-          fontWeight: 300,
-          color: '#b0a8a0',
-          lineHeight: 1.25,
-          margin: '12px 0 8px',
-          letterSpacing: '0.3px',
-        }}>{o.tytul}</h2>
-        <p className="szczegoly-meta" style={{ color: '#c4bab4', fontSize: '11px', letterSpacing: '0.4px' }}>
-          Biuro On-Arch · {new Date(o.data_utworzenia).toLocaleDateString('pl-PL')}
-        </p>
-        <div style={{ height: '0.5px', background: 'var(--border-soft)', margin: '14px 0 0' }} />
+        <h2 className="szczegoly-tytul">{o.tytul}</h2>
+        <p className="szczegoly-meta">Biuro On-Arch · {new Date(o.data_utworzenia).toLocaleDateString('pl-PL')}</p>
       </div>
-      <div className="szczegoly-tresc" style={{ whiteSpace: 'pre-line' }}>{o.szczegoly}</div>
+      <div className="szczegoly-tresc">{o.szczegoly || o.tresc}</div>
     </>
   );
 }
