@@ -343,6 +343,15 @@
      line-height: 1.5;
    }
    
+   .sess-lbl {
+     font-weight: 600;
+     color: var(--text);
+     font-size: 11px;
+     text-transform: uppercase;
+     letter-spacing: 0.4px;
+     margin-right: 4px;
+   }
+   
    .s-badge {
      font-size: 9px;
      padding: 3px 8px;

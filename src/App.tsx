@@ -14,6 +14,14 @@ type Ogloszenie = {
   grupa_id: number | null;
 };
 
+type Prowadzacy = {
+  id: number;
+  imie: string;
+  nazwisko: string;
+  bio: string | null;
+  avatar_url: string | null;
+};
+
 type Zjazd = {
   id: number;
   nr: number;
@@ -24,6 +32,7 @@ type Zjazd = {
   status: string;
   data_zjazdu: string;
   grupa_id: number;
+  prowadzacy?: Prowadzacy[];
 };
 
 type Kursant = {
@@ -821,13 +830,15 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
   const [kursanci, setKursanci] = useState<KursantAdmin[]>([]);
   const [ogloszenia, setOgloszenia] = useState<Ogloszenie[]>([]);
   const [zjazdy, setZjazdy] = useState<Zjazd[]>([]);
+  const [prowadzacy, setProwadzacy] = useState<Prowadzacy[]>([]);
   const [ankiety, setAnkiety] = useState<OdpowiedziAnkiety[]>([]);
   const [edytowane, setEdytowane] = useState<Ogloszenie | null>(null);
   const [edytowanyZjazd, setEdytowanyZjazd] = useState<Zjazd | null>(null);
   const [noweOgl, setNoweOgl] = useState({ typ: 'Informacja', tytul: '', tresc: '', szczegoly: '', nowe: true, grupa_id: '' });
-  const [nowyZjazd, setNowyZjazd] = useState({ nr: '', daty: '', sala: '', adres: '', tematy: '', status: 'nadchodzacy', data_zjazdu: '', grupa_id: '' });
+  const [nowyZjazd, setNowyZjazd] = useState({ nr: '', daty: '', sala: '', adres: '', tematy: '', status: 'nadchodzacy', data_zjazdu: '', grupa_id: '', prowadzacy_id: '' });
   const [nowyKursant, setNowyKursant] = useState({ imie: '', nazwisko: '', email: '', grupa_id: '' });
   const [nowaGrupa, setNowaGrupa] = useState({ nazwa: '', miasto: '', edycja: '' });
+  const [nowyProwadzacy, setNowyProwadzacy] = useState({ imie: '', nazwisko: '', specjalizacja: '' });
   const [komunikat, setKomunikat] = useState('');
   const [importStatus, setImportStatus] = useState<{ imie: string; nazwisko: string; email: string; status: string }[]>([]);
   const [importowanie, setImportowanie] = useState(false);
@@ -835,14 +846,26 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    pobierzGrupy(); pobierzOgloszenia(); pobierzZjazdy();
+    pobierzGrupy(); pobierzOgloszenia(); pobierzZjazdy(); pobierzProwadzacy();
     supabase.from('kursanci').select('id, imie, nazwisko, grupa_id, user_id').then(({ data }) => setKursanci((data || []) as unknown as KursantAdmin[]));
     supabase.from('ankiety').select('*').order('created_at', { ascending: false }).then(({ data }) => setAnkiety((data || []) as unknown as OdpowiedziAnkiety[]));
   }, []);
 
   async function pobierzGrupy() { const { data } = await supabase.from('grupy').select('*'); setGrupy(data || []); }
   async function pobierzOgloszenia() { const { data } = await supabase.from('ogloszenia').select('*').order('data_utworzenia', { ascending: false }); setOgloszenia(data || []); }
-  async function pobierzZjazdy() { const { data } = await supabase.from('zjazdy').select('*').order('data_zjazdu', { ascending: true }); setZjazdy(data || []); }
+  async function pobierzZjazdy() {
+    const { data: zjData } = await supabase.from('zjazdy').select('*').order('data_zjazdu', { ascending: true });
+    if (!zjData) { setZjazdy([]); return; }
+    const ids = zjData.map((z: any) => z.id);
+    const { data: zpData } = await supabase.from('zjazdy_prowadzacy').select('zjazd_id, prowadzacy(id, imie, nazwisko, bio, avatar_url)').in('zjazd_id', ids);
+    const map: Record<number, Prowadzacy[]> = {};
+    (zpData || []).forEach((row: any) => {
+      if (!map[row.zjazd_id]) map[row.zjazd_id] = [];
+      if (row.prowadzacy) map[row.zjazd_id].push(row.prowadzacy);
+    });
+    setZjazdy(zjData.map((z: any) => ({ ...z, prowadzacy: map[z.id] || [] })));
+  }
+  async function pobierzProwadzacy() { const { data } = await supabase.from('prowadzacy').select('*').order('nazwisko', { ascending: true }); setProwadzacy(data || []); }
 
   async function dodajOgloszenie(e: React.FormEvent) {
     e.preventDefault();
@@ -865,15 +888,39 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
 
   async function dodajZjazd(e: React.FormEvent) {
     e.preventDefault();
-    const { error } = await supabase.from('zjazdy').insert([{ ...nowyZjazd, nr: parseInt(nowyZjazd.nr), grupa_id: parseInt(nowyZjazd.grupa_id) }]);
-    if (error) { setKomunikat('Blad: ' + error.message); } else { setKomunikat('Zjazd dodany!'); setNowyZjazd({ nr: '', daty: '', sala: '', adres: '', tematy: '', status: 'nadchodzacy', data_zjazdu: '', grupa_id: '' }); pobierzZjazdy(); }
+    const { data: nowyZjazdData, error } = await supabase.from('zjazdy').insert([{
+      nr: parseInt(nowyZjazd.nr),
+      daty: nowyZjazd.daty,
+      sala: nowyZjazd.sala,
+      adres: nowyZjazd.adres,
+      tematy: nowyZjazd.tematy,
+      status: nowyZjazd.status,
+      data_zjazdu: nowyZjazd.data_zjazdu,
+      grupa_id: parseInt(nowyZjazd.grupa_id),
+    }]).select().single();
+    if (error) { setKomunikat('Blad: ' + error.message); return; }
+    if (nowyZjazd.prowadzacy_id && nowyZjazdData) {
+      await supabase.from('zjazdy_prowadzacy').insert([{ zjazd_id: nowyZjazdData.id, prowadzacy_id: parseInt(nowyZjazd.prowadzacy_id) }]);
+    }
+    setKomunikat('Zjazd dodany!');
+    setNowyZjazd({ nr: '', daty: '', sala: '', adres: '', tematy: '', status: 'nadchodzacy', data_zjazdu: '', grupa_id: '', prowadzacy_id: '' });
+    pobierzZjazdy();
   }
 
   async function zapiszEdycjeZjazdu(e: React.FormEvent) {
     e.preventDefault();
     if (!edytowanyZjazd) return;
     const poprzedniStatus = zjazdy.find(z => z.id === edytowanyZjazd.id)?.status;
-    const { error } = await supabase.from('zjazdy').update({ nr: edytowanyZjazd.nr, daty: edytowanyZjazd.daty, sala: edytowanyZjazd.sala, adres: edytowanyZjazd.adres, tematy: edytowanyZjazd.tematy, status: edytowanyZjazd.status, data_zjazdu: edytowanyZjazd.data_zjazdu, grupa_id: edytowanyZjazd.grupa_id }).eq('id', edytowanyZjazd.id);
+    const { error } = await supabase.from('zjazdy').update({
+      nr: edytowanyZjazd.nr,
+      daty: edytowanyZjazd.daty,
+      sala: edytowanyZjazd.sala,
+      adres: edytowanyZjazd.adres,
+      tematy: edytowanyZjazd.tematy,
+      status: edytowanyZjazd.status,
+      data_zjazdu: edytowanyZjazd.data_zjazdu,
+      grupa_id: edytowanyZjazd.grupa_id,
+    }).eq('id', edytowanyZjazd.id);
     if (error) { setKomunikat('Blad: ' + error.message); return; }
     if (edytowanyZjazd.status === 'zakonczony' && poprzedniStatus !== 'zakonczony') {
       const { data: wszystkieZjazdy } = await supabase.from('zjazdy').select('*').eq('grupa_id', edytowanyZjazd.grupa_id).order('data_zjazdu', { ascending: true });
@@ -885,6 +932,21 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
       } else { setKomunikat('Zjazd zaktualizowany!'); }
     } else { setKomunikat('Zjazd zaktualizowany!'); }
     setEdytowanyZjazd(null); pobierzZjazdy();
+  }
+
+  async function dodajProwadzacego(e: React.FormEvent) {
+    e.preventDefault();
+    const { error } = await supabase.from('prowadzacy').insert([{
+      imie: nowyProwadzacy.imie,
+      nazwisko: nowyProwadzacy.nazwisko,
+    }]);
+    if (error) { setKomunikat('Blad: ' + error.message); } else { setKomunikat('Prowadzący dodany!'); setNowyProwadzacy({ imie: '', nazwisko: '', specjalizacja: '' }); pobierzProwadzacy(); }
+  }
+
+  async function usunProwadzacego(id: number) {
+    if (!window.confirm('Usunac prowadzacego?')) return;
+    const { error } = await supabase.from('prowadzacy').delete().eq('id', id);
+    if (error) { setKomunikat('Blad: ' + error.message); } else { setKomunikat('Usunieto!'); pobierzProwadzacy(); }
   }
 
   async function usunZjazd(id: number) {
@@ -1015,6 +1077,38 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
                   <button className="login-btn" type="submit">Zapisz zmiany</button>
                   <button className="btn-link" onClick={() => setEdytowanyZjazd(null)}>Anuluj</button>
                 </form>
+                {/* Prowadzący per zjazd */}
+                <h2 className="page-title" style={{ marginTop: '20px' }}>Prowadzący tego zjazdu</h2>
+                {(edytowanyZjazd.prowadzacy || []).length === 0 && (
+                  <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '12px' }}>Brak przypisanych prowadzących.</p>
+                )}
+                {(edytowanyZjazd.prowadzacy || []).map(p => (
+                  <div key={p.id} className="profil-card" style={{ marginBottom: '8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px' }}>
+                    <span style={{ fontSize: '14px' }}>{p.imie} {p.nazwisko}</span>
+                    <button onClick={async () => {
+                      await supabase.from('zjazdy_prowadzacy').delete().eq('zjazd_id', edytowanyZjazd.id).eq('prowadzacy_id', p.id);
+                      await pobierzZjazdy();
+                      setEdytowanyZjazd(prev => prev ? { ...prev, prowadzacy: (prev.prowadzacy || []).filter(x => x.id !== p.id) } : prev);
+                    }} style={{ background: 'none', border: 'none', color: '#c62828', cursor: 'pointer', fontSize: '18px' }}>×</button>
+                  </div>
+                ))}
+                <div className="login-field" style={{ marginTop: '8px' }}>
+                  <label>Dodaj prowadzącego</label>
+                  <select defaultValue="" onChange={async (e) => {
+                    const pid = parseInt(e.target.value);
+                    if (!pid) return;
+                    await supabase.from('zjazdy_prowadzacy').insert([{ zjazd_id: edytowanyZjazd.id, prowadzacy_id: pid }]);
+                    await pobierzZjazdy();
+                    const p = prowadzacy.find(x => x.id === pid);
+                    if (p) setEdytowanyZjazd(prev => prev ? { ...prev, prowadzacy: [...(prev.prowadzacy || []), p] } : prev);
+                    e.target.value = '';
+                  }}>
+                    <option value="">— wybierz prowadzącego —</option>
+                    {prowadzacy.filter(p => !(edytowanyZjazd.prowadzacy || []).some(ep => ep.id === p.id)).map(p => (
+                      <option key={p.id} value={p.id}>{p.imie} {p.nazwisko}</option>
+                    ))}
+                  </select>
+                </div>
               </>
             ) : (
               <>
@@ -1027,6 +1121,12 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
                   <div className="login-field"><label>Sala</label><input type="text" value={nowyZjazd.sala} onChange={e => setNowyZjazd({ ...nowyZjazd, sala: e.target.value })} required /></div>
                   <div className="login-field"><label>Adres</label><input type="text" value={nowyZjazd.adres} onChange={e => setNowyZjazd({ ...nowyZjazd, adres: e.target.value })} required /></div>
                   <div className="login-field"><label>Tematy</label><input type="text" value={nowyZjazd.tematy} onChange={e => setNowyZjazd({ ...nowyZjazd, tematy: e.target.value })} required /></div>
+                  <div className="login-field"><label>Prowadzący (opcjonalnie)</label>
+                    <select value={nowyZjazd.prowadzacy_id} onChange={e => setNowyZjazd({ ...nowyZjazd, prowadzacy_id: e.target.value })}>
+                      <option value="">— brak —</option>
+                      {prowadzacy.map(p => <option key={p.id} value={p.id}>{p.imie} {p.nazwisko}</option>)}
+                    </select>
+                  </div>
                   <div className="login-field"><label>Status</label><select value={nowyZjazd.status} onChange={e => setNowyZjazd({ ...nowyZjazd, status: e.target.value })}><option value="nadchodzacy">Nadchodzacy</option><option value="zakonczony">Zakonczony</option></select></div>
                   <button className="login-btn" type="submit">Dodaj zjazd</button>
                 </form>
@@ -1139,9 +1239,49 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
           </>
         )}
 
-        {/* NOWA ZAKŁADKA: Obecności w panelu biura */}
+        {/* ZAKŁADKA: Obecności w panelu biura */}
         {aktywnaZakladka === 'obecnosci' && (
           <AdminObecnosci grupy={grupy} zjazdy={zjazdy} />
+        )}
+
+        {/* ZAKŁADKA: Prowadzący */}
+        {aktywnaZakladka === 'prowadzacy' && (
+          <>
+            <h2 className="page-title">Nowy prowadzący</h2>
+            <form className="admin-form" onSubmit={dodajProwadzacego}>
+              <div className="login-field"><label>Imię</label><input type="text" value={nowyProwadzacy.imie} onChange={e => setNowyProwadzacy({ ...nowyProwadzacy, imie: e.target.value })} required /></div>
+              <div className="login-field"><label>Nazwisko</label><input type="text" value={nowyProwadzacy.nazwisko} onChange={e => setNowyProwadzacy({ ...nowyProwadzacy, nazwisko: e.target.value })} required /></div>
+              <button className="login-btn" type="submit">Dodaj prowadzącego</button>
+            </form>
+            <h2 className="page-title" style={{ marginTop: '24px' }}>Lista prowadzących</h2>
+            {prowadzacy.length === 0 && (
+              <div className="profil-card"><div className="profil-row"><span style={{ color: 'var(--text-muted)', fontSize: '13px' }}>Brak prowadzących. Dodaj pierwszego powyżej.</span></div></div>
+            )}
+            {prowadzacy.map(p => (
+              <div key={p.id} className="profil-card" style={{ marginBottom: '8px' }}>
+                <div className="profil-row">
+                  <span className="profil-lbl" style={{ fontWeight: 600 }}>{p.imie} {p.nazwisko}</span>
+                  <button onClick={() => usunProwadzacego(p.id)} style={{ background: 'none', border: 'none', color: '#c62828', cursor: 'pointer', fontSize: '18px', padding: '0 4px' }}>×</button>
+                </div>
+                {/* Zjazdy przypisane do tego prowadzącego */}
+                {(() => {
+                  const przypisane = zjazdy.filter(z => (z.prowadzacy || []).some(x => x.id === p.id));
+                  return przypisane.length > 0 ? (
+                    <div className="profil-row" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '2px' }}>
+                      <span className="profil-lbl" style={{ marginBottom: '4px' }}>Przypisany do zjazdów:</span>
+                      {przypisane.map(z => (
+                        <span key={z.id} style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                          Zjazd {z.nr} — {z.daty} ({grupy.find(g => g.id === z.grupa_id)?.nazwa || '?'})
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="profil-row"><span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Brak przypisanych zjazdów</span></div>
+                  );
+                })()}
+              </div>
+            ))}
+          </>
         )}
       </main>
 
@@ -1150,8 +1290,9 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
         <button className={`nav-item ${aktywnaZakladka === 'zjazdy' ? 'active' : ''}`} onClick={() => { setKomunikat(''); setEdytowanyZjazd(null); setAktywnaZakladka('zjazdy'); }}><Calendar size={20} /><span className="nav-label">Zjazdy</span></button>
         <button className={`nav-item ${aktywnaZakladka === 'kursanci' ? 'active' : ''}`} onClick={() => { setKomunikat(''); setAktywnaZakladka('kursanci'); }}><User size={20} /><span className="nav-label">Kursanci</span></button>
         <button className={`nav-item ${aktywnaZakladka === 'grupy' ? 'active' : ''}`} onClick={() => { setKomunikat(''); setAktywnaZakladka('grupy'); }}><Home size={20} /><span className="nav-label">Grupy</span></button>
-        <button className={`nav-item ${aktywnaZakladka === 'ankiety' ? 'active' : ''}`} onClick={() => { setKomunikat(''); setAktywnaZakladka('ankiety'); }}><Star size={20} /><span className="nav-label">Ankiety</span></button>
-        <button className={`nav-item ${aktywnaZakladka === 'obecnosci' ? 'active' : ''}`} onClick={() => { setKomunikat(''); setAktywnaZakladka('obecnosci'); }}><CheckSquare size={20} /><span className="nav-label">Obecność</span></button>
+        <button className={`nav-item ${aktywnaZakladka === 'prowadzacy' ? 'active' : ''}`} onClick={() => { setKomunikat(''); setAktywnaZakladka('prowadzacy'); }}><Star size={20} /><span className="nav-label">Prowadz.</span></button>
+        <button className={`nav-item ${aktywnaZakladka === 'ankiety' ? 'active' : ''}`} onClick={() => { setKomunikat(''); setAktywnaZakladka('ankiety'); }}><CheckSquare size={20} /><span className="nav-label">Ankiety</span></button>
+        <button className={`nav-item ${aktywnaZakladka === 'obecnosci' ? 'active' : ''}`} onClick={() => { setKomunikat(''); setAktywnaZakladka('obecnosci'); }}><Bell size={20} /><span className="nav-label">Obecność</span></button>
         <button className={`nav-item ${aktywnaZakladka === 'import' ? 'active' : ''}`} onClick={() => { setKomunikat(''); setAktywnaZakladka('import'); }}><MessageCircle size={20} /><span className="nav-label">Import</span></button>
       </nav>
     </div>
@@ -1181,10 +1322,21 @@ function EkranSzczegoly({ o, onWroc }: { o: Ogloszenie; onWroc: () => void }) {
       <button className="btn-wroc" onClick={onWroc}>← Wróć</button>
       <div className="szczegoly-header">
         <span className={`badge badge-${o.typ.toLowerCase()}`}>{o.typ}</span>
-        <h2 className="szczegoly-tytul">{o.tytul}</h2>
-        <p className="szczegoly-meta">Biuro On-Arch · {new Date(o.data_utworzenia).toLocaleDateString('pl-PL')}</p>
+        <h2 style={{
+          fontFamily: 'Cormorant Garamond, serif',
+          fontSize: '28px',
+          fontWeight: 300,
+          color: '#b0a8a0',
+          lineHeight: 1.25,
+          margin: '12px 0 8px',
+          letterSpacing: '0.3px',
+        }}>{o.tytul}</h2>
+        <p className="szczegoly-meta" style={{ color: '#c4bab4', fontSize: '11px', letterSpacing: '0.4px' }}>
+          Biuro On-Arch · {new Date(o.data_utworzenia).toLocaleDateString('pl-PL')}
+        </p>
+        <div style={{ height: '0.5px', background: 'var(--border-soft)', margin: '14px 0 0' }} />
       </div>
-      <div className="szczegoly-tresc">{o.szczegoly}</div>
+      <div className="szczegoly-tresc" style={{ whiteSpace: 'pre-line' }}>{o.szczegoly}</div>
     </>
   );
 }
@@ -1244,9 +1396,32 @@ function EkranZjazdy({ zjazdy }: { zjazdy: Zjazd[] }) {
           </div>
           <div className="sess-date">{z.daty}</div>
           <div className="sess-rows">
-            <div className="sess-row">{z.sala}</div>
-            <div className="sess-row">{z.adres}</div>
-            <div className="sess-row">{z.tematy}</div>
+            {z.sala && z.sala !== 'Do uzupełnienia' && (
+              <div className="sess-row">
+                <span className="sess-lbl">Sala:</span> {z.sala}
+              </div>
+            )}
+            {z.adres && z.adres !== 'Do uzupełnienia' && (
+              <div className="sess-row">
+                <span className="sess-lbl">Adres:</span> {z.adres}
+              </div>
+            )}
+            {z.tematy && (
+              <div className="sess-row">
+                <span className="sess-lbl">Temat:</span> {z.tematy}
+              </div>
+            )}
+            {z.prowadzacy && z.prowadzacy.length > 0 && (
+              <div className="sess-row" style={{ marginTop: '4px', paddingTop: '6px', borderTop: '0.5px solid var(--border-soft)' }}>
+                <span className="sess-lbl">Prowadzący:</span>{' '}
+                {z.prowadzacy.map((p, i) => (
+                  <span key={p.id}>
+                    {p.imie} {p.nazwisko}
+                    {i < z.prowadzacy!.length - 1 ? ', ' : ''}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       ))}
@@ -1368,7 +1543,21 @@ export default function App() {
         grupaId ? supabase.from('zjazdy').select('*').eq('grupa_id', grupaId).order('data_zjazdu', { ascending: true }) : supabase.from('zjazdy').select('*').order('data_zjazdu', { ascending: true }),
       ]);
       setOgloszenia((og || []).filter((o: any) => o.grupa_id === null || o.grupa_id === grupaId));
-      setZjazdy(zj || []);
+
+      // Pobierz prowadzących dla każdego zjazdu
+      const zjezdzeIds = (zj || []).map((z: any) => z.id);
+      let prowadzacyMap: Record<number, Prowadzacy[]> = {};
+      if (zjezdzeIds.length > 0) {
+        const { data: zpData } = await supabase
+          .from('zjazdy_prowadzacy')
+          .select('zjazd_id, prowadzacy(id, imie, nazwisko, bio, avatar_url)')
+          .in('zjazd_id', zjezdzeIds);
+        (zpData || []).forEach((row: any) => {
+          if (!prowadzacyMap[row.zjazd_id]) prowadzacyMap[row.zjazd_id] = [];
+          if (row.prowadzacy) prowadzacyMap[row.zjazd_id].push(row.prowadzacy);
+        });
+      }
+      setZjazdy((zj || []).map((z: any) => ({ ...z, prowadzacy: prowadzacyMap[z.id] || [] })));
     }
     pobierzDane();
   }, [user]);
