@@ -724,14 +724,50 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
   async function zapiszEdycjeZjazdu(e: React.FormEvent) {
     e.preventDefault();
     if (!edytowanyZjazd) return;
+
+    const poprzedniStatus = zjazdy.find(z => z.id === edytowanyZjazd.id)?.status;
+    const nowyStatus = edytowanyZjazd.status;
+    const grupaId = edytowanyZjazd.grupa_id;
+
     const { error } = await supabase.from('zjazdy').update({
       nr: edytowanyZjazd.nr, daty: edytowanyZjazd.daty, sala: edytowanyZjazd.sala,
       adres: edytowanyZjazd.adres, tematy: edytowanyZjazd.tematy,
-      status: edytowanyZjazd.status, data_zjazdu: edytowanyZjazd.data_zjazdu,
-      grupa_id: edytowanyZjazd.grupa_id,
+      status: nowyStatus, data_zjazdu: edytowanyZjazd.data_zjazdu,
+      grupa_id: grupaId,
     }).eq('id', edytowanyZjazd.id);
-    if (error) { setKomunikat('Blad: ' + error.message); }
-    else { setKomunikat('Zjazd zaktualizowany!'); setEdytowanyZjazd(null); pobierzZjazdy(); }
+
+    if (error) { setKomunikat('Blad: ' + error.message); return; }
+
+    // Jeśli właśnie oznaczono zjazd jako zakończony — sprawdź czy to ostatni
+    if (nowyStatus === 'zakonczony' && poprzedniStatus !== 'zakonczony') {
+      const { data: wszystkieZjazdy } = await supabase
+        .from('zjazdy').select('*').eq('grupa_id', grupaId).order('data_zjazdu', { ascending: true });
+
+      const jeszczeNadchodzace = (wszystkieZjazdy || []).filter(
+        z => z.id !== edytowanyZjazd.id && z.status === 'nadchodzacy'
+      );
+
+      if (jeszczeNadchodzace.length === 0) {
+        // Ostatni zjazd! Dodaj ogłoszenie-powiadomienie w aplikacji
+        const nazwaGrupy = grupy.find(g => g.id === grupaId)?.nazwa || 'Twoja grupa';
+        await supabase.from('ogloszenia').insert([{
+          typ: 'Informacja',
+          tytul: 'Wypełnij ankietę oceny kursu ⭐',
+          tresc: 'Twój kurs dobiegł końca. Prosimy o wypełnienie krótkiej ankiety — to tylko kilka minut!',
+          szczegoly: `Dziękujemy za udział w kursie ${nazwaGrupy}!\n\nTwoja opinia jest dla nas bardzo ważna i pomoże nam udoskonalić kolejne edycje kursu.\n\nProsimy o wypełnienie krótkiej ankiety oceniającej szkolenie. Znajdziesz ją w aplikacji, w zakładce ⭐ Ankieta w dolnym menu.\n\nZ góry dziękujemy!\nZespół On-Arch`,
+          nowe: true,
+          data_utworzenia: new Date().toISOString(),
+        }]);
+        setKomunikat(`Zjazd zakończony! Kursanci zobaczą powiadomienie o ankiecie w aplikacji.`);
+      } else {
+        setKomunikat('Zjazd zaktualizowany!');
+      }
+    } else {
+      setKomunikat('Zjazd zaktualizowany!');
+    }
+
+    setEdytowanyZjazd(null);
+    pobierzZjazdy();
   }
 
   async function usunZjazd(id: number) {
