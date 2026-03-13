@@ -1410,7 +1410,95 @@ function EkranGlowny({ ogloszenia, zjazdy, onOtworzOgloszenie, user, kursant }: 
   );
 }
 
+function ModalProwadzacy({ p, onZamknij }: { p: Prowadzacy; onZamknij: () => void }) {
+  return (
+    <div
+      onClick={onZamknij}
+      style={{
+        position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)',
+        zIndex: 1000, display: 'flex', alignItems: 'flex-end',
+        backdropFilter: 'blur(2px)',
+      }}
+    >
+      <div
+        onClick={e => e.stopPropagation()}
+        style={{
+          background: 'white', borderRadius: '24px 24px 0 0',
+          width: '100%', padding: '0 0 40px',
+          animation: 'slideUp 0.25s ease',
+        }}
+      >
+        {/* Uchwyt */}
+        <div style={{ display: 'flex', justifyContent: 'center', padding: '12px 0 0' }}>
+          <div style={{ width: '36px', height: '4px', borderRadius: '2px', background: '#e0d8d4' }} />
+        </div>
+
+        {/* Zdjęcie + imię */}
+        <div style={{ textAlign: 'center', padding: '20px 24px 16px' }}>
+          {p.avatar_url ? (
+            <img
+              src={p.avatar_url}
+              alt={p.imie}
+              style={{
+                width: '96px', height: '96px', borderRadius: '50%',
+                objectFit: 'cover', border: '3px solid var(--brand-light)',
+                marginBottom: '14px',
+              }}
+            />
+          ) : (
+            <div style={{
+              width: '96px', height: '96px', borderRadius: '50%',
+              background: 'var(--brand-light)', color: 'var(--brand)',
+              fontSize: '36px', fontWeight: 600,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              margin: '0 auto 14px',
+              fontFamily: 'Cormorant Garamond, serif',
+            }}>
+              {p.imie[0]}
+            </div>
+          )}
+          <div style={{
+            fontFamily: 'Cormorant Garamond, serif',
+            fontSize: '24px', fontWeight: 500, color: 'var(--text)',
+            marginBottom: '4px',
+          }}>
+            {p.imie} {p.nazwisko}
+          </div>
+        </div>
+
+        {/* Bio */}
+        {p.bio && (
+          <div style={{
+            margin: '0 20px', padding: '16px 18px',
+            background: '#faf6f3', borderRadius: '14px',
+            fontSize: '14px', color: 'var(--text)',
+            lineHeight: '1.75', whiteSpace: 'pre-line',
+            border: '0.5px solid var(--border)',
+          }}>
+            {p.bio}
+          </div>
+        )}
+
+        <button
+          onClick={onZamknij}
+          style={{
+            display: 'block', margin: '16px 20px 0',
+            width: 'calc(100% - 40px)', padding: '14px',
+            background: 'var(--brand-light)', color: 'var(--brand)',
+            border: 'none', borderRadius: '14px',
+            fontSize: '14px', fontWeight: 600, cursor: 'pointer',
+            fontFamily: 'Jost, sans-serif',
+          }}
+        >
+          Zamknij
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function EkranZjazdy({ zjazdy }: { zjazdy: Zjazd[] }) {
+  const [modalProwadzacy, setModalProwadzacy] = useState<Prowadzacy | null>(null);
   return (
     <>
       <h2 className="page-title">Plan zjazdów</h2>
@@ -1442,7 +1530,20 @@ function EkranZjazdy({ zjazdy }: { zjazdy: Zjazd[] }) {
                 <span className="sess-lbl">Prowadzący:</span>{' '}
                 {z.prowadzacy.map((p, i) => (
                   <span key={p.id}>
-                    {p.imie} {p.nazwisko}
+                    <button
+                      onClick={() => setModalProwadzacy(p)}
+                      style={{
+                        background: 'none', border: 'none', padding: 0,
+                        color: 'var(--brand)', fontWeight: 600,
+                        fontSize: '12px', cursor: 'pointer',
+                        fontFamily: 'Jost, sans-serif',
+                        textDecoration: 'underline',
+                        textDecorationStyle: 'dotted',
+                        textUnderlineOffset: '3px',
+                      }}
+                    >
+                      {p.imie} {p.nazwisko}
+                    </button>
                     {i < z.prowadzacy!.length - 1 ? ', ' : ''}
                   </span>
                 ))}
@@ -1451,6 +1552,7 @@ function EkranZjazdy({ zjazdy }: { zjazdy: Zjazd[] }) {
           </div>
         </div>
       ))}
+      {modalProwadzacy && <ModalProwadzacy p={modalProwadzacy} onZamknij={() => setModalProwadzacy(null)} />}
     </>
   );
 }
