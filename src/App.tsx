@@ -1312,6 +1312,9 @@ export default function App() {
 
       setKursant(kursantData ? { ...kursantData, grupy: grupaData } as Kursant : null);
 
+      // Automatycznie oznacz przeterminowane zjazdy jako zakonczony
+      await aktualizujStatusyZjazdow();
+
       const grupaId = kursantData?.grupa_id;
       const [{ data: og }, { data: zj }] = await Promise.all([
         supabase.from('ogloszenia').select('*').order('data_utworzenia', { ascending: false }),
@@ -1324,6 +1327,55 @@ export default function App() {
     }
     pobierzDane();
   }, [user]);
+
+  async function aktualizujStatusyZjazdow() {
+    const dzisiaj = new Date().toISOString().split('T')[0];
+
+    const { data: przestarzale } = await supabase
+      .from('zjazdy')
+      .select('*')
+      .eq('status', 'nadchodzacy')
+      .lt('data_zjazdu', dzisiaj);
+
+    if (!przestarzale || przestarzale.length === 0) return;
+
+    for (const zjazd of przestarzale) {
+      await supabase.from('zjazdy').update({ status: 'zakonczony' }).eq('id', zjazd.id);
+
+      const { data: wszystkieZjazdy } = await supabase
+        .from('zjazdy')
+        .select('*')
+        .eq('grupa_id', zjazd.grupa_id)
+        .order('data_zjazdu', { ascending: true });
+
+      const pozostaleNadchodzace = (wszystkieZjazdy || []).filter(
+        z => z.id !== zjazd.id && z.status === 'nadchodzacy' && z.data_zjazdu >= dzisiaj
+      );
+
+      if (pozostaleNadchodzace.length === 0) {
+        const { data: istniejacePowiadomienie } = await supabase
+          .from('ogloszenia')
+          .select('id')
+          .eq('tytul', 'Wypełnij ankietę oceny kursu ⭐')
+          .maybeSingle();
+
+        if (!istniejacePowiadomienie) {
+          const { data: grupaInfo } = await supabase
+            .from('grupy').select('nazwa').eq('id', zjazd.grupa_id).single();
+          const nazwaGrupy = grupaInfo?.nazwa || 'Twoja grupa';
+
+          await supabase.from('ogloszenia').insert([{
+            typ: 'Informacja',
+            tytul: 'Wypełnij ankietę oceny kursu ⭐',
+            tresc: 'Twój kurs dobiegł końca. Prosimy o wypełnienie krótkiej ankiety — to tylko kilka minut!',
+            szczegoly: 'Dziękujemy za udział w kursie ' + nazwaGrupy + '!\n\nTwoja opinia jest dla nas bardzo ważna i pomoże nam udoskonalić kolejne edycje kursu.\n\nProsimy o wypełnienie krótkiej ankiety oceniającej szkolenie. Znajdziesz ją w aplikacji, w zakładce Ankieta w dolnym menu.\n\nZ góry dziękujemy!\nZespół On-Arch',
+            nowe: true,
+            data_utworzenia: new Date().toISOString(),
+          }]);
+        }
+      }
+    }
+  }
 
   async function wyloguj() {
     await supabase.auth.signOut();
