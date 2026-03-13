@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import './App.css';
 import { supabase } from './supabase';
-import { Home, Calendar, Bell, MessageCircle, User } from 'lucide-react';
+import { Home, Calendar, Bell, MessageCircle, User, Star } from 'lucide-react';
 
 type Ogloszenie = {
   id: string;
@@ -63,6 +63,256 @@ type Wiadomosc = {
   created_at: string;
 };
 
+type OdpowiedziAnkiety = {
+  zadowolenie: number;
+  wiedza_przed: number;
+  wiedza_po: number;
+  zajecia_teoretyczne: number;
+  zajecia_rysunek: number;
+  zajecia_programy: number;
+  zakres_tematyczny: number;
+  org_czas: number;
+  org_miejsce: number;
+  org_baza: number;
+  org_materialy: number;
+  org_kadra: number;
+  org_dostosowanie: number;
+  stopien_oczekiwan: number;
+  ocena_ogolna: number;
+  przydatne_informacje: string;
+  uzasadnienie_zle: string;
+  inne_uwagi: string;
+  plec: string;
+  wyksztalcenie: string;
+  wiek: string;
+};
+
+function GwiazdkiOcena({ wartosc, onChange }: { wartosc: number; onChange: (v: number) => void }) {
+  const [hover, setHover] = useState(0);
+  return (
+    <div style={{ display: 'flex', gap: '6px', margin: '6px 0' }}>
+      {[1, 2, 3, 4, 5].map(i => (
+        <button
+          key={i}
+          type="button"
+          onClick={() => onChange(i)}
+          onMouseEnter={() => setHover(i)}
+          onMouseLeave={() => setHover(0)}
+          style={{
+            background: 'none', border: 'none', cursor: 'pointer', padding: '2px',
+            fontSize: '28px', color: (hover || wartosc) >= i ? '#A05C5C' : '#ddd',
+            transition: 'color 0.15s'
+          }}
+        >★</button>
+      ))}
+    </div>
+  );
+}
+
+function EkranAnkieta({ kursant, zjazdy, user }: { kursant: Kursant | null; zjazdy: Zjazd[]; user: User }) {
+  const [wypelniona, setWypelniona] = useState<boolean | null>(null);
+  const [wysylanie, setWysylanie] = useState(false);
+  const [sukces, setSukces] = useState(false);
+  const [krok, setKrok] = useState(1);
+  const [odpowiedzi, setOdpowiedzi] = useState<OdpowiedziAnkiety>({
+    zadowolenie: 0, wiedza_przed: 0, wiedza_po: 0,
+    zajecia_teoretyczne: 0, zajecia_rysunek: 0, zajecia_programy: 0,
+    zakres_tematyczny: 0, org_czas: 0, org_miejsce: 0,
+    org_baza: 0, org_materialy: 0, org_kadra: 0, org_dostosowanie: 0,
+    stopien_oczekiwan: 0, ocena_ogolna: 0,
+    przydatne_informacje: '', uzasadnienie_zle: '', inne_uwagi: '',
+    plec: '', wyksztalcenie: '', wiek: '',
+  });
+
+  // Sprawdź czy ostatni zjazd grupy już minął
+  const ostatniZjazd = zjazdy.length > 0 ? zjazdy[zjazdy.length - 1] : null;
+  const kursZakonczony = ostatniZjazd?.status === 'zakonczony';
+
+  useEffect(() => {
+    if (!user || !kursant?.grupa_id) return;
+    supabase.from('ankiety')
+      .select('id')
+      .eq('grupa_id', kursant.grupa_id)
+      .eq('user_id', user.id)
+      .maybeSingle()
+      .then(({ data }) => setWypelniona(!!data));
+  }, [user, kursant]);
+
+  function ustaw(pole: keyof OdpowiedziAnkiety, wartosc: number | string) {
+    setOdpowiedzi(prev => ({ ...prev, [pole]: wartosc }));
+  }
+
+  async function wyslij() {
+    setWysylanie(true);
+    const { error } = await supabase.from('ankiety').insert([{
+      ...odpowiedzi,
+      grupa_id: kursant?.grupa_id,
+      user_id: user.id,
+    }]);
+    if (!error) setSukces(true);
+    setWysylanie(false);
+  }
+
+  if (!kursZakonczony) {
+    return (
+      <div style={{ padding: '24px', textAlign: 'center' }}>
+        <div style={{ fontSize: '48px', marginBottom: '16px' }}>🔒</div>
+        <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '22px', marginBottom: '12px' }}>Ankieta niedostępna</h2>
+        <p style={{ color: 'var(--text-muted)', fontSize: '14px', lineHeight: '1.6' }}>
+          Ankieta oceniająca kurs zostanie odblokowana po zakończeniu ostatniego zjazdu Twojej grupy.
+        </p>
+        {ostatniZjazd && (
+          <div style={{ marginTop: '20px', background: 'var(--bg-card)', borderRadius: '12px', padding: '16px' }}>
+            <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Ostatni zjazd:</p>
+            <p style={{ fontWeight: '600', color: 'var(--brand)', marginTop: '4px' }}>Zjazd {ostatniZjazd.nr} — {ostatniZjazd.daty}</p>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  if (wypelniona === null) return <div style={{ padding: '24px', textAlign: 'center', color: 'var(--text-muted)' }}>Ładowanie...</div>;
+
+  if (wypelniona || sukces) {
+    return (
+      <div style={{ padding: '24px', textAlign: 'center' }}>
+        <div style={{ fontSize: '56px', marginBottom: '16px' }}>🎉</div>
+        <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '24px', marginBottom: '12px' }}>Dziękujemy!</h2>
+        <p style={{ color: 'var(--text-muted)', fontSize: '14px', lineHeight: '1.6' }}>
+          Twoja opinia została zapisana. Dziękujemy za udział w kursie i za poświęcony czas.
+        </p>
+        <div style={{ marginTop: '24px', background: 'var(--bg-card)', borderRadius: '12px', padding: '16px' }}>
+          <p style={{ fontSize: '13px', color: 'var(--brand)', fontWeight: '600' }}>On-Arch Barbara Szczęsna-Dyńska</p>
+          <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px' }}>biuro@on-arch.pl | 883 659 069</p>
+        </div>
+      </div>
+    );
+  }
+
+  const sekcjaTytul = (t: string) => (
+    <h3 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '18px', color: 'var(--brand)', margin: '20px 0 8px' }}>{t}</h3>
+  );
+
+  const pytanieGwiazdki = (label: string, pole: keyof OdpowiedziAnkiety) => (
+    <div style={{ marginBottom: '16px' }}>
+      <p style={{ fontSize: '13px', color: 'var(--text)', lineHeight: '1.5', marginBottom: '4px' }}>{label}</p>
+      <GwiazdkiOcena wartosc={odpowiedzi[pole] as number} onChange={v => ustaw(pole, v)} />
+    </div>
+  );
+
+  const select = (label: string, pole: keyof OdpowiedziAnkiety, opcje: string[]) => (
+    <div className="login-field" style={{ marginBottom: '12px' }}>
+      <label style={{ fontSize: '13px' }}>{label}</label>
+      <select value={odpowiedzi[pole] as string} onChange={e => ustaw(pole, e.target.value)}>
+        <option value="">-- wybierz --</option>
+        {opcje.map(o => <option key={o} value={o}>{o}</option>)}
+      </select>
+    </div>
+  );
+
+  const textarea = (label: string, pole: keyof OdpowiedziAnkiety, opcjonalne = false) => (
+    <div className="login-field" style={{ marginBottom: '12px' }}>
+      <label style={{ fontSize: '13px' }}>{label}{opcjonalne && <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}> (opcjonalnie)</span>}</label>
+      <textarea
+        value={odpowiedzi[pole] as string}
+        onChange={e => ustaw(pole, e.target.value)}
+        rows={3}
+        style={{ resize: 'vertical', fontSize: '13px' }}
+      />
+    </div>
+  );
+
+  const krokowLacznie = 4;
+
+  return (
+    <div style={{ paddingBottom: '16px' }}>
+      <div style={{ background: 'var(--brand)', color: 'white', padding: '16px 20px', borderRadius: '0 0 16px 16px', marginBottom: '4px' }}>
+        <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '22px', marginBottom: '4px' }}>Ankieta oceny kursu</h2>
+        <p style={{ fontSize: '12px', opacity: 0.85 }}>Odpowiedzi są anonimowe • Krok {krok} z {krokowLacznie}</p>
+        <div style={{ display: 'flex', gap: '4px', marginTop: '10px' }}>
+          {Array.from({ length: krokowLacznie }).map((_, i) => (
+            <div key={i} style={{ flex: 1, height: '3px', borderRadius: '2px', background: i < krok ? 'white' : 'rgba(255,255,255,0.3)' }} />
+          ))}
+        </div>
+      </div>
+
+      <div style={{ padding: '8px 20px' }}>
+        {krok === 1 && (
+          <>
+            {sekcjaTytul('Ocena szkolenia')}
+            {pytanieGwiazdki('1. Czy jest Pan/Pani zadowolony/a ze szkolenia?', 'zadowolenie')}
+            {pytanieGwiazdki('2. Jak ocenia Pan/Pani swój poziom wiedzy PRZED szkoleniem?', 'wiedza_przed')}
+            {pytanieGwiazdki('3. Jak ocenia Pan/Pani swój poziom wiedzy PO szkoleniu?', 'wiedza_po')}
+            {sekcjaTytul('Prowadzenie zajęć')}
+            {pytanieGwiazdki('4a. Zajęcia teoretyczne', 'zajecia_teoretyczne')}
+            {pytanieGwiazdki('4b. Zajęcia praktyczne — Rysunek techniczny', 'zajecia_rysunek')}
+            {pytanieGwiazdki('4c. Zajęcia praktyczne — Programy komputerowe', 'zajecia_programy')}
+            {pytanieGwiazdki('5. Jak ocenia Pan/Pani zakres tematyczny szkolenia?', 'zakres_tematyczny')}
+          </>
+        )}
+
+        {krok === 2 && (
+          <>
+            {sekcjaTytul('Organizacja szkolenia')}
+            {pytanieGwiazdki('6a. Czas trwania szkolenia', 'org_czas')}
+            {pytanieGwiazdki('6b. Miejsce szkolenia', 'org_miejsce')}
+            {pytanieGwiazdki('6c. Baza dydaktyczna (lokal, sprzęt)', 'org_baza')}
+            {pytanieGwiazdki('6d. Jakość i przydatność materiałów szkoleniowych', 'org_materialy')}
+            {pytanieGwiazdki('6e. Przygotowanie zawodowe kadry dydaktycznej', 'org_kadra')}
+            {pytanieGwiazdki('6f. Dostosowanie poziomu zajęć do potrzeb grupy', 'org_dostosowanie')}
+            {textarea('W przypadku oceny negatywnej — proszę o uzasadnienie:', 'uzasadnienie_zle', true)}
+          </>
+        )}
+
+        {krok === 3 && (
+          <>
+            {sekcjaTytul('Podsumowanie')}
+            {pytanieGwiazdki('7. W jakim stopniu szkolenie spełniło Pana/Pani oczekiwania?', 'stopien_oczekiwan')}
+            {pytanieGwiazdki('Ogólna ocena szkolenia', 'ocena_ogolna')}
+            {textarea('Które z przekazywanych informacji uważa Pan/Pani za najbardziej przydatne?', 'przydatne_informacje', true)}
+            {textarea('8. Inne uwagi dotyczące szkolenia', 'inne_uwagi', true)}
+          </>
+        )}
+
+        {krok === 4 && (
+          <>
+            {sekcjaTytul('Metryczka')}
+            <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '16px' }}>
+              Dane służą wyłącznie do celów statystycznych i nie pozwalają na identyfikację osoby.
+            </p>
+            {select('Płeć', 'plec', ['Kobieta', 'Mężczyzna', 'Inne', 'Wolę nie podawać'])}
+            {select('Wykształcenie', 'wyksztalcenie', ['Podstawowe', 'Zawodowe', 'Średnie', 'Wyższe licencjackie', 'Wyższe magisterskie', 'Doktorat lub wyższe'])}
+            {select('Wiek', 'wiek', ['18–24', '25–34', '35–44', '45–54', '55–64', '65+'])}
+          </>
+        )}
+
+        <div style={{ display: 'flex', gap: '10px', marginTop: '24px' }}>
+          {krok > 1 && (
+            <button
+              onClick={() => setKrok(k => k - 1)}
+              style={{ flex: 1, padding: '14px', borderRadius: '12px', border: '1px solid var(--brand)', background: 'white', color: 'var(--brand)', fontSize: '15px', cursor: 'pointer', fontWeight: '600' }}
+            >← Wstecz</button>
+          )}
+          {krok < krokowLacznie ? (
+            <button
+              onClick={() => setKrok(k => k + 1)}
+              className="login-btn"
+              style={{ flex: 1 }}
+            >Dalej →</button>
+          ) : (
+            <button
+              onClick={wyslij}
+              className="login-btn"
+              style={{ flex: 1 }}
+              disabled={wysylanie}
+            >{wysylanie ? 'Wysyłanie...' : 'Wyślij ankietę ✓'}</button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function EkranZmianaHasla() {
   const [haslo, setHaslo] = useState('');
   const [haslo2, setHaslo2] = useState('');
@@ -119,6 +369,7 @@ function EkranZmianaHasla() {
     </div>
   );
 }
+
 function EkranPolitykaPrywatnosci({ onWroc }: { onWroc: () => void }) {
   return (
     <div className="login-screen" style={{overflowY:'auto', alignItems:'flex-start', padding:'24px'}}>
@@ -201,8 +452,9 @@ function EkranLogowania({ onZalogowano }: { onZalogowano: () => void }) {
     else { setResetWyslany(true); }
     setLadowanie(false);
   }
+
   if (pokazPolityka) return <EkranPolitykaPrywatnosci onWroc={() => setPokazPolityka(false)} />;
-if (pokazRegulamin) return <EkranRegulamin onWroc={() => setPokazRegulamin(false)} />;
+  if (pokazRegulamin) return <EkranRegulamin onWroc={() => setPokazRegulamin(false)} />;
 
   if (resetWyslany) {
     return (
@@ -256,12 +508,12 @@ if (pokazRegulamin) return <EkranRegulamin onWroc={() => setPokazRegulamin(false
           </div>
           {blad && <div className="login-error">{blad}</div>}
           <div style={{display:'flex', alignItems:'flex-start', gap:'8px', margin:'12px 0'}}>
-  <input type="checkbox" id="zgoda" checked={zgodaRodo} onChange={e => setZgodaRodo(e.target.checked)} style={{marginTop:'3px', accentColor:'var(--brand)'}} />
-  <label htmlFor="zgoda" style={{fontSize:'12px', color:'var(--text-muted)', lineHeight:'1.6'}}>
-    Akceptuję <button type="button" className="btn-link" style={{display:'inline', fontSize:'12px'}} onClick={() => setPokazRegulamin(true)}>Regulamin</button> oraz <button type="button" className="btn-link" style={{display:'inline', fontSize:'12px'}} onClick={() => setPokazPolityka(true)}>Politykę Prywatności</button>
-  </label>
-</div>
-<button className="login-btn" type="submit" disabled={ladowanie || !zgodaRodo}>{ladowanie ? 'Logowanie...' : 'Zaloguj sie'}</button>
+            <input type="checkbox" id="zgoda" checked={zgodaRodo} onChange={e => setZgodaRodo(e.target.checked)} style={{marginTop:'3px', accentColor:'var(--brand)'}} />
+            <label htmlFor="zgoda" style={{fontSize:'12px', color:'var(--text-muted)', lineHeight:'1.6'}}>
+              Akceptuję <button type="button" className="btn-link" style={{display:'inline', fontSize:'12px'}} onClick={() => setPokazRegulamin(true)}>Regulamin</button> oraz <button type="button" className="btn-link" style={{display:'inline', fontSize:'12px'}} onClick={() => setPokazPolityka(true)}>Politykę Prywatności</button>
+            </label>
+          </div>
+          <button className="login-btn" type="submit" disabled={ladowanie || !zgodaRodo}>{ladowanie ? 'Logowanie...' : 'Zaloguj sie'}</button>
         </form>
         <button className="btn-link" onClick={() => setResetMode(true)}>Nie pamietasz hasla?</button>
         <p className="login-kontakt">Problemy z logowaniem? Zadzwon do biura:<br/><strong>883 659 069</strong></p>
@@ -340,6 +592,7 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
   const [kursanci, setKursanci] = useState<KursantAdmin[]>([]);
   const [ogloszenia, setOgloszenia] = useState<Ogloszenie[]>([]);
   const [zjazdy, setZjazdy] = useState<Zjazd[]>([]);
+  const [ankiety, setAnkiety] = useState<OdpowiedziAnkiety[]>([]);
   const [edytowane, setEdytowane] = useState<Ogloszenie | null>(null);
   const [edytowanyZjazd, setEdytowanyZjazd] = useState<Zjazd | null>(null);
   const [noweOgl, setNoweOgl] = useState({ typ: 'Informacja', tytul: '', tresc: '', szczegoly: '', nowe: true });
@@ -349,6 +602,7 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
   const [komunikat, setKomunikat] = useState('');
   const [importStatus, setImportStatus] = useState<{imie: string; nazwisko: string; email: string; status: string}[]>([]);
   const [importowanie, setImportowanie] = useState(false);
+  const [wybranaGrupaAnkiety, setWybranaGrupaAnkiety] = useState('');
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -356,6 +610,7 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
     pobierzOgloszenia();
     pobierzZjazdy();
     supabase.from('kursanci').select('id, imie, nazwisko, grupa_id, user_id').then(({ data }) => setKursanci((data || []) as unknown as KursantAdmin[]));
+    supabase.from('ankiety').select('*').order('created_at', { ascending: false }).then(({ data }) => setAnkiety((data || []) as unknown as OdpowiedziAnkiety[]));
   }, []);
 
   async function pobierzGrupy() {
@@ -424,10 +679,7 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
 
   async function dodajKursanta(e: React.FormEvent) {
     e.preventDefault();
-    const { data: authData, error: authError } = await supabase.auth.signUp({
-      email: nowyKursant.email,
-      password: Math.random().toString(36).slice(-10),
-    });
+    const { data: authData, error: authError } = await supabase.auth.signUp({ email: nowyKursant.email, password: Math.random().toString(36).slice(-10) });
     if (authError) { setKomunikat('Blad tworzenia konta: ' + authError.message); return; }
     const { error } = await supabase.from('kursanci').insert([{ imie: nowyKursant.imie, nazwisko: nowyKursant.nazwisko, grupa_id: parseInt(nowyKursant.grupa_id), user_id: authData.user!.id, rola: 'kursant' }]);
     if (error) { setKomunikat('Blad: ' + error.message); }
@@ -457,9 +709,7 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
     for (const row of rows) {
       const [imie, nazwisko, email, grupa_id] = row.split(',').map(s => s.trim());
       if (!imie || !nazwisko || !email || !grupa_id) continue;
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email, password: Math.random().toString(36).slice(-10),
-      });
+      const { data: authData, error: authError } = await supabase.auth.signUp({ email, password: Math.random().toString(36).slice(-10) });
       if (authError) { wyniki.push({ imie, nazwisko, email, status: 'Blad: ' + authError.message }); continue; }
       const { error } = await supabase.from('kursanci').insert([{ imie, nazwisko, grupa_id: parseInt(grupa_id), user_id: authData.user!.id, rola: 'kursant' }]);
       wyniki.push({ imie, nazwisko, email, status: error ? 'Blad: ' + error.message : 'Dodano!' });
@@ -471,6 +721,29 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
     setKursanci((data || []) as unknown as KursantAdmin[]);
     if (fileRef.current) fileRef.current.value = '';
   }
+
+  function eksportujAnkietyCSV() {
+    const filtred = wybranaGrupaAnkiety
+      ? ankiety.filter((a: any) => a.grupa_id === parseInt(wybranaGrupaAnkiety))
+      : ankiety;
+    const naglowki = ['data', 'grupa_id', 'zadowolenie', 'wiedza_przed', 'wiedza_po', 'zajecia_teoretyczne', 'zajecia_rysunek', 'zajecia_programy', 'zakres_tematyczny', 'org_czas', 'org_miejsce', 'org_baza', 'org_materialy', 'org_kadra', 'org_dostosowanie', 'stopien_oczekiwan', 'ocena_ogolna', 'przydatne_informacje', 'uzasadnienie_zle', 'inne_uwagi', 'plec', 'wyksztalcenie', 'wiek'];
+    const wiersze = filtred.map((a: any) => naglowki.map(k => `"${(a[k] ?? '').toString().replace(/"/g, '""')}"`).join(','));
+    const csv = [naglowki.join(','), ...wiersze].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'ankiety_onarch.csv'; a.click();
+  }
+
+  function srednia(pole: keyof OdpowiedziAnkiety, lista: OdpowiedziAnkiety[]) {
+    const vals = lista.map(a => a[pole] as number).filter(v => v > 0);
+    if (!vals.length) return '—';
+    return (vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(1);
+  }
+
+  const ankietyFiltrowane = wybranaGrupaAnkiety
+    ? ankiety.filter((a: any) => a.grupa_id === parseInt(wybranaGrupaAnkiety))
+    : ankiety;
 
   return (
     <div className="app">
@@ -669,7 +942,53 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
             )}
           </>
         )}
+
+        {aktywnaZakladka === 'ankiety' && (
+          <>
+            <h2 className="page-title">Wyniki ankiet</h2>
+            <div className="login-field" style={{marginBottom:'12px'}}>
+              <label>Filtruj po grupie</label>
+              <select value={wybranaGrupaAnkiety} onChange={e => setWybranaGrupaAnkiety(e.target.value)}>
+                <option value="">Wszystkie grupy ({ankiety.length} odpowiedzi)</option>
+                {grupy.map(g => <option key={g.id} value={g.id}>{g.nazwa} ({ankiety.filter((a:any) => a.grupa_id === g.id).length})</option>)}
+              </select>
+            </div>
+            <button className="login-btn" style={{marginBottom:'16px'}} onClick={eksportujAnkietyCSV}>⬇ Pobierz CSV</button>
+            {ankietyFiltrowane.length === 0 ? (
+              <div className="profil-card"><p style={{color:'var(--text-muted)', textAlign:'center', fontSize:'14px'}}>Brak wypełnionych ankiet.</p></div>
+            ) : (
+              <div className="profil-card">
+                <h3 style={{fontFamily:'Cormorant Garamond, serif', fontSize:'17px', marginBottom:'12px', color:'var(--brand)'}}>Średnie oceny ({ankietyFiltrowane.length} ankiet)</h3>
+                {[
+                  ['Zadowolenie ze szkolenia', 'zadowolenie'],
+                  ['Wiedza przed szkoleniem', 'wiedza_przed'],
+                  ['Wiedza po szkoleniu', 'wiedza_po'],
+                  ['Zajęcia teoretyczne', 'zajecia_teoretyczne'],
+                  ['Zajęcia — rysunek techniczny', 'zajecia_rysunek'],
+                  ['Zajęcia — programy komputerowe', 'zajecia_programy'],
+                  ['Zakres tematyczny', 'zakres_tematyczny'],
+                  ['Czas trwania', 'org_czas'],
+                  ['Miejsce szkolenia', 'org_miejsce'],
+                  ['Baza dydaktyczna', 'org_baza'],
+                  ['Materiały szkoleniowe', 'org_materialy'],
+                  ['Kadra dydaktyczna', 'org_kadra'],
+                  ['Dostosowanie do grupy', 'org_dostosowanie'],
+                  ['Spełnienie oczekiwań', 'stopien_oczekiwan'],
+                  ['Ocena ogólna', 'ocena_ogolna'],
+                ].map(([label, pole]) => (
+                  <div key={pole} className="profil-row">
+                    <span className="profil-lbl" style={{fontSize:'12px'}}>{label}</span>
+                    <span className="profil-val" style={{fontWeight:'700', color:'var(--brand)'}}>
+                      {'★'.repeat(Math.round(parseFloat(srednia(pole as keyof OdpowiedziAnkiety, ankietyFiltrowane))))} {srednia(pole as keyof OdpowiedziAnkiety, ankietyFiltrowane)}/5
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
+        )}
       </main>
+
       <nav className="bottom-nav" style={{overflowX:'auto'}}>
         <button className={`nav-item ${aktywnaZakladka === 'ogloszenia' ? 'active' : ''}`} onClick={() => { setKomunikat(''); setEdytowane(null); setAktywnaZakladka('ogloszenia'); }}>
           <Bell size={20} /><span className="nav-label">Ogloszenia</span>
@@ -682,6 +1001,9 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
         </button>
         <button className={`nav-item ${aktywnaZakladka === 'grupy' ? 'active' : ''}`} onClick={() => { setKomunikat(''); setAktywnaZakladka('grupy'); }}>
           <Home size={20} /><span className="nav-label">Grupy</span>
+        </button>
+        <button className={`nav-item ${aktywnaZakladka === 'ankiety' ? 'active' : ''}`} onClick={() => { setKomunikat(''); setAktywnaZakladka('ankiety'); }}>
+          <Star size={20} /><span className="nav-label">Ankiety</span>
         </button>
         <button className={`nav-item ${aktywnaZakladka === 'import' ? 'active' : ''}`} onClick={() => { setKomunikat(''); setAktywnaZakladka('import'); }}>
           <MessageCircle size={20} /><span className="nav-label">Import</span>
@@ -829,7 +1151,7 @@ function EkranProfil({ user, kursant, onWyloguj, onAvatarZmieniony }: { user: Us
         <div className="profil-row"><span className="profil-lbl">Kurs</span><span className="profil-val">Projektowanie wnetrz</span></div>
         <div className="profil-row"><span className="profil-lbl">Miasto</span><span className="profil-val">{miasto}</span></div>
         <div className="profil-row"><span className="profil-lbl">Edycja</span><span className="profil-val">{edycja}</span></div>
-        <div className="profil-row"><span className="profil-lbl">Email</span><span className="profil-val"> {user.email}</span></div>
+        <div className="profil-row"><span className="profil-lbl">Email</span><span className="profil-val">{user.email}</span></div>
         <div className="profil-row"><span className="profil-lbl">Telefon biura</span><span className="profil-val">883 659 069</span></div>
       </div>
       <button className="btn-wyloguj" onClick={onWyloguj}>Wyloguj sie</button>
@@ -912,6 +1234,10 @@ export default function App() {
   const avatarUrl = kursant?.avatar_url;
   const inicjal = kursant ? kursant.imie[0] : user?.email?.[0]?.toUpperCase() || '?';
 
+  // Sprawdź czy ankieta jest dostępna (ostatni zjazd zakończony)
+  const ostatniZjazd = zjazdy.length > 0 ? zjazdy[zjazdy.length - 1] : null;
+  const ankietaDostepna = ostatniZjazd?.status === 'zakonczony';
+
   if (ladowanie) return <div className="ladowanie">Ladowanie...</div>;
   if (resetMode) return <EkranZmianaHasla />;
   if (!user) return <EkranLogowania onZalogowano={() => {}} />;
@@ -936,6 +1262,7 @@ export default function App() {
             {aktywnaZakladka === 'zjazdy' && <EkranZjazdy zjazdy={zjazdy} />}
             {aktywnaZakladka === 'ogloszenia' && <EkranOgloszenia ogloszenia={ogloszenia} onOtworzOgloszenie={otworzOgloszenie} />}
             {aktywnaZakladka === 'czat' && <EkranCzat user={user} kursant={kursant} />}
+            {aktywnaZakladka === 'ankieta' && <EkranAnkieta kursant={kursant} zjazdy={zjazdy} user={user} />}
             {aktywnaZakladka === 'profil' && <EkranProfil user={user} kursant={kursant} onWyloguj={wyloguj} onAvatarZmieniony={onAvatarZmieniony} />}
           </>
         )}
@@ -953,6 +1280,14 @@ export default function App() {
         </button>
         <button className={`nav-item ${aktywnaZakladka === 'czat' ? 'active' : ''}`} onClick={() => { setAktywneOgloszenie(null); setAktywnaZakladka('czat'); }}>
           <MessageCircle size={20} /><span className="nav-label">Czat</span>
+        </button>
+        <button
+          className={`nav-item ${aktywnaZakladka === 'ankieta' ? 'active' : ''}`}
+          onClick={() => { setAktywneOgloszenie(null); setAktywnaZakladka('ankieta'); }}
+          style={{ opacity: ankietaDostepna ? 1 : 0.4 }}
+        >
+          <Star size={20} /><span className="nav-label">Ankieta</span>
+          {ankietaDostepna && <span className="nav-badge" style={{background:'#A05C5C'}}>!</span>}
         </button>
         <button className={`nav-item ${aktywnaZakladka === 'profil' ? 'active' : ''}`} onClick={() => { setAktywneOgloszenie(null); setAktywnaZakladka('profil'); }}>
           <User size={20} /><span className="nav-label">Profil</span>
