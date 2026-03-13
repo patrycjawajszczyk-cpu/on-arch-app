@@ -125,13 +125,11 @@ function EkranAnkieta({ kursant, zjazdy, user }: { kursant: Kursant | null; zjaz
     nps: '', plec: '', wyksztalcenie: '', wiek: '',
   });
 
-  // Sprawdź czy któreś pytanie organizacyjne ma niską ocenę (1 lub 2)
   const pokazUzasadnienie = [
     odpowiedzi.org_czas, odpowiedzi.org_miejsce, odpowiedzi.org_baza,
     odpowiedzi.org_materialy, odpowiedzi.org_kadra, odpowiedzi.org_dostosowanie,
   ].some(v => v > 0 && v <= 2);
 
-  // Sprawdź czy ostatni zjazd grupy już minął
   const ostatniZjazd = zjazdy.length > 0 ? zjazdy[zjazdy.length - 1] : null;
   const kursZakonczony = ostatniZjazd?.status === 'zakonczony';
 
@@ -169,7 +167,7 @@ function EkranAnkieta({ kursant, zjazdy, user }: { kursant: Kursant | null; zjaz
           Ankieta oceniająca kurs zostanie odblokowana po zakończeniu ostatniego zjazdu Twojej grupy.
         </p>
         {ostatniZjazd && (
-          <div style={{ marginTop: '20px', background: 'var(--bg-card)', borderRadius: '12px', padding: '16px' }}>
+          <div style={{ marginTop: '20px', background: 'var(--surface)', borderRadius: '12px', padding: '16px', border: '0.5px solid var(--border)' }}>
             <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Ostatni zjazd:</p>
             <p style={{ fontWeight: '600', color: 'var(--brand)', marginTop: '4px' }}>Zjazd {ostatniZjazd.nr} — {ostatniZjazd.daty}</p>
           </div>
@@ -188,7 +186,7 @@ function EkranAnkieta({ kursant, zjazdy, user }: { kursant: Kursant | null; zjaz
         <p style={{ color: 'var(--text-muted)', fontSize: '14px', lineHeight: '1.6' }}>
           Twoja opinia została zapisana. Dziękujemy za udział w kursie i za poświęcony czas.
         </p>
-        <div style={{ marginTop: '24px', background: 'var(--bg-card)', borderRadius: '12px', padding: '16px' }}>
+        <div style={{ marginTop: '24px', background: 'var(--surface)', borderRadius: '12px', padding: '16px', border: '0.5px solid var(--border)' }}>
           <p style={{ fontSize: '13px', color: 'var(--brand)', fontWeight: '600' }}>On-Arch Barbara Szczęsna-Dyńska</p>
           <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px' }}>biuro@on-arch.pl | 883 659 069</p>
         </div>
@@ -248,7 +246,6 @@ function EkranAnkieta({ kursant, zjazdy, user }: { kursant: Kursant | null; zjaz
           <>
             {sekcjaTytul('Ocena szkolenia')}
             {pytanieGwiazdki('1. Czy jest Pan/Pani zadowolony/a ze szkolenia?', 'zadowolenie')}
-
             <div style={{ marginBottom: '16px' }}>
               <p style={{ fontSize: '13px', color: 'var(--text)', lineHeight: '1.5', marginBottom: '8px' }}>
                 2. Czy czujesz, że Twoja wiedza wzrosła?
@@ -262,16 +259,15 @@ function EkranAnkieta({ kursant, zjazdy, user }: { kursant: Kursant | null; zjaz
                     style={{
                       flex: 1, padding: '10px 4px', borderRadius: '10px', fontSize: '13px',
                       cursor: 'pointer', fontWeight: odpowiedzi.wiedza_wzrosla === opcja ? '600' : '400',
-                      background: odpowiedzi.wiedza_wzrosla === opcja ? '#A05C5C' : 'var(--bg-card)',
+                      background: odpowiedzi.wiedza_wzrosla === opcja ? '#A05C5C' : 'var(--surface)',
                       color: odpowiedzi.wiedza_wzrosla === opcja ? 'white' : 'var(--text)',
-                      border: odpowiedzi.wiedza_wzrosla === opcja ? 'none' : '1px solid #ddd',
+                      border: odpowiedzi.wiedza_wzrosla === opcja ? 'none' : '0.5px solid var(--border)',
                       transition: 'all 0.15s',
                     }}
                   >{opcja}</button>
                 ))}
               </div>
             </div>
-
             {sekcjaTytul('Prowadzenie zajęć')}
             {pytanieGwiazdki('3a. Zajęcia teoretyczne', 'zajecia_teoretyczne')}
             {pytanieGwiazdki('3b. Zajęcia praktyczne — Rysunek techniczny', 'zajecia_rysunek')}
@@ -308,7 +304,6 @@ function EkranAnkieta({ kursant, zjazdy, user }: { kursant: Kursant | null; zjaz
             {sekcjaTytul('Podsumowanie')}
             {pytanieGwiazdki('6. W jakim stopniu szkolenie spełniło Pana/Pani oczekiwania?', 'stopien_oczekiwan')}
             {pytanieGwiazdki('Ogólna ocena szkolenia', 'ocena_ogolna')}
-
             <div style={{ marginBottom: '16px' }}>
               <p style={{ fontSize: '13px', color: 'var(--text)', lineHeight: '1.5', marginBottom: '8px' }}>
                 7. Czy poleciłabyś/poleciłbyś ten kurs znajomym?
@@ -324,16 +319,15 @@ function EkranAnkieta({ kursant, zjazdy, user }: { kursant: Kursant | null; zjaz
                       cursor: 'pointer', fontWeight: odpowiedzi.nps === opcja ? '600' : '400',
                       background: odpowiedzi.nps === opcja
                         ? (opcja === 'Tak' ? '#4a7c59' : opcja === 'Nie' ? '#A05C5C' : '#7a6a3a')
-                        : 'var(--bg-card)',
+                        : 'var(--surface)',
                       color: odpowiedzi.nps === opcja ? 'white' : 'var(--text)',
-                      border: odpowiedzi.nps === opcja ? 'none' : '1px solid #ddd',
+                      border: odpowiedzi.nps === opcja ? 'none' : '0.5px solid var(--border)',
                       transition: 'all 0.15s',
                     }}
                   >{opcja}</button>
                 ))}
               </div>
             </div>
-
             {textarea('Które z przekazywanych informacji uważa Pan/Pani za najbardziej przydatne?', 'przydatne_informacje', true)}
             {textarea('8. Inne uwagi dotyczące szkolenia', 'inne_uwagi', true)}
           </>
@@ -355,22 +349,15 @@ function EkranAnkieta({ kursant, zjazdy, user }: { kursant: Kursant | null; zjaz
           {krok > 1 && (
             <button
               onClick={() => setKrok(k => k - 1)}
-              style={{ flex: 1, padding: '14px', borderRadius: '12px', border: '1px solid var(--brand)', background: 'white', color: 'var(--brand)', fontSize: '15px', cursor: 'pointer', fontWeight: '600' }}
+              style={{ flex: 1, padding: '14px', borderRadius: '12px', border: '0.5px solid var(--brand)', background: 'white', color: 'var(--brand)', fontSize: '15px', cursor: 'pointer', fontWeight: '600' }}
             >← Wstecz</button>
           )}
           {krok < krokowLacznie ? (
-            <button
-              onClick={() => setKrok(k => k + 1)}
-              className="login-btn"
-              style={{ flex: 1 }}
-            >Dalej →</button>
+            <button onClick={() => setKrok(k => k + 1)} className="login-btn" style={{ flex: 1 }}>Dalej →</button>
           ) : (
-            <button
-              onClick={wyslij}
-              className="login-btn"
-              style={{ flex: 1 }}
-              disabled={wysylanie}
-            >{wysylanie ? 'Wysyłanie...' : 'Wyślij ankietę ✓'}</button>
+            <button onClick={wyslij} className="login-btn" style={{ flex: 1 }} disabled={wysylanie}>
+              {wysylanie ? 'Wysyłanie...' : 'Wyślij ankietę ✓'}
+            </button>
           )}
         </div>
       </div>
@@ -407,7 +394,7 @@ function EkranZmianaHasla() {
             <h3>Haslo zostalo zmienione!</h3>
             <p>Mozesz teraz zalogowac sie nowym haslem.</p>
           </div>
-          <button className="login-btn" style={{marginTop: '20px'}} onClick={() => window.location.href = '/'}>Przejdz do logowania</button>
+          <button className="login-btn" style={{ marginTop: '20px' }} onClick={() => window.location.href = '/'}>Przejdz do logowania</button>
         </div>
       </div>
     );
@@ -437,24 +424,24 @@ function EkranZmianaHasla() {
 
 function EkranPolitykaPrywatnosci({ onWroc }: { onWroc: () => void }) {
   return (
-    <div className="login-screen" style={{overflowY:'auto', alignItems:'flex-start', padding:'24px'}}>
-      <button className="btn-wroc" onClick={onWroc} style={{marginBottom:'16px'}}>← Wróć</button>
-      <h2 style={{fontFamily:'Cormorant Garamond, serif', fontSize:'22px', marginBottom:'16px'}}>Polityka Prywatności</h2>
-      <div style={{fontSize:'13px', lineHeight:'1.7', color:'var(--text)'}}>
-        <p style={{marginBottom:'12px'}}><strong>Administrator danych osobowych:</strong><br/>On-Arch Barbara Szczęsna-Dyńska<br/>ul. Tymienieckiego 25D/53, 90-350 Łódź<br/>Email: biuro@on-arch.pl</p>
-        <p style={{marginBottom:'8px'}}><strong>1. Jakie dane zbieramy?</strong></p>
-        <p style={{marginBottom:'12px'}}>W ramach aplikacji On-Arch przetwarzamy następujące dane osobowe: imię i nazwisko, adres e-mail, numer telefonu, zdjęcie profilowe (opcjonalne).</p>
-        <p style={{marginBottom:'8px'}}><strong>2. W jakim celu?</strong></p>
-        <p style={{marginBottom:'12px'}}>Dane są przetwarzane wyłącznie w celu umożliwienia korzystania z aplikacji On-Arch — dostępu do informacji o zjazdach, ogłoszeń biura oraz komunikacji w ramach grupy kursantów.</p>
-        <p style={{marginBottom:'8px'}}><strong>3. Podstawa prawna</strong></p>
-        <p style={{marginBottom:'12px'}}>Przetwarzanie danych odbywa się na podstawie art. 6 ust. 1 lit. b RODO (wykonanie umowy) oraz art. 6 ust. 1 lit. a RODO (zgoda użytkownika).</p>
-        <p style={{marginBottom:'8px'}}><strong>4. Jak długo przechowujemy dane?</strong></p>
-        <p style={{marginBottom:'12px'}}>Dane są przechowywane przez czas trwania kursu oraz do 12 miesięcy po jego zakończeniu, chyba że wyrazisz wolę wcześniejszego usunięcia.</p>
-        <p style={{marginBottom:'8px'}}><strong>5. Twoje prawa</strong></p>
-        <p style={{marginBottom:'12px'}}>Masz prawo do: dostępu do swoich danych, ich sprostowania, usunięcia, ograniczenia przetwarzania, przenoszenia danych oraz wniesienia skargi do Prezesa UODO (ul. Stawki 2, 00-193 Warszawa).</p>
-        <p style={{marginBottom:'8px'}}><strong>6. Bezpieczeństwo</strong></p>
-        <p style={{marginBottom:'12px'}}>Dane są przechowywane na serwerach Supabase (UE, Frankfurt) z zastosowaniem szyfrowania i zabezpieczeń zgodnych z RODO.</p>
-        <p style={{marginBottom:'8px'}}><strong>7. Kontakt</strong></p>
+    <div className="login-screen" style={{ overflowY: 'auto', alignItems: 'flex-start', padding: '24px' }}>
+      <button className="btn-wroc" onClick={onWroc} style={{ marginBottom: '16px' }}>← Wróć</button>
+      <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '22px', marginBottom: '16px' }}>Polityka Prywatności</h2>
+      <div style={{ fontSize: '13px', lineHeight: '1.7', color: 'var(--text)' }}>
+        <p style={{ marginBottom: '12px' }}><strong>Administrator danych osobowych:</strong><br />On-Arch Barbara Szczęsna-Dyńska<br />ul. Tymienieckiego 25D/53, 90-350 Łódź<br />Email: biuro@on-arch.pl</p>
+        <p style={{ marginBottom: '8px' }}><strong>1. Jakie dane zbieramy?</strong></p>
+        <p style={{ marginBottom: '12px' }}>W ramach aplikacji On-Arch przetwarzamy następujące dane osobowe: imię i nazwisko, adres e-mail, numer telefonu, zdjęcie profilowe (opcjonalne).</p>
+        <p style={{ marginBottom: '8px' }}><strong>2. W jakim celu?</strong></p>
+        <p style={{ marginBottom: '12px' }}>Dane są przetwarzane wyłącznie w celu umożliwienia korzystania z aplikacji On-Arch — dostępu do informacji o zjazdach, ogłoszeń biura oraz komunikacji w ramach grupy kursantów.</p>
+        <p style={{ marginBottom: '8px' }}><strong>3. Podstawa prawna</strong></p>
+        <p style={{ marginBottom: '12px' }}>Przetwarzanie danych odbywa się na podstawie art. 6 ust. 1 lit. b RODO (wykonanie umowy) oraz art. 6 ust. 1 lit. a RODO (zgoda użytkownika).</p>
+        <p style={{ marginBottom: '8px' }}><strong>4. Jak długo przechowujemy dane?</strong></p>
+        <p style={{ marginBottom: '12px' }}>Dane są przechowywane przez czas trwania kursu oraz do 12 miesięcy po jego zakończeniu, chyba że wyrazisz wolę wcześniejszego usunięcia.</p>
+        <p style={{ marginBottom: '8px' }}><strong>5. Twoje prawa</strong></p>
+        <p style={{ marginBottom: '12px' }}>Masz prawo do: dostępu do swoich danych, ich sprostowania, usunięcia, ograniczenia przetwarzania, przenoszenia danych oraz wniesienia skargi do Prezesa UODO (ul. Stawki 2, 00-193 Warszawa).</p>
+        <p style={{ marginBottom: '8px' }}><strong>6. Bezpieczeństwo</strong></p>
+        <p style={{ marginBottom: '12px' }}>Dane są przechowywane na serwerach Supabase (UE, Frankfurt) z zastosowaniem szyfrowania i zabezpieczeń zgodnych z RODO.</p>
+        <p style={{ marginBottom: '8px' }}><strong>7. Kontakt</strong></p>
         <p>W sprawach dotyczących danych osobowych skontaktuj się z nami: biuro@on-arch.pl lub tel. 883 659 069.</p>
       </div>
     </div>
@@ -463,25 +450,25 @@ function EkranPolitykaPrywatnosci({ onWroc }: { onWroc: () => void }) {
 
 function EkranRegulamin({ onWroc }: { onWroc: () => void }) {
   return (
-    <div className="login-screen" style={{overflowY:'auto', alignItems:'flex-start', padding:'24px'}}>
-      <button className="btn-wroc" onClick={onWroc} style={{marginBottom:'16px'}}>← Wróć</button>
-      <h2 style={{fontFamily:'Cormorant Garamond, serif', fontSize:'22px', marginBottom:'16px'}}>Regulamin aplikacji</h2>
-      <div style={{fontSize:'13px', lineHeight:'1.7', color:'var(--text)'}}>
-        <p style={{marginBottom:'12px'}}><strong>Aplikacja On-Arch</strong> — regulamin korzystania z aplikacji mobilnej dla kursantów.</p>
-        <p style={{marginBottom:'8px'}}><strong>1. Postanowienia ogólne</strong></p>
-        <p style={{marginBottom:'12px'}}>Aplikacja On-Arch jest przeznaczona wyłącznie dla kursantów On-Arch Barbara Szczęsna-Dyńska. Korzystanie z aplikacji jest dobrowolne i bezpłatne.</p>
-        <p style={{marginBottom:'8px'}}><strong>2. Konto użytkownika</strong></p>
-        <p style={{marginBottom:'12px'}}>Dostęp do aplikacji wymaga założenia konta przez biuro On-Arch. Kursant zobowiązuje się do nieudostępniania danych logowania osobom trzecim.</p>
-        <p style={{marginBottom:'8px'}}><strong>3. Czat grupowy</strong></p>
-        <p style={{marginBottom:'12px'}}>Kursanci zobowiązują się do kulturalnego i zgodnego z prawem korzystania z czatu grupowego. Zabrania się publikowania treści obraźliwych, niezgodnych z prawem lub naruszających prawa osób trzecich. Biuro On-Arch zastrzega sobie prawo do usuwania nieodpowiednich treści.</p>
-        <p style={{marginBottom:'8px'}}><strong>4. Zdjęcie profilowe</strong></p>
-        <p style={{marginBottom:'12px'}}>Kursant wgrywając zdjęcie profilowe wyraża zgodę na jego przechowywanie i wyświetlanie innym kursantom w ramach grupy.</p>
-        <p style={{marginBottom:'8px'}}><strong>5. Odpowiedzialność</strong></p>
-        <p style={{marginBottom:'12px'}}>On-Arch dokłada starań, aby informacje w aplikacji były aktualne i rzetelne. Nie ponosimy odpowiedzialności za skutki działań podjętych na podstawie błędnie wprowadzonych danych.</p>
-        <p style={{marginBottom:'8px'}}><strong>6. Zmiany regulaminu</strong></p>
-        <p style={{marginBottom:'12px'}}>On-Arch zastrzega sobie prawo do zmiany regulaminu. O zmianach kursanci zostaną poinformowani przez ogłoszenie w aplikacji.</p>
-        <p style={{marginBottom:'8px'}}><strong>7. Kontakt</strong></p>
-        <p>On-Arch Barbara Szczęsna-Dyńska<br/>ul. Tymienieckiego 25D/53, 90-350 Łódź<br/>biuro@on-arch.pl | 883 659 069</p>
+    <div className="login-screen" style={{ overflowY: 'auto', alignItems: 'flex-start', padding: '24px' }}>
+      <button className="btn-wroc" onClick={onWroc} style={{ marginBottom: '16px' }}>← Wróć</button>
+      <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '22px', marginBottom: '16px' }}>Regulamin aplikacji</h2>
+      <div style={{ fontSize: '13px', lineHeight: '1.7', color: 'var(--text)' }}>
+        <p style={{ marginBottom: '12px' }}><strong>Aplikacja On-Arch</strong> — regulamin korzystania z aplikacji mobilnej dla kursantów.</p>
+        <p style={{ marginBottom: '8px' }}><strong>1. Postanowienia ogólne</strong></p>
+        <p style={{ marginBottom: '12px' }}>Aplikacja On-Arch jest przeznaczona wyłącznie dla kursantów On-Arch Barbara Szczęsna-Dyńska. Korzystanie z aplikacji jest dobrowolne i bezpłatne.</p>
+        <p style={{ marginBottom: '8px' }}><strong>2. Konto użytkownika</strong></p>
+        <p style={{ marginBottom: '12px' }}>Dostęp do aplikacji wymaga założenia konta przez biuro On-Arch. Kursant zobowiązuje się do nieudostępniania danych logowania osobom trzecim.</p>
+        <p style={{ marginBottom: '8px' }}><strong>3. Czat grupowy</strong></p>
+        <p style={{ marginBottom: '12px' }}>Kursanci zobowiązują się do kulturalnego i zgodnego z prawem korzystania z czatu grupowego. Zabrania się publikowania treści obraźliwych, niezgodnych z prawem lub naruszających prawa osób trzecich.</p>
+        <p style={{ marginBottom: '8px' }}><strong>4. Zdjęcie profilowe</strong></p>
+        <p style={{ marginBottom: '12px' }}>Kursant wgrywając zdjęcie profilowe wyraża zgodę na jego przechowywanie i wyświetlanie innym kursantom w ramach grupy.</p>
+        <p style={{ marginBottom: '8px' }}><strong>5. Odpowiedzialność</strong></p>
+        <p style={{ marginBottom: '12px' }}>On-Arch dokłada starań, aby informacje w aplikacji były aktualne i rzetelne.</p>
+        <p style={{ marginBottom: '8px' }}><strong>6. Zmiany regulaminu</strong></p>
+        <p style={{ marginBottom: '12px' }}>On-Arch zastrzega sobie prawo do zmiany regulaminu. O zmianach kursanci zostaną poinformowani przez ogłoszenie w aplikacji.</p>
+        <p style={{ marginBottom: '8px' }}><strong>7. Kontakt</strong></p>
+        <p>On-Arch Barbara Szczęsna-Dyńska<br />ul. Tymienieckiego 25D/53, 90-350 Łódź<br />biuro@on-arch.pl | 883 659 069</p>
       </div>
     </div>
   );
@@ -531,7 +518,7 @@ function EkranLogowania({ onZalogowano }: { onZalogowano: () => void }) {
             <h3>Sprawdz skrzynke</h3>
             <p>Wyslalismy link na adres <strong>{email}</strong></p>
           </div>
-          <button className="login-btn" style={{marginTop: '20px'}} onClick={() => { setResetMode(false); setResetWyslany(false); }}>Wroce do logowania</button>
+          <button className="login-btn" style={{ marginTop: '20px' }} onClick={() => { setResetMode(false); setResetWyslany(false); }}>Wroce do logowania</button>
         </div>
       </div>
     );
@@ -572,16 +559,16 @@ function EkranLogowania({ onZalogowano }: { onZalogowano: () => void }) {
             <input type="password" value={haslo} onChange={e => setHaslo(e.target.value)} placeholder="password" required />
           </div>
           {blad && <div className="login-error">{blad}</div>}
-          <div style={{display:'flex', alignItems:'flex-start', gap:'8px', margin:'12px 0'}}>
-            <input type="checkbox" id="zgoda" checked={zgodaRodo} onChange={e => setZgodaRodo(e.target.checked)} style={{marginTop:'3px', accentColor:'var(--brand)'}} />
-            <label htmlFor="zgoda" style={{fontSize:'12px', color:'var(--text-muted)', lineHeight:'1.6'}}>
-              Akceptuję <button type="button" className="btn-link" style={{display:'inline', fontSize:'12px'}} onClick={() => setPokazRegulamin(true)}>Regulamin</button> oraz <button type="button" className="btn-link" style={{display:'inline', fontSize:'12px'}} onClick={() => setPokazPolityka(true)}>Politykę Prywatności</button>
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', margin: '12px 0' }}>
+            <input type="checkbox" id="zgoda" checked={zgodaRodo} onChange={e => setZgodaRodo(e.target.checked)} style={{ marginTop: '3px', accentColor: 'var(--brand)' }} />
+            <label htmlFor="zgoda" style={{ fontSize: '12px', color: 'var(--text-muted)', lineHeight: '1.6' }}>
+              Akceptuję <button type="button" className="btn-link" style={{ display: 'inline', fontSize: '12px' }} onClick={() => setPokazRegulamin(true)}>Regulamin</button> oraz <button type="button" className="btn-link" style={{ display: 'inline', fontSize: '12px' }} onClick={() => setPokazPolityka(true)}>Politykę Prywatności</button>
             </label>
           </div>
           <button className="login-btn" type="submit" disabled={ladowanie || !zgodaRodo}>{ladowanie ? 'Logowanie...' : 'Zaloguj sie'}</button>
         </form>
         <button className="btn-link" onClick={() => setResetMode(true)}>Nie pamietasz hasla?</button>
-        <p className="login-kontakt">Problemy z logowaniem? Zadzwon do biura:<br/><strong>883 659 069</strong></p>
+        <p className="login-kontakt">Problemy z logowaniem? Zadzwon do biura:<br /><strong>883 659 069</strong></p>
       </div>
     </div>
   );
@@ -625,7 +612,7 @@ function EkranCzat({ user, kursant }: { user: User; kursant: Kursant | null }) {
   }
 
   if (!kursant?.grupa_id) {
-    return <div style={{padding:'24px', textAlign:'center', color:'var(--text-muted)'}}>Nie jestes przypisany do zadnej grupy.</div>;
+    return <div style={{ padding: '24px', textAlign: 'center', color: 'var(--text-muted)' }}>Nie jestes przypisany do zadnej grupy.</div>;
   }
 
   return (
@@ -665,7 +652,7 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
   const [nowyKursant, setNowyKursant] = useState({ imie: '', nazwisko: '', email: '', grupa_id: '' });
   const [nowaGrupa, setNowaGrupa] = useState({ nazwa: '', miasto: '', edycja: '' });
   const [komunikat, setKomunikat] = useState('');
-  const [importStatus, setImportStatus] = useState<{imie: string; nazwisko: string; email: string; status: string}[]>([]);
+  const [importStatus, setImportStatus] = useState<{ imie: string; nazwisko: string; email: string; status: string }[]>([]);
   const [importowanie, setImportowanie] = useState(false);
   const [wybranaGrupaAnkiety, setWybranaGrupaAnkiety] = useState('');
   const fileRef = useRef<HTMLInputElement>(null);
@@ -696,11 +683,8 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
   async function dodajOgloszenie(e: React.FormEvent) {
     e.preventDefault();
     const daneOgl = {
-      typ: noweOgl.typ,
-      tytul: noweOgl.tytul,
-      tresc: noweOgl.tresc,
-      szczegoly: noweOgl.szczegoly,
-      nowe: true,
+      typ: noweOgl.typ, tytul: noweOgl.tytul, tresc: noweOgl.tresc,
+      szczegoly: noweOgl.szczegoly, nowe: true,
       data_utworzenia: new Date().toISOString(),
       grupa_id: noweOgl.grupa_id ? parseInt(noweOgl.grupa_id) : null,
     };
@@ -737,48 +721,35 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
   async function zapiszEdycjeZjazdu(e: React.FormEvent) {
     e.preventDefault();
     if (!edytowanyZjazd) return;
-
     const poprzedniStatus = zjazdy.find(z => z.id === edytowanyZjazd.id)?.status;
     const nowyStatus = edytowanyZjazd.status;
     const grupaId = edytowanyZjazd.grupa_id;
-
     const { error } = await supabase.from('zjazdy').update({
       nr: edytowanyZjazd.nr, daty: edytowanyZjazd.daty, sala: edytowanyZjazd.sala,
       adres: edytowanyZjazd.adres, tematy: edytowanyZjazd.tematy,
-      status: nowyStatus, data_zjazdu: edytowanyZjazd.data_zjazdu,
-      grupa_id: grupaId,
+      status: nowyStatus, data_zjazdu: edytowanyZjazd.data_zjazdu, grupa_id: grupaId,
     }).eq('id', edytowanyZjazd.id);
-
     if (error) { setKomunikat('Blad: ' + error.message); return; }
-
-    // Jeśli właśnie oznaczono zjazd jako zakończony — sprawdź czy to ostatni
     if (nowyStatus === 'zakonczony' && poprzedniStatus !== 'zakonczony') {
-      const { data: wszystkieZjazdy } = await supabase
-        .from('zjazdy').select('*').eq('grupa_id', grupaId).order('data_zjazdu', { ascending: true });
-
-      const jeszczeNadchodzace = (wszystkieZjazdy || []).filter(
-        z => z.id !== edytowanyZjazd.id && z.status === 'nadchodzacy'
-      );
-
+      const { data: wszystkieZjazdy } = await supabase.from('zjazdy').select('*').eq('grupa_id', grupaId).order('data_zjazdu', { ascending: true });
+      const jeszczeNadchodzace = (wszystkieZjazdy || []).filter(z => z.id !== edytowanyZjazd.id && z.status === 'nadchodzacy');
       if (jeszczeNadchodzace.length === 0) {
-        // Ostatni zjazd! Dodaj ogłoszenie-powiadomienie w aplikacji
         const nazwaGrupy = grupy.find(g => g.id === grupaId)?.nazwa || 'Twoja grupa';
         await supabase.from('ogloszenia').insert([{
           typ: 'Informacja',
           tytul: 'Wypełnij ankietę oceny kursu ⭐',
           tresc: 'Twój kurs dobiegł końca. Prosimy o wypełnienie krótkiej ankiety — to tylko kilka minut!',
-          szczegoly: `Dziękujemy za udział w kursie ${nazwaGrupy}!\n\nTwoja opinia jest dla nas bardzo ważna i pomoże nam udoskonalić kolejne edycje kursu.\n\nProsimy o wypełnienie krótkiej ankiety oceniającej szkolenie. Znajdziesz ją w aplikacji, w zakładce ⭐ Ankieta w dolnym menu.\n\nZ góry dziękujemy!\nZespół On-Arch`,
+          szczegoly: `Dziękujemy za udział w kursie ${nazwaGrupy}!\n\nTwoja opinia jest dla nas bardzo ważna.\n\nProsimy o wypełnienie krótkiej ankiety oceniającej szkolenie. Znajdziesz ją w zakładce ⭐ Ankieta w dolnym menu.\n\nZ góry dziękujemy!\nZespół On-Arch`,
           nowe: true,
           data_utworzenia: new Date().toISOString(),
         }]);
-        setKomunikat(`Zjazd zakończony! Kursanci zobaczą powiadomienie o ankiecie w aplikacji.`);
+        setKomunikat('Zjazd zakończony! Kursanci zobaczą powiadomienie o ankiecie.');
       } else {
         setKomunikat('Zjazd zaktualizowany!');
       }
     } else {
       setKomunikat('Zjazd zaktualizowany!');
     }
-
     setEdytowanyZjazd(null);
     pobierzZjazdy();
   }
@@ -818,7 +789,7 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
     setImportStatus([]);
     const text = await file.text();
     const rows = text.trim().split('\n').slice(1);
-    const wyniki: {imie: string; nazwisko: string; email: string; status: string}[] = [];
+    const wyniki: { imie: string; nazwisko: string; email: string; status: string }[] = [];
     for (const row of rows) {
       const [imie, nazwisko, email, grupa_id] = row.split(',').map(s => s.trim());
       if (!imie || !nazwisko || !email || !grupa_id) continue;
@@ -836,9 +807,7 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
   }
 
   function eksportujAnkietyCSV() {
-    const filtred = wybranaGrupaAnkiety
-      ? ankiety.filter((a: any) => a.grupa_id === parseInt(wybranaGrupaAnkiety))
-      : ankiety;
+    const filtred = wybranaGrupaAnkiety ? ankiety.filter((a: any) => a.grupa_id === parseInt(wybranaGrupaAnkiety)) : ankiety;
     const naglowki = ['data', 'grupa_id', 'zadowolenie', 'wiedza_wzrosla', 'zajecia_teoretyczne', 'zajecia_rysunek', 'zajecia_programy', 'zakres_tematyczny', 'org_czas', 'org_miejsce', 'org_baza', 'org_materialy', 'org_kadra', 'org_dostosowanie', 'stopien_oczekiwan', 'ocena_ogolna', 'nps', 'przydatne_informacje', 'uzasadnienie_zle', 'inne_uwagi', 'plec', 'wyksztalcenie', 'wiek'];
     const wiersze = filtred.map((a: any) => naglowki.map(k => `"${(a[k] ?? '').toString().replace(/"/g, '""')}"`).join(','));
     const csv = [naglowki.join(','), ...wiersze].join('\n');
@@ -854,18 +823,16 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
     return (vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(1);
   }
 
-  const ankietyFiltrowane = wybranaGrupaAnkiety
-    ? ankiety.filter((a: any) => a.grupa_id === parseInt(wybranaGrupaAnkiety))
-    : ankiety;
+  const ankietyFiltrowane = wybranaGrupaAnkiety ? ankiety.filter((a: any) => a.grupa_id === parseInt(wybranaGrupaAnkiety)) : ankiety;
 
   return (
     <div className="app">
       <header className="header">
-        <div className="logo">On<span>-Arch</span> <span style={{fontSize:'11px', opacity:0.7}}>Biuro</span></div>
-        <button onClick={onWyloguj} style={{background:'none', border:'none', color:'var(--brand)', fontSize:'13px', cursor:'pointer'}}>Wyloguj</button>
+        <div className="logo">On<span>-Arch</span> <span style={{ fontSize: '11px', opacity: 0.7 }}>Biuro</span></div>
+        <button onClick={onWyloguj} style={{ background: 'none', border: 'none', color: 'var(--brand)', fontSize: '13px', cursor: 'pointer' }}>Wyloguj</button>
       </header>
       <main className="main">
-        {komunikat && <div className="login-error" style={{background:'#e8f5e9', color:'#2e7d32', marginBottom:'12px'}}>{komunikat}</div>}
+        {komunikat && <div className="login-error" style={{ background: '#e8f5e9', color: '#2e7d32', marginBottom: '12px' }}>{komunikat}</div>}
 
         {aktywnaZakladka === 'ogloszenia' && (
           <>
@@ -874,19 +841,19 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
                 <h2 className="page-title">Edytuj ogloszenie</h2>
                 <form className="admin-form" onSubmit={zapiszEdycje}>
                   <div className="login-field"><label>Typ</label>
-                    <select value={edytowane.typ} onChange={e => setEdytowane({...edytowane, typ: e.target.value})}>
+                    <select value={edytowane.typ} onChange={e => setEdytowane({ ...edytowane, typ: e.target.value })}>
                       <option>Informacja</option><option>Pilne</option><option>Zmiana</option>
                     </select>
                   </div>
                   <div className="login-field"><label>Dla kogo</label>
-                    <select value={edytowane.grupa_id ?? ''} onChange={e => setEdytowane({...edytowane, grupa_id: e.target.value ? parseInt(e.target.value) : null})}>
+                    <select value={edytowane.grupa_id ?? ''} onChange={e => setEdytowane({ ...edytowane, grupa_id: e.target.value ? parseInt(e.target.value) : null })}>
                       <option value="">Wszystkie grupy</option>
                       {grupy.map(g => <option key={g.id} value={g.id}>{g.nazwa}</option>)}
                     </select>
                   </div>
-                  <div className="login-field"><label>Tytul</label><input type="text" value={edytowane.tytul} onChange={e => setEdytowane({...edytowane, tytul: e.target.value})} required /></div>
-                  <div className="login-field"><label>Krotki opis</label><input type="text" value={edytowane.tresc} onChange={e => setEdytowane({...edytowane, tresc: e.target.value})} required /></div>
-                  <div className="login-field"><label>Pelna tresc</label><textarea value={edytowane.szczegoly} onChange={e => setEdytowane({...edytowane, szczegoly: e.target.value})} rows={4} /></div>
+                  <div className="login-field"><label>Tytul</label><input type="text" value={edytowane.tytul} onChange={e => setEdytowane({ ...edytowane, tytul: e.target.value })} required /></div>
+                  <div className="login-field"><label>Krotki opis</label><input type="text" value={edytowane.tresc} onChange={e => setEdytowane({ ...edytowane, tresc: e.target.value })} required /></div>
+                  <div className="login-field"><label>Pelna tresc</label><textarea value={edytowane.szczegoly} onChange={e => setEdytowane({ ...edytowane, szczegoly: e.target.value })} rows={4} /></div>
                   <button className="login-btn" type="submit">Zapisz zmiany</button>
                   <button className="btn-link" onClick={() => setEdytowane(null)}>Anuluj</button>
                 </form>
@@ -896,35 +863,35 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
                 <h2 className="page-title">Nowe ogloszenie</h2>
                 <form className="admin-form" onSubmit={dodajOgloszenie}>
                   <div className="login-field"><label>Typ</label>
-                    <select value={noweOgl.typ} onChange={e => setNoweOgl({...noweOgl, typ: e.target.value})}>
+                    <select value={noweOgl.typ} onChange={e => setNoweOgl({ ...noweOgl, typ: e.target.value })}>
                       <option>Informacja</option><option>Pilne</option><option>Zmiana</option>
                     </select>
                   </div>
                   <div className="login-field"><label>Dla kogo</label>
-                    <select value={noweOgl.grupa_id} onChange={e => setNoweOgl({...noweOgl, grupa_id: e.target.value})}>
+                    <select value={noweOgl.grupa_id} onChange={e => setNoweOgl({ ...noweOgl, grupa_id: e.target.value })}>
                       <option value="">Wszystkie grupy</option>
                       {grupy.map(g => <option key={g.id} value={g.id}>{g.nazwa}</option>)}
                     </select>
                   </div>
-                  <div className="login-field"><label>Tytul</label><input type="text" value={noweOgl.tytul} onChange={e => setNoweOgl({...noweOgl, tytul: e.target.value})} required /></div>
-                  <div className="login-field"><label>Krotki opis</label><input type="text" value={noweOgl.tresc} onChange={e => setNoweOgl({...noweOgl, tresc: e.target.value})} required /></div>
-                  <div className="login-field"><label>Pelna tresc</label><textarea value={noweOgl.szczegoly} onChange={e => setNoweOgl({...noweOgl, szczegoly: e.target.value})} rows={4} /></div>
+                  <div className="login-field"><label>Tytul</label><input type="text" value={noweOgl.tytul} onChange={e => setNoweOgl({ ...noweOgl, tytul: e.target.value })} required /></div>
+                  <div className="login-field"><label>Krotki opis</label><input type="text" value={noweOgl.tresc} onChange={e => setNoweOgl({ ...noweOgl, tresc: e.target.value })} required /></div>
+                  <div className="login-field"><label>Pelna tresc</label><textarea value={noweOgl.szczegoly} onChange={e => setNoweOgl({ ...noweOgl, szczegoly: e.target.value })} rows={4} /></div>
                   <button className="login-btn" type="submit">Dodaj ogloszenie</button>
                 </form>
-                <h2 className="page-title" style={{marginTop:'24px'}}>Lista ogloszen</h2>
+                <h2 className="page-title" style={{ marginTop: '24px' }}>Lista ogloszen</h2>
                 {ogloszenia.map(o => (
-                  <div key={o.id} className="profil-card" style={{marginBottom:'8px'}}>
+                  <div key={o.id} className="profil-card" style={{ marginBottom: '8px' }}>
                     <div className="profil-row"><span className="profil-lbl">Tytul</span><span className="profil-val">{o.tytul}</span></div>
                     <div className="profil-row"><span className="profil-lbl">Typ</span><span className="profil-val">{o.typ}</span></div>
                     <div className="profil-row">
                       <span className="profil-lbl">Dla</span>
-                      <span className="profil-val" style={{color: o.grupa_id ? 'var(--brand)' : 'var(--text-muted)'}}>
+                      <span className="profil-val" style={{ color: o.grupa_id ? 'var(--brand)' : 'var(--text-muted)' }}>
                         {o.grupa_id ? (grupy.find(g => g.id === o.grupa_id)?.nazwa || 'Grupa') : 'Wszystkie grupy'}
                       </span>
                     </div>
-                    <div style={{display:'flex', gap:'8px', marginTop:'8px'}}>
-                      <button className="login-btn" style={{flex:1, padding:'8px'}} onClick={() => { setEdytowane(o); setKomunikat(''); }}>Edytuj</button>
-                      <button className="btn-wyloguj" style={{flex:1, padding:'8px'}} onClick={() => usunOgloszenie(o.id)}>Usun</button>
+                    <div style={{ display: 'flex', gap: '8px', margin: '8px 16px 12px' }}>
+                      <button className="login-btn" style={{ flex: 1, padding: '8px' }} onClick={() => { setEdytowane(o); setKomunikat(''); }}>Edytuj</button>
+                      <button className="btn-wyloguj" style={{ flex: 1, padding: '8px', marginTop: 0 }} onClick={() => usunOgloszenie(o.id)}>Usun</button>
                     </div>
                   </div>
                 ))}
@@ -940,18 +907,18 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
                 <h2 className="page-title">Edytuj zjazd</h2>
                 <form className="admin-form" onSubmit={zapiszEdycjeZjazdu}>
                   <div className="login-field"><label>Grupa</label>
-                    <select value={edytowanyZjazd.grupa_id} onChange={e => setEdytowanyZjazd({...edytowanyZjazd, grupa_id: parseInt(e.target.value)})}>
+                    <select value={edytowanyZjazd.grupa_id} onChange={e => setEdytowanyZjazd({ ...edytowanyZjazd, grupa_id: parseInt(e.target.value) })}>
                       {grupy.map(g => <option key={g.id} value={g.id}>{g.nazwa}</option>)}
                     </select>
                   </div>
-                  <div className="login-field"><label>Numer zjazdu</label><input type="number" value={edytowanyZjazd.nr} onChange={e => setEdytowanyZjazd({...edytowanyZjazd, nr: parseInt(e.target.value)})} required /></div>
-                  <div className="login-field"><label>Daty</label><input type="text" value={edytowanyZjazd.daty} onChange={e => setEdytowanyZjazd({...edytowanyZjazd, daty: e.target.value})} required /></div>
-                  <div className="login-field"><label>Data zjazdu</label><input type="date" value={edytowanyZjazd.data_zjazdu} onChange={e => setEdytowanyZjazd({...edytowanyZjazd, data_zjazdu: e.target.value})} required /></div>
-                  <div className="login-field"><label>Sala</label><input type="text" value={edytowanyZjazd.sala} onChange={e => setEdytowanyZjazd({...edytowanyZjazd, sala: e.target.value})} required /></div>
-                  <div className="login-field"><label>Adres</label><input type="text" value={edytowanyZjazd.adres} onChange={e => setEdytowanyZjazd({...edytowanyZjazd, adres: e.target.value})} required /></div>
-                  <div className="login-field"><label>Tematy</label><input type="text" value={edytowanyZjazd.tematy} onChange={e => setEdytowanyZjazd({...edytowanyZjazd, tematy: e.target.value})} required /></div>
+                  <div className="login-field"><label>Numer zjazdu</label><input type="number" value={edytowanyZjazd.nr} onChange={e => setEdytowanyZjazd({ ...edytowanyZjazd, nr: parseInt(e.target.value) })} required /></div>
+                  <div className="login-field"><label>Daty</label><input type="text" value={edytowanyZjazd.daty} onChange={e => setEdytowanyZjazd({ ...edytowanyZjazd, daty: e.target.value })} required /></div>
+                  <div className="login-field"><label>Data zjazdu</label><input type="date" value={edytowanyZjazd.data_zjazdu} onChange={e => setEdytowanyZjazd({ ...edytowanyZjazd, data_zjazdu: e.target.value })} required /></div>
+                  <div className="login-field"><label>Sala</label><input type="text" value={edytowanyZjazd.sala} onChange={e => setEdytowanyZjazd({ ...edytowanyZjazd, sala: e.target.value })} required /></div>
+                  <div className="login-field"><label>Adres</label><input type="text" value={edytowanyZjazd.adres} onChange={e => setEdytowanyZjazd({ ...edytowanyZjazd, adres: e.target.value })} required /></div>
+                  <div className="login-field"><label>Tematy</label><input type="text" value={edytowanyZjazd.tematy} onChange={e => setEdytowanyZjazd({ ...edytowanyZjazd, tematy: e.target.value })} required /></div>
                   <div className="login-field"><label>Status</label>
-                    <select value={edytowanyZjazd.status} onChange={e => setEdytowanyZjazd({...edytowanyZjazd, status: e.target.value})}>
+                    <select value={edytowanyZjazd.status} onChange={e => setEdytowanyZjazd({ ...edytowanyZjazd, status: e.target.value })}>
                       <option value="nadchodzacy">Nadchodzacy</option>
                       <option value="zakonczony">Zakonczony</option>
                     </select>
@@ -965,34 +932,34 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
                 <h2 className="page-title">Nowy zjazd</h2>
                 <form className="admin-form" onSubmit={dodajZjazd}>
                   <div className="login-field"><label>Grupa</label>
-                    <select value={nowyZjazd.grupa_id} onChange={e => setNowyZjazd({...nowyZjazd, grupa_id: e.target.value})} required>
+                    <select value={nowyZjazd.grupa_id} onChange={e => setNowyZjazd({ ...nowyZjazd, grupa_id: e.target.value })} required>
                       <option value="">Wybierz grupe</option>
                       {grupy.map(g => <option key={g.id} value={g.id}>{g.nazwa}</option>)}
                     </select>
                   </div>
-                  <div className="login-field"><label>Numer zjazdu</label><input type="number" value={nowyZjazd.nr} onChange={e => setNowyZjazd({...nowyZjazd, nr: e.target.value})} required /></div>
-                  <div className="login-field"><label>Daty (np. 22-23 marca 2025)</label><input type="text" value={nowyZjazd.daty} onChange={e => setNowyZjazd({...nowyZjazd, daty: e.target.value})} required /></div>
-                  <div className="login-field"><label>Data zjazdu</label><input type="date" value={nowyZjazd.data_zjazdu} onChange={e => setNowyZjazd({...nowyZjazd, data_zjazdu: e.target.value})} required /></div>
-                  <div className="login-field"><label>Sala</label><input type="text" value={nowyZjazd.sala} onChange={e => setNowyZjazd({...nowyZjazd, sala: e.target.value})} required /></div>
-                  <div className="login-field"><label>Adres</label><input type="text" value={nowyZjazd.adres} onChange={e => setNowyZjazd({...nowyZjazd, adres: e.target.value})} required /></div>
-                  <div className="login-field"><label>Tematy</label><input type="text" value={nowyZjazd.tematy} onChange={e => setNowyZjazd({...nowyZjazd, tematy: e.target.value})} required /></div>
+                  <div className="login-field"><label>Numer zjazdu</label><input type="number" value={nowyZjazd.nr} onChange={e => setNowyZjazd({ ...nowyZjazd, nr: e.target.value })} required /></div>
+                  <div className="login-field"><label>Daty (np. 22-23 marca 2025)</label><input type="text" value={nowyZjazd.daty} onChange={e => setNowyZjazd({ ...nowyZjazd, daty: e.target.value })} required /></div>
+                  <div className="login-field"><label>Data zjazdu</label><input type="date" value={nowyZjazd.data_zjazdu} onChange={e => setNowyZjazd({ ...nowyZjazd, data_zjazdu: e.target.value })} required /></div>
+                  <div className="login-field"><label>Sala</label><input type="text" value={nowyZjazd.sala} onChange={e => setNowyZjazd({ ...nowyZjazd, sala: e.target.value })} required /></div>
+                  <div className="login-field"><label>Adres</label><input type="text" value={nowyZjazd.adres} onChange={e => setNowyZjazd({ ...nowyZjazd, adres: e.target.value })} required /></div>
+                  <div className="login-field"><label>Tematy</label><input type="text" value={nowyZjazd.tematy} onChange={e => setNowyZjazd({ ...nowyZjazd, tematy: e.target.value })} required /></div>
                   <div className="login-field"><label>Status</label>
-                    <select value={nowyZjazd.status} onChange={e => setNowyZjazd({...nowyZjazd, status: e.target.value})}>
+                    <select value={nowyZjazd.status} onChange={e => setNowyZjazd({ ...nowyZjazd, status: e.target.value })}>
                       <option value="nadchodzacy">Nadchodzacy</option>
                       <option value="zakonczony">Zakonczony</option>
                     </select>
                   </div>
                   <button className="login-btn" type="submit">Dodaj zjazd</button>
                 </form>
-                <h2 className="page-title" style={{marginTop:'24px'}}>Lista zjazdow</h2>
+                <h2 className="page-title" style={{ marginTop: '24px' }}>Lista zjazdow</h2>
                 {zjazdy.map(z => (
-                  <div key={z.id} className="profil-card" style={{marginBottom:'8px'}}>
+                  <div key={z.id} className="profil-card" style={{ marginBottom: '8px' }}>
                     <div className="profil-row"><span className="profil-lbl">Zjazd {z.nr}</span><span className="profil-val">{z.daty}</span></div>
                     <div className="profil-row"><span className="profil-lbl">Grupa</span><span className="profil-val">{grupy.find(g => g.id === z.grupa_id)?.nazwa || '-'}</span></div>
                     <div className="profil-row"><span className="profil-lbl">Status</span><span className="profil-val">{z.status === 'nadchodzacy' ? 'Nadchodzacy' : 'Zakonczony'}</span></div>
-                    <div style={{display:'flex', gap:'8px', marginTop:'8px'}}>
-                      <button className="login-btn" style={{flex:1, padding:'8px'}} onClick={() => { setEdytowanyZjazd(z); setKomunikat(''); }}>Edytuj</button>
-                      <button className="btn-wyloguj" style={{flex:1, padding:'8px'}} onClick={() => usunZjazd(z.id)}>Usun</button>
+                    <div style={{ display: 'flex', gap: '8px', margin: '8px 16px 12px' }}>
+                      <button className="login-btn" style={{ flex: 1, padding: '8px' }} onClick={() => { setEdytowanyZjazd(z); setKomunikat(''); }}>Edytuj</button>
+                      <button className="btn-wyloguj" style={{ flex: 1, padding: '8px', marginTop: 0 }} onClick={() => usunZjazd(z.id)}>Usun</button>
                     </div>
                   </div>
                 ))}
@@ -1005,20 +972,20 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
           <>
             <h2 className="page-title">Nowy kursant</h2>
             <form className="admin-form" onSubmit={dodajKursanta}>
-              <div className="login-field"><label>Imie</label><input type="text" value={nowyKursant.imie} onChange={e => setNowyKursant({...nowyKursant, imie: e.target.value})} required /></div>
-              <div className="login-field"><label>Nazwisko</label><input type="text" value={nowyKursant.nazwisko} onChange={e => setNowyKursant({...nowyKursant, nazwisko: e.target.value})} required /></div>
-              <div className="login-field"><label>Email</label><input type="email" value={nowyKursant.email} onChange={e => setNowyKursant({...nowyKursant, email: e.target.value})} required /></div>
+              <div className="login-field"><label>Imie</label><input type="text" value={nowyKursant.imie} onChange={e => setNowyKursant({ ...nowyKursant, imie: e.target.value })} required /></div>
+              <div className="login-field"><label>Nazwisko</label><input type="text" value={nowyKursant.nazwisko} onChange={e => setNowyKursant({ ...nowyKursant, nazwisko: e.target.value })} required /></div>
+              <div className="login-field"><label>Email</label><input type="email" value={nowyKursant.email} onChange={e => setNowyKursant({ ...nowyKursant, email: e.target.value })} required /></div>
               <div className="login-field"><label>Grupa</label>
-                <select value={nowyKursant.grupa_id} onChange={e => setNowyKursant({...nowyKursant, grupa_id: e.target.value})} required>
+                <select value={nowyKursant.grupa_id} onChange={e => setNowyKursant({ ...nowyKursant, grupa_id: e.target.value })} required>
                   <option value="">Wybierz grupe</option>
                   {grupy.map(g => <option key={g.id} value={g.id}>{g.nazwa}</option>)}
                 </select>
               </div>
               <button className="login-btn" type="submit">Dodaj kursanta</button>
             </form>
-            <h2 className="page-title" style={{marginTop:'24px'}}>Lista kursantow</h2>
+            <h2 className="page-title" style={{ marginTop: '24px' }}>Lista kursantow</h2>
             {kursanci.map(k => (
-              <div key={k.id} className="profil-card" style={{marginBottom:'8px'}}>
+              <div key={k.id} className="profil-card" style={{ marginBottom: '8px' }}>
                 <div className="profil-row"><span className="profil-lbl">Imie i nazwisko</span><span className="profil-val">{k.imie} {k.nazwisko}</span></div>
                 <div className="profil-row"><span className="profil-lbl">Grupa</span><span className="profil-val">{grupy.find(g => g.id === k.grupa_id)?.nazwa || '-'}</span></div>
               </div>
@@ -1030,15 +997,15 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
           <>
             <h2 className="page-title">Nowa grupa</h2>
             <form className="admin-form" onSubmit={dodajGrupe}>
-              <div className="login-field"><label>Nazwa grupy</label><input type="text" value={nowaGrupa.nazwa} onChange={e => setNowaGrupa({...nowaGrupa, nazwa: e.target.value})} placeholder="np. Grupa III Warszawa 2025/2026" required /></div>
-              <div className="login-field"><label>Miasto</label><input type="text" value={nowaGrupa.miasto} onChange={e => setNowaGrupa({...nowaGrupa, miasto: e.target.value})} placeholder="np. Warszawa" required /></div>
-              <div className="login-field"><label>Edycja</label><input type="text" value={nowaGrupa.edycja} onChange={e => setNowaGrupa({...nowaGrupa, edycja: e.target.value})} placeholder="np. 2025/2026" required /></div>
+              <div className="login-field"><label>Nazwa grupy</label><input type="text" value={nowaGrupa.nazwa} onChange={e => setNowaGrupa({ ...nowaGrupa, nazwa: e.target.value })} placeholder="np. Grupa III Warszawa 2025/2026" required /></div>
+              <div className="login-field"><label>Miasto</label><input type="text" value={nowaGrupa.miasto} onChange={e => setNowaGrupa({ ...nowaGrupa, miasto: e.target.value })} placeholder="np. Warszawa" required /></div>
+              <div className="login-field"><label>Edycja</label><input type="text" value={nowaGrupa.edycja} onChange={e => setNowaGrupa({ ...nowaGrupa, edycja: e.target.value })} placeholder="np. 2025/2026" required /></div>
               <button className="login-btn" type="submit">Dodaj grupe</button>
             </form>
-            <h2 className="page-title" style={{marginTop:'24px'}}>Lista grup</h2>
+            <h2 className="page-title" style={{ marginTop: '24px' }}>Lista grup</h2>
             {grupy.map(g => (
-              <div key={g.id} className="profil-card" style={{marginBottom:'8px'}}>
-                <div className="profil-row"><span className="profil-lbl">ID do CSV</span><span className="profil-val" style={{fontWeight:'700', color:'var(--brand)'}}>{g.id}</span></div>
+              <div key={g.id} className="profil-card" style={{ marginBottom: '8px' }}>
+                <div className="profil-row"><span className="profil-lbl">ID do CSV</span><span className="profil-val" style={{ fontWeight: '700', color: 'var(--brand)' }}>{g.id}</span></div>
                 <div className="profil-row"><span className="profil-lbl">Nazwa</span><span className="profil-val">{g.nazwa}</span></div>
                 <div className="profil-row"><span className="profil-lbl">Miasto</span><span className="profil-val">{g.miasto}</span></div>
                 <div className="profil-row"><span className="profil-lbl">Edycja</span><span className="profil-val">{g.edycja}</span></div>
@@ -1050,23 +1017,25 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
         {aktywnaZakladka === 'import' && (
           <>
             <h2 className="page-title">Import kursantow z CSV</h2>
-            <div className="profil-card" style={{marginBottom:'16px'}}>
-              <p style={{fontSize:'13px', color:'var(--text-muted)', marginBottom:'8px'}}>Format pliku CSV (pierwsza linia to naglowek):</p>
-              <code style={{fontSize:'12px', background:'#f5f5f5', padding:'8px', borderRadius:'6px', display:'block', whiteSpace:'pre'}}>imie,nazwisko,email,grupa_id{'\n'}Anna,Kowalska,a.kowalska@email.pl,1{'\n'}Jan,Nowak,j.nowak@email.pl,1</code>
-              <p style={{fontSize:'12px', color:'var(--text-muted)', marginTop:'8px'}}>grupa_id znajdziesz w zakladce Grupy</p>
+            <div className="profil-card" style={{ marginBottom: '16px' }}>
+              <div className="profil-row" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '8px' }}>
+                <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Format pliku CSV (pierwsza linia to naglowek):</p>
+                <code style={{ fontSize: '12px', background: '#f5f5f5', padding: '8px', borderRadius: '6px', display: 'block', whiteSpace: 'pre', width: '100%' }}>imie,nazwisko,email,grupa_id{'\n'}Anna,Kowalska,a.kowalska@email.pl,1</code>
+                <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>grupa_id znajdziesz w zakladce Grupy</p>
+              </div>
             </div>
             <div className="login-field">
               <label>Wybierz plik CSV</label>
-              <input ref={fileRef} type="file" accept=".csv" onChange={importujCSV} disabled={importowanie} style={{padding:'8px', border:'1px solid #ddd', borderRadius:'8px', width:'100%'}} />
+              <input ref={fileRef} type="file" accept=".csv" onChange={importujCSV} disabled={importowanie} style={{ padding: '8px', border: '0.5px solid var(--border)', borderRadius: '8px', width: '100%' }} />
             </div>
-            {importowanie && <div style={{textAlign:'center', padding:'12px', color:'var(--brand)'}}>Importowanie... nie zamykaj tej strony</div>}
+            {importowanie && <div style={{ textAlign: 'center', padding: '12px', color: 'var(--brand)' }}>Importowanie... nie zamykaj tej strony</div>}
             {importStatus.length > 0 && (
               <>
-                <h2 className="page-title" style={{marginTop:'16px'}}>Wyniki importu</h2>
+                <h2 className="page-title" style={{ marginTop: '16px' }}>Wyniki importu</h2>
                 {importStatus.map((s, i) => (
-                  <div key={i} className="profil-card" style={{marginBottom:'6px', borderLeft: s.status === 'Dodano!' ? '3px solid #2e7d32' : '3px solid #c62828'}}>
-                    <div className="profil-row"><span className="profil-lbl">{s.imie} {s.nazwisko}</span><span className="profil-val" style={{color: s.status === 'Dodano!' ? '#2e7d32' : '#c62828'}}>{s.status}</span></div>
-                    <div style={{fontSize:'12px', color:'var(--text-muted)'}}>{s.email}</div>
+                  <div key={i} className="profil-card" style={{ marginBottom: '6px', borderLeft: s.status === 'Dodano!' ? '3px solid #2e7d32' : '3px solid #c62828' }}>
+                    <div className="profil-row"><span className="profil-lbl">{s.imie} {s.nazwisko}</span><span className="profil-val" style={{ color: s.status === 'Dodano!' ? '#2e7d32' : '#c62828' }}>{s.status}</span></div>
+                    <div style={{ fontSize: '12px', color: 'var(--text-muted)', padding: '0 16px 10px' }}>{s.email}</div>
                   </div>
                 ))}
               </>
@@ -1077,19 +1046,21 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
         {aktywnaZakladka === 'ankiety' && (
           <>
             <h2 className="page-title">Wyniki ankiet</h2>
-            <div className="login-field" style={{marginBottom:'12px'}}>
+            <div className="login-field" style={{ marginBottom: '12px' }}>
               <label>Filtruj po grupie</label>
               <select value={wybranaGrupaAnkiety} onChange={e => setWybranaGrupaAnkiety(e.target.value)}>
                 <option value="">Wszystkie grupy ({ankiety.length} odpowiedzi)</option>
-                {grupy.map(g => <option key={g.id} value={g.id}>{g.nazwa} ({ankiety.filter((a:any) => a.grupa_id === g.id).length})</option>)}
+                {grupy.map(g => <option key={g.id} value={g.id}>{g.nazwa} ({ankiety.filter((a: any) => a.grupa_id === g.id).length})</option>)}
               </select>
             </div>
-            <button className="login-btn" style={{marginBottom:'16px'}} onClick={eksportujAnkietyCSV}>⬇ Pobierz CSV</button>
+            <button className="login-btn" style={{ marginBottom: '16px' }} onClick={eksportujAnkietyCSV}>⬇ Pobierz CSV</button>
             {ankietyFiltrowane.length === 0 ? (
-              <div className="profil-card"><p style={{color:'var(--text-muted)', textAlign:'center', fontSize:'14px'}}>Brak wypełnionych ankiet.</p></div>
+              <div className="profil-card"><div className="profil-row"><p style={{ color: 'var(--text-muted)', fontSize: '14px' }}>Brak wypełnionych ankiet.</p></div></div>
             ) : (
               <div className="profil-card">
-                <h3 style={{fontFamily:'Cormorant Garamond, serif', fontSize:'17px', marginBottom:'12px', color:'var(--brand)'}}>Średnie oceny ({ankietyFiltrowane.length} ankiet)</h3>
+                <div className="profil-row" style={{ borderBottom: '0.5px solid var(--border)' }}>
+                  <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '17px', color: 'var(--brand)' }}>Średnie oceny ({ankietyFiltrowane.length} ankiet)</span>
+                </div>
                 {[
                   ['Zadowolenie ze szkolenia', 'zadowolenie'],
                   ['Zajęcia teoretyczne', 'zajecia_teoretyczne'],
@@ -1106,26 +1077,22 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
                   ['Ocena ogólna', 'ocena_ogolna'],
                 ].map(([label, pole]) => (
                   <div key={pole} className="profil-row">
-                    <span className="profil-lbl" style={{fontSize:'12px'}}>{label}</span>
-                    <span className="profil-val" style={{fontWeight:'700', color:'var(--brand)'}}>
+                    <span className="profil-lbl">{label}</span>
+                    <span className="profil-val" style={{ color: 'var(--brand)' }}>
                       {'★'.repeat(Math.round(parseFloat(srednia(pole as keyof OdpowiedziAnkiety, ankietyFiltrowane))))} {srednia(pole as keyof OdpowiedziAnkiety, ankietyFiltrowane)}/5
                     </span>
                   </div>
                 ))}
-                <div className="profil-row" style={{borderTop:'1px solid #eee', paddingTop:'8px', marginTop:'4px'}}>
-                  <span className="profil-lbl" style={{fontSize:'12px'}}>Wiedza wzrosła (Tak)</span>
-                  <span className="profil-val" style={{fontWeight:'700', color:'var(--brand)'}}>
-                    {ankietyFiltrowane.length > 0
-                      ? Math.round(ankietyFiltrowane.filter((a:any) => a.wiedza_wzrosla === 'Tak').length / ankietyFiltrowane.length * 100) + '%'
-                      : '—'}
+                <div className="profil-row">
+                  <span className="profil-lbl">Wiedza wzrosła (Tak)</span>
+                  <span className="profil-val" style={{ color: 'var(--brand)' }}>
+                    {ankietyFiltrowane.length > 0 ? Math.round(ankietyFiltrowane.filter((a: any) => a.wiedza_wzrosla === 'Tak').length / ankietyFiltrowane.length * 100) + '%' : '—'}
                   </span>
                 </div>
                 <div className="profil-row">
-                  <span className="profil-lbl" style={{fontSize:'12px'}}>Polecenie znajomym (Tak)</span>
-                  <span className="profil-val" style={{fontWeight:'700', color:'var(--brand)'}}>
-                    {ankietyFiltrowane.length > 0
-                      ? Math.round(ankietyFiltrowane.filter((a:any) => a.nps === 'Tak').length / ankietyFiltrowane.length * 100) + '%'
-                      : '—'}
+                  <span className="profil-lbl">Polecenie znajomym (Tak)</span>
+                  <span className="profil-val" style={{ color: 'var(--brand)' }}>
+                    {ankietyFiltrowane.length > 0 ? Math.round(ankietyFiltrowane.filter((a: any) => a.nps === 'Tak').length / ankietyFiltrowane.length * 100) + '%' : '—'}
                   </span>
                 </div>
               </div>
@@ -1134,7 +1101,7 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
         )}
       </main>
 
-      <nav className="bottom-nav" style={{overflowX:'auto'}}>
+      <nav className="bottom-nav" style={{ overflowX: 'auto' }}>
         <button className={`nav-item ${aktywnaZakladka === 'ogloszenia' ? 'active' : ''}`} onClick={() => { setKomunikat(''); setEdytowane(null); setAktywnaZakladka('ogloszenia'); }}>
           <Bell size={20} /><span className="nav-label">Ogloszenia</span>
         </button>
@@ -1178,11 +1145,11 @@ function KartaOgloszenia({ o, onClick }: { o: Ogloszenie; onClick: () => void })
 function EkranSzczegoly({ o, onWroc }: { o: Ogloszenie; onWroc: () => void }) {
   return (
     <>
-      <button className="btn-wroc" onClick={onWroc}>Wroc</button>
+      <button className="btn-wroc" onClick={onWroc}>← Wróć</button>
       <div className="szczegoly-header">
         <span className={`badge badge-${o.typ.toLowerCase()}`}>{o.typ}</span>
         <h2 className="szczegoly-tytul">{o.tytul}</h2>
-        <p className="szczegoly-meta">Biuro On-Arch - {new Date(o.data_utworzenia).toLocaleDateString('pl-PL')}</p>
+        <p className="szczegoly-meta">Biuro On-Arch · {new Date(o.data_utworzenia).toLocaleDateString('pl-PL')}</p>
       </div>
       <div className="szczegoly-tresc">{o.szczegoly}</div>
     </>
@@ -1208,9 +1175,9 @@ function EkranGlowny({ ogloszenia, zjazdy, onOtworzOgloszenie, user, kursant }: 
   const odliczanie = najblizszy ? liczDni(najblizszy.data_zjazdu) : '';
   return (
     <>
-      <p className="greeting">Dzien dobry, {imie}</p>
+      <p className="greeting">Dzień dobry, {imie}</p>
       <section className="section">
-        <div className="section-header"><span className="section-title">Najblizszy zjazd</span></div>
+        <div className="section-header"><span className="section-title">Najbliższy zjazd</span></div>
         {najblizszy ? (
           <div className="hero-card">
             <div className="hero-label">Zjazd {najblizszy.nr}</div>
@@ -1219,11 +1186,11 @@ function EkranGlowny({ ogloszenia, zjazdy, onOtworzOgloszenie, user, kursant }: 
                 display: 'inline-block',
                 background: 'rgba(255,255,255,0.18)',
                 color: 'white',
-                fontSize: '12px',
+                fontSize: '11px',
                 fontWeight: 600,
                 padding: '4px 12px',
                 borderRadius: '20px',
-                marginBottom: '6px',
+                marginBottom: '8px',
                 letterSpacing: '0.5px',
               }}>{odliczanie}</div>
             )}
@@ -1235,11 +1202,11 @@ function EkranGlowny({ ogloszenia, zjazdy, onOtworzOgloszenie, user, kursant }: 
             </div>
           </div>
         ) : (
-          <div className="hero-card"><div className="hero-date">Brak nadchodzacych zjazdow</div></div>
+          <div className="hero-card"><div className="hero-date">Brak nadchodzących zjazdów</div></div>
         )}
       </section>
       <section className="section">
-        <div className="section-header"><span className="section-title">Ogloszenia biura</span></div>
+        <div className="section-header"><span className="section-title">Ogłoszenia biura</span></div>
         {ogloszenia.slice(0, 3).map((o) => (
           <KartaOgloszenia key={o.id} o={o} onClick={() => onOtworzOgloszenie(o)} />
         ))}
@@ -1251,12 +1218,12 @@ function EkranGlowny({ ogloszenia, zjazdy, onOtworzOgloszenie, user, kursant }: 
 function EkranZjazdy({ zjazdy }: { zjazdy: Zjazd[] }) {
   return (
     <>
-      <h2 className="page-title">Plan zjazdow</h2>
+      <h2 className="page-title">Plan zjazdów</h2>
       {zjazdy.map((z) => (
         <div key={z.id} className={`sess-card ${z.status}`}>
           <div className="sess-top">
             <span className="sess-nr">Zjazd {z.nr}</span>
-            <span className={`s-badge s-${z.status}`}>{z.status === 'nadchodzacy' ? 'Nadchodzacy' : 'Zakonczony'}</span>
+            <span className={`s-badge s-${z.status}`}>{z.status === 'nadchodzacy' ? 'Nadchodzący' : 'Zakończony'}</span>
           </div>
           <div className="sess-date">{z.daty}</div>
           <div className="sess-rows">
@@ -1273,7 +1240,7 @@ function EkranZjazdy({ zjazdy }: { zjazdy: Zjazd[] }) {
 function EkranOgloszenia({ ogloszenia, onOtworzOgloszenie }: { ogloszenia: Ogloszenie[]; onOtworzOgloszenie: (o: Ogloszenie) => void }) {
   return (
     <>
-      <h2 className="page-title">Ogloszenia</h2>
+      <h2 className="page-title">Ogłoszenia</h2>
       {ogloszenia.map((o) => (
         <KartaOgloszenia key={o.id} o={o} onClick={() => onOtworzOgloszenie(o)} />
       ))}
@@ -1281,45 +1248,36 @@ function EkranOgloszenia({ ogloszenia, onOtworzOgloszenie }: { ogloszenia: Oglos
   );
 }
 
-
+// ── ZMIANA 1: PostepKursu renderuje się wewnątrz profil-card ──────────────────
 function PostepKursu({ zjazdy }: { zjazdy: Zjazd[] }) {
   const wszystkie = zjazdy.length;
   const zakonczone = zjazdy.filter(z => z.status === 'zakonczony').length;
   const procent = wszystkie > 0 ? Math.round((zakonczone / wszystkie) * 100) : 0;
 
   return (
-    <div className="profil-card" style={{ marginBottom: '12px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-        <span className="profil-lbl" style={{ fontSize: '12px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Postep kursu</span>
-        <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--brand)' }}>{zakonczone} / {wszystkie} zjazdow</span>
+    <div className="profil-postep">
+      <div className="profil-postep-header">
+        <span className="profil-postep-label">Postęp kursu</span>
+        <span className="profil-postep-count">{zakonczone} / {wszystkie} zjazdów</span>
       </div>
-      <div style={{
-        background: '#f0ebe8',
-        borderRadius: '20px',
-        height: '10px',
-        overflow: 'hidden',
-        marginBottom: '8px',
-      }}>
-        <div style={{
-          height: '100%',
-          width: `${procent}%`,
-          background: 'linear-gradient(90deg, var(--brand), #c49090)',
-          borderRadius: '20px',
-          transition: 'width 0.8s ease',
-        }} />
+      <div className="profil-postep-track">
+        <div className="profil-postep-fill" style={{ width: `${procent}%` }} />
       </div>
-      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-        <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-          {zakonczone === 0 ? 'Kurs jeszcze nie rozpoczety' : zakonczone === wszystkie ? 'Kurs ukonczony!' : `${procent}% ukonczone`}
+      <div className="profil-postep-footer">
+        <span>
+          {zakonczone === 0
+            ? 'Kurs jeszcze nie rozpoczęty'
+            : zakonczone === wszystkie
+            ? 'Kurs ukończony! 🎉'
+            : `${procent}% ukończone`}
         </span>
-        <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-          {wszystkie - zakonczone > 0 ? `Zostalo ${wszystkie - zakonczone} zjazdow` : '🎉'}
-        </span>
+        <span>{wszystkie - zakonczone > 0 ? `Zostało ${wszystkie - zakonczone} zjazdów` : ''}</span>
       </div>
     </div>
   );
 }
 
+// ── ZMIANA 2: <PostepKursu> wewnątrz profil-card, nie po niej ────────────────
 function EkranProfil({ user, kursant, zjazdy, onWyloguj, onAvatarZmieniony }: { user: User; kursant: Kursant | null; zjazdy: Zjazd[]; onWyloguj: () => void; onAvatarZmieniony: (url: string) => void }) {
   const [uploadowanie, setUploadowanie] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -1354,19 +1312,38 @@ function EkranProfil({ user, kursant, zjazdy, onWyloguj, onAvatarZmieniony }: { 
           )}
           <div className="profil-avatar-edit">{uploadowanie ? '...' : '📷'}</div>
         </div>
-        <input ref={fileRef} type="file" accept="image/*" onChange={wgrajZdjecie} style={{display:'none'}} />
+        <input ref={fileRef} type="file" accept="image/*" onChange={wgrajZdjecie} style={{ display: 'none' }} />
         <div className="profil-name">{kursant ? `${kursant.imie} ${kursant.nazwisko}` : user.email}</div>
         <div className="profil-group">{nazwaGrupy}</div>
       </div>
+
+      {/* Dane + postęp w jednej karcie */}
       <div className="profil-card">
-        <div className="profil-row"><span className="profil-lbl">Kurs</span><span className="profil-val">Projektowanie wnetrz</span></div>
-        <div className="profil-row"><span className="profil-lbl">Miasto</span><span className="profil-val">{miasto}</span></div>
-        <div className="profil-row"><span className="profil-lbl">Edycja</span><span className="profil-val">{edycja}</span></div>
-        <div className="profil-row"><span className="profil-lbl">Email</span><span className="profil-val">{user.email}</span></div>
-        <div className="profil-row"><span className="profil-lbl">Telefon biura</span><span className="profil-val">883 659 069</span></div>
+        <div className="profil-row">
+          <span className="profil-lbl">Kurs</span>
+          <span className="profil-val">Projektowanie wnętrz</span>
+        </div>
+        <div className="profil-row">
+          <span className="profil-lbl">Miasto</span>
+          <span className="profil-val">{miasto}</span>
+        </div>
+        <div className="profil-row">
+          <span className="profil-lbl">Edycja</span>
+          <span className="profil-val">{edycja}</span>
+        </div>
+        <div className="profil-row">
+          <span className="profil-lbl">Email</span>
+          <span className="profil-val">{user.email}</span>
+        </div>
+        <div className="profil-row">
+          <span className="profil-lbl">Telefon biura</span>
+          <span className="profil-val">883 659 069</span>
+        </div>
+        {/* Postęp kursu wtopiony w kartę */}
+        <PostepKursu zjazdy={zjazdy} />
       </div>
-      <PostepKursu zjazdy={zjazdy} />
-      <button className="btn-wyloguj" onClick={onWyloguj}>Wyloguj sie</button>
+
+      <button className="btn-wyloguj" onClick={onWyloguj}>Wyloguj się</button>
     </>
   );
 }
@@ -1409,8 +1386,6 @@ export default function App() {
       }
 
       setKursant(kursantData ? { ...kursantData, grupy: grupaData } as Kursant : null);
-
-      // Automatycznie oznacz przeterminowane zjazdy jako zakonczony
       await aktualizujStatusyZjazdow();
 
       const grupaId = kursantData?.grupa_id;
@@ -1420,10 +1395,7 @@ export default function App() {
           ? supabase.from('zjazdy').select('*').eq('grupa_id', grupaId).order('data_zjazdu', { ascending: true })
           : supabase.from('zjazdy').select('*').order('data_zjazdu', { ascending: true }),
       ]);
-      // Pokaz tylko ogloszenia dla swojej grupy + ogloszenia dla wszystkich (grupa_id = null)
-      const ogFiltrowane = (og || []).filter(
-        (o: any) => o.grupa_id === null || o.grupa_id === grupaId
-      );
+      const ogFiltrowane = (og || []).filter((o: any) => o.grupa_id === null || o.grupa_id === grupaId);
       setOgloszenia(ogFiltrowane);
       setZjazdy(zj || []);
     }
@@ -1432,45 +1404,22 @@ export default function App() {
 
   async function aktualizujStatusyZjazdow() {
     const dzisiaj = new Date().toISOString().split('T')[0];
-
-    const { data: przestarzale } = await supabase
-      .from('zjazdy')
-      .select('*')
-      .eq('status', 'nadchodzacy')
-      .lt('data_zjazdu', dzisiaj);
-
+    const { data: przestarzale } = await supabase.from('zjazdy').select('*').eq('status', 'nadchodzacy').lt('data_zjazdu', dzisiaj);
     if (!przestarzale || przestarzale.length === 0) return;
-
     for (const zjazd of przestarzale) {
       await supabase.from('zjazdy').update({ status: 'zakonczony' }).eq('id', zjazd.id);
-
-      const { data: wszystkieZjazdy } = await supabase
-        .from('zjazdy')
-        .select('*')
-        .eq('grupa_id', zjazd.grupa_id)
-        .order('data_zjazdu', { ascending: true });
-
-      const pozostaleNadchodzace = (wszystkieZjazdy || []).filter(
-        z => z.id !== zjazd.id && z.status === 'nadchodzacy' && z.data_zjazdu >= dzisiaj
-      );
-
+      const { data: wszystkieZjazdy } = await supabase.from('zjazdy').select('*').eq('grupa_id', zjazd.grupa_id).order('data_zjazdu', { ascending: true });
+      const pozostaleNadchodzace = (wszystkieZjazdy || []).filter(z => z.id !== zjazd.id && z.status === 'nadchodzacy' && z.data_zjazdu >= dzisiaj);
       if (pozostaleNadchodzace.length === 0) {
-        const { data: istniejacePowiadomienie } = await supabase
-          .from('ogloszenia')
-          .select('id')
-          .eq('tytul', 'Wypełnij ankietę oceny kursu ⭐')
-          .maybeSingle();
-
+        const { data: istniejacePowiadomienie } = await supabase.from('ogloszenia').select('id').eq('tytul', 'Wypełnij ankietę oceny kursu ⭐').maybeSingle();
         if (!istniejacePowiadomienie) {
-          const { data: grupaInfo } = await supabase
-            .from('grupy').select('nazwa').eq('id', zjazd.grupa_id).single();
+          const { data: grupaInfo } = await supabase.from('grupy').select('nazwa').eq('id', zjazd.grupa_id).single();
           const nazwaGrupy = grupaInfo?.nazwa || 'Twoja grupa';
-
           await supabase.from('ogloszenia').insert([{
             typ: 'Informacja',
             tytul: 'Wypełnij ankietę oceny kursu ⭐',
             tresc: 'Twój kurs dobiegł końca. Prosimy o wypełnienie krótkiej ankiety — to tylko kilka minut!',
-            szczegoly: 'Dziękujemy za udział w kursie ' + nazwaGrupy + '!\n\nTwoja opinia jest dla nas bardzo ważna i pomoże nam udoskonalić kolejne edycje kursu.\n\nProsimy o wypełnienie krótkiej ankiety oceniającej szkolenie. Znajdziesz ją w aplikacji, w zakładce Ankieta w dolnym menu.\n\nZ góry dziękujemy!\nZespół On-Arch',
+            szczegoly: 'Dziękujemy za udział w kursie ' + nazwaGrupy + '!\n\nTwoja opinia jest dla nas bardzo ważna i pomoże nam udoskonalić kolejne edycje kursu.\n\nProsimy o wypełnienie krótkiej ankiety oceniającej szkolenie. Znajdziesz ją w zakładce Ankieta w dolnym menu.\n\nZ góry dziękujemy!\nZespół On-Arch',
             nowe: true,
             data_utworzenia: new Date().toISOString(),
           }]);
@@ -1501,12 +1450,10 @@ export default function App() {
   const noweCount = ogloszenia.filter((o) => o.nowe).length;
   const avatarUrl = kursant?.avatar_url;
   const inicjal = kursant ? kursant.imie[0] : user?.email?.[0]?.toUpperCase() || '?';
-
-  // Sprawdź czy ankieta jest dostępna (ostatni zjazd zakończony)
   const ostatniZjazd = zjazdy.length > 0 ? zjazdy[zjazdy.length - 1] : null;
   const ankietaDostepna = ostatniZjazd?.status === 'zakonczony';
 
-  if (ladowanie) return <div className="ladowanie">Ladowanie...</div>;
+  if (ladowanie) return <div className="ladowanie">Ładowanie...</div>;
   if (resetMode) return <EkranZmianaHasla />;
   if (!user) return <EkranLogowania onZalogowano={() => {}} />;
   if (kursant?.rola === 'admin') return <PanelBiura onWyloguj={wyloguj} />;
@@ -1537,13 +1484,13 @@ export default function App() {
       </main>
       <nav className="bottom-nav">
         <button className={`nav-item ${aktywnaZakladka === 'home' ? 'active' : ''}`} onClick={() => { setAktywneOgloszenie(null); setAktywnaZakladka('home'); }}>
-          <Home size={20} /><span className="nav-label">Glowna</span>
+          <Home size={20} /><span className="nav-label">Główna</span>
         </button>
         <button className={`nav-item ${aktywnaZakladka === 'zjazdy' ? 'active' : ''}`} onClick={() => { setAktywneOgloszenie(null); setAktywnaZakladka('zjazdy'); }}>
           <Calendar size={20} /><span className="nav-label">Zjazdy</span>
         </button>
         <button className={`nav-item ${aktywnaZakladka === 'ogloszenia' ? 'active' : ''}`} onClick={() => { setAktywneOgloszenie(null); setAktywnaZakladka('ogloszenia'); }}>
-          <Bell size={20} /><span className="nav-label">Ogloszenia</span>
+          <Bell size={20} /><span className="nav-label">Ogłoszenia</span>
           {noweCount > 0 && <span className="nav-badge">{noweCount}</span>}
         </button>
         <button className={`nav-item ${aktywnaZakladka === 'czat' ? 'active' : ''}`} onClick={() => { setAktywneOgloszenie(null); setAktywnaZakladka('czat'); }}>
@@ -1555,7 +1502,7 @@ export default function App() {
           style={{ opacity: ankietaDostepna ? 1 : 0.4 }}
         >
           <Star size={20} /><span className="nav-label">Ankieta</span>
-          {ankietaDostepna && <span className="nav-badge" style={{background:'#A05C5C'}}>!</span>}
+          {ankietaDostepna && <span className="nav-badge" style={{ background: 'var(--brand)' }}>!</span>}
         </button>
         <button className={`nav-item ${aktywnaZakladka === 'profil' ? 'active' : ''}`} onClick={() => { setAktywneOgloszenie(null); setAktywnaZakladka('profil'); }}>
           <User size={20} /><span className="nav-label">Profil</span>
