@@ -1077,38 +1077,6 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
                   <button className="login-btn" type="submit">Zapisz zmiany</button>
                   <button className="btn-link" onClick={() => setEdytowanyZjazd(null)}>Anuluj</button>
                 </form>
-                {/* Prowadzący per zjazd */}
-                <h2 className="page-title" style={{ marginTop: '20px' }}>Prowadzący tego zjazdu</h2>
-                {(edytowanyZjazd.prowadzacy || []).length === 0 && (
-                  <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '12px' }}>Brak przypisanych prowadzących.</p>
-                )}
-                {(edytowanyZjazd.prowadzacy || []).map(p => (
-                  <div key={p.id} className="profil-card" style={{ marginBottom: '8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px' }}>
-                    <span style={{ fontSize: '14px' }}>{p.imie} {p.nazwisko}</span>
-                    <button onClick={async () => {
-                      await supabase.from('zjazdy_prowadzacy').delete().eq('zjazd_id', edytowanyZjazd.id).eq('prowadzacy_id', p.id);
-                      await pobierzZjazdy();
-                      setEdytowanyZjazd(prev => prev ? { ...prev, prowadzacy: (prev.prowadzacy || []).filter(x => x.id !== p.id) } : prev);
-                    }} style={{ background: 'none', border: 'none', color: '#c62828', cursor: 'pointer', fontSize: '18px' }}>×</button>
-                  </div>
-                ))}
-                <div className="login-field" style={{ marginTop: '8px' }}>
-                  <label>Dodaj prowadzącego</label>
-                  <select defaultValue="" onChange={async (e) => {
-                    const pid = parseInt(e.target.value);
-                    if (!pid) return;
-                    await supabase.from('zjazdy_prowadzacy').insert([{ zjazd_id: edytowanyZjazd.id, prowadzacy_id: pid }]);
-                    await pobierzZjazdy();
-                    const p = prowadzacy.find(x => x.id === pid);
-                    if (p) setEdytowanyZjazd(prev => prev ? { ...prev, prowadzacy: [...(prev.prowadzacy || []), p] } : prev);
-                    e.target.value = '';
-                  }}>
-                    <option value="">— wybierz prowadzącego —</option>
-                    {prowadzacy.filter(p => !(edytowanyZjazd.prowadzacy || []).some(ep => ep.id === p.id)).map(p => (
-                      <option key={p.id} value={p.id}>{p.imie} {p.nazwisko}</option>
-                    ))}
-                  </select>
-                </div>
               </>
             ) : (
               <>
@@ -1130,15 +1098,84 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
                   <div className="login-field"><label>Status</label><select value={nowyZjazd.status} onChange={e => setNowyZjazd({ ...nowyZjazd, status: e.target.value })}><option value="nadchodzacy">Nadchodzacy</option><option value="zakonczony">Zakonczony</option></select></div>
                   <button className="login-btn" type="submit">Dodaj zjazd</button>
                 </form>
-                <h2 className="page-title" style={{ marginTop: '24px' }}>Lista zjazdow</h2>
-                {zjazdy.map(z => (
-                  <div key={z.id} className="profil-card" style={{ marginBottom: '8px' }}>
-                    <div className="profil-row"><span className="profil-lbl">Zjazd {z.nr}</span><span className="profil-val">{z.daty}</span></div>
+                <h2 className="page-title" style={{ marginTop: '24px' }}>Lista zjazdów</h2>
+
+                {/* Filtr po grupie */}
+                {grupy.length > 1 && (
+                  <div className="login-field" style={{ marginBottom: '12px' }}>
+                    <label>Filtruj po grupie</label>
+                    <select
+                      value={(nowyZjazd as any)._filterGrupa || ''}
+                      onChange={e => setNowyZjazd({ ...nowyZjazd, ...(nowyZjazd as any), _filterGrupa: e.target.value })}
+                    >
+                      <option value="">Wszystkie grupy</option>
+                      {grupy.map(g => <option key={g.id} value={g.id}>{g.nazwa}</option>)}
+                    </select>
+                  </div>
+                )}
+
+                {zjazdy
+                  .filter(z => !(nowyZjazd as any)._filterGrupa || z.grupa_id === parseInt((nowyZjazd as any)._filterGrupa))
+                  .map(z => (
+                  <div key={z.id} className="profil-card" style={{ marginBottom: '10px' }}>
+                    <div className="profil-row">
+                      <span className="profil-lbl" style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '16px', fontWeight: 500 }}>
+                        Zjazd {z.nr} — {z.daty}
+                      </span>
+                      <span className={`s-badge s-${z.status}`} style={{ fontSize: '9px' }}>
+                        {z.status === 'nadchodzacy' ? 'Nadchodzący' : 'Zakończony'}
+                      </span>
+                    </div>
                     <div className="profil-row"><span className="profil-lbl">Grupa</span><span className="profil-val">{grupy.find(g => g.id === z.grupa_id)?.nazwa || '-'}</span></div>
-                    <div className="profil-row"><span className="profil-lbl">Status</span><span className="profil-val">{z.status === 'nadchodzacy' ? 'Nadchodzacy' : 'Zakonczony'}</span></div>
+
+                    {/* Prowadzący inline */}
+                    <div className="profil-row" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '6px' }}>
+                      <span className="profil-lbl">Prowadzący</span>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', width: '100%' }}>
+                        {(z.prowadzacy || []).map(p => (
+                          <span key={p.id} style={{
+                            display: 'inline-flex', alignItems: 'center', gap: '4px',
+                            background: 'var(--brand-light)', color: 'var(--brand-dark)',
+                            fontSize: '12px', padding: '3px 10px 3px 10px', borderRadius: '20px',
+                            fontWeight: 500,
+                          }}>
+                            {p.imie} {p.nazwisko}
+                            <button onClick={async () => {
+                              await supabase.from('zjazdy_prowadzacy').delete().eq('zjazd_id', z.id).eq('prowadzacy_id', p.id);
+                              pobierzZjazdy();
+                            }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--brand)', fontSize: '14px', padding: '0 0 0 2px', lineHeight: 1 }}>×</button>
+                          </span>
+                        ))}
+                        {/* Dropdown dodawania */}
+                        {prowadzacy.filter(p => !(z.prowadzacy || []).some(ep => ep.id === p.id)).length > 0 && (
+                          <select
+                            defaultValue=""
+                            onChange={async (e) => {
+                              const pid = parseInt(e.target.value);
+                              if (!pid) return;
+                              await supabase.from('zjazdy_prowadzacy').insert([{ zjazd_id: z.id, prowadzacy_id: pid }]);
+                              e.target.value = '';
+                              pobierzZjazdy();
+                            }}
+                            style={{
+                              fontSize: '12px', padding: '3px 8px', borderRadius: '20px',
+                              border: '0.5px dashed var(--brand-mid)', background: 'white',
+                              color: 'var(--brand)', cursor: 'pointer', fontFamily: 'Jost, sans-serif',
+                            }}
+                          >
+                            <option value="">+ dodaj</option>
+                            {prowadzacy
+                              .filter(p => !(z.prowadzacy || []).some(ep => ep.id === p.id))
+                              .map(p => <option key={p.id} value={p.id}>{p.imie} {p.nazwisko}</option>)
+                            }
+                          </select>
+                        )}
+                      </div>
+                    </div>
+
                     <div style={{ display: 'flex', gap: '8px', margin: '8px 16px 12px' }}>
                       <button className="login-btn" style={{ flex: 1, padding: '8px' }} onClick={() => { setEdytowanyZjazd(z); setKomunikat(''); }}>Edytuj</button>
-                      <button className="btn-wyloguj" style={{ flex: 1, padding: '8px', marginTop: 0 }} onClick={() => usunZjazd(z.id)}>Usun</button>
+                      <button className="btn-wyloguj" style={{ flex: 1, padding: '8px', marginTop: 0 }} onClick={() => usunZjazd(z.id)}>Usuń</button>
                     </div>
                   </div>
                 ))}
