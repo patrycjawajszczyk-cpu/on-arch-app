@@ -11,6 +11,7 @@ type Ogloszenie = {
   szczegoly: string;
   nowe: boolean;
   data_utworzenia: string;
+  grupa_id: number | null;
 };
 
 type Zjazd = {
@@ -659,7 +660,7 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
   const [ankiety, setAnkiety] = useState<OdpowiedziAnkiety[]>([]);
   const [edytowane, setEdytowane] = useState<Ogloszenie | null>(null);
   const [edytowanyZjazd, setEdytowanyZjazd] = useState<Zjazd | null>(null);
-  const [noweOgl, setNoweOgl] = useState({ typ: 'Informacja', tytul: '', tresc: '', szczegoly: '', nowe: true });
+  const [noweOgl, setNoweOgl] = useState({ typ: 'Informacja', tytul: '', tresc: '', szczegoly: '', nowe: true, grupa_id: '' });
   const [nowyZjazd, setNowyZjazd] = useState({ nr: '', daty: '', sala: '', adres: '', tematy: '', status: 'nadchodzacy', data_zjazdu: '', grupa_id: '' });
   const [nowyKursant, setNowyKursant] = useState({ imie: '', nazwisko: '', email: '', grupa_id: '' });
   const [nowaGrupa, setNowaGrupa] = useState({ nazwa: '', miasto: '', edycja: '' });
@@ -694,15 +695,27 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
 
   async function dodajOgloszenie(e: React.FormEvent) {
     e.preventDefault();
-    const { error } = await supabase.from('ogloszenia').insert([{ ...noweOgl, data_utworzenia: new Date().toISOString() }]);
+    const daneOgl = {
+      typ: noweOgl.typ,
+      tytul: noweOgl.tytul,
+      tresc: noweOgl.tresc,
+      szczegoly: noweOgl.szczegoly,
+      nowe: true,
+      data_utworzenia: new Date().toISOString(),
+      grupa_id: noweOgl.grupa_id ? parseInt(noweOgl.grupa_id) : null,
+    };
+    const { error } = await supabase.from('ogloszenia').insert([daneOgl]);
     if (error) { setKomunikat('Blad: ' + error.message); }
-    else { setKomunikat('Ogloszenie dodane!'); setNoweOgl({ typ: 'Informacja', tytul: '', tresc: '', szczegoly: '', nowe: true }); pobierzOgloszenia(); }
+    else { setKomunikat('Ogloszenie dodane!'); setNoweOgl({ typ: 'Informacja', tytul: '', tresc: '', szczegoly: '', nowe: true, grupa_id: '' }); pobierzOgloszenia(); }
   }
 
   async function zapiszEdycje(e: React.FormEvent) {
     e.preventDefault();
     if (!edytowane) return;
-    const { error } = await supabase.from('ogloszenia').update({ typ: edytowane.typ, tytul: edytowane.tytul, tresc: edytowane.tresc, szczegoly: edytowane.szczegoly }).eq('id', edytowane.id);
+    const { error } = await supabase.from('ogloszenia').update({
+      typ: edytowane.typ, tytul: edytowane.tytul, tresc: edytowane.tresc,
+      szczegoly: edytowane.szczegoly, grupa_id: edytowane.grupa_id ?? null,
+    }).eq('id', edytowane.id);
     if (error) { setKomunikat('Blad: ' + error.message); }
     else { setKomunikat('Ogloszenie zaktualizowane!'); setEdytowane(null); pobierzOgloszenia(); }
   }
@@ -865,6 +878,12 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
                       <option>Informacja</option><option>Pilne</option><option>Zmiana</option>
                     </select>
                   </div>
+                  <div className="login-field"><label>Dla kogo</label>
+                    <select value={edytowane.grupa_id ?? ''} onChange={e => setEdytowane({...edytowane, grupa_id: e.target.value ? parseInt(e.target.value) : null})}>
+                      <option value="">Wszystkie grupy</option>
+                      {grupy.map(g => <option key={g.id} value={g.id}>{g.nazwa}</option>)}
+                    </select>
+                  </div>
                   <div className="login-field"><label>Tytul</label><input type="text" value={edytowane.tytul} onChange={e => setEdytowane({...edytowane, tytul: e.target.value})} required /></div>
                   <div className="login-field"><label>Krotki opis</label><input type="text" value={edytowane.tresc} onChange={e => setEdytowane({...edytowane, tresc: e.target.value})} required /></div>
                   <div className="login-field"><label>Pelna tresc</label><textarea value={edytowane.szczegoly} onChange={e => setEdytowane({...edytowane, szczegoly: e.target.value})} rows={4} /></div>
@@ -881,6 +900,12 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
                       <option>Informacja</option><option>Pilne</option><option>Zmiana</option>
                     </select>
                   </div>
+                  <div className="login-field"><label>Dla kogo</label>
+                    <select value={noweOgl.grupa_id} onChange={e => setNoweOgl({...noweOgl, grupa_id: e.target.value})}>
+                      <option value="">Wszystkie grupy</option>
+                      {grupy.map(g => <option key={g.id} value={g.id}>{g.nazwa}</option>)}
+                    </select>
+                  </div>
                   <div className="login-field"><label>Tytul</label><input type="text" value={noweOgl.tytul} onChange={e => setNoweOgl({...noweOgl, tytul: e.target.value})} required /></div>
                   <div className="login-field"><label>Krotki opis</label><input type="text" value={noweOgl.tresc} onChange={e => setNoweOgl({...noweOgl, tresc: e.target.value})} required /></div>
                   <div className="login-field"><label>Pelna tresc</label><textarea value={noweOgl.szczegoly} onChange={e => setNoweOgl({...noweOgl, szczegoly: e.target.value})} rows={4} /></div>
@@ -891,6 +916,12 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
                   <div key={o.id} className="profil-card" style={{marginBottom:'8px'}}>
                     <div className="profil-row"><span className="profil-lbl">Tytul</span><span className="profil-val">{o.tytul}</span></div>
                     <div className="profil-row"><span className="profil-lbl">Typ</span><span className="profil-val">{o.typ}</span></div>
+                    <div className="profil-row">
+                      <span className="profil-lbl">Dla</span>
+                      <span className="profil-val" style={{color: o.grupa_id ? 'var(--brand)' : 'var(--text-muted)'}}>
+                        {o.grupa_id ? (grupy.find(g => g.id === o.grupa_id)?.nazwa || 'Grupa') : 'Wszystkie grupy'}
+                      </span>
+                    </div>
                     <div style={{display:'flex', gap:'8px', marginTop:'8px'}}>
                       <button className="login-btn" style={{flex:1, padding:'8px'}} onClick={() => { setEdytowane(o); setKomunikat(''); }}>Edytuj</button>
                       <button className="btn-wyloguj" style={{flex:1, padding:'8px'}} onClick={() => usunOgloszenie(o.id)}>Usun</button>
@@ -1322,7 +1353,11 @@ export default function App() {
           ? supabase.from('zjazdy').select('*').eq('grupa_id', grupaId).order('data_zjazdu', { ascending: true })
           : supabase.from('zjazdy').select('*').order('data_zjazdu', { ascending: true }),
       ]);
-      setOgloszenia(og || []);
+      // Pokaz tylko ogloszenia dla swojej grupy + ogloszenia dla wszystkich (grupa_id = null)
+      const ogFiltrowane = (og || []).filter(
+        (o: any) => o.grupa_id === null || o.grupa_id === grupaId
+      );
+      setOgloszenia(ogFiltrowane);
       setZjazdy(zj || []);
     }
     pobierzDane();
