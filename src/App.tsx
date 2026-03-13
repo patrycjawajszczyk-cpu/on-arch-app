@@ -1189,9 +1189,23 @@ function EkranSzczegoly({ o, onWroc }: { o: Ogloszenie; onWroc: () => void }) {
   );
 }
 
+function liczDni(dataZjazdu: string): string {
+  if (!dataZjazdu) return '';
+  const dzisiaj = new Date();
+  dzisiaj.setHours(0, 0, 0, 0);
+  const cel = new Date(dataZjazdu);
+  cel.setHours(0, 0, 0, 0);
+  const diff = Math.round((cel.getTime() - dzisiaj.getTime()) / (1000 * 60 * 60 * 24));
+  if (diff === 0) return 'Dzisiaj!';
+  if (diff === 1) return 'Jutro!';
+  if (diff < 0) return '';
+  return `Za ${diff} dni`;
+}
+
 function EkranGlowny({ ogloszenia, zjazdy, onOtworzOgloszenie, user, kursant }: { ogloszenia: Ogloszenie[]; zjazdy: Zjazd[]; onOtworzOgloszenie: (o: Ogloszenie) => void; user: User; kursant: Kursant | null }) {
   const imie = kursant ? kursant.imie : user.email.split('@')[0];
   const najblizszy = zjazdy.find(z => z.status === 'nadchodzacy');
+  const odliczanie = najblizszy ? liczDni(najblizszy.data_zjazdu) : '';
   return (
     <>
       <p className="greeting">Dzien dobry, {imie}</p>
@@ -1200,6 +1214,19 @@ function EkranGlowny({ ogloszenia, zjazdy, onOtworzOgloszenie, user, kursant }: 
         {najblizszy ? (
           <div className="hero-card">
             <div className="hero-label">Zjazd {najblizszy.nr}</div>
+            {odliczanie && (
+              <div style={{
+                display: 'inline-block',
+                background: 'rgba(255,255,255,0.18)',
+                color: 'white',
+                fontSize: '12px',
+                fontWeight: 600,
+                padding: '4px 12px',
+                borderRadius: '20px',
+                marginBottom: '6px',
+                letterSpacing: '0.5px',
+              }}>{odliczanie}</div>
+            )}
             <div className="hero-date">{najblizszy.daty}</div>
             <div className="hero-sub">{kursant?.grupy?.miasto || 'Warszawa'}</div>
             <div className="hero-pills">
@@ -1254,7 +1281,46 @@ function EkranOgloszenia({ ogloszenia, onOtworzOgloszenie }: { ogloszenia: Oglos
   );
 }
 
-function EkranProfil({ user, kursant, onWyloguj, onAvatarZmieniony }: { user: User; kursant: Kursant | null; onWyloguj: () => void; onAvatarZmieniony: (url: string) => void }) {
+
+function PostepKursu({ zjazdy }: { zjazdy: Zjazd[] }) {
+  const wszystkie = zjazdy.length;
+  const zakonczone = zjazdy.filter(z => z.status === 'zakonczony').length;
+  const procent = wszystkie > 0 ? Math.round((zakonczone / wszystkie) * 100) : 0;
+
+  return (
+    <div className="profil-card" style={{ marginBottom: '12px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+        <span className="profil-lbl" style={{ fontSize: '12px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Postep kursu</span>
+        <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--brand)' }}>{zakonczone} / {wszystkie} zjazdow</span>
+      </div>
+      <div style={{
+        background: '#f0ebe8',
+        borderRadius: '20px',
+        height: '10px',
+        overflow: 'hidden',
+        marginBottom: '8px',
+      }}>
+        <div style={{
+          height: '100%',
+          width: `${procent}%`,
+          background: 'linear-gradient(90deg, var(--brand), #c49090)',
+          borderRadius: '20px',
+          transition: 'width 0.8s ease',
+        }} />
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+        <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+          {zakonczone === 0 ? 'Kurs jeszcze nie rozpoczety' : zakonczone === wszystkie ? 'Kurs ukonczony!' : `${procent}% ukonczone`}
+        </span>
+        <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+          {wszystkie - zakonczone > 0 ? `Zostalo ${wszystkie - zakonczone} zjazdow` : '🎉'}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function EkranProfil({ user, kursant, zjazdy, onWyloguj, onAvatarZmieniony }: { user: User; kursant: Kursant | null; zjazdy: Zjazd[]; onWyloguj: () => void; onAvatarZmieniony: (url: string) => void }) {
   const [uploadowanie, setUploadowanie] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const inicjal = kursant ? kursant.imie[0] : user.email[0].toUpperCase();
@@ -1299,6 +1365,7 @@ function EkranProfil({ user, kursant, onWyloguj, onAvatarZmieniony }: { user: Us
         <div className="profil-row"><span className="profil-lbl">Email</span><span className="profil-val">{user.email}</span></div>
         <div className="profil-row"><span className="profil-lbl">Telefon biura</span><span className="profil-val">883 659 069</span></div>
       </div>
+      <PostepKursu zjazdy={zjazdy} />
       <button className="btn-wyloguj" onClick={onWyloguj}>Wyloguj sie</button>
     </>
   );
@@ -1464,7 +1531,7 @@ export default function App() {
             {aktywnaZakladka === 'ogloszenia' && <EkranOgloszenia ogloszenia={ogloszenia} onOtworzOgloszenie={otworzOgloszenie} />}
             {aktywnaZakladka === 'czat' && <EkranCzat user={user} kursant={kursant} />}
             {aktywnaZakladka === 'ankieta' && <EkranAnkieta kursant={kursant} zjazdy={zjazdy} user={user} />}
-            {aktywnaZakladka === 'profil' && <EkranProfil user={user} kursant={kursant} onWyloguj={wyloguj} onAvatarZmieniony={onAvatarZmieniony} />}
+            {aktywnaZakladka === 'profil' && <EkranProfil user={user} kursant={kursant} zjazdy={zjazdy} onWyloguj={wyloguj} onAvatarZmieniony={onAvatarZmieniony} />}
           </>
         )}
       </main>
