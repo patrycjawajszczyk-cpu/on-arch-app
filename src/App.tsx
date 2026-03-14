@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import './App.css';
 import { supabase } from './supabase';
-import { Home, Calendar, Bell, MessageCircle, User, Star, CheckSquare } from 'lucide-react';
+import { Home, Calendar, Bell, MessageCircle, User, Star, CheckSquare, BookOpen } from 'lucide-react';
 
 type Ogloszenie = {
   id: string;
@@ -20,6 +20,27 @@ type Prowadzacy = {
   nazwisko: string;
   bio: string | null;
   avatar_url: string | null;
+};
+
+type Zadanie = {
+  id: number;
+  grupa_id: number;
+  tytul: string;
+  opis: string | null;
+  termin: string | null;
+  link_materialow: string | null;
+  created_at: string;
+};
+
+type ZadanieOdpowiedz = {
+  id: number;
+  zadanie_id: number;
+  user_id: string;
+  imie: string;
+  nazwisko: string;
+  link_pracy: string;
+  komentarz: string | null;
+  created_at: string;
 };
 
 type Zjazd = {
@@ -57,6 +78,7 @@ type Grupa = {
   nazwa: string;
   miasto: string;
   edycja: string;
+  drive_link: string | null;
 };
 
 type User = {
@@ -105,6 +127,173 @@ type OdpowiedziAnkiety = {
   wyksztalcenie: string;
   wiek: string;
 };
+
+// ─── EKRAN ZADANIA (kursant) ─────────────────────────────────────────────────
+
+function EkranZadania({ user, kursant }: { user: User; kursant: Kursant | null }) {
+  const [zadania, setZadania] = useState<Zadanie[]>([]);
+  const [odpowiedzi, setOdpowiedzi] = useState<ZadanieOdpowiedz[]>([]);
+  const [ladowanie, setLadowanie] = useState(true);
+  const [aktywneZadanie, setAktywneZadanie] = useState<Zadanie | null>(null);
+  const [linkPracy, setLinkPracy] = useState('');
+  const [komentarz, setKomentarz] = useState('');
+  const [wysylanie, setWysylanie] = useState(false);
+  const [sukces, setSukces] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!kursant?.grupa_id) return;
+    pobierz();
+  }, [kursant]);
+
+  async function pobierz() {
+    setLadowanie(true);
+    const [{ data: zad }, { data: odp }] = await Promise.all([
+      supabase.from('zadania').select('*').eq('grupa_id', kursant!.grupa_id).order('created_at', { ascending: false }),
+      supabase.from('zadania_odpowiedzi').select('*').eq('user_id', user.id),
+    ]);
+    setZadania(zad || []);
+    setOdpowiedzi(odp || []);
+    setLadowanie(false);
+  }
+
+  const odpowiedzDlaZadania = (zid: number) => odpowiedzi.find(o => o.zadanie_id === zid);
+
+  async function wyslij(zadanie: Zadanie) {
+    if (!linkPracy.trim() || !kursant) return;
+    setWysylanie(true);
+    const istniejaca = odpowiedzDlaZadania(zadanie.id);
+    if (istniejaca) {
+      await supabase.from('zadania_odpowiedzi').update({ link_pracy: linkPracy, komentarz: komentarz || null }).eq('id', istniejaca.id);
+    } else {
+      await supabase.from('zadania_odpowiedzi').insert([{
+        zadanie_id: zadanie.id,
+        user_id: user.id,
+        imie: kursant.imie,
+        nazwisko: kursant.nazwisko,
+        link_pracy: linkPracy,
+        komentarz: komentarz || null,
+      }]);
+    }
+    setSukces(zadanie.id);
+    setAktywneZadanie(null);
+    setLinkPracy('');
+    setKomentarz('');
+    await pobierz();
+    setWysylanie(false);
+  }
+
+  if (!kursant?.grupa_id) return (
+    <div style={{ padding: '24px', textAlign: 'center', color: 'var(--text-muted)' }}>
+      Nie jesteś przypisany do żadnej grupy.
+    </div>
+  );
+
+  return (
+    <>
+      <h2 className="page-title">Zadania</h2>
+
+      {ladowanie && <div style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '24px' }}>Ładowanie...</div>}
+
+      {!ladowanie && zadania.length === 0 && (
+        <div style={{ textAlign: 'center', padding: '40px 24px', color: 'var(--text-muted)' }}>
+          <div style={{ fontSize: '40px', marginBottom: '12px' }}>📋</div>
+          <p style={{ fontSize: '14px' }}>Brak zadań. Pojawią się tutaj gdy prowadzący doda nowe.</p>
+        </div>
+      )}
+
+      {zadania.map(z => {
+        const odp = odpowiedzDlaZadania(z.id);
+        const wyslano = !!odp;
+        const rozwinięte = aktywneZadanie?.id === z.id;
+
+        return (
+          <div key={z.id} className="sess-card" style={{ marginBottom: '10px', borderColor: wyslano ? '#7aab8a' : undefined }}>
+            <div className="sess-top" style={{ background: wyslano ? '#f0faf4' : 'var(--brand-light)' }}>
+              <span className="sess-nr" style={{ fontSize: '13px' }}>{z.tytul}</span>
+              {wyslano
+                ? <span style={{ fontSize: '10px', fontWeight: 600, color: '#2e7d32', background: '#e8f5e9', padding: '3px 8px', borderRadius: '20px', textTransform: 'uppercase' }}>✓ Przesłano</span>
+                : z.termin
+                  ? <span style={{ fontSize: '10px', color: 'var(--brand-dark)', background: 'var(--brand-light)', padding: '3px 8px', borderRadius: '20px', fontWeight: 500 }}>do {new Date(z.termin).toLocaleDateString('pl-PL')}</span>
+                  : null
+              }
+            </div>
+
+            <div className="sess-rows">
+              {z.opis && <div className="sess-row" style={{ whiteSpace: 'pre-line', lineHeight: '1.6' }}>{renderTekstZLinkami(z.opis)}</div>}
+              {z.link_materialow && (
+                <div className="sess-row" style={{ marginTop: '6px' }}>
+                  <span className="sess-lbl">Materiały:</span>{' '}
+                  <a href={z.link_materialow} target="_blank" rel="noopener noreferrer"
+                    style={{ color: 'var(--brand)', textDecoration: 'underline', textDecorationStyle: 'dotted', textUnderlineOffset: '3px', fontSize: '12px' }}>
+                    Otwórz link →
+                  </a>
+                </div>
+              )}
+            </div>
+
+            {/* Przesłana praca */}
+            {wyslano && !rozwinięte && (
+              <div style={{ padding: '0 14px 12px' }}>
+                <div style={{ background: '#f0faf4', borderRadius: '10px', padding: '10px 12px' }}>
+                  <p style={{ fontSize: '11px', color: '#2e7d32', fontWeight: 600, marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.4px' }}>Twoja praca</p>
+                  <a href={odp!.link_pracy} target="_blank" rel="noopener noreferrer"
+                    style={{ fontSize: '12px', color: 'var(--brand)', textDecoration: 'underline', wordBreak: 'break-all' }}>
+                    {odp!.link_pracy}
+                  </a>
+                  {odp!.komentarz && <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px' }}>{odp!.komentarz}</p>}
+                </div>
+                <button onClick={() => { setAktywneZadanie(z); setLinkPracy(odp!.link_pracy); setKomentarz(odp!.komentarz || ''); }}
+                  style={{ marginTop: '8px', fontSize: '12px', color: 'var(--brand)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Jost, sans-serif' }}>
+                  Edytuj odpowiedź
+                </button>
+              </div>
+            )}
+
+            {/* Formularz przesyłania */}
+            {rozwinięte && (
+              <div style={{ padding: '0 14px 14px' }}>
+                <div className="login-field" style={{ marginBottom: '8px' }}>
+                  <label style={{ fontSize: '12px' }}>Link do pracy (Google Drive, Dropbox...)</label>
+                  <input type="url" value={linkPracy} onChange={e => setLinkPracy(e.target.value)}
+                    placeholder="https://drive.google.com/..."
+                    style={{ fontSize: '13px' }} />
+                </div>
+                <div className="login-field" style={{ marginBottom: '10px' }}>
+                  <label style={{ fontSize: '12px' }}>Komentarz (opcjonalnie)</label>
+                  <textarea value={komentarz} onChange={e => setKomentarz(e.target.value)}
+                    rows={2} placeholder="np. wersja robocza, czeka na poprawki..." style={{ fontSize: '13px', resize: 'none' }} />
+                </div>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button onClick={() => wyslij(z)} disabled={wysylanie || !linkPracy.trim()}
+                    className="login-btn" style={{ flex: 1, marginTop: 0, padding: '10px' }}>
+                    {wysylanie ? 'Wysyłanie...' : 'Prześlij pracę'}
+                  </button>
+                  <button onClick={() => { setAktywneZadanie(null); setLinkPracy(''); setKomentarz(''); }}
+                    style={{ padding: '10px 16px', borderRadius: '12px', border: '0.5px solid var(--border)', background: 'white', cursor: 'pointer', fontSize: '13px', color: 'var(--text-muted)' }}>
+                    Anuluj
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Przycisk prześlij (gdy jeszcze nie przesłano i formularz zamknięty) */}
+            {!wyslano && !rozwinięte && (
+              <div style={{ padding: '0 14px 14px' }}>
+                <button onClick={() => setAktywneZadanie(z)} className="login-btn" style={{ width: '100%', marginTop: 0, padding: '10px' }}>
+                  Prześlij pracę
+                </button>
+              </div>
+            )}
+
+            {sukces === z.id && (
+              <div style={{ padding: '0 14px 12px', fontSize: '13px', color: '#2e7d32' }}>✓ Praca przesłana!</div>
+            )}
+          </div>
+        );
+      })}
+    </>
+  );
+}
 
 // ─── EKRAN OBECNOŚCI (kursant) ───────────────────────────────────────────────
 
@@ -832,27 +1021,33 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
   const [zjazdy, setZjazdy] = useState<Zjazd[]>([]);
   const [prowadzacy, setProwadzacy] = useState<Prowadzacy[]>([]);
   const [ankiety, setAnkiety] = useState<OdpowiedziAnkiety[]>([]);
+  const [zadania, setZadania] = useState<Zadanie[]>([]);
+  const [odpowiedziZadan, setOdpowiedziZadan] = useState<ZadanieOdpowiedz[]>([]);
   const [edytowane, setEdytowane] = useState<Ogloszenie | null>(null);
   const [edytowanyZjazd, setEdytowanyZjazd] = useState<Zjazd | null>(null);
   const [noweOgl, setNoweOgl] = useState({ typ: 'Informacja', tytul: '', tresc: '', szczegoly: '', nowe: true, grupa_id: '' });
   const [nowyZjazd, setNowyZjazd] = useState({ nr: '', daty: '', sala: '', adres: '', tematy: '', status: 'nadchodzacy', data_zjazdu: '', grupa_id: '', prowadzacy_id: '' });
   const [nowyKursant, setNowyKursant] = useState({ imie: '', nazwisko: '', email: '', grupa_id: '' });
-  const [nowaGrupa, setNowaGrupa] = useState({ nazwa: '', miasto: '', edycja: '' });
+  const [nowaGrupa, setNowaGrupa] = useState({ nazwa: '', miasto: '', edycja: '', drive_link: '' });
   const [nowyProwadzacy, setNowyProwadzacy] = useState({ imie: '', nazwisko: '', specjalizacja: '' });
+  const [noweZadanie, setNoweZadanie] = useState({ tytul: '', opis: '', termin: '', link_materialow: '', grupa_id: '' });
   const [komunikat, setKomunikat] = useState('');
   const [importStatus, setImportStatus] = useState<{ imie: string; nazwisko: string; email: string; status: string }[]>([]);
   const [importowanie, setImportowanie] = useState(false);
   const [wybranaGrupaAnkiety, setWybranaGrupaAnkiety] = useState('');
+  const [wybranaGrupaZadan, setWybranaGrupaZadan] = useState('');
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    pobierzGrupy(); pobierzOgloszenia(); pobierzZjazdy(); pobierzProwadzacy();
+    pobierzGrupy(); pobierzOgloszenia(); pobierzZjazdy(); pobierzProwadzacy(); pobierzZadania();
     supabase.from('kursanci').select('id, imie, nazwisko, grupa_id, user_id').then(({ data }) => setKursanci((data || []) as unknown as KursantAdmin[]));
     supabase.from('ankiety').select('*').order('created_at', { ascending: false }).then(({ data }) => setAnkiety((data || []) as unknown as OdpowiedziAnkiety[]));
+    supabase.from('zadania_odpowiedzi').select('*').order('created_at', { ascending: false }).then(({ data }) => setOdpowiedziZadan(data || []));
   }, []);
 
   async function pobierzGrupy() { const { data } = await supabase.from('grupy').select('*'); setGrupy(data || []); }
   async function pobierzOgloszenia() { const { data } = await supabase.from('ogloszenia').select('*').order('data_utworzenia', { ascending: false }); setOgloszenia(data || []); }
+  async function pobierzZadania() { const { data } = await supabase.from('zadania').select('*').order('created_at', { ascending: false }); setZadania(data || []); }
   async function pobierzZjazdy() {
     const { data: zjData } = await supabase.from('zjazdy').select('*').order('data_zjazdu', { ascending: true });
     if (!zjData) { setZjazdy([]); return; }
@@ -965,8 +1160,35 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
 
   async function dodajGrupe(e: React.FormEvent) {
     e.preventDefault();
-    const { error } = await supabase.from('grupy').insert([{ ...nowaGrupa }]);
-    if (error) { setKomunikat('Blad: ' + error.message); } else { setKomunikat('Grupa dodana!'); setNowaGrupa({ nazwa: '', miasto: '', edycja: '' }); pobierzGrupy(); }
+    const { error } = await supabase.from('grupy').insert([{ nazwa: nowaGrupa.nazwa, miasto: nowaGrupa.miasto, edycja: nowaGrupa.edycja, drive_link: nowaGrupa.drive_link || null }]);
+    if (error) { setKomunikat('Blad: ' + error.message); } else { setKomunikat('Grupa dodana!'); setNowaGrupa({ nazwa: '', miasto: '', edycja: '', drive_link: '' }); pobierzGrupy(); }
+  }
+
+  async function zapiszDriveLink(grupaId: number, link: string) {
+    const { error } = await supabase.from('grupy').update({ drive_link: link || null }).eq('id', grupaId);
+    if (error) { setKomunikat('Blad: ' + error.message); } else { setKomunikat('Link zapisany!'); pobierzGrupy(); }
+  }
+
+  async function dodajZadanie(e: React.FormEvent) {
+    e.preventDefault();
+    const { error } = await supabase.from('zadania').insert([{
+      grupa_id: parseInt(noweZadanie.grupa_id),
+      tytul: noweZadanie.tytul,
+      opis: noweZadanie.opis || null,
+      termin: noweZadanie.termin || null,
+      link_materialow: noweZadanie.link_materialow || null,
+    }]);
+    if (error) { setKomunikat('Blad: ' + error.message); } else {
+      setKomunikat('Zadanie dodane!');
+      setNoweZadanie({ tytul: '', opis: '', termin: '', link_materialow: '', grupa_id: noweZadanie.grupa_id });
+      pobierzZadania();
+    }
+  }
+
+  async function usunZadanie(id: number) {
+    if (!window.confirm('Usunąć zadanie?')) return;
+    await supabase.from('zadania').delete().eq('id', id);
+    setKomunikat('Usunięto!'); pobierzZadania();
   }
 
   async function importujCSV(e: React.ChangeEvent<HTMLInputElement>) {
@@ -1211,6 +1433,7 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
               <div className="login-field"><label>Nazwa grupy</label><input type="text" value={nowaGrupa.nazwa} onChange={e => setNowaGrupa({ ...nowaGrupa, nazwa: e.target.value })} required /></div>
               <div className="login-field"><label>Miasto</label><input type="text" value={nowaGrupa.miasto} onChange={e => setNowaGrupa({ ...nowaGrupa, miasto: e.target.value })} required /></div>
               <div className="login-field"><label>Edycja</label><input type="text" value={nowaGrupa.edycja} onChange={e => setNowaGrupa({ ...nowaGrupa, edycja: e.target.value })} required /></div>
+              <div className="login-field"><label>Strefa Wiedzy — link Google Drive (opcjonalnie)</label><input type="url" value={nowaGrupa.drive_link} onChange={e => setNowaGrupa({ ...nowaGrupa, drive_link: e.target.value })} placeholder="https://drive.google.com/..." /></div>
               <button className="login-btn" type="submit">Dodaj grupe</button>
             </form>
             <h2 className="page-title" style={{ marginTop: '24px' }}>Lista grup</h2>
@@ -1220,6 +1443,18 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
                 <div className="profil-row"><span className="profil-lbl">Nazwa</span><span className="profil-val">{g.nazwa}</span></div>
                 <div className="profil-row"><span className="profil-lbl">Miasto</span><span className="profil-val">{g.miasto}</span></div>
                 <div className="profil-row"><span className="profil-lbl">Edycja</span><span className="profil-val">{g.edycja}</span></div>
+                <div style={{ padding: '4px 16px 12px' }}>
+                  <label style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.4px', fontWeight: 600 }}>Strefa Wiedzy (Drive)</label>
+                  <div style={{ display: 'flex', gap: '8px', marginTop: '6px' }}>
+                    <input
+                      type="url"
+                      defaultValue={g.drive_link || ''}
+                      placeholder="https://drive.google.com/..."
+                      onBlur={e => { if (e.target.value !== (g.drive_link || '')) zapiszDriveLink(g.id, e.target.value); }}
+                      style={{ flex: 1, fontSize: '12px', padding: '8px 10px', borderRadius: '8px', border: '0.5px solid var(--border)', fontFamily: 'Jost, sans-serif' }}
+                    />
+                  </div>
+                </div>
               </div>
             ))}
           </>
@@ -1276,6 +1511,82 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
           </>
         )}
 
+        {/* ZAKŁADKA: Zadania */}
+        {aktywnaZakladka === 'zadania' && (
+          <>
+            <h2 className="page-title">Nowe zadanie</h2>
+            <form className="admin-form" onSubmit={dodajZadanie}>
+              <div className="login-field">
+                <label>Grupa</label>
+                <select value={noweZadanie.grupa_id} onChange={e => { setNoweZadanie({ ...noweZadanie, grupa_id: e.target.value }); setWybranaGrupaZadan(e.target.value); }} required>
+                  <option value="">Wybierz grupę</option>
+                  {grupy.map(g => <option key={g.id} value={g.id}>{g.nazwa}</option>)}
+                </select>
+              </div>
+              <div className="login-field"><label>Tytuł zadania</label><input type="text" value={noweZadanie.tytul} onChange={e => setNoweZadanie({ ...noweZadanie, tytul: e.target.value })} placeholder="np. Przygotuj rzut mieszkania" required /></div>
+              <div className="login-field"><label>Opis / instrukcja</label><textarea value={noweZadanie.opis} onChange={e => setNoweZadanie({ ...noweZadanie, opis: e.target.value })} rows={4} placeholder="Co dokładnie należy przygotować..." /></div>
+              <div className="login-field"><label>Termin (opcjonalnie)</label><input type="date" value={noweZadanie.termin} onChange={e => setNoweZadanie({ ...noweZadanie, termin: e.target.value })} /></div>
+              <div className="login-field"><label>Link do materiałów (opcjonalnie)</label><input type="url" value={noweZadanie.link_materialow} onChange={e => setNoweZadanie({ ...noweZadanie, link_materialow: e.target.value })} placeholder="https://drive.google.com/..." /></div>
+              <button className="login-btn" type="submit">Dodaj zadanie</button>
+            </form>
+
+            <h2 className="page-title" style={{ marginTop: '24px' }}>Lista zadań</h2>
+            <div className="login-field" style={{ marginBottom: '12px' }}>
+              <label>Filtruj po grupie</label>
+              <select value={wybranaGrupaZadan} onChange={e => setWybranaGrupaZadan(e.target.value)}>
+                <option value="">Wszystkie grupy</option>
+                {grupy.map(g => <option key={g.id} value={g.id}>{g.nazwa}</option>)}
+              </select>
+            </div>
+
+            {zadania
+              .filter(z => !wybranaGrupaZadan || z.grupa_id === parseInt(wybranaGrupaZadan))
+              .map(z => {
+                const odp = odpowiedziZadan.filter(o => o.zadanie_id === z.id);
+                return (
+                  <div key={z.id} className="profil-card" style={{ marginBottom: '10px' }}>
+                    <div className="profil-row">
+                      <span className="profil-lbl" style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '16px', fontWeight: 500 }}>{z.tytul}</span>
+                      <button onClick={() => usunZadanie(z.id)} style={{ background: 'none', border: 'none', color: '#c62828', cursor: 'pointer', fontSize: '18px' }}>×</button>
+                    </div>
+                    <div className="profil-row"><span className="profil-lbl">Grupa</span><span className="profil-val">{grupy.find(g => g.id === z.grupa_id)?.nazwa || '-'}</span></div>
+                    {z.termin && <div className="profil-row"><span className="profil-lbl">Termin</span><span className="profil-val">{new Date(z.termin).toLocaleDateString('pl-PL')}</span></div>}
+                    {z.link_materialow && (
+                      <div className="profil-row">
+                        <span className="profil-lbl">Materiały</span>
+                        <a href={z.link_materialow} target="_blank" rel="noopener noreferrer" style={{ fontSize: '12px', color: 'var(--brand)' }}>Otwórz →</a>
+                      </div>
+                    )}
+                    {/* Odpowiedzi kursantów */}
+                    {odp.length > 0 && (
+                      <div style={{ margin: '8px 16px 12px', background: '#f8f8f8', borderRadius: '10px', padding: '10px 12px' }}>
+                        <p style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: '8px' }}>
+                          Przesłane prace ({odp.length})
+                        </p>
+                        {odp.map(o => (
+                          <div key={o.id} style={{ marginBottom: '8px', paddingBottom: '8px', borderBottom: '0.5px solid var(--border)' }}>
+                            <p style={{ fontSize: '13px', fontWeight: 500 }}>{o.imie} {o.nazwisko}</p>
+                            <a href={o.link_pracy} target="_blank" rel="noopener noreferrer"
+                              style={{ fontSize: '12px', color: 'var(--brand)', textDecoration: 'underline', wordBreak: 'break-all' }}>
+                              {o.link_pracy}
+                            </a>
+                            {o.komentarz && <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '2px' }}>{o.komentarz}</p>}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {odp.length === 0 && (
+                      <div style={{ padding: '0 16px 12px' }}>
+                        <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Brak przesłanych prac</span>
+                      </div>
+                    )}
+                  </div>
+                );
+              })
+            }
+          </>
+        )}
+
         {/* ZAKŁADKA: Obecności w panelu biura */}
         {aktywnaZakladka === 'obecnosci' && (
           <AdminObecnosci grupy={grupy} zjazdy={zjazdy} />
@@ -1325,6 +1636,7 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
       <nav className="bottom-nav" style={{ overflowX: 'auto' }}>
         <button className={`nav-item ${aktywnaZakladka === 'ogloszenia' ? 'active' : ''}`} onClick={() => { setKomunikat(''); setEdytowane(null); setAktywnaZakladka('ogloszenia'); }}><Bell size={20} /><span className="nav-label">Ogłoszenia</span></button>
         <button className={`nav-item ${aktywnaZakladka === 'zjazdy' ? 'active' : ''}`} onClick={() => { setKomunikat(''); setEdytowanyZjazd(null); setAktywnaZakladka('zjazdy'); }}><Calendar size={20} /><span className="nav-label">Zjazdy</span></button>
+        <button className={`nav-item ${aktywnaZakladka === 'zadania' ? 'active' : ''}`} onClick={() => { setKomunikat(''); setAktywnaZakladka('zadania'); }}><BookOpen size={20} /><span className="nav-label">Zadania</span></button>
         <button className={`nav-item ${aktywnaZakladka === 'kursanci' ? 'active' : ''}`} onClick={() => { setKomunikat(''); setAktywnaZakladka('kursanci'); }}><User size={20} /><span className="nav-label">Kursanci</span></button>
         <button className={`nav-item ${aktywnaZakladka === 'grupy' ? 'active' : ''}`} onClick={() => { setKomunikat(''); setAktywnaZakladka('grupy'); }}><Home size={20} /><span className="nav-label">Grupy</span></button>
         <button className={`nav-item ${aktywnaZakladka === 'prowadzacy' ? 'active' : ''}`} onClick={() => { setKomunikat(''); setAktywnaZakladka('prowadzacy'); }}><Star size={20} /><span className="nav-label">Prowadz.</span></button>
@@ -1616,7 +1928,7 @@ function PostepKursu({ zjazdy }: { zjazdy: Zjazd[] }) {
   );
 }
 
-function EkranProfil({ user, kursant, zjazdy, onWyloguj, onAvatarZmieniony }: { user: User; kursant: Kursant | null; zjazdy: Zjazd[]; onWyloguj: () => void; onAvatarZmieniony: (url: string) => void }) {
+function EkranProfil({ user, kursant, zjazdy, onWyloguj, onAvatarZmieniony, grupaInfo }: { user: User; kursant: Kursant | null; zjazdy: Zjazd[]; onWyloguj: () => void; onAvatarZmieniony: (url: string) => void; grupaInfo: Grupa | null }) {
   const [uploadowanie, setUploadowanie] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const inicjal = kursant ? kursant.imie[0] : user.email[0].toUpperCase();
@@ -1656,6 +1968,34 @@ function EkranProfil({ user, kursant, zjazdy, onWyloguj, onAvatarZmieniony }: { 
         <div className="profil-row"><span className="profil-lbl">Telefon biura</span><span className="profil-val">883 659 069</span></div>
         <PostepKursu zjazdy={zjazdy} />
       </div>
+
+      {/* Strefa Wiedzy */}
+      {grupaInfo?.drive_link && (
+        <a
+          href={grupaInfo.drive_link}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{ textDecoration: 'none' }}
+        >
+          <div style={{
+            background: 'white', borderRadius: '16px', padding: '16px 18px',
+            border: '0.5px solid var(--border)', marginBottom: '10px',
+            display: 'flex', alignItems: 'center', gap: '14px',
+          }}>
+            <div style={{
+              width: '44px', height: '44px', borderRadius: '12px',
+              background: '#e8f0fe', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: '22px', flexShrink: 0,
+            }}>📁</div>
+            <div>
+              <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text)', marginBottom: '2px' }}>Strefa Wiedzy</div>
+              <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Materiały szkoleniowe grupy · Google Drive</div>
+            </div>
+            <span style={{ marginLeft: 'auto', color: 'var(--brand)', fontSize: '18px' }}>→</span>
+          </div>
+        </a>
+      )}
+
       <button className="btn-wyloguj" onClick={onWyloguj}>Wyloguj się</button>
     </>
   );
@@ -1664,6 +2004,7 @@ function EkranProfil({ user, kursant, zjazdy, onWyloguj, onAvatarZmieniony }: { 
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
   const [kursant, setKursant] = useState<Kursant | null>(null);
+  const [grupaInfo, setGrupaInfo] = useState<Grupa | null>(null);
   const [aktywnaZakladka, setAktywnaZakladka] = useState('home');
   const [aktywneOgloszenie, setAktywneOgloszenie] = useState<Ogloszenie | null>(null);
   const [ogloszenia, setOgloszenia] = useState<Ogloszenie[]>([]);
@@ -1689,8 +2030,9 @@ export default function App() {
       const { data: kursantData } = await supabase.from('kursanci').select('imie, nazwisko, grupa_id, rola, avatar_url').eq('user_id', user!.id).single();
       let grupaData = null;
       if (kursantData?.grupa_id) {
-        const { data } = await supabase.from('grupy').select('nazwa, miasto, edycja').eq('id', kursantData.grupa_id).single();
+        const { data } = await supabase.from('grupy').select('id, nazwa, miasto, edycja, drive_link').eq('id', kursantData.grupa_id).single();
         grupaData = data;
+        setGrupaInfo(data as Grupa | null);
       }
       setKursant(kursantData ? { ...kursantData, grupy: grupaData } as Kursant : null);
       await aktualizujStatusyZjazdow();
@@ -1778,9 +2120,10 @@ export default function App() {
             {aktywnaZakladka === 'zjazdy' && <EkranZjazdy zjazdy={zjazdy} />}
             {aktywnaZakladka === 'ogloszenia' && <EkranOgloszenia ogloszenia={ogloszenia} onOtworzOgloszenie={otworzOgloszenie} />}
             {aktywnaZakladka === 'czat' && <EkranCzat user={user} kursant={kursant} />}
+            {aktywnaZakladka === 'zadania' && <EkranZadania user={user} kursant={kursant} />}
             {aktywnaZakladka === 'obecnosc' && <EkranObecnosc user={user} kursant={kursant} zjazdy={zjazdy} />}
             {aktywnaZakladka === 'ankieta' && <EkranAnkieta kursant={kursant} zjazdy={zjazdy} user={user} />}
-            {aktywnaZakladka === 'profil' && <EkranProfil user={user} kursant={kursant} zjazdy={zjazdy} onWyloguj={wyloguj} onAvatarZmieniony={onAvatarZmieniony} />}
+            {aktywnaZakladka === 'profil' && <EkranProfil user={user} kursant={kursant} zjazdy={zjazdy} onWyloguj={wyloguj} onAvatarZmieniony={onAvatarZmieniony} grupaInfo={grupaInfo} />}
           </>
         )}
       </main>
@@ -1791,6 +2134,7 @@ export default function App() {
           <Bell size={20} /><span className="nav-label">Ogłoszenia</span>
           {noweCount > 0 && <span className="nav-badge">{noweCount}</span>}
         </button>
+        <button className={`nav-item ${aktywnaZakladka === 'zadania' ? 'active' : ''}`} onClick={() => { setAktywneOgloszenie(null); setAktywnaZakladka('zadania'); }}><BookOpen size={20} /><span className="nav-label">Zadania</span></button>
         <button className={`nav-item ${aktywnaZakladka === 'czat' ? 'active' : ''}`} onClick={() => { setAktywneOgloszenie(null); setAktywnaZakladka('czat'); }}><MessageCircle size={20} /><span className="nav-label">Czat</span></button>
         <button className={`nav-item ${aktywnaZakladka === 'obecnosc' ? 'active' : ''}`} onClick={() => { setAktywneOgloszenie(null); setAktywnaZakladka('obecnosc'); }}><CheckSquare size={20} /><span className="nav-label">Obecność</span></button>
         <button className={`nav-item ${aktywnaZakladka === 'ankieta' ? 'active' : ''}`} onClick={() => { setAktywneOgloszenie(null); setAktywnaZakladka('ankieta'); }} style={{ opacity: ankietaDostepna ? 1 : 0.4 }}>
