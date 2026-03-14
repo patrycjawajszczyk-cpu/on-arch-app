@@ -29,6 +29,7 @@ type Zadanie = {
   opis: string | null;
   termin: string | null;
   link_materialow: string | null;
+  typ: string;
   created_at: string;
 };
 
@@ -201,23 +202,26 @@ function EkranZadania({ user, kursant }: { user: User; kursant: Kursant | null }
         </div>
       )}
 
-      {zadania.map(z => {
+      {/* Praca zaliczeniowa — zawsze na górze jeśli istnieje */}
+      {zadania.filter(z => z.typ === 'praca_zaliczeniowa').map(z => {
         const odp = odpowiedzDlaZadania(z.id);
         const wyslano = !!odp;
         const rozwinięte = aktywneZadanie?.id === z.id;
-
         return (
-          <div key={z.id} className="sess-card" style={{ marginBottom: '10px', borderColor: wyslano ? '#7aab8a' : undefined }}>
-            <div className="sess-top" style={{ background: wyslano ? '#f0faf4' : 'var(--brand-light)' }}>
-              <span className="sess-nr" style={{ fontSize: '13px' }}>{z.tytul}</span>
+          <div key={z.id} className="sess-card" style={{
+            marginBottom: '16px',
+            borderColor: wyslano ? '#7aab8a' : 'var(--brand)',
+            borderWidth: '1.5px',
+          }}>
+            <div className="sess-top" style={{ background: wyslano ? '#f0faf4' : 'var(--brand-dark)' }}>
+              <span className="sess-nr" style={{ fontSize: '13px', color: wyslano ? 'var(--text)' : 'white' }}>
+                🎓 {z.tytul}
+              </span>
               {wyslano
                 ? <span style={{ fontSize: '10px', fontWeight: 600, color: '#2e7d32', background: '#e8f5e9', padding: '3px 8px', borderRadius: '20px', textTransform: 'uppercase' }}>✓ Przesłano</span>
-                : z.termin
-                  ? <span style={{ fontSize: '10px', color: 'var(--brand-dark)', background: 'var(--brand-light)', padding: '3px 8px', borderRadius: '20px', fontWeight: 500 }}>do {new Date(z.termin).toLocaleDateString('pl-PL')}</span>
-                  : null
+                : <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.8)', background: 'rgba(255,255,255,0.15)', padding: '3px 8px', borderRadius: '20px', fontWeight: 500 }}>Praca zaliczeniowa</span>
               }
             </div>
-
             <div className="sess-rows">
               {z.opis && <div className="sess-row" style={{ whiteSpace: 'pre-line', lineHeight: '1.6' }}>{renderTekstZLinkami(z.opis)}</div>}
               {z.link_materialow && (
@@ -229,9 +233,12 @@ function EkranZadania({ user, kursant }: { user: User; kursant: Kursant | null }
                   </a>
                 </div>
               )}
+              {z.termin && (
+                <div className="sess-row" style={{ marginTop: '4px' }}>
+                  <span className="sess-lbl">Termin:</span> {new Date(z.termin).toLocaleDateString('pl-PL')}
+                </div>
+              )}
             </div>
-
-            {/* Przesłana praca */}
             {wyslano && !rozwinięte && (
               <div style={{ padding: '0 14px 12px' }}>
                 <div style={{ background: '#f0faf4', borderRadius: '10px', padding: '10px 12px' }}>
@@ -248,24 +255,101 @@ function EkranZadania({ user, kursant }: { user: User; kursant: Kursant | null }
                 </button>
               </div>
             )}
-
-            {/* Formularz przesyłania */}
             {rozwinięte && (
               <div style={{ padding: '0 14px 14px' }}>
                 <div className="login-field" style={{ marginBottom: '8px' }}>
                   <label style={{ fontSize: '12px' }}>Link do pracy (Google Drive, Dropbox...)</label>
-                  <input type="url" value={linkPracy} onChange={e => setLinkPracy(e.target.value)}
-                    placeholder="https://drive.google.com/..."
-                    style={{ fontSize: '13px' }} />
+                  <input type="url" value={linkPracy} onChange={e => setLinkPracy(e.target.value)} placeholder="https://drive.google.com/..." style={{ fontSize: '13px' }} />
                 </div>
                 <div className="login-field" style={{ marginBottom: '10px' }}>
                   <label style={{ fontSize: '12px' }}>Komentarz (opcjonalnie)</label>
-                  <textarea value={komentarz} onChange={e => setKomentarz(e.target.value)}
-                    rows={2} placeholder="np. wersja robocza, czeka na poprawki..." style={{ fontSize: '13px', resize: 'none' }} />
+                  <textarea value={komentarz} onChange={e => setKomentarz(e.target.value)} rows={2} placeholder="np. wersja robocza..." style={{ fontSize: '13px', resize: 'none' }} />
                 </div>
                 <div style={{ display: 'flex', gap: '8px' }}>
-                  <button onClick={() => wyslij(z)} disabled={wysylanie || !linkPracy.trim()}
-                    className="login-btn" style={{ flex: 1, marginTop: 0, padding: '10px' }}>
+                  <button onClick={() => wyslij(z)} disabled={wysylanie || !linkPracy.trim()} className="login-btn" style={{ flex: 1, marginTop: 0, padding: '10px' }}>
+                    {wysylanie ? 'Wysyłanie...' : 'Prześlij pracę zaliczeniową'}
+                  </button>
+                  <button onClick={() => { setAktywneZadanie(null); setLinkPracy(''); setKomentarz(''); }}
+                    style={{ padding: '10px 16px', borderRadius: '12px', border: '0.5px solid var(--border)', background: 'white', cursor: 'pointer', fontSize: '13px', color: 'var(--text-muted)' }}>
+                    Anuluj
+                  </button>
+                </div>
+              </div>
+            )}
+            {!wyslano && !rozwinięte && (
+              <div style={{ padding: '0 14px 14px' }}>
+                <button onClick={() => setAktywneZadanie(z)} className="login-btn" style={{ width: '100%', marginTop: 0, padding: '10px' }}>
+                  Prześlij pracę zaliczeniową
+                </button>
+              </div>
+            )}
+          </div>
+        );
+      })}
+
+      {/* Zadania domowe */}
+      {zadania.filter(z => z.typ !== 'praca_zaliczeniowa').length > 0 && (
+        <h3 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '16px', color: 'var(--text-muted)', marginBottom: '10px', fontWeight: 400 }}>
+          Zadania domowe
+        </h3>
+      )}
+
+      {zadania.filter(z => z.typ !== 'praca_zaliczeniowa').map(z => {
+        const odp = odpowiedzDlaZadania(z.id);
+        const wyslano = !!odp;
+        const rozwinięte = aktywneZadanie?.id === z.id;
+
+        return (
+          <div key={z.id} className="sess-card" style={{ marginBottom: '10px', borderColor: wyslano ? '#7aab8a' : undefined }}>
+            <div className="sess-top" style={{ background: wyslano ? '#f0faf4' : 'var(--brand-light)' }}>
+              <span className="sess-nr" style={{ fontSize: '13px' }}>{z.tytul}</span>
+              {wyslano
+                ? <span style={{ fontSize: '10px', fontWeight: 600, color: '#2e7d32', background: '#e8f5e9', padding: '3px 8px', borderRadius: '20px', textTransform: 'uppercase' }}>✓ Przesłano</span>
+                : z.termin
+                  ? <span style={{ fontSize: '10px', color: 'var(--brand-dark)', background: 'var(--brand-light)', padding: '3px 8px', borderRadius: '20px', fontWeight: 500 }}>do {new Date(z.termin).toLocaleDateString('pl-PL')}</span>
+                  : null
+              }
+            </div>
+            <div className="sess-rows">
+              {z.opis && <div className="sess-row" style={{ whiteSpace: 'pre-line', lineHeight: '1.6' }}>{renderTekstZLinkami(z.opis)}</div>}
+              {z.link_materialow && (
+                <div className="sess-row" style={{ marginTop: '6px' }}>
+                  <span className="sess-lbl">Materiały:</span>{' '}
+                  <a href={z.link_materialow} target="_blank" rel="noopener noreferrer"
+                    style={{ color: 'var(--brand)', textDecoration: 'underline', textDecorationStyle: 'dotted', textUnderlineOffset: '3px', fontSize: '12px' }}>
+                    Otwórz link →
+                  </a>
+                </div>
+              )}
+            </div>
+            {wyslano && !rozwinięte && (
+              <div style={{ padding: '0 14px 12px' }}>
+                <div style={{ background: '#f0faf4', borderRadius: '10px', padding: '10px 12px' }}>
+                  <p style={{ fontSize: '11px', color: '#2e7d32', fontWeight: 600, marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.4px' }}>Twoja praca</p>
+                  <a href={odp!.link_pracy} target="_blank" rel="noopener noreferrer"
+                    style={{ fontSize: '12px', color: 'var(--brand)', textDecoration: 'underline', wordBreak: 'break-all' }}>
+                    {odp!.link_pracy}
+                  </a>
+                  {odp!.komentarz && <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px' }}>{odp!.komentarz}</p>}
+                </div>
+                <button onClick={() => { setAktywneZadanie(z); setLinkPracy(odp!.link_pracy); setKomentarz(odp!.komentarz || ''); }}
+                  style={{ marginTop: '8px', fontSize: '12px', color: 'var(--brand)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Jost, sans-serif' }}>
+                  Edytuj odpowiedź
+                </button>
+              </div>
+            )}
+            {rozwinięte && (
+              <div style={{ padding: '0 14px 14px' }}>
+                <div className="login-field" style={{ marginBottom: '8px' }}>
+                  <label style={{ fontSize: '12px' }}>Link do pracy (Google Drive, Dropbox...)</label>
+                  <input type="url" value={linkPracy} onChange={e => setLinkPracy(e.target.value)} placeholder="https://drive.google.com/..." style={{ fontSize: '13px' }} />
+                </div>
+                <div className="login-field" style={{ marginBottom: '10px' }}>
+                  <label style={{ fontSize: '12px' }}>Komentarz (opcjonalnie)</label>
+                  <textarea value={komentarz} onChange={e => setKomentarz(e.target.value)} rows={2} placeholder="np. wersja robocza, czeka na poprawki..." style={{ fontSize: '13px', resize: 'none' }} />
+                </div>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button onClick={() => wyslij(z)} disabled={wysylanie || !linkPracy.trim()} className="login-btn" style={{ flex: 1, marginTop: 0, padding: '10px' }}>
                     {wysylanie ? 'Wysyłanie...' : 'Prześlij pracę'}
                   </button>
                   <button onClick={() => { setAktywneZadanie(null); setLinkPracy(''); setKomentarz(''); }}
@@ -275,8 +359,6 @@ function EkranZadania({ user, kursant }: { user: User; kursant: Kursant | null }
                 </div>
               </div>
             )}
-
-            {/* Przycisk prześlij (gdy jeszcze nie przesłano i formularz zamknięty) */}
             {!wyslano && !rozwinięte && (
               <div style={{ padding: '0 14px 14px' }}>
                 <button onClick={() => setAktywneZadanie(z)} className="login-btn" style={{ width: '100%', marginTop: 0, padding: '10px' }}>
@@ -284,7 +366,6 @@ function EkranZadania({ user, kursant }: { user: User; kursant: Kursant | null }
                 </button>
               </div>
             )}
-
             {sukces === z.id && (
               <div style={{ padding: '0 14px 12px', fontSize: '13px', color: '#2e7d32' }}>✓ Praca przesłana!</div>
             )}
@@ -1026,7 +1107,7 @@ function PanelProwadzacego({ user, kursant, onWyloguj }: { user: User; kursant: 
   const [zadania, setZadania] = useState<Zadanie[]>([]);
   const [odpowiedziZadan, setOdpowiedziZadan] = useState<ZadanieOdpowiedz[]>([]);
   const [aktywneOgloszenie, setAktywneOgloszenie] = useState<Ogloszenie | null>(null);
-  const [noweZadanie, setNoweZadanie] = useState({ tytul: '', opis: '', termin: '', link_materialow: '', grupa_id: '' });
+  const [noweZadanie, setNoweZadanie] = useState({ tytul: '', opis: '', termin: '', link_materialow: '', grupa_id: '', typ: 'zadanie' });
   const [wybranaGrupa, setWybranaGrupa] = useState('');
   const [komunikat, setKomunikat] = useState('');
   const [ladowanie, setLadowanie] = useState(true);
@@ -1102,10 +1183,11 @@ function PanelProwadzacego({ user, kursant, onWyloguj }: { user: User; kursant: 
       opis: noweZadanie.opis || null,
       termin: noweZadanie.termin || null,
       link_materialow: noweZadanie.link_materialow || null,
+      typ: noweZadanie.typ || 'zadanie',
     }]);
     if (error) { setKomunikat('Błąd: ' + error.message); return; }
     setKomunikat('Zadanie dodane!');
-    setNoweZadanie({ tytul: '', opis: '', termin: '', link_materialow: '', grupa_id: noweZadanie.grupa_id });
+    setNoweZadanie({ tytul: '', opis: '', termin: '', link_materialow: '', grupa_id: noweZadanie.grupa_id, typ: 'zadanie' });
     const { data } = await supabase.from('zadania').select('*').in('grupa_id', mojeGrupyIds).order('created_at', { ascending: false });
     setZadania(data || []);
   }
@@ -1179,6 +1261,7 @@ function PanelProwadzacego({ user, kursant, onWyloguj }: { user: User; kursant: 
                   <div className="login-field"><label>Opis / instrukcja</label><textarea value={noweZadanie.opis} onChange={e => setNoweZadanie({ ...noweZadanie, opis: e.target.value })} rows={4} placeholder="Co dokładnie należy przygotować..." /></div>
                   <div className="login-field"><label>Termin (opcjonalnie)</label><input type="date" value={noweZadanie.termin} onChange={e => setNoweZadanie({ ...noweZadanie, termin: e.target.value })} /></div>
                   <div className="login-field"><label>Link do materiałów (opcjonalnie)</label><input type="url" value={noweZadanie.link_materialow} onChange={e => setNoweZadanie({ ...noweZadanie, link_materialow: e.target.value })} placeholder="https://drive.google.com/..." /></div>
+                  <div className="login-field"><label>Typ</label><select value={noweZadanie.typ} onChange={e => setNoweZadanie({ ...noweZadanie, typ: e.target.value })}><option value="zadanie">Zadanie domowe</option><option value="praca_zaliczeniowa">Praca zaliczeniowa</option></select></div>
                   <button className="login-btn" type="submit">Dodaj zadanie</button>
                 </form>
 
@@ -1321,7 +1404,7 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
   const [nowyKursant, setNowyKursant] = useState({ imie: '', nazwisko: '', email: '', grupa_id: '' });
   const [nowaGrupa, setNowaGrupa] = useState({ nazwa: '', miasto: '', edycja: '', drive_link: '' });
   const [nowyProwadzacy, setNowyProwadzacy] = useState({ imie: '', nazwisko: '', specjalizacja: '' });
-  const [noweZadanie, setNoweZadanie] = useState({ tytul: '', opis: '', termin: '', link_materialow: '', grupa_id: '' });
+  const [noweZadanie, setNoweZadanie] = useState({ tytul: '', opis: '', termin: '', link_materialow: '', grupa_id: '', typ: 'zadanie' });
   const [komunikat, setKomunikat] = useState('');
   const [importStatus, setImportStatus] = useState<{ imie: string; nazwisko: string; email: string; status: string }[]>([]);
   const [importowanie, setImportowanie] = useState(false);
@@ -1468,10 +1551,11 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
       opis: noweZadanie.opis || null,
       termin: noweZadanie.termin || null,
       link_materialow: noweZadanie.link_materialow || null,
+      typ: noweZadanie.typ || 'zadanie',
     }]);
     if (error) { setKomunikat('Blad: ' + error.message); } else {
       setKomunikat('Zadanie dodane!');
-      setNoweZadanie({ tytul: '', opis: '', termin: '', link_materialow: '', grupa_id: noweZadanie.grupa_id });
+      setNoweZadanie({ tytul: '', opis: '', termin: '', link_materialow: '', grupa_id: noweZadanie.grupa_id, typ: 'zadanie' });
       pobierzZadania();
     }
   }
@@ -1818,6 +1902,7 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
               <div className="login-field"><label>Opis / instrukcja</label><textarea value={noweZadanie.opis} onChange={e => setNoweZadanie({ ...noweZadanie, opis: e.target.value })} rows={4} placeholder="Co dokładnie należy przygotować..." /></div>
               <div className="login-field"><label>Termin (opcjonalnie)</label><input type="date" value={noweZadanie.termin} onChange={e => setNoweZadanie({ ...noweZadanie, termin: e.target.value })} /></div>
               <div className="login-field"><label>Link do materiałów (opcjonalnie)</label><input type="url" value={noweZadanie.link_materialow} onChange={e => setNoweZadanie({ ...noweZadanie, link_materialow: e.target.value })} placeholder="https://drive.google.com/..." /></div>
+              <div className="login-field"><label>Typ</label><select value={noweZadanie.typ} onChange={e => setNoweZadanie({ ...noweZadanie, typ: e.target.value })}><option value="zadanie">Zadanie domowe</option><option value="praca_zaliczeniowa">Praca zaliczeniowa</option></select></div>
               <button className="login-btn" type="submit">Dodaj zadanie</button>
             </form>
 
