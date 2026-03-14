@@ -1013,6 +1013,229 @@ function EkranCzat({ user, kursant }: { user: User; kursant: Kursant | null }) {
   );
 }
 
+// ─── PANEL PROWADZĄCEGO ──────────────────────────────────────────────────────
+
+function PanelProwadzacego({ user, kursant, onWyloguj }: { user: User; kursant: Kursant | null; onWyloguj: () => void }) {
+  const [aktywnaZakladka, setAktywnaZakladka] = useState('zadania');
+  const [grupy, setGrupy] = useState<Grupa[]>([]);
+  const [zjazdy, setZjazdy] = useState<Zjazd[]>([]);
+  const [kursanci, setKursanci] = useState<KursantAdmin[]>([]);
+  const [ogloszenia, setOgloszenia] = useState<Ogloszenie[]>([]);
+  const [zadania, setZadania] = useState<Zadanie[]>([]);
+  const [odpowiedziZadan, setOdpowiedziZadan] = useState<ZadanieOdpowiedz[]>([]);
+  const [aktywneOgloszenie, setAktywneOgloszenie] = useState<Ogloszenie | null>(null);
+  const [noweZadanie, setNoweZadanie] = useState({ tytul: '', opis: '', termin: '', link_materialow: '', grupa_id: '' });
+  const [wybranaGrupaZadan, setWybranaGrupaZadan] = useState('');
+  const [komunikat, setKomunikat] = useState('');
+
+  useEffect(() => {
+    pobierz();
+  }, []);
+
+  async function pobierz() {
+    const [{ data: gr }, { data: zj }, { data: ku }, { data: og }, { data: zad }, { data: odp }] = await Promise.all([
+      supabase.from('grupy').select('*'),
+      supabase.from('zjazdy').select('*').order('data_zjazdu', { ascending: true }),
+      supabase.from('kursanci').select('id, imie, nazwisko, grupa_id, user_id').eq('rola', 'kursant'),
+      supabase.from('ogloszenia').select('*').order('data_utworzenia', { ascending: false }),
+      supabase.from('zadania').select('*').order('created_at', { ascending: false }),
+      supabase.from('zadania_odpowiedzi').select('*').order('created_at', { ascending: false }),
+    ]);
+    setGrupy(gr || []);
+    setZjazdy(zj || []);
+    setKursanci(ku as unknown as KursantAdmin[] || []);
+    setOgloszenia(og || []);
+    setZadania(zad || []);
+    setOdpowiedziZadan(odp || []);
+  }
+
+  async function dodajZadanie(e: React.FormEvent) {
+    e.preventDefault();
+    const { error } = await supabase.from('zadania').insert([{
+      grupa_id: parseInt(noweZadanie.grupa_id),
+      tytul: noweZadanie.tytul,
+      opis: noweZadanie.opis || null,
+      termin: noweZadanie.termin || null,
+      link_materialow: noweZadanie.link_materialow || null,
+    }]);
+    if (error) { setKomunikat('Błąd: ' + error.message); return; }
+    setKomunikat('Zadanie dodane!');
+    setNoweZadanie({ tytul: '', opis: '', termin: '', link_materialow: '', grupa_id: noweZadanie.grupa_id });
+    const { data } = await supabase.from('zadania').select('*').order('created_at', { ascending: false });
+    setZadania(data || []);
+  }
+
+  async function usunZadanie(id: number) {
+    if (!window.confirm('Usunąć zadanie?')) return;
+    await supabase.from('zadania').delete().eq('id', id);
+    setZadania(prev => prev.filter(z => z.id !== id));
+  }
+
+  const imie = kursant ? `${kursant.imie} ${kursant.nazwisko}` : 'Prowadzący';
+
+  return (
+    <div className="app">
+      <header className="header">
+        <div className="logo">On<span>-Arch</span> <span style={{ fontSize: '11px', opacity: 0.7 }}>Prowadzący</span></div>
+        <button onClick={onWyloguj} style={{ background: 'none', border: 'none', color: 'var(--brand)', fontSize: '13px', cursor: 'pointer' }}>Wyloguj</button>
+      </header>
+      <main className="main">
+        {komunikat && (
+          <div className="login-error" style={{ background: '#e8f5e9', color: '#2e7d32', marginBottom: '12px' }}>{komunikat}</div>
+        )}
+
+        {/* Powitanie */}
+        {aktywnaZakladka === 'zadania' && !aktywneOgloszenie && (
+          <>
+            <p className="greeting" style={{ marginBottom: '16px' }}>Dzień dobry, {kursant?.imie || 'Prowadzący'}</p>
+
+            <h2 className="page-title">Nowe zadanie</h2>
+            <form className="admin-form" onSubmit={dodajZadanie}>
+              <div className="login-field">
+                <label>Grupa</label>
+                <select value={noweZadanie.grupa_id} onChange={e => { setNoweZadanie({ ...noweZadanie, grupa_id: e.target.value }); setWybranaGrupaZadan(e.target.value); }} required>
+                  <option value="">Wybierz grupę</option>
+                  {grupy.map(g => <option key={g.id} value={g.id}>{g.nazwa}</option>)}
+                </select>
+              </div>
+              <div className="login-field"><label>Tytuł zadania</label><input type="text" value={noweZadanie.tytul} onChange={e => setNoweZadanie({ ...noweZadanie, tytul: e.target.value })} placeholder="np. Przygotuj rzut mieszkania" required /></div>
+              <div className="login-field"><label>Opis / instrukcja</label><textarea value={noweZadanie.opis} onChange={e => setNoweZadanie({ ...noweZadanie, opis: e.target.value })} rows={4} placeholder="Co dokładnie należy przygotować..." /></div>
+              <div className="login-field"><label>Termin (opcjonalnie)</label><input type="date" value={noweZadanie.termin} onChange={e => setNoweZadanie({ ...noweZadanie, termin: e.target.value })} /></div>
+              <div className="login-field"><label>Link do materiałów (opcjonalnie)</label><input type="url" value={noweZadanie.link_materialow} onChange={e => setNoweZadanie({ ...noweZadanie, link_materialow: e.target.value })} placeholder="https://drive.google.com/..." /></div>
+              <button className="login-btn" type="submit">Dodaj zadanie</button>
+            </form>
+
+            <h2 className="page-title" style={{ marginTop: '24px' }}>Lista zadań</h2>
+            <div className="login-field" style={{ marginBottom: '12px' }}>
+              <label>Filtruj po grupie</label>
+              <select value={wybranaGrupaZadan} onChange={e => setWybranaGrupaZadan(e.target.value)}>
+                <option value="">Wszystkie grupy</option>
+                {grupy.map(g => <option key={g.id} value={g.id}>{g.nazwa}</option>)}
+              </select>
+            </div>
+            {zadania
+              .filter(z => !wybranaGrupaZadan || z.grupa_id === parseInt(wybranaGrupaZadan))
+              .map(z => {
+                const odp = odpowiedziZadan.filter(o => o.zadanie_id === z.id);
+                return (
+                  <div key={z.id} className="profil-card" style={{ marginBottom: '10px' }}>
+                    <div className="profil-row">
+                      <span className="profil-lbl" style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '16px', fontWeight: 500 }}>{z.tytul}</span>
+                      <button onClick={() => usunZadanie(z.id)} style={{ background: 'none', border: 'none', color: '#c62828', cursor: 'pointer', fontSize: '18px' }}>×</button>
+                    </div>
+                    <div className="profil-row"><span className="profil-lbl">Grupa</span><span className="profil-val">{grupy.find(g => g.id === z.grupa_id)?.nazwa || '-'}</span></div>
+                    {z.termin && <div className="profil-row"><span className="profil-lbl">Termin</span><span className="profil-val">{new Date(z.termin).toLocaleDateString('pl-PL')}</span></div>}
+                    {z.link_materialow && (
+                      <div className="profil-row"><span className="profil-lbl">Materiały</span>
+                        <a href={z.link_materialow} target="_blank" rel="noopener noreferrer" style={{ fontSize: '12px', color: 'var(--brand)' }}>Otwórz →</a>
+                      </div>
+                    )}
+                    {odp.length > 0 ? (
+                      <div style={{ margin: '8px 16px 12px', background: '#f8f8f8', borderRadius: '10px', padding: '10px 12px' }}>
+                        <p style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: '8px' }}>
+                          Przesłane prace ({odp.length})
+                        </p>
+                        {odp.map(o => (
+                          <div key={o.id} style={{ marginBottom: '8px', paddingBottom: '8px', borderBottom: '0.5px solid var(--border)' }}>
+                            <p style={{ fontSize: '13px', fontWeight: 500 }}>{o.imie} {o.nazwisko}</p>
+                            <a href={o.link_pracy} target="_blank" rel="noopener noreferrer"
+                              style={{ fontSize: '12px', color: 'var(--brand)', textDecoration: 'underline', wordBreak: 'break-all' }}>
+                              {o.link_pracy}
+                            </a>
+                            {o.komentarz && <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '2px' }}>{o.komentarz}</p>}
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div style={{ padding: '0 16px 12px' }}>
+                        <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Brak przesłanych prac</span>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+          </>
+        )}
+
+        {aktywnaZakladka === 'kursanci' && (
+          <>
+            <h2 className="page-title">Kursanci</h2>
+            <div className="login-field" style={{ marginBottom: '12px' }}>
+              <label>Filtruj po grupie</label>
+              <select onChange={e => setWybranaGrupaZadan(e.target.value)} value={wybranaGrupaZadan}>
+                <option value="">Wszystkie grupy</option>
+                {grupy.map(g => <option key={g.id} value={g.id}>{g.nazwa}</option>)}
+              </select>
+            </div>
+            {kursanci
+              .filter(k => !wybranaGrupaZadan || k.grupa_id === parseInt(wybranaGrupaZadan))
+              .map(k => (
+                <div key={k.id} className="profil-card" style={{ marginBottom: '8px' }}>
+                  <div className="profil-row">
+                    <span style={{ fontSize: '14px', fontWeight: 500 }}>{k.imie} {k.nazwisko}</span>
+                    <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{grupy.find(g => g.id === k.grupa_id)?.nazwa || '-'}</span>
+                  </div>
+                </div>
+              ))}
+          </>
+        )}
+
+        {aktywnaZakladka === 'zjazdy' && (
+          <>
+            <h2 className="page-title">Plan zjazdów</h2>
+            <div className="login-field" style={{ marginBottom: '12px' }}>
+              <label>Filtruj po grupie</label>
+              <select onChange={e => setWybranaGrupaZadan(e.target.value)} value={wybranaGrupaZadan}>
+                <option value="">Wszystkie grupy</option>
+                {grupy.map(g => <option key={g.id} value={g.id}>{g.nazwa}</option>)}
+              </select>
+            </div>
+            {zjazdy
+              .filter(z => !wybranaGrupaZadan || z.grupa_id === parseInt(wybranaGrupaZadan))
+              .map(z => (
+                <div key={z.id} className={`sess-card ${z.status}`}>
+                  <div className="sess-top">
+                    <span className="sess-nr">Zjazd {z.nr}</span>
+                    <span className={`s-badge s-${z.status}`}>{z.status === 'nadchodzacy' ? 'Nadchodzący' : 'Zakończony'}</span>
+                  </div>
+                  <div className="sess-date">{z.daty}</div>
+                  <div className="sess-rows">
+                    <div className="sess-row"><span className="sess-lbl">Grupa:</span> {grupy.find(g => g.id === z.grupa_id)?.nazwa || '-'}</div>
+                    {z.sala && z.sala !== 'Do uzupełnienia' && <div className="sess-row"><span className="sess-lbl">Sala:</span> {z.sala}</div>}
+                    {z.adres && z.adres !== 'Do uzupełnienia' && <div className="sess-row"><span className="sess-lbl">Adres:</span> {z.adres}</div>}
+                    {z.tematy && <div className="sess-row"><span className="sess-lbl">Temat:</span> {z.tematy}</div>}
+                  </div>
+                </div>
+              ))}
+          </>
+        )}
+
+        {aktywnaZakladka === 'ogloszenia' && (
+          <>
+            {aktywneOgloszenie ? (
+              <EkranSzczegoly o={aktywneOgloszenie} onWroc={() => setAktywneOgloszenie(null)} />
+            ) : (
+              <>
+                <h2 className="page-title">Ogłoszenia</h2>
+                {ogloszenia.map(o => (
+                  <KartaOgloszenia key={o.id} o={o} onClick={() => setAktywneOgloszenie(o)} />
+                ))}
+              </>
+            )}
+          </>
+        )}
+      </main>
+
+      <nav className="bottom-nav">
+        <button className={`nav-item ${aktywnaZakladka === 'zadania' ? 'active' : ''}`} onClick={() => setAktywnaZakladka('zadania')}><BookOpen size={20} /><span className="nav-label">Zadania</span></button>
+        <button className={`nav-item ${aktywnaZakladka === 'zjazdy' ? 'active' : ''}`} onClick={() => setAktywnaZakladka('zjazdy')}><Calendar size={20} /><span className="nav-label">Zjazdy</span></button>
+        <button className={`nav-item ${aktywnaZakladka === 'kursanci' ? 'active' : ''}`} onClick={() => setAktywnaZakladka('kursanci')}><User size={20} /><span className="nav-label">Kursanci</span></button>
+        <button className={`nav-item ${aktywnaZakladka === 'ogloszenia' ? 'active' : ''}`} onClick={() => setAktywnaZakladka('ogloszenia')}><Bell size={20} /><span className="nav-label">Ogłoszenia</span></button>
+      </nav>
+    </div>
+  );
+}
+
 function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
   const [aktywnaZakladka, setAktywnaZakladka] = useState('ogloszenia');
   const [grupy, setGrupy] = useState<Grupa[]>([]);
@@ -2104,6 +2327,7 @@ export default function App() {
   if (resetMode) return <EkranZmianaHasla />;
   if (!user) return <EkranLogowania onZalogowano={() => {}} />;
   if (kursant?.rola === 'admin') return <PanelBiura onWyloguj={wyloguj} />;
+  if (kursant?.rola === 'prowadzacy') return <PanelProwadzacego user={user} kursant={kursant} onWyloguj={wyloguj} />;
 
   return (
     <div className="app">
