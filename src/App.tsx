@@ -1038,14 +1038,14 @@ function PanelProwadzacego({ user, kursant, onWyloguj }: { user: User; kursant: 
   async function pobierz() {
     setLadowanie(true);
 
-    // 1. Znajdź prowadzacy_id powiązany z tym kontem
-    const { data: kData } = await supabase
-      .from('kursanci')
-      .select('prowadzacy_id')
+    // 1. Znajdź profil prowadzącego bezpośrednio przez user_id
+    const { data: pData } = await supabase
+      .from('prowadzacy')
+      .select('id, imie, nazwisko, bio, avatar_url')
       .eq('user_id', user.id)
       .single();
 
-    const pid = kData?.prowadzacy_id;
+    const pid = pData?.id;
     setMojeProwadzacyId(pid || null);
 
     if (!pid) {
@@ -2318,6 +2318,20 @@ export default function App() {
   useEffect(() => {
     if (!user) return;
     async function pobierzDane() {
+      // Sprawdź czy to prowadzący (ma user_id w tabeli prowadzacy)
+      const { data: prowData } = await supabase
+        .from('prowadzacy')
+        .select('id')
+        .eq('user_id', user!.id)
+        .maybeSingle();
+
+      if (prowData) {
+        // To jest prowadzący — ustaw minimalny kursant z rolą prowadzacy
+        setKursant({ imie: '', nazwisko: '', grupa_id: 0, rola: 'prowadzacy', avatar_url: null, grupy: null });
+        setLadowanie(false);
+        return;
+      }
+
       const { data: kursantData } = await supabase.from('kursanci').select('imie, nazwisko, grupa_id, rola, avatar_url').eq('user_id', user!.id).single();
       let grupaData = null;
       if (kursantData?.grupa_id) {
