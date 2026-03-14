@@ -1353,6 +1353,33 @@ function KartaOgloszenia({ o, onClick }: { o: Ogloszenie; onClick: () => void })
   );
 }
 
+function renderTekstZLinkami(tekst: string) {
+  if (!tekst) return null;
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  const czesci = tekst.split(urlRegex);
+  return czesci.map((czesc, i) =>
+    urlRegex.test(czesc) ? (
+      <a
+        key={i}
+        href={czesc}
+        target="_blank"
+        rel="noopener noreferrer"
+        style={{
+          color: 'var(--brand)',
+          textDecoration: 'underline',
+          textDecorationStyle: 'dotted',
+          textUnderlineOffset: '3px',
+          wordBreak: 'break-all',
+        }}
+      >
+        {czesc}
+      </a>
+    ) : (
+      <span key={i}>{czesc}</span>
+    )
+  );
+}
+
 function EkranSzczegoly({ o, onWroc }: { o: Ogloszenie; onWroc: () => void }) {
   return (
     <>
@@ -1362,7 +1389,9 @@ function EkranSzczegoly({ o, onWroc }: { o: Ogloszenie; onWroc: () => void }) {
         <h2 className="szczegoly-tytul">{o.tytul}</h2>
         <p className="szczegoly-meta">Biuro On-Arch · {new Date(o.data_utworzenia).toLocaleDateString('pl-PL')}</p>
       </div>
-      <div className="szczegoly-tresc">{o.szczegoly || o.tresc}</div>
+      <div className="szczegoly-tresc">
+        {renderTekstZLinkami(o.szczegoly || o.tresc)}
+      </div>
     </>
   );
 }
