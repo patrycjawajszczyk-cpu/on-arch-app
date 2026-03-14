@@ -1017,7 +1017,9 @@ function EkranCzat({ user, kursant }: { user: User; kursant: Kursant | null }) {
 
 function PanelProwadzacego({ user, kursant, onWyloguj }: { user: User; kursant: Kursant | null; onWyloguj: () => void }) {
   const [aktywnaZakladka, setAktywnaZakladka] = useState('zadania');
-  const [grupy, setGrupy] = useState<Grupa[]>([]);
+  const [mojeProwadzacyId, setMojeProwadzacyId] = useState<number | null>(null);
+  const [mojeGrupy, setMojeGrupy] = useState<Grupa[]>([]);
+  const [mojeGrupyIds, setMojeGrupyIds] = useState<number[]>([]);
   const [zjazdy, setZjazdy] = useState<Zjazd[]>([]);
   const [kursanci, setKursanci] = useState<KursantAdmin[]>([]);
   const [ogloszenia, setOgloszenia] = useState<Ogloszenie[]>([]);
@@ -1025,28 +1027,71 @@ function PanelProwadzacego({ user, kursant, onWyloguj }: { user: User; kursant: 
   const [odpowiedziZadan, setOdpowiedziZadan] = useState<ZadanieOdpowiedz[]>([]);
   const [aktywneOgloszenie, setAktywneOgloszenie] = useState<Ogloszenie | null>(null);
   const [noweZadanie, setNoweZadanie] = useState({ tytul: '', opis: '', termin: '', link_materialow: '', grupa_id: '' });
-  const [wybranaGrupaZadan, setWybranaGrupaZadan] = useState('');
+  const [wybranaGrupa, setWybranaGrupa] = useState('');
   const [komunikat, setKomunikat] = useState('');
+  const [ladowanie, setLadowanie] = useState(true);
 
   useEffect(() => {
     pobierz();
-  }, []);
+  }, [kursant]);
 
   async function pobierz() {
-    const [{ data: gr }, { data: zj }, { data: ku }, { data: og }, { data: zad }, { data: odp }] = await Promise.all([
-      supabase.from('grupy').select('*'),
-      supabase.from('zjazdy').select('*').order('data_zjazdu', { ascending: true }),
-      supabase.from('kursanci').select('id, imie, nazwisko, grupa_id, user_id').eq('rola', 'kursant'),
+    setLadowanie(true);
+
+    // 1. Znajdź prowadzacy_id powiązany z tym kontem
+    const { data: kData } = await supabase
+      .from('kursanci')
+      .select('prowadzacy_id')
+      .eq('user_id', user.id)
+      .single();
+
+    const pid = kData?.prowadzacy_id;
+    setMojeProwadzacyId(pid || null);
+
+    if (!pid) {
+      setLadowanie(false);
+      return;
+    }
+
+    // 2. Znajdź zjazdy przypisane do tego prowadzącego
+    const { data: zpData } = await supabase
+      .from('zjazdy_prowadzacy')
+      .select('zjazd_id')
+      .eq('prowadzacy_id', pid);
+
+    const zjazdIds = (zpData || []).map((r: any) => r.zjazd_id);
+
+    if (zjazdIds.length === 0) {
+      setLadowanie(false);
+      return;
+    }
+
+    // 3. Pobierz te zjazdy i wyciągnij unikalne grupa_id
+    const { data: zjData } = await supabase
+      .from('zjazdy')
+      .select('*')
+      .in('id', zjazdIds)
+      .order('data_zjazdu', { ascending: true });
+
+    const grupyIds = [...new Set((zjData || []).map((z: any) => z.grupa_id))] as number[];
+    setMojeGrupyIds(grupyIds);
+    setZjazdy(zjData || []);
+
+    // 4. Pobierz tylko swoje grupy, kursantów, zadania, ogłoszenia
+    const [{ data: gr }, { data: ku }, { data: og }, { data: zad }, { data: odp }] = await Promise.all([
+      supabase.from('grupy').select('*').in('id', grupyIds),
+      supabase.from('kursanci').select('id, imie, nazwisko, grupa_id, user_id').eq('rola', 'kursant').in('grupa_id', grupyIds),
       supabase.from('ogloszenia').select('*').order('data_utworzenia', { ascending: false }),
-      supabase.from('zadania').select('*').order('created_at', { ascending: false }),
+      supabase.from('zadania').select('*').in('grupa_id', grupyIds).order('created_at', { ascending: false }),
       supabase.from('zadania_odpowiedzi').select('*').order('created_at', { ascending: false }),
     ]);
-    setGrupy(gr || []);
-    setZjazdy(zj || []);
+
+    setMojeGrupy(gr || []);
     setKursanci(ku as unknown as KursantAdmin[] || []);
-    setOgloszenia(og || []);
+    setOgloszenia((og || []).filter((o: any) => o.grupa_id === null || grupyIds.includes(o.grupa_id)));
     setZadania(zad || []);
     setOdpowiedziZadan(odp || []);
+    setLadowanie(false);
   }
 
   async function dodajZadanie(e: React.FormEvent) {
@@ -1061,7 +1106,7 @@ function PanelProwadzacego({ user, kursant, onWyloguj }: { user: User; kursant: 
     if (error) { setKomunikat('Błąd: ' + error.message); return; }
     setKomunikat('Zadanie dodane!');
     setNoweZadanie({ tytul: '', opis: '', termin: '', link_materialow: '', grupa_id: noweZadanie.grupa_id });
-    const { data } = await supabase.from('zadania').select('*').order('created_at', { ascending: false });
+    const { data } = await supabase.from('zadania').select('*').in('grupa_id', mojeGrupyIds).order('created_at', { ascending: false });
     setZadania(data || []);
   }
 
@@ -1071,8 +1116,6 @@ function PanelProwadzacego({ user, kursant, onWyloguj }: { user: User; kursant: 
     setZadania(prev => prev.filter(z => z.id !== id));
   }
 
-  const imie = kursant ? `${kursant.imie} ${kursant.nazwisko}` : 'Prowadzący';
-
   return (
     <div className="app">
       <header className="header">
@@ -1080,146 +1123,171 @@ function PanelProwadzacego({ user, kursant, onWyloguj }: { user: User; kursant: 
         <button onClick={onWyloguj} style={{ background: 'none', border: 'none', color: 'var(--brand)', fontSize: '13px', cursor: 'pointer' }}>Wyloguj</button>
       </header>
       <main className="main">
-        {komunikat && (
-          <div className="login-error" style={{ background: '#e8f5e9', color: '#2e7d32', marginBottom: '12px' }}>{komunikat}</div>
+        {komunikat && <div className="login-error" style={{ background: '#e8f5e9', color: '#2e7d32', marginBottom: '12px' }}>{komunikat}</div>}
+
+        {ladowanie && <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>Ładowanie...</div>}
+
+        {!ladowanie && !mojeProwadzacyId && (
+          <div style={{ textAlign: 'center', padding: '40px 24px', color: 'var(--text-muted)' }}>
+            <div style={{ fontSize: '40px', marginBottom: '12px' }}>⚠️</div>
+            <p style={{ fontSize: '14px', lineHeight: '1.6' }}>
+              Twoje konto nie jest powiązane z profilem prowadzącego.<br />
+              Skontaktuj się z biurem.
+            </p>
+          </div>
         )}
 
-        {/* Powitanie */}
-        {aktywnaZakladka === 'zadania' && !aktywneOgloszenie && (
-          <>
-            <p className="greeting" style={{ marginBottom: '16px' }}>Dzień dobry, {kursant?.imie || 'Prowadzący'}</p>
-
-            <h2 className="page-title">Nowe zadanie</h2>
-            <form className="admin-form" onSubmit={dodajZadanie}>
-              <div className="login-field">
-                <label>Grupa</label>
-                <select value={noweZadanie.grupa_id} onChange={e => { setNoweZadanie({ ...noweZadanie, grupa_id: e.target.value }); setWybranaGrupaZadan(e.target.value); }} required>
-                  <option value="">Wybierz grupę</option>
-                  {grupy.map(g => <option key={g.id} value={g.id}>{g.nazwa}</option>)}
-                </select>
-              </div>
-              <div className="login-field"><label>Tytuł zadania</label><input type="text" value={noweZadanie.tytul} onChange={e => setNoweZadanie({ ...noweZadanie, tytul: e.target.value })} placeholder="np. Przygotuj rzut mieszkania" required /></div>
-              <div className="login-field"><label>Opis / instrukcja</label><textarea value={noweZadanie.opis} onChange={e => setNoweZadanie({ ...noweZadanie, opis: e.target.value })} rows={4} placeholder="Co dokładnie należy przygotować..." /></div>
-              <div className="login-field"><label>Termin (opcjonalnie)</label><input type="date" value={noweZadanie.termin} onChange={e => setNoweZadanie({ ...noweZadanie, termin: e.target.value })} /></div>
-              <div className="login-field"><label>Link do materiałów (opcjonalnie)</label><input type="url" value={noweZadanie.link_materialow} onChange={e => setNoweZadanie({ ...noweZadanie, link_materialow: e.target.value })} placeholder="https://drive.google.com/..." /></div>
-              <button className="login-btn" type="submit">Dodaj zadanie</button>
-            </form>
-
-            <h2 className="page-title" style={{ marginTop: '24px' }}>Lista zadań</h2>
-            <div className="login-field" style={{ marginBottom: '12px' }}>
-              <label>Filtruj po grupie</label>
-              <select value={wybranaGrupaZadan} onChange={e => setWybranaGrupaZadan(e.target.value)}>
-                <option value="">Wszystkie grupy</option>
-                {grupy.map(g => <option key={g.id} value={g.id}>{g.nazwa}</option>)}
-              </select>
-            </div>
-            {zadania
-              .filter(z => !wybranaGrupaZadan || z.grupa_id === parseInt(wybranaGrupaZadan))
-              .map(z => {
-                const odp = odpowiedziZadan.filter(o => o.zadanie_id === z.id);
-                return (
-                  <div key={z.id} className="profil-card" style={{ marginBottom: '10px' }}>
-                    <div className="profil-row">
-                      <span className="profil-lbl" style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '16px', fontWeight: 500 }}>{z.tytul}</span>
-                      <button onClick={() => usunZadanie(z.id)} style={{ background: 'none', border: 'none', color: '#c62828', cursor: 'pointer', fontSize: '18px' }}>×</button>
-                    </div>
-                    <div className="profil-row"><span className="profil-lbl">Grupa</span><span className="profil-val">{grupy.find(g => g.id === z.grupa_id)?.nazwa || '-'}</span></div>
-                    {z.termin && <div className="profil-row"><span className="profil-lbl">Termin</span><span className="profil-val">{new Date(z.termin).toLocaleDateString('pl-PL')}</span></div>}
-                    {z.link_materialow && (
-                      <div className="profil-row"><span className="profil-lbl">Materiały</span>
-                        <a href={z.link_materialow} target="_blank" rel="noopener noreferrer" style={{ fontSize: '12px', color: 'var(--brand)' }}>Otwórz →</a>
-                      </div>
-                    )}
-                    {odp.length > 0 ? (
-                      <div style={{ margin: '8px 16px 12px', background: '#f8f8f8', borderRadius: '10px', padding: '10px 12px' }}>
-                        <p style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: '8px' }}>
-                          Przesłane prace ({odp.length})
-                        </p>
-                        {odp.map(o => (
-                          <div key={o.id} style={{ marginBottom: '8px', paddingBottom: '8px', borderBottom: '0.5px solid var(--border)' }}>
-                            <p style={{ fontSize: '13px', fontWeight: 500 }}>{o.imie} {o.nazwisko}</p>
-                            <a href={o.link_pracy} target="_blank" rel="noopener noreferrer"
-                              style={{ fontSize: '12px', color: 'var(--brand)', textDecoration: 'underline', wordBreak: 'break-all' }}>
-                              {o.link_pracy}
-                            </a>
-                            {o.komentarz && <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '2px' }}>{o.komentarz}</p>}
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div style={{ padding: '0 16px 12px' }}>
-                        <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Brak przesłanych prac</span>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-          </>
+        {!ladowanie && mojeProwadzacyId && mojeGrupyIds.length === 0 && (
+          <div style={{ textAlign: 'center', padding: '40px 24px', color: 'var(--text-muted)' }}>
+            <div style={{ fontSize: '40px', marginBottom: '12px' }}>📋</div>
+            <p style={{ fontSize: '14px' }}>Nie jesteś jeszcze przypisany do żadnego zjazdu.</p>
+          </div>
         )}
 
-        {aktywnaZakladka === 'kursanci' && (
+        {!ladowanie && mojeProwadzacyId && mojeGrupyIds.length > 0 && (
           <>
-            <h2 className="page-title">Kursanci</h2>
-            <div className="login-field" style={{ marginBottom: '12px' }}>
-              <label>Filtruj po grupie</label>
-              <select onChange={e => setWybranaGrupaZadan(e.target.value)} value={wybranaGrupaZadan}>
-                <option value="">Wszystkie grupy</option>
-                {grupy.map(g => <option key={g.id} value={g.id}>{g.nazwa}</option>)}
-              </select>
-            </div>
-            {kursanci
-              .filter(k => !wybranaGrupaZadan || k.grupa_id === parseInt(wybranaGrupaZadan))
-              .map(k => (
-                <div key={k.id} className="profil-card" style={{ marginBottom: '8px' }}>
-                  <div className="profil-row">
-                    <span style={{ fontSize: '14px', fontWeight: 500 }}>{k.imie} {k.nazwisko}</span>
-                    <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{grupy.find(g => g.id === k.grupa_id)?.nazwa || '-'}</span>
-                  </div>
-                </div>
-              ))}
-          </>
-        )}
-
-        {aktywnaZakladka === 'zjazdy' && (
-          <>
-            <h2 className="page-title">Plan zjazdów</h2>
-            <div className="login-field" style={{ marginBottom: '12px' }}>
-              <label>Filtruj po grupie</label>
-              <select onChange={e => setWybranaGrupaZadan(e.target.value)} value={wybranaGrupaZadan}>
-                <option value="">Wszystkie grupy</option>
-                {grupy.map(g => <option key={g.id} value={g.id}>{g.nazwa}</option>)}
-              </select>
-            </div>
-            {zjazdy
-              .filter(z => !wybranaGrupaZadan || z.grupa_id === parseInt(wybranaGrupaZadan))
-              .map(z => (
-                <div key={z.id} className={`sess-card ${z.status}`}>
-                  <div className="sess-top">
-                    <span className="sess-nr">Zjazd {z.nr}</span>
-                    <span className={`s-badge s-${z.status}`}>{z.status === 'nadchodzacy' ? 'Nadchodzący' : 'Zakończony'}</span>
-                  </div>
-                  <div className="sess-date">{z.daty}</div>
-                  <div className="sess-rows">
-                    <div className="sess-row"><span className="sess-lbl">Grupa:</span> {grupy.find(g => g.id === z.grupa_id)?.nazwa || '-'}</div>
-                    {z.sala && z.sala !== 'Do uzupełnienia' && <div className="sess-row"><span className="sess-lbl">Sala:</span> {z.sala}</div>}
-                    {z.adres && z.adres !== 'Do uzupełnienia' && <div className="sess-row"><span className="sess-lbl">Adres:</span> {z.adres}</div>}
-                    {z.tematy && <div className="sess-row"><span className="sess-lbl">Temat:</span> {z.tematy}</div>}
-                  </div>
-                </div>
-              ))}
-          </>
-        )}
-
-        {aktywnaZakladka === 'ogloszenia' && (
-          <>
-            {aktywneOgloszenie ? (
-              <EkranSzczegoly o={aktywneOgloszenie} onWroc={() => setAktywneOgloszenie(null)} />
-            ) : (
+            {aktywnaZakladka === 'zadania' && (
               <>
-                <h2 className="page-title">Ogłoszenia</h2>
-                {ogloszenia.map(o => (
-                  <KartaOgloszenia key={o.id} o={o} onClick={() => setAktywneOgloszenie(o)} />
+                <p className="greeting" style={{ marginBottom: '16px' }}>Dzień dobry, {kursant?.imie || 'Prowadzący'}</p>
+
+                {/* Jeśli wiele grup — pokaż switcher */}
+                {mojeGrupy.length > 1 && (
+                  <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', overflowX: 'auto', paddingBottom: '4px' }}>
+                    <button onClick={() => setWybranaGrupa('')}
+                      style={{ padding: '6px 14px', borderRadius: '20px', border: '0.5px solid var(--border)', background: !wybranaGrupa ? 'var(--brand)' : 'white', color: !wybranaGrupa ? 'white' : 'var(--text)', fontSize: '12px', cursor: 'pointer', whiteSpace: 'nowrap', fontFamily: 'Jost, sans-serif' }}>
+                      Wszystkie
+                    </button>
+                    {mojeGrupy.map(g => (
+                      <button key={g.id} onClick={() => setWybranaGrupa(String(g.id))}
+                        style={{ padding: '6px 14px', borderRadius: '20px', border: '0.5px solid var(--border)', background: wybranaGrupa === String(g.id) ? 'var(--brand)' : 'white', color: wybranaGrupa === String(g.id) ? 'white' : 'var(--text)', fontSize: '12px', cursor: 'pointer', whiteSpace: 'nowrap', fontFamily: 'Jost, sans-serif' }}>
+                        {g.nazwa}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                <h2 className="page-title">Nowe zadanie</h2>
+                <form className="admin-form" onSubmit={dodajZadanie}>
+                  <div className="login-field">
+                    <label>Grupa</label>
+                    <select value={noweZadanie.grupa_id} onChange={e => setNoweZadanie({ ...noweZadanie, grupa_id: e.target.value })} required>
+                      <option value="">Wybierz grupę</option>
+                      {mojeGrupy.map(g => <option key={g.id} value={g.id}>{g.nazwa}</option>)}
+                    </select>
+                  </div>
+                  <div className="login-field"><label>Tytuł zadania</label><input type="text" value={noweZadanie.tytul} onChange={e => setNoweZadanie({ ...noweZadanie, tytul: e.target.value })} placeholder="np. Przygotuj rzut mieszkania" required /></div>
+                  <div className="login-field"><label>Opis / instrukcja</label><textarea value={noweZadanie.opis} onChange={e => setNoweZadanie({ ...noweZadanie, opis: e.target.value })} rows={4} placeholder="Co dokładnie należy przygotować..." /></div>
+                  <div className="login-field"><label>Termin (opcjonalnie)</label><input type="date" value={noweZadanie.termin} onChange={e => setNoweZadanie({ ...noweZadanie, termin: e.target.value })} /></div>
+                  <div className="login-field"><label>Link do materiałów (opcjonalnie)</label><input type="url" value={noweZadanie.link_materialow} onChange={e => setNoweZadanie({ ...noweZadanie, link_materialow: e.target.value })} placeholder="https://drive.google.com/..." /></div>
+                  <button className="login-btn" type="submit">Dodaj zadanie</button>
+                </form>
+
+                <h2 className="page-title" style={{ marginTop: '24px' }}>Lista zadań</h2>
+                {zadania
+                  .filter(z => !wybranaGrupa || z.grupa_id === parseInt(wybranaGrupa))
+                  .map(z => {
+                    const odp = odpowiedziZadan.filter(o => o.zadanie_id === z.id);
+                    return (
+                      <div key={z.id} className="profil-card" style={{ marginBottom: '10px' }}>
+                        <div className="profil-row">
+                          <span className="profil-lbl" style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '16px', fontWeight: 500 }}>{z.tytul}</span>
+                          <button onClick={() => usunZadanie(z.id)} style={{ background: 'none', border: 'none', color: '#c62828', cursor: 'pointer', fontSize: '18px' }}>×</button>
+                        </div>
+                        {mojeGrupy.length > 1 && <div className="profil-row"><span className="profil-lbl">Grupa</span><span className="profil-val">{mojeGrupy.find(g => g.id === z.grupa_id)?.nazwa || '-'}</span></div>}
+                        {z.termin && <div className="profil-row"><span className="profil-lbl">Termin</span><span className="profil-val">{new Date(z.termin).toLocaleDateString('pl-PL')}</span></div>}
+                        {z.link_materialow && (
+                          <div className="profil-row"><span className="profil-lbl">Materiały</span>
+                            <a href={z.link_materialow} target="_blank" rel="noopener noreferrer" style={{ fontSize: '12px', color: 'var(--brand)' }}>Otwórz →</a>
+                          </div>
+                        )}
+                        {odp.length > 0 ? (
+                          <div style={{ margin: '8px 16px 12px', background: '#f8f8f8', borderRadius: '10px', padding: '10px 12px' }}>
+                            <p style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: '8px' }}>Przesłane prace ({odp.length})</p>
+                            {odp.map(o => (
+                              <div key={o.id} style={{ marginBottom: '8px', paddingBottom: '8px', borderBottom: '0.5px solid var(--border)' }}>
+                                <p style={{ fontSize: '13px', fontWeight: 500 }}>{o.imie} {o.nazwisko}</p>
+                                <a href={o.link_pracy} target="_blank" rel="noopener noreferrer" style={{ fontSize: '12px', color: 'var(--brand)', textDecoration: 'underline', wordBreak: 'break-all' }}>{o.link_pracy}</a>
+                                {o.komentarz && <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '2px' }}>{o.komentarz}</p>}
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div style={{ padding: '0 16px 12px' }}><span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Brak przesłanych prac</span></div>
+                        )}
+                      </div>
+                    );
+                  })}
+              </>
+            )}
+
+            {aktywnaZakladka === 'kursanci' && (
+              <>
+                <h2 className="page-title">Kursanci</h2>
+                {mojeGrupy.map(g => (
+                  <div key={g.id} style={{ marginBottom: '20px' }}>
+                    <h3 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '18px', color: 'var(--brand)', marginBottom: '10px' }}>{g.nazwa}</h3>
+                    {kursanci.filter(k => k.grupa_id === g.id).map(k => (
+                      <div key={k.id} className="profil-card" style={{ marginBottom: '6px' }}>
+                        <div className="profil-row">
+                          <span style={{ fontSize: '14px', fontWeight: 500 }}>{k.imie} {k.nazwisko}</span>
+                        </div>
+                      </div>
+                    ))}
+                    {kursanci.filter(k => k.grupa_id === g.id).length === 0 && (
+                      <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Brak kursantów w tej grupie.</p>
+                    )}
+                  </div>
                 ))}
+              </>
+            )}
+
+            {aktywnaZakladka === 'zjazdy' && (
+              <>
+                <h2 className="page-title">Moje zjazdy</h2>
+                {mojeGrupy.length > 1 && (
+                  <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', overflowX: 'auto', paddingBottom: '4px' }}>
+                    <button onClick={() => setWybranaGrupa('')}
+                      style={{ padding: '6px 14px', borderRadius: '20px', border: '0.5px solid var(--border)', background: !wybranaGrupa ? 'var(--brand)' : 'white', color: !wybranaGrupa ? 'white' : 'var(--text)', fontSize: '12px', cursor: 'pointer', whiteSpace: 'nowrap', fontFamily: 'Jost, sans-serif' }}>
+                      Wszystkie
+                    </button>
+                    {mojeGrupy.map(g => (
+                      <button key={g.id} onClick={() => setWybranaGrupa(String(g.id))}
+                        style={{ padding: '6px 14px', borderRadius: '20px', border: '0.5px solid var(--border)', background: wybranaGrupa === String(g.id) ? 'var(--brand)' : 'white', color: wybranaGrupa === String(g.id) ? 'white' : 'var(--text)', fontSize: '12px', cursor: 'pointer', whiteSpace: 'nowrap', fontFamily: 'Jost, sans-serif' }}>
+                        {g.nazwa}
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {zjazdy
+                  .filter(z => !wybranaGrupa || z.grupa_id === parseInt(wybranaGrupa))
+                  .map(z => (
+                    <div key={z.id} className={`sess-card ${z.status}`}>
+                      <div className="sess-top">
+                        <span className="sess-nr">Zjazd {z.nr}</span>
+                        <span className={`s-badge s-${z.status}`}>{z.status === 'nadchodzacy' ? 'Nadchodzący' : 'Zakończony'}</span>
+                      </div>
+                      <div className="sess-date">{z.daty}</div>
+                      <div className="sess-rows">
+                        {mojeGrupy.length > 1 && <div className="sess-row"><span className="sess-lbl">Grupa:</span> {mojeGrupy.find(g => g.id === z.grupa_id)?.nazwa || '-'}</div>}
+                        {z.sala && z.sala !== 'Do uzupełnienia' && <div className="sess-row"><span className="sess-lbl">Sala:</span> {z.sala}</div>}
+                        {z.adres && z.adres !== 'Do uzupełnienia' && <div className="sess-row"><span className="sess-lbl">Adres:</span> {z.adres}</div>}
+                        {z.tematy && <div className="sess-row"><span className="sess-lbl">Temat:</span> {z.tematy}</div>}
+                      </div>
+                    </div>
+                  ))}
+              </>
+            )}
+
+            {aktywnaZakladka === 'ogloszenia' && (
+              <>
+                {aktywneOgloszenie ? (
+                  <EkranSzczegoly o={aktywneOgloszenie} onWroc={() => setAktywneOgloszenie(null)} />
+                ) : (
+                  <>
+                    <h2 className="page-title">Ogłoszenia</h2>
+                    {ogloszenia.map(o => <KartaOgloszenia key={o.id} o={o} onClick={() => setAktywneOgloszenie(o)} />)}
+                  </>
+                )}
               </>
             )}
           </>
