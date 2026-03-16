@@ -74,6 +74,7 @@ type Kursant = {
   grupa_id: number;
   rola: string;
   avatar_url: string | null;
+  certyfikat_url: string | null;
   grupy: { nazwa: string; miasto: string; edycja: string } | null;
 };
 
@@ -83,6 +84,7 @@ type KursantAdmin = {
   nazwisko: string;
   grupa_id: number;
   user_id: string;
+  certyfikat_url: string | null;
 };
 
 type Grupa = {
@@ -1042,7 +1044,7 @@ function PanelProwadzacego({ user, kursant, onWyloguj }: { user: User; kursant: 
     // 4. Pobierz tylko swoje grupy, kursantów, zadania, ogłoszenia
     const [{ data: gr }, { data: ku }, { data: og }, { data: zad }, { data: odp }] = await Promise.all([
       supabase.from('grupy').select('*').in('id', grupyIds),
-      supabase.from('kursanci').select('id, imie, nazwisko, grupa_id, user_id').eq('rola', 'kursant').in('grupa_id', grupyIds),
+      supabase.from('kursanci').select('id, imie, nazwisko, grupa_id, user_id, certyfikat_url').eq('rola', 'kursant').in('grupa_id', grupyIds),
       supabase.from('ogloszenia').select('*').order('data_utworzenia', { ascending: false }),
       supabase.from('zadania').select('*').in('grupa_id', grupyIds).order('created_at', { ascending: false }),
       supabase.from('zadania_odpowiedzi').select('*').order('created_at', { ascending: false }),
@@ -1505,7 +1507,7 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
 
   useEffect(() => {
     pobierzGrupy(); pobierzOgloszenia(); pobierzZjazdy(); pobierzProwadzacy(); pobierzZadania();
-    supabase.from('kursanci').select('id, imie, nazwisko, grupa_id, user_id').then(({ data }) => setKursanci((data || []) as unknown as KursantAdmin[]));
+    supabase.from('kursanci').select('id, imie, nazwisko, grupa_id, user_id, certyfikat_url').then(({ data }) => setKursanci((data || []) as unknown as KursantAdmin[]));
     supabase.from('ankiety').select('*').order('created_at', { ascending: false }).then(({ data }) => setAnkiety((data || []) as unknown as OdpowiedziAnkiety[]));
     supabase.from('zadania_odpowiedzi').select('*').order('created_at', { ascending: false }).then(({ data }) => setOdpowiedziZadan(data || []));
   }, []);
@@ -1624,7 +1626,7 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
     const { data: authData, error: authError } = await supabase.auth.signUp({ email: nowyKursant.email, password: Math.random().toString(36).slice(-10) });
     if (authError) { setKomunikat('Blad: ' + authError.message); return; }
     const { error } = await supabase.from('kursanci').insert([{ imie: nowyKursant.imie, nazwisko: nowyKursant.nazwisko, grupa_id: parseInt(nowyKursant.grupa_id), user_id: authData.user!.id, rola: 'kursant' }]);
-    if (error) { setKomunikat('Blad: ' + error.message); } else { setKomunikat('Kursant dodany!'); setNowyKursant({ imie: '', nazwisko: '', email: '', grupa_id: '' }); const { data } = await supabase.from('kursanci').select('id, imie, nazwisko, grupa_id, user_id'); setKursanci((data || []) as unknown as KursantAdmin[]); }
+    if (error) { setKomunikat('Blad: ' + error.message); } else { setKomunikat('Kursant dodany!'); setNowyKursant({ imie: '', nazwisko: '', email: '', grupa_id: '' }); const { data } = await supabase.from('kursanci').select('id, imie, nazwisko, grupa_id, user_id, certyfikat_url'); setKursanci((data || []) as unknown as KursantAdmin[]); }
   }
 
   async function dodajGrupe(e: React.FormEvent) {
@@ -1678,7 +1680,7 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
       await new Promise(r => setTimeout(r, 1000));
     }
     setImportowanie(false);
-    const { data } = await supabase.from('kursanci').select('id, imie, nazwisko, grupa_id, user_id'); setKursanci((data || []) as unknown as KursantAdmin[]);
+    const { data } = await supabase.from('kursanci').select('id, imie, nazwisko, grupa_id, user_id, certyfikat_url'); setKursanci((data || []) as unknown as KursantAdmin[]);
     if (fileRef.current) fileRef.current.value = '';
   }
 
@@ -1964,6 +1966,29 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
               <div key={k.id} className="profil-card" style={{ marginBottom: '8px' }}>
                 <div className="profil-row"><span className="profil-lbl">Imie i nazwisko</span><span className="profil-val">{k.imie} {k.nazwisko}</span></div>
                 <div className="profil-row"><span className="profil-lbl">Grupa</span><span className="profil-val">{grupy.find(g => g.id === k.grupa_id)?.nazwa || '-'}</span></div>
+                <div style={{ padding: '4px 16px 12px' }}>
+                  <label style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.4px', fontWeight: 600 }}>Link do certyfikatu</label>
+                  <div style={{ display: 'flex', gap: '8px', marginTop: '6px' }}>
+                    <input
+                      type="url"
+                      defaultValue={k.certyfikat_url || ''}
+                      placeholder="https://drive.google.com/..."
+                      onBlur={async (e) => {
+                        if (e.target.value !== (k.certyfikat_url || '')) {
+                          await supabase.from('kursanci').update({ certyfikat_url: e.target.value || null }).eq('id', k.id);
+                          setKomunikat(`Certyfikat zapisany dla ${k.imie} ${k.nazwisko}`);
+                        }
+                      }}
+                      style={{ flex: 1, fontSize: '12px', padding: '8px 10px', borderRadius: '8px', border: '0.5px solid var(--border)', fontFamily: 'Jost, sans-serif' }}
+                    />
+                    {k.certyfikat_url && (
+                      <a href={k.certyfikat_url} target="_blank" rel="noopener noreferrer"
+                        style={{ padding: '8px 12px', borderRadius: '8px', background: 'var(--brand-light)', color: 'var(--brand)', fontSize: '12px', textDecoration: 'none', display: 'flex', alignItems: 'center', whiteSpace: 'nowrap', border: '0.5px solid var(--brand-mid)' }}>
+                        Podgląd
+                      </a>
+                    )}
+                  </div>
+                </div>
               </div>
             ))}
 
@@ -2691,6 +2716,24 @@ function EkranProfil({ user, kursant, zjazdy, onWyloguj, onAvatarZmieniony, grup
         </a>
       )}
 
+      {/* Certyfikat */}
+      {kursant?.certyfikat_url && (
+        <a href={kursant.certyfikat_url} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
+          <div style={{
+            background: 'white', borderRadius: '16px', padding: '16px 18px',
+            border: '0.5px solid #d4af7a', marginBottom: '10px',
+            display: 'flex', alignItems: 'center', gap: '14px',
+          }}>
+            <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: '#fef9ec', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px', flexShrink: 0 }}>🎓</div>
+            <div>
+              <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text)', marginBottom: '2px' }}>Certyfikat ukończenia</div>
+              <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Pobierz swój certyfikat</div>
+            </div>
+            <span style={{ marginLeft: 'auto', color: '#c8a84b', fontSize: '18px' }}>→</span>
+          </div>
+        </a>
+      )}
+
       {/* Ankieta — widoczna tylko gdy kurs zakończony */}
       {ankietaDostepna && (
         <div onClick={onOtworzAnkiete} style={{
@@ -2756,7 +2799,7 @@ export default function App() {
         return;
       }
 
-      const { data: kursantData } = await supabase.from('kursanci').select('imie, nazwisko, grupa_id, rola, avatar_url').eq('user_id', user!.id).single();
+      const { data: kursantData } = await supabase.from('kursanci').select('imie, nazwisko, grupa_id, rola, avatar_url, certyfikat_url').eq('user_id', user!.id).single();
       let grupaData = null;
       if (kursantData?.grupa_id) {
         const { data } = await supabase.from('grupy').select('id, nazwa, miasto, edycja, drive_link').eq('id', kursantData.grupa_id).single();
