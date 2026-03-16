@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import './App.css';
 import { supabase } from './supabase';
-import { Home, Calendar, Bell, MessageCircle, User, Star, CheckSquare, BookOpen } from 'lucide-react';
+import { Home, Calendar, Bell, MessageCircle, User, CheckSquare, BookOpen } from 'lucide-react';
 
 type Ogloszenie = {
   id: string;
