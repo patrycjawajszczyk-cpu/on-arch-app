@@ -999,7 +999,7 @@ function EkranCzat({ user, kursant }: { user: User; kursant: Kursant | null }) {
                   ) : <div style={{ width: '24px' }} />}
                 </div>
               )}
-              <div style={{ maxWidth: moja ? 'calc(100% - 0px)' : 'calc(100% - 29px)', minWidth: 0 }}>
+              <div style={{ minWidth: 0, flex: 1 }}>
                 {!moja && !poprzedniaTaSama && (
                   <div className="czat-imie" style={{ marginLeft: '2px' }}>{w.imie}</div>
                 )}
