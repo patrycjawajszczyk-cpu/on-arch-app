@@ -983,20 +983,20 @@ function EkranCzat({ user, kursant }: { user: User; kursant: Kursant | null }) {
           return (
             <div key={w.id} className={`czat-msg ${moja ? 'moja' : 'obca'}`} style={{ marginBottom: czyPokazac ? '10px' : '2px' }}>
               {!moja && (
-                <div style={{ width: '28px', flexShrink: 0, alignSelf: 'flex-end', marginRight: '6px' }}>
+                <div style={{ width: '24px', flexShrink: 0, alignSelf: 'flex-end', marginRight: '5px' }}>
                   {czyPokazac ? (
                     info?.avatar_url ? (
                       <img src={info.avatar_url} alt={w.imie}
-                        style={{ width: '28px', height: '28px', borderRadius: '50%', objectFit: 'cover', border: '1.5px solid var(--border)' }} />
+                        style={{ width: '24px', height: '24px', borderRadius: '50%', objectFit: 'cover', border: '1px solid var(--border)' }} />
                     ) : (
                       <div style={{
-                        width: '28px', height: '28px', borderRadius: '50%',
-                        background: 'var(--brand-light)', border: '1.5px solid var(--brand-mid)',
+                        width: '24px', height: '24px', borderRadius: '50%',
+                        background: 'var(--brand-light)', border: '1px solid var(--brand-mid)',
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        fontSize: '12px', fontWeight: 600, color: 'var(--brand-dark)',
+                        fontSize: '10px', fontWeight: 600, color: 'var(--brand-dark)',
                       }}>{w.imie?.[0]?.toUpperCase()}</div>
                     )
-                  ) : <div style={{ width: '28px' }} />}
+                  ) : <div style={{ width: '24px' }} />}
                 </div>
               )}
               <div style={{ maxWidth: '75%' }}>

@@ -708,6 +708,7 @@
      flex-direction: row;
      align-items: flex-end;
      gap: 0;
+     max-width: 82%;
    }
    
    .czat-msg.moja {
@@ -732,6 +733,7 @@
      font-size: 13px;
      line-height: 1.5;
      word-break: break-word;
+     white-space: pre-wrap;
    }
    
    .czat-msg.moja .czat-buble {
