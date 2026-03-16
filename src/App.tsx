@@ -1719,11 +1719,11 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
         {/* ─── EKRAN GŁÓWNY — KAFELKI ─── */}
         {aktywnaZakladka === 'home' && (
           <>
-            <div style={{ textAlign: 'center', marginBottom: '24px', paddingTop: '8px' }}>
-              <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '28px', fontWeight: 400, color: 'var(--brand-dark)', letterSpacing: '0.5px' }}>On-Arch</div>
+            <div style={{ textAlign: 'center', marginBottom: '16px', paddingTop: '4px' }}>
+              <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '26px', fontWeight: 400, color: 'var(--brand-dark)', letterSpacing: '0.5px' }}>On-Arch</div>
               <div style={{ fontSize: '11px', color: 'var(--text-muted)', letterSpacing: '1.5px', textTransform: 'uppercase', marginTop: '2px' }}>Panel biura</div>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
               {[
                 { id: 'ogloszenia', emoji: '📢', label: 'Ogłoszenia', opis: `${ogloszenia.length} ogłoszeń` },
                 { id: 'zjazdy',     emoji: '📅', label: 'Zjazdy',     opis: `${zjazdy.length} zjazdów` },
@@ -1736,27 +1736,27 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
               ].map(k => (
                 <div key={k.id} onClick={() => setAktywnaZakladka(k.id)} style={{
                   background: 'white',
-                  borderRadius: '20px',
-                  padding: '20px 16px 18px',
+                  borderRadius: '18px',
+                  padding: '16px 12px 14px',
                   border: '0.5px solid var(--border)',
                   cursor: 'pointer',
                   display: 'flex',
                   flexDirection: 'column',
-                  gap: '10px',
-                  boxShadow: '0 2px 12px rgba(160,92,92,0.07)',
-                  transition: 'box-shadow 0.15s, transform 0.1s',
+                  alignItems: 'center',
+                  textAlign: 'center',
+                  gap: '8px',
+                  boxShadow: '0 2px 10px rgba(160,92,92,0.06)',
                 }}>
                   <div style={{
-                    width: '44px', height: '44px', borderRadius: '14px',
+                    width: '40px', height: '40px', borderRadius: '12px',
                     background: 'var(--brand-light)',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: '22px',
+                    fontSize: '20px',
                   }}>{k.emoji}</div>
                   <div>
-                    <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text)', marginBottom: '3px' }}>{k.label}</div>
-                    <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 400 }}>{k.opis}</div>
+                    <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text)', marginBottom: '2px' }}>{k.label}</div>
+                    <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{k.opis}</div>
                   </div>
-                  <div style={{ fontSize: '16px', color: 'var(--brand-mid)', marginTop: '-4px', alignSelf: 'flex-end' }}>→</div>
                 </div>
               ))}
             </div>
