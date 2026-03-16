@@ -2794,7 +2794,7 @@ export default function App() {
 
       if (prowData) {
         // To jest prowadzący — ustaw minimalny kursant z rolą prowadzacy
-        setKursant({ imie: '', nazwisko: '', grupa_id: 0, rola: 'prowadzacy', avatar_url: null, grupy: null });
+        setKursant({ imie: '', nazwisko: '', grupa_id: 0, rola: 'prowadzacy', avatar_url: null, certyfikat_url: null, grupy: null });
         setLadowanie(false);
         return;
       }
