@@ -981,7 +981,11 @@ function EkranCzat({ user, kursant }: { user: User; kursant: Kursant | null }) {
           const poprzedniaTaSama = idx > 0 && wiadomosci[idx - 1].user_id === w.user_id;
 
           return (
-            <div key={w.id} className={`czat-msg ${moja ? 'moja' : 'obca'}`} style={{ marginBottom: czyPokazac ? '10px' : '2px', maxWidth: '85%' }}>
+            <div key={w.id} className={`czat-msg ${moja ? 'moja' : 'obca'}`} style={{ 
+            marginBottom: czyPokazac ? '10px' : '2px', 
+            maxWidth: moja ? '80%' : '88%',
+            alignSelf: moja ? 'flex-end' : 'flex-start',
+          }}>
               {!moja && (
                 <div style={{ width: '24px', flexShrink: 0, alignSelf: 'flex-end', marginRight: '5px' }}>
                   {czyPokazac ? (
