@@ -923,12 +923,22 @@ function EkranLogowania({ onZalogowano }: { onZalogowano: () => void }) {
 
 function EkranCzat({ user, kursant }: { user: User; kursant: Kursant | null }) {
   const [wiadomosci, setWiadomosci] = useState<Wiadomosc[]>([]);
+  const [avatary, setAvatary] = useState<Record<string, { avatar_url: string | null; imie: string }>>({});
   const [nowa, setNowa] = useState('');
   const [wysylanie, setWysylanie] = useState(false);
   const doRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!kursant?.grupa_id) return;
+
+    // Pobierz avatary wszystkich kursantów grupy
+    supabase.from('kursanci').select('user_id, imie, avatar_url').eq('grupa_id', kursant.grupa_id)
+      .then(({ data }) => {
+        const map: Record<string, { avatar_url: string | null; imie: string }> = {};
+        (data || []).forEach((k: any) => { map[k.user_id] = { avatar_url: k.avatar_url, imie: k.imie }; });
+        setAvatary(map);
+      });
+
     supabase.from('wiadomosci').select('*').eq('grupa_id', kursant.grupa_id).order('created_at', { ascending: true }).then(({ data }) => {
       setWiadomosci(data || []);
       setTimeout(() => doRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
@@ -951,19 +961,56 @@ function EkranCzat({ user, kursant }: { user: User; kursant: Kursant | null }) {
 
   if (!kursant?.grupa_id) return <div style={{ padding: '24px', textAlign: 'center', color: 'var(--text-muted)' }}>Nie jestes przypisany do zadnej grupy.</div>;
 
+  // Grupuj wiadomości — ukryj avatar jeśli kolejna wiadomość od tej samej osoby
+  const pokazAvatar = (idx: number) => {
+    const w = wiadomosci[idx];
+    const next = wiadomosci[idx + 1];
+    return !next || next.user_id !== w.user_id;
+  };
+
   return (
     <div className="czat-container">
       <h2 className="page-title">Czat grupy</h2>
       <div className="czat-nazwa">{kursant.grupy?.nazwa || 'Twoja grupa'}</div>
       <div className="czat-wiadomosci">
         {wiadomosci.length === 0 && <div className="czat-puste">Brak wiadomosci. Napisz pierwsza!</div>}
-        {wiadomosci.map(w => (
-          <div key={w.id} className={`czat-msg ${w.user_id === user.id ? 'moja' : 'obca'}`}>
-            {w.user_id !== user.id && <div className="czat-imie">{w.imie}</div>}
-            <div className="czat-buble">{w.tekst}</div>
-            <div className="czat-czas">{new Date(w.created_at).toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' })}</div>
-          </div>
-        ))}
+        {wiadomosci.map((w, idx) => {
+          const moja = w.user_id === user.id;
+          const info = avatary[w.user_id];
+          const czyPokazac = pokazAvatar(idx);
+          const poprzedniaTaSama = idx > 0 && wiadomosci[idx - 1].user_id === w.user_id;
+
+          return (
+            <div key={w.id} className={`czat-msg ${moja ? 'moja' : 'obca'}`} style={{ marginBottom: czyPokazac ? '10px' : '2px' }}>
+              {!moja && (
+                <div style={{ width: '28px', flexShrink: 0, alignSelf: 'flex-end', marginRight: '6px' }}>
+                  {czyPokazac ? (
+                    info?.avatar_url ? (
+                      <img src={info.avatar_url} alt={w.imie}
+                        style={{ width: '28px', height: '28px', borderRadius: '50%', objectFit: 'cover', border: '1.5px solid var(--border)' }} />
+                    ) : (
+                      <div style={{
+                        width: '28px', height: '28px', borderRadius: '50%',
+                        background: 'var(--brand-light)', border: '1.5px solid var(--brand-mid)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontSize: '12px', fontWeight: 600, color: 'var(--brand-dark)',
+                      }}>{w.imie?.[0]?.toUpperCase()}</div>
+                    )
+                  ) : <div style={{ width: '28px' }} />}
+                </div>
+              )}
+              <div style={{ maxWidth: '75%' }}>
+                {!moja && !poprzedniaTaSama && (
+                  <div className="czat-imie" style={{ marginLeft: '2px' }}>{w.imie}</div>
+                )}
+                <div className="czat-buble">{w.tekst}</div>
+                {czyPokazac && (
+                  <div className="czat-czas">{new Date(w.created_at).toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' })}</div>
+                )}
+              </div>
+            </div>
+          );
+        })}
         <div ref={doRef} />
       </div>
       <form className="czat-form" onSubmit={wyslij}>
