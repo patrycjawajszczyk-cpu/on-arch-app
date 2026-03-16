@@ -2434,26 +2434,43 @@ function EkranZjazdy({ zjazdy, user, kursant }: { zjazdy: Zjazd[]; user: User; k
     const zakonczone = zjazd.status === 'zakonczony';
     const formularzAktywny = aktywnyFormularz?.zjazdId === zjazd.id && aktywnyFormularz?.dzien === dzien;
 
-    const kolorTla = !wpis ? 'var(--surface-2)' :
-      wpis.status === 'potwierdzono' ? '#f0faf4' : '#fff8f8';
-    const kolorObramowania = !wpis ? 'var(--border)' :
-      wpis.status === 'potwierdzono' ? '#7aab8a' : '#e57373';
+    // Kolory zależne od statusu
+    const kolorTla = zakonczone
+      ? (wpis?.status === 'potwierdzono' ? '#f5faf6' : wpis?.status === 'nieobecnosc' ? '#fdf5f5' : '#f8f8f8')
+      : (!wpis ? 'var(--surface-2)' : wpis.status === 'potwierdzono' ? '#f0faf4' : '#fff8f8');
+    const kolorObramowania = zakonczone
+      ? (wpis?.status === 'potwierdzono' ? '#c8dfc8' : wpis?.status === 'nieobecnosc' ? '#f0c0c0' : 'var(--border)')
+      : (!wpis ? 'var(--border)' : wpis.status === 'potwierdzono' ? '#7aab8a' : '#e57373');
 
     return (
-      <div style={{ flex: 1, borderRadius: '12px', border: `0.5px solid ${kolorObramowania}`, background: kolorTla, padding: '10px 12px' }}>
-        <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: '4px' }}>{label}</div>
-        <div style={{ fontSize: '12px', color: 'var(--text)', marginBottom: '8px' }}>{formatujDate(dzien === 1 ? zjazd.data_dzien1 : zjazd.data_dzien2) || '—'}</div>
+      <div style={{ flex: 1, borderRadius: '12px', border: `0.5px solid ${kolorObramowania}`, background: kolorTla, padding: '10px 12px', opacity: zakonczone && !wpis ? 0.5 : 1 }}>
+        {/* Tylko nagłówek dnia — bez powielania daty */}
+        <div style={{ fontSize: '11px', fontWeight: 600, color: zakonczone ? '#aaa' : 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: '8px' }}>{label}</div>
 
-        {/* Status */}
-        {wpis && (
+        {/* Status zakończonego zjazdu — wyszarzony */}
+        {zakonczone && (
+          <div style={{ marginBottom: '4px' }}>
+            {wpis?.status === 'potwierdzono' && (
+              <span style={{ fontSize: '12px', color: '#5a8a5a', fontWeight: 500 }}>✓ Obecny/a{wpis.zweryfikowano ? ' · zweryfikowano' : ''}</span>
+            )}
+            {wpis?.status === 'nieobecnosc' && (
+              <div>
+                <span style={{ fontSize: '12px', color: '#b06060', fontWeight: 500 }}>✕ Nieobecny/a{wpis.zweryfikowano ? ' · zweryfikowano' : ''}</span>
+                {wpis.powod_nieobecnosci && <p style={{ fontSize: '11px', color: '#aaa', marginTop: '2px', fontStyle: 'italic' }}>{wpis.powod_nieobecnosci}</p>}
+              </div>
+            )}
+            {!wpis && <span style={{ fontSize: '12px', color: '#bbb' }}>Brak zgłoszenia</span>}
+          </div>
+        )}
+
+        {/* Status nadchodzącego zjazdu */}
+        {!zakonczone && wpis && (
           <div style={{ marginBottom: '6px' }}>
             {wpis.status === 'potwierdzono' ? (
-              <span style={{ fontSize: '11px', color: '#2e7d32', fontWeight: 600 }}>
-                ✓ Potwierdzono {wpis.zweryfikowano ? '· ✓ Zweryfikowano' : ''}
-              </span>
+              <span style={{ fontSize: '11px', color: '#2e7d32', fontWeight: 600 }}>✓ Potwierdzono{wpis.zweryfikowano ? ' · ✓ zweryfikowano' : ''}</span>
             ) : (
               <div>
-                <span style={{ fontSize: '11px', color: '#c62828', fontWeight: 600 }}>✕ Nieobecność {wpis.zweryfikowano ? '· ✓ Zweryfikowano' : ''}</span>
+                <span style={{ fontSize: '11px', color: '#c62828', fontWeight: 600 }}>✕ Nieobecność{wpis.zweryfikowano ? ' · ✓ zweryfikowano' : ''}</span>
                 {wpis.powod_nieobecnosci && <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px', fontStyle: 'italic' }}>{wpis.powod_nieobecnosci}</p>}
               </div>
             )}
@@ -2478,7 +2495,7 @@ function EkranZjazdy({ zjazdy, user, kursant }: { zjazdy: Zjazd[]; user: User; k
           </div>
         )}
 
-        {/* Przyciski akcji */}
+        {/* Przyciski akcji — tylko dla nadchodzących */}
         {!zakonczone && !formularzAktywny && (
           <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
             {(!wpis || wpis.status === 'nieobecnosc') && (
@@ -2536,10 +2553,10 @@ function EkranZjazdy({ zjazdy, user, kursant }: { zjazdy: Zjazd[]; user: User; k
             )}
           </div>
 
-        {/* Kafelki per dzień */}
+          {/* Kafelki per dzień */}
           <div style={{ display: 'flex', gap: '8px', padding: '8px 14px 14px' }}>
-            <KafelekDnia zjazd={z} dzien={1} label={z.data_dzien1 ? formatujDate(z.data_dzien1) || 'Dzień 1' : 'Dzień 1'} />
-            {z.data_dzien2 && <KafelekDnia zjazd={z} dzien={2} label={formatujDate(z.data_dzien2) || 'Dzień 2'} />}
+            <KafelekDnia zjazd={z} dzien={1} label={z.data_dzien1 ? new Date(z.data_dzien1).toLocaleDateString('pl-PL', { weekday: 'long', day: 'numeric', month: 'long' }) : 'Dzień 1'} />
+            {z.data_dzien2 && <KafelekDnia zjazd={z} dzien={2} label={new Date(z.data_dzien2).toLocaleDateString('pl-PL', { weekday: 'long', day: 'numeric', month: 'long' })} />}
           </div>
         </div>
       ))}
