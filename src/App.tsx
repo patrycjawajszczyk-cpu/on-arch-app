@@ -2291,11 +2291,36 @@ function EkranGlowny({ ogloszenia, zjazdy, onOtworzOgloszenie, user, kursant, on
     .filter(z => z.typ !== 'praca_zaliczeniowa' && z.termin)
     .sort((a, b) => new Date(a.termin!).getTime() - new Date(b.termin!).getTime())[0];
 
+  const noweOgloszenia = ogloszenia.filter(o => o.nowe);
+
   return (
     <>
       <p className="greeting">Dzień dobry, {imie}</p>
 
-      {/* Kafelki skrótów */}
+      {/* Baner nowych ogłoszeń */}
+      {noweOgloszenia.length > 0 && (
+        <div onClick={() => onNavigate('ogloszenia')} style={{
+          background: 'var(--brand-dark)', borderRadius: '14px', padding: '14px 16px',
+          marginBottom: '16px', cursor: 'pointer',
+          display: 'flex', alignItems: 'center', gap: '12px',
+        }}>
+          <div style={{
+            width: '36px', height: '36px', borderRadius: '10px',
+            background: 'rgba(255,255,255,0.15)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: '18px', flexShrink: 0,
+          }}>📢</div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: '13px', fontWeight: 600, color: 'white', marginBottom: '2px' }}>
+              {noweOgloszenia.length === 1 ? 'Nowe ogłoszenie' : `${noweOgloszenia.length} nowe ogłoszenia`}
+            </div>
+            <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.7)' }}>
+              {noweOgloszenia[0].tytul}
+            </div>
+          </div>
+          <span style={{ color: 'rgba(255,255,255,0.8)', fontSize: '16px' }}>→</span>
+        </div>
+      )}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '20px' }}>
         {nieprzeslaneZadania > 0 && (
           <div onClick={() => onNavigate('zadania')} style={{
