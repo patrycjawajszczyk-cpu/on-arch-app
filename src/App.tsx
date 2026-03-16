@@ -117,8 +117,8 @@ type Obecnosc = {
   dzien: number;
   status: string;
   powod_nieobecnosci: string | null;
-  zweryfikowane_przez: string | null;
-  zweryfikowane_at: string | null;
+  zweryfikowano: boolean;
+  zweryfikowano_przez: string | null;
   confirmed_at: string;
 };
 
@@ -1366,8 +1366,8 @@ function WeryfikacjaObecnosci({ zjazdy, grupy, kursanci, prowadzacyUserId }: {
 
   async function zweryfikuj(obecnoscId: string, weryfikuj: boolean) {
     await supabase.from('obecnosci').update({
-      zweryfikowane_przez: weryfikuj ? user.id : null,
-      zweryfikowane_at: weryfikuj ? new Date().toISOString() : null,
+      zweryfikowano: weryfikuj,
+      zweryfikowano_przez: weryfikuj ? prowadzacyUserId : null,
     }).eq('id', obecnoscId);
     const { data } = await supabase.from('obecnosci').select('*').eq('zjazd_id', parseInt(wybranyZjazd));
     setObecnosci(data || []);
@@ -1447,7 +1447,7 @@ function WeryfikacjaObecnosci({ zjazdy, grupy, kursanci, prowadzacyUserId }: {
                             }}>
                               {wpis.status === 'potwierdzono' ? '✓ Obecny/a' : '✕ Nieobecny/a'}
                             </span>
-                            {wpis.zweryfikowane_przez ? (
+                            {wpis.zweryfikowano ? (
                               <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>✓ zweryfikowano</span>
                             ) : (
                               <button onClick={() => zweryfikuj(wpis.id, true)}
@@ -2405,7 +2405,7 @@ function EkranZjazdy({ zjazdy, user, kursant }: { zjazdy: Zjazd[]; user: User; k
     setWysylanie(true);
     const istniejaca = pobierzDzien(zjazd.id, dzien);
     if (istniejaca) {
-      await supabase.from('obecnosci').update({ status, powod_nieobecnosci: status === 'nieobecnosc' ? powod : null, zweryfikowane_przez: null }).eq('id', istniejaca.id);
+      await supabase.from('obecnosci').update({ status, powod_nieobecnosci: status === 'nieobecnosc' ? powod : null, zweryfikowano: false }).eq('id', istniejaca.id);
     } else {
       await supabase.from('obecnosci').insert([{
         zjazd_id: zjazd.id, user_id: user.id,
@@ -2449,11 +2449,11 @@ function EkranZjazdy({ zjazdy, user, kursant }: { zjazdy: Zjazd[]; user: User; k
           <div style={{ marginBottom: '6px' }}>
             {wpis.status === 'potwierdzono' ? (
               <span style={{ fontSize: '11px', color: '#2e7d32', fontWeight: 600 }}>
-                ✓ Potwierdzono {wpis.zweryfikowane_przez ? '· ✓ Zweryfikowano' : ''}
+                ✓ Potwierdzono {wpis.zweryfikowano ? '· ✓ Zweryfikowano' : ''}
               </span>
             ) : (
               <div>
-                <span style={{ fontSize: '11px', color: '#c62828', fontWeight: 600 }}>✕ Nieobecność {wpis.zweryfikowane_przez ? '· ✓ Zweryfikowano' : ''}</span>
+                <span style={{ fontSize: '11px', color: '#c62828', fontWeight: 600 }}>✕ Nieobecność {wpis.zweryfikowano ? '· ✓ Zweryfikowano' : ''}</span>
                 {wpis.powod_nieobecnosci && <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px', fontStyle: 'italic' }}>{wpis.powod_nieobecnosci}</p>}
               </div>
             )}
