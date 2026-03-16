@@ -1718,28 +1718,49 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
 
         {/* ─── EKRAN GŁÓWNY — KAFELKI ─── */}
         {aktywnaZakladka === 'home' && (
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', paddingTop: '4px' }}>
-            {[
-              { id: 'ogloszenia', emoji: '📢', label: 'Ogłoszenia', opis: `${ogloszenia.length} ogłoszeń`,          kolor: '#f5edec', ramka: 'var(--brand-mid)' },
-              { id: 'zjazdy',     emoji: '📅', label: 'Zjazdy',     opis: `${zjazdy.length} zjazdów`,              kolor: '#edf2fb', ramka: '#9ab0d8' },
-              { id: 'zadania',    emoji: '📋', label: 'Zadania',    opis: `${zadania.length} zadań`,               kolor: '#f0faf4', ramka: '#7aab8a' },
-              { id: 'obecnosci',  emoji: '✅', label: 'Obecności',  opis: 'Lista i weryfikacja',                   kolor: '#fef9ec', ramka: '#c8a84b' },
-              { id: 'kursanci',   emoji: '👥', label: 'Kursanci',   opis: `${kursanci.length} osób`,               kolor: '#f3f0fb', ramka: '#9b8dc8' },
-              { id: 'grupy',      emoji: '🏫', label: 'Grupy',      opis: `${grupy.length} grup`,                  kolor: '#f0f7fb', ramka: '#7aaec8' },
-              { id: 'prowadzacy', emoji: '👩‍🏫', label: 'Prowadzący', opis: `${prowadzacy.length} osób`,             kolor: '#fdf0f5', ramka: '#c87a9b' },
-              { id: 'ankiety',    emoji: '⭐', label: 'Ankiety',    opis: `${ankiety.length} wypełnień`,           kolor: '#fffbec', ramka: '#c8b44b' },
-            ].map(k => (
-              <div key={k.id} onClick={() => setAktywnaZakladka(k.id)} style={{
-                background: k.kolor, borderRadius: '18px', padding: '20px 16px 18px',
-                border: `0.5px solid ${k.ramka}`, cursor: 'pointer',
-                display: 'flex', flexDirection: 'column', gap: '8px',
-              }}>
-                <div style={{ fontSize: '30px', lineHeight: 1 }}>{k.emoji}</div>
-                <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text)' }}>{k.label}</div>
-                <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{k.opis}</div>
-              </div>
-            ))}
-          </div>
+          <>
+            <div style={{ textAlign: 'center', marginBottom: '24px', paddingTop: '8px' }}>
+              <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '28px', fontWeight: 400, color: 'var(--brand-dark)', letterSpacing: '0.5px' }}>On-Arch</div>
+              <div style={{ fontSize: '11px', color: 'var(--text-muted)', letterSpacing: '1.5px', textTransform: 'uppercase', marginTop: '2px' }}>Panel biura</div>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+              {[
+                { id: 'ogloszenia', emoji: '📢', label: 'Ogłoszenia', opis: `${ogloszenia.length} ogłoszeń` },
+                { id: 'zjazdy',     emoji: '📅', label: 'Zjazdy',     opis: `${zjazdy.length} zjazdów` },
+                { id: 'zadania',    emoji: '📋', label: 'Zadania',    opis: `${zadania.length} zadań` },
+                { id: 'obecnosci',  emoji: '✅', label: 'Obecności',  opis: 'Lista i weryfikacja' },
+                { id: 'kursanci',   emoji: '👥', label: 'Kursanci',   opis: `${kursanci.length} osób` },
+                { id: 'grupy',      emoji: '🏫', label: 'Grupy',      opis: `${grupy.length} grup` },
+                { id: 'prowadzacy', emoji: '👩‍🏫', label: 'Prowadzący', opis: `${prowadzacy.length} osób` },
+                { id: 'ankiety',    emoji: '⭐', label: 'Ankiety',    opis: `${ankiety.length} wypełnień` },
+              ].map(k => (
+                <div key={k.id} onClick={() => setAktywnaZakladka(k.id)} style={{
+                  background: 'white',
+                  borderRadius: '20px',
+                  padding: '20px 16px 18px',
+                  border: '0.5px solid var(--border)',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '10px',
+                  boxShadow: '0 2px 12px rgba(160,92,92,0.07)',
+                  transition: 'box-shadow 0.15s, transform 0.1s',
+                }}>
+                  <div style={{
+                    width: '44px', height: '44px', borderRadius: '14px',
+                    background: 'var(--brand-light)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: '22px',
+                  }}>{k.emoji}</div>
+                  <div>
+                    <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text)', marginBottom: '3px' }}>{k.label}</div>
+                    <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 400 }}>{k.opis}</div>
+                  </div>
+                  <div style={{ fontSize: '16px', color: 'var(--brand-mid)', marginTop: '-4px', alignSelf: 'flex-end' }}>→</div>
+                </div>
+              ))}
+            </div>
+          </>
         )}
 
         {aktywnaZakladka === 'ogloszenia' && (
