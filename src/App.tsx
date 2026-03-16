@@ -926,6 +926,7 @@ function EkranCzat({ user, kursant }: { user: User; kursant: Kursant | null }) {
   const [avatary, setAvatary] = useState<Record<string, { avatar_url: string | null; imie: string }>>({});
   const [nowa, setNowa] = useState('');
   const [wysylanie, setWysylanie] = useState(false);
+  const [pokazEmoji, setPokazEmoji] = useState(false);
   const doRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -1013,10 +1014,31 @@ function EkranCzat({ user, kursant }: { user: User; kursant: Kursant | null }) {
         })}
         <div ref={doRef} />
       </div>
-      <form className="czat-form" onSubmit={wyslij}>
-        <input className="czat-input" type="text" value={nowa} onChange={e => setNowa(e.target.value)} placeholder="Napisz wiadomosc..." disabled={wysylanie} maxLength={500} />
-        <button className="czat-btn" type="submit" disabled={wysylanie || !nowa.trim()}>➤</button>
-      </form>
+      <div style={{ position: 'relative' }}>
+        {pokazEmoji && (
+          <div style={{
+            position: 'absolute', bottom: '48px', left: 0,
+            background: 'white', borderRadius: '16px', padding: '10px',
+            border: '0.5px solid var(--border)', boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+            display: 'flex', flexWrap: 'wrap', gap: '4px', width: '240px', zIndex: 100,
+          }}>
+            {['😊','😂','❤️','👍','🙏','😍','🤩','😘','😅','🥹','😭','😤','🤔','💪','🎉','✨','🔥','💡','📝','✅','❌','⭐','🏠','📐','🎨','🖼️','💼','📅','🗓️','📌'].map(e => (
+              <button key={e} type="button" onClick={() => { setNowa(prev => prev + e); setPokazEmoji(false); }}
+                style={{ background: 'none', border: 'none', fontSize: '22px', cursor: 'pointer', padding: '2px', borderRadius: '6px', lineHeight: 1 }}>
+                {e}
+              </button>
+            ))}
+          </div>
+        )}
+        <form className="czat-form" onSubmit={wyslij}>
+          <button type="button" onClick={() => setPokazEmoji(p => !p)}
+            style={{ background: 'none', border: 'none', fontSize: '22px', cursor: 'pointer', padding: '0 4px', flexShrink: 0, opacity: 0.7 }}>
+            😊
+          </button>
+          <input className="czat-input" type="text" value={nowa} onChange={e => setNowa(e.target.value)} placeholder="Napisz wiadomosc..." disabled={wysylanie} maxLength={500} />
+          <button className="czat-btn" type="submit" disabled={wysylanie || !nowa.trim()}>➤</button>
+        </form>
+      </div>
     </div>
   );
 }
