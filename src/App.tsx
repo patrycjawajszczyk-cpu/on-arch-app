@@ -1479,7 +1479,7 @@ function WeryfikacjaObecnosci({ zjazdy, grupy, kursanci, prowadzacyUserId }: {
 }
 
 function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
-  const [aktywnaZakladka, setAktywnaZakladka] = useState('ogloszenia');
+  const [aktywnaZakladka, setAktywnaZakladka] = useState('home');
   const [grupy, setGrupy] = useState<Grupa[]>([]);
   const [kursanci, setKursanci] = useState<KursantAdmin[]>([]);
   const [ogloszenia, setOgloszenia] = useState<Ogloszenie[]>([]);
@@ -1704,10 +1704,48 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
     <div className="app">
       <header className="header">
         <div className="logo">On<span>-Arch</span> <span style={{ fontSize: '11px', opacity: 0.7 }}>Biuro</span></div>
-        <button onClick={onWyloguj} style={{ background: 'none', border: 'none', color: 'var(--brand)', fontSize: '13px', cursor: 'pointer' }}>Wyloguj</button>
+        {aktywnaZakladka !== 'home' ? (
+          <button onClick={() => { setKomunikat(''); setEdytowane(null); setEdytowanyZjazd(null); setAktywnaZakladka('home'); }}
+            style={{ background: 'none', border: 'none', color: 'var(--brand)', fontSize: '13px', cursor: 'pointer' }}>
+            ← Wróć
+          </button>
+        ) : (
+          <button onClick={onWyloguj} style={{ background: 'none', border: 'none', color: 'var(--brand)', fontSize: '13px', cursor: 'pointer' }}>Wyloguj</button>
+        )}
       </header>
       <main className="main">
         {komunikat && <div className="login-error" style={{ background: '#e8f5e9', color: '#2e7d32', marginBottom: '12px' }}>{komunikat}</div>}
+
+        {/* ─── EKRAN GŁÓWNY — KAFELKI ─── */}
+        {aktywnaZakladka === 'home' && (
+          <>
+            <p className="greeting" style={{ marginBottom: '20px' }}>Panel biura</p>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              {[
+                { id: 'ogloszenia', emoji: '📢', label: 'Ogłoszenia', opis: `${ogloszenia.length} ogłoszeń`, kolor: '#f5edec', ramka: 'var(--brand-mid)' },
+                { id: 'zjazdy',     emoji: '📅', label: 'Zjazdy',     opis: `${zjazdy.filter(z => z.status === 'nadchodzacy').length} nadchodzących`, kolor: '#edf2fb', ramka: '#9ab0d8' },
+                { id: 'zadania',    emoji: '📋', label: 'Zadania',    opis: `${zadania.length} zadań`, kolor: '#f0faf4', ramka: '#7aab8a' },
+                { id: 'obecnosci',  emoji: '✅', label: 'Obecności',  opis: 'Lista i weryfikacja', kolor: '#fef9ec', ramka: '#c8a84b' },
+                { id: 'kursanci',   emoji: '👥', label: 'Kursanci',   opis: `${kursanci.length} osób`, kolor: '#f3f0fb', ramka: '#9b8dc8' },
+                { id: 'grupy',      emoji: '🏫', label: 'Grupy',      opis: `${grupy.length} grup`, kolor: '#f0f7fb', ramka: '#7aaec8' },
+                { id: 'prowadzacy', emoji: '👩‍🏫', label: 'Prowadzący', opis: `${prowadzacy.length} osób`, kolor: '#fdf0f5', ramka: '#c87a9b' },
+                { id: 'ankiety',    emoji: '⭐', label: 'Ankiety',    opis: `${ankiety.length} wypełnień`, kolor: '#fffbec', ramka: '#c8b44b' },
+                { id: 'import',     emoji: '📥', label: 'Import CSV', opis: 'Dodaj kursantów', kolor: '#f4f4f4', ramka: '#aaa' },
+              ].map(k => (
+                <div key={k.id} onClick={() => setAktywnaZakladka(k.id)} style={{
+                  background: k.kolor, borderRadius: '18px', padding: '18px 16px',
+                  border: `0.5px solid ${k.ramka}`, cursor: 'pointer',
+                  transition: 'transform 0.1s',
+                  display: 'flex', flexDirection: 'column', gap: '6px',
+                }}>
+                  <div style={{ fontSize: '28px', lineHeight: 1 }}>{k.emoji}</div>
+                  <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text)' }}>{k.label}</div>
+                  <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{k.opis}</div>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
 
         {aktywnaZakladka === 'ogloszenia' && (
           <>
@@ -2122,18 +2160,6 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
           </>
         )}
       </main>
-
-      <nav className="bottom-nav" style={{ overflowX: 'auto' }}>
-        <button className={`nav-item ${aktywnaZakladka === 'ogloszenia' ? 'active' : ''}`} onClick={() => { setKomunikat(''); setEdytowane(null); setAktywnaZakladka('ogloszenia'); }}><Bell size={20} /><span className="nav-label">Ogłoszenia</span></button>
-        <button className={`nav-item ${aktywnaZakladka === 'zjazdy' ? 'active' : ''}`} onClick={() => { setKomunikat(''); setEdytowanyZjazd(null); setAktywnaZakladka('zjazdy'); }}><Calendar size={20} /><span className="nav-label">Zjazdy</span></button>
-        <button className={`nav-item ${aktywnaZakladka === 'zadania' ? 'active' : ''}`} onClick={() => { setKomunikat(''); setAktywnaZakladka('zadania'); }}><BookOpen size={20} /><span className="nav-label">Zadania</span></button>
-        <button className={`nav-item ${aktywnaZakladka === 'kursanci' ? 'active' : ''}`} onClick={() => { setKomunikat(''); setAktywnaZakladka('kursanci'); }}><User size={20} /><span className="nav-label">Kursanci</span></button>
-        <button className={`nav-item ${aktywnaZakladka === 'grupy' ? 'active' : ''}`} onClick={() => { setKomunikat(''); setAktywnaZakladka('grupy'); }}><Home size={20} /><span className="nav-label">Grupy</span></button>
-        <button className={`nav-item ${aktywnaZakladka === 'prowadzacy' ? 'active' : ''}`} onClick={() => { setKomunikat(''); setAktywnaZakladka('prowadzacy'); }}><Star size={20} /><span className="nav-label">Prowadz.</span></button>
-        <button className={`nav-item ${aktywnaZakladka === 'ankiety' ? 'active' : ''}`} onClick={() => { setKomunikat(''); setAktywnaZakladka('ankiety'); }}><CheckSquare size={20} /><span className="nav-label">Ankiety</span></button>
-        <button className={`nav-item ${aktywnaZakladka === 'obecnosci' ? 'active' : ''}`} onClick={() => { setKomunikat(''); setAktywnaZakladka('obecnosci'); }}><Bell size={20} /><span className="nav-label">Obecność</span></button>
-        <button className={`nav-item ${aktywnaZakladka === 'import' ? 'active' : ''}`} onClick={() => { setKomunikat(''); setAktywnaZakladka('import'); }}><MessageCircle size={20} /><span className="nav-label">Import</span></button>
-      </nav>
     </div>
   );
 }
