@@ -982,33 +982,43 @@ function EkranCzat({ user, kursant }: { user: User; kursant: Kursant | null }) {
           const poprzedniaTaSama = idx > 0 && wiadomosci[idx - 1].user_id === w.user_id;
 
           return (
-            <div key={w.id} className={`czat-msg ${moja ? 'moja' : 'obca'}`} style={{ marginBottom: czyPokazac ? '10px' : '2px' }}>
-              {!moja && (
-                <div style={{ width: '24px', flexShrink: 0, alignSelf: 'flex-end', marginRight: '5px' }}>
-                  {czyPokazac ? (
-                    info?.avatar_url ? (
-                      <img src={info.avatar_url} alt={w.imie}
-                        style={{ width: '24px', height: '24px', borderRadius: '50%', objectFit: 'cover', border: '1px solid var(--border)' }} />
-                    ) : (
-                      <div style={{
-                        width: '24px', height: '24px', borderRadius: '50%',
-                        background: 'var(--brand-light)', border: '1px solid var(--brand-mid)',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        fontSize: '10px', fontWeight: 600, color: 'var(--brand-dark)',
-                      }}>{w.imie?.[0]?.toUpperCase()}</div>
-                    )
-                  ) : <div style={{ width: '24px' }} />}
+            <div key={w.id} style={{ marginBottom: czyPokazac ? '10px' : '2px', display: 'flex', flexDirection: 'column', alignItems: moja ? 'flex-end' : 'flex-start' }}>
+              {/* Imię — tylko pierwsza wiadomość z serii */}
+              {!moja && !poprzedniaTaSama && (
+                <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginBottom: '2px', paddingLeft: '32px' }}>{w.imie}</div>
+              )}
+              <div style={{ display: 'flex', alignItems: 'flex-end', gap: '6px', flexDirection: moja ? 'row-reverse' : 'row' }}>
+                {/* Avatar — tylko cudze, tylko ostatnia w serii */}
+                {!moja && (
+                  <div style={{ width: '24px', flexShrink: 0 }}>
+                    {czyPokazac ? (
+                      info?.avatar_url
+                        ? <img src={info.avatar_url} alt={w.imie} style={{ width: '24px', height: '24px', borderRadius: '50%', objectFit: 'cover', border: '1px solid var(--border)' }} />
+                        : <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: 'var(--brand-light)', border: '1px solid var(--brand-mid)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 600, color: 'var(--brand-dark)' }}>{w.imie?.[0]?.toUpperCase()}</div>
+                    ) : <div style={{ width: '24px' }} />}
+                  </div>
+                )}
+                {/* Bąbelka */}
+                <div style={{
+                  maxWidth: '240px',
+                  padding: '9px 14px',
+                  borderRadius: '18px',
+                  fontSize: '13px',
+                  lineHeight: '1.5',
+                  wordBreak: 'break-word',
+                  background: moja ? 'var(--brand)' : 'var(--surface)',
+                  color: moja ? 'white' : 'var(--text)',
+                  border: moja ? 'none' : '0.5px solid var(--border)',
+                  borderBottomRightRadius: moja ? '4px' : '18px',
+                  borderBottomLeftRadius: moja ? '18px' : '4px',
+                }}>{w.tekst}</div>
+              </div>
+              {/* Czas — tylko ostatnia w serii */}
+              {czyPokazac && (
+                <div style={{ fontSize: '9px', color: 'var(--text-muted)', marginTop: '3px', paddingRight: moja ? '2px' : '0', paddingLeft: moja ? '0' : '32px' }}>
+                  {new Date(w.created_at).toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' })}
                 </div>
               )}
-              <div style={{ minWidth: 0 }}>
-                {!moja && !poprzedniaTaSama && (
-                  <div className="czat-imie" style={{ marginLeft: '2px' }}>{w.imie}</div>
-                )}
-                <div className="czat-buble" style={{ maxWidth: '100%', wordBreak: 'break-word', whiteSpace: 'pre-wrap' }}>{w.tekst}</div>
-                {czyPokazac && (
-                  <div className="czat-czas">{new Date(w.created_at).toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' })}</div>
-                )}
-              </div>
             </div>
           );
         })}
