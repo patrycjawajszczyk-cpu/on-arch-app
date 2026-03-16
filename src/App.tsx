@@ -75,6 +75,7 @@ type Kursant = {
   rola: string;
   avatar_url: string | null;
   certyfikat_url: string | null;
+  onboarding_done: boolean;
   grupy: { nazwa: string; miasto: string; edycja: string } | null;
 };
 
@@ -844,6 +845,83 @@ function EkranRegulamin({ onWroc }: { onWroc: () => void }) {
         <p style={{ marginBottom: '8px' }}><strong>4. Kontakt</strong></p>
         <p>On-Arch Barbara Szczęsna-Dyńska<br />ul. Tymienieckiego 25D/53, 90-350 Łódź<br />biuro@on-arch.pl | 883 659 069</p>
       </div>
+    </div>
+  );
+}
+
+function EkranPowitalny({ kursant, user, onDalej }: { kursant: Kursant; user: { id: string }; onDalej: () => void }) {
+  const [ladowanie, setLadowanie] = useState(false);
+
+  async function zakoncz() {
+    setLadowanie(true);
+    await supabase.from('kursanci').update({ onboarding_done: true }).eq('user_id', user.id);
+    onDalej();
+  }
+
+  return (
+    <div style={{
+      minHeight: '100vh', background: 'var(--brand-dark)',
+      display: 'flex', flexDirection: 'column', alignItems: 'center',
+      justifyContent: 'center', padding: '32px 24px',
+    }}>
+      {/* Logo */}
+      <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '36px', fontWeight: 400, color: 'white', letterSpacing: '1px', marginBottom: '6px' }}>
+        On-Arch
+      </div>
+      <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.6)', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '40px' }}>
+        Akademia
+      </div>
+
+      {/* Powitanie */}
+      <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+        <div style={{ fontSize: '24px', fontWeight: 300, color: 'white', marginBottom: '12px', fontFamily: 'Cormorant Garamond, serif' }}>
+          Witaj, {kursant.imie}! 👋
+        </div>
+        <div style={{ fontSize: '14px', color: 'rgba(255,255,255,0.75)', lineHeight: '1.7', maxWidth: '300px' }}>
+          Cieszymy się, że jesteś z nami. To Twoja przestrzeń na czas kursu projektowania wnętrz.
+        </div>
+      </div>
+
+      {/* Placeholder na filmik */}
+      <div style={{
+        width: '100%', maxWidth: '320px', aspectRatio: '16/9',
+        background: 'rgba(255,255,255,0.08)', borderRadius: '16px',
+        border: '1px dashed rgba(255,255,255,0.2)',
+        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+        marginBottom: '32px', gap: '8px',
+      }}>
+        <div style={{ fontSize: '36px' }}>▶️</div>
+        <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', textAlign: 'center', padding: '0 16px' }}>
+          Tutaj pojawi się filmik z omówieniem funkcji aplikacji
+        </div>
+      </div>
+
+      {/* Co znajdziesz w aplikacji */}
+      <div style={{ width: '100%', maxWidth: '320px', marginBottom: '32px' }}>
+        {[
+          { emoji: '📅', text: 'Plan zjazdów i potwierdzenie obecności' },
+          { emoji: '📋', text: 'Zadania domowe i praca zaliczeniowa' },
+          { emoji: '💬', text: 'Czat z kursantami Twojej grupy' },
+          { emoji: '📢', text: 'Ogłoszenia i informacje od biura' },
+          { emoji: '🎓', text: 'Certyfikat po ukończeniu kursu' },
+        ].map((p, i) => (
+          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+            <div style={{ fontSize: '20px', flexShrink: 0 }}>{p.emoji}</div>
+            <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.8)' }}>{p.text}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Przycisk Dalej */}
+      <button onClick={zakoncz} disabled={ladowanie} style={{
+        width: '100%', maxWidth: '320px', padding: '16px',
+        background: 'white', color: 'var(--brand-dark)',
+        border: 'none', borderRadius: '16px', cursor: 'pointer',
+        fontSize: '16px', fontWeight: 600, fontFamily: 'Jost, sans-serif',
+        letterSpacing: '0.3px',
+      }}>
+        {ladowanie ? 'Ładowanie...' : 'Zaczynamy! →'}
+      </button>
     </div>
   );
 }
@@ -2946,12 +3024,12 @@ export default function App() {
 
       if (prowData) {
         // To jest prowadzący — ustaw minimalny kursant z rolą prowadzacy
-        setKursant({ imie: '', nazwisko: '', grupa_id: 0, rola: 'prowadzacy', avatar_url: null, certyfikat_url: null, grupy: null });
+        setKursant({ imie: '', nazwisko: '', grupa_id: 0, rola: 'prowadzacy', avatar_url: null, certyfikat_url: null, onboarding_done: true, grupy: null });
         setLadowanie(false);
         return;
       }
 
-      const { data: kursantData } = await supabase.from('kursanci').select('imie, nazwisko, grupa_id, rola, avatar_url, certyfikat_url').eq('user_id', user!.id).single();
+      const { data: kursantData } = await supabase.from('kursanci').select('imie, nazwisko, grupa_id, rola, avatar_url, certyfikat_url, onboarding_done').eq('user_id', user!.id).single();
       let grupaData = null;
       if (kursantData?.grupa_id) {
         const { data } = await supabase.from('grupy').select('id, nazwa, miasto, edycja, drive_link').eq('id', kursantData.grupa_id).single();
@@ -3066,6 +3144,7 @@ export default function App() {
   if (!user) return <EkranLogowania onZalogowano={() => {}} />;
   if (kursant?.rola === 'admin') return <PanelBiura onWyloguj={wyloguj} />;
   if (kursant?.rola === 'prowadzacy') return <PanelProwadzacego user={user} kursant={kursant} onWyloguj={wyloguj} />;
+  if (kursant && !kursant.onboarding_done) return <EkranPowitalny kursant={kursant} user={user} onDalej={() => setKursant(prev => prev ? { ...prev, onboarding_done: true } : prev)} />;
 
   return (
     <div className="app">
