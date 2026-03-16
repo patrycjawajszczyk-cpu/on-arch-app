@@ -2630,6 +2630,25 @@ function EkranOgloszenia({ ogloszenia, onOtworzOgloszenie }: { ogloszenia: Oglos
     <>
       <h2 className="page-title">Ogłoszenia</h2>
       {ogloszenia.map((o) => <KartaOgloszenia key={o.id} o={o} onClick={() => onOtworzOgloszenie(o)} />)}
+      {ogloszenia.length === 0 && (
+        <div style={{ textAlign: 'center', padding: '40px 24px', color: 'var(--text-muted)', fontSize: '14px' }}>
+          Brak ogłoszeń.
+        </div>
+      )}
+      {/* Kontakt z biurem */}
+      <div style={{
+        marginTop: '24px', padding: '16px 18px', borderRadius: '16px',
+        background: 'var(--brand-light)', border: '0.5px solid var(--border-soft)',
+        textAlign: 'center',
+      }}>
+        <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--brand-dark)', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Kontakt z biurem</div>
+        <a href="tel:883659069" style={{ display: 'block', fontSize: '18px', fontWeight: 600, color: 'var(--brand-dark)', textDecoration: 'none', marginBottom: '4px' }}>
+          883 659 069
+        </a>
+        <a href="mailto:biuro@on-arch.pl" style={{ fontSize: '12px', color: 'var(--text-muted)', textDecoration: 'none' }}>
+          biuro@on-arch.pl
+        </a>
+      </div>
     </>
   );
 }
@@ -2694,7 +2713,6 @@ function EkranProfil({ user, kursant, zjazdy, onWyloguj, onAvatarZmieniony, grup
         <div className="profil-row"><span className="profil-lbl">Miasto</span><span className="profil-val">{miasto}</span></div>
         <div className="profil-row"><span className="profil-lbl">Edycja</span><span className="profil-val">{edycja}</span></div>
         <div className="profil-row"><span className="profil-lbl">Email</span><span className="profil-val">{user.email}</span></div>
-        <div className="profil-row"><span className="profil-lbl">Telefon biura</span><span className="profil-val">883 659 069</span></div>
         <PostepKursu zjazdy={zjazdy} />
       </div>
 
