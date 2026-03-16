@@ -2716,8 +2716,8 @@ function EkranProfil({ user, kursant, zjazdy, onWyloguj, onAvatarZmieniony, grup
         </a>
       )}
 
-      {/* Certyfikat */}
-      {kursant?.certyfikat_url && (
+      {/* Certyfikat — zawsze widoczny */}
+      {kursant?.certyfikat_url ? (
         <a href={kursant.certyfikat_url} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
           <div style={{
             background: 'white', borderRadius: '16px', padding: '16px 18px',
@@ -2727,15 +2727,31 @@ function EkranProfil({ user, kursant, zjazdy, onWyloguj, onAvatarZmieniony, grup
             <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: '#fef9ec', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px', flexShrink: 0 }}>🎓</div>
             <div>
               <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text)', marginBottom: '2px' }}>Certyfikat ukończenia</div>
-              <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Pobierz swój certyfikat</div>
+              <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Kliknij aby pobrać</div>
             </div>
             <span style={{ marginLeft: 'auto', color: '#c8a84b', fontSize: '18px' }}>→</span>
           </div>
         </a>
+      ) : (
+        <div style={{
+          background: '#f8f8f8', borderRadius: '16px', padding: '16px 18px',
+          border: '0.5px dashed #d0d0d0', marginBottom: '10px',
+          display: 'flex', alignItems: 'center', gap: '14px',
+          opacity: 0.65,
+        }}>
+          <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: '#efefef', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px', flexShrink: 0 }}>🎓</div>
+          <div>
+            <div style={{ fontSize: '14px', fontWeight: 600, color: '#aaa', marginBottom: '2px' }}>Certyfikat ukończenia</div>
+            <div style={{ fontSize: '12px', color: '#bbb', lineHeight: 1.5 }}>
+              Pojawi się po zakończeniu kursu,{'\n'}wypełnieniu ankiety i przesłaniu pracy zaliczeniowej
+            </div>
+          </div>
+          <span style={{ marginLeft: 'auto', color: '#ccc', fontSize: '18px' }}>🔒</span>
+        </div>
       )}
 
-      {/* Ankieta — widoczna tylko gdy kurs zakończony */}
-      {ankietaDostepna && (
+      {/* Ankieta — zawsze widoczna */}
+      {ankietaDostepna ? (
         <div onClick={onOtworzAnkiete} style={{
           background: 'var(--brand-dark)', borderRadius: '16px', padding: '16px 18px',
           marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '14px',
@@ -2744,9 +2760,23 @@ function EkranProfil({ user, kursant, zjazdy, onWyloguj, onAvatarZmieniony, grup
           <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: 'rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px', flexShrink: 0 }}>⭐</div>
           <div>
             <div style={{ fontSize: '14px', fontWeight: 600, color: 'white', marginBottom: '2px' }}>Ankieta oceny kursu</div>
-            <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.7)' }}>Twoja opinia jest dla nas ważna</div>
+            <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.7)' }}>Twoja opinia jest dla nas ważna — wypełnij!</div>
           </div>
           <span style={{ marginLeft: 'auto', color: 'white', fontSize: '18px' }}>→</span>
+        </div>
+      ) : (
+        <div style={{
+          background: '#f8f8f8', borderRadius: '16px', padding: '16px 18px',
+          border: '0.5px dashed #d0d0d0', marginBottom: '10px',
+          display: 'flex', alignItems: 'center', gap: '14px',
+          opacity: 0.65,
+        }}>
+          <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: '#efefef', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px', flexShrink: 0 }}>⭐</div>
+          <div>
+            <div style={{ fontSize: '14px', fontWeight: 600, color: '#aaa', marginBottom: '2px' }}>Ankieta oceny kursu</div>
+            <div style={{ fontSize: '12px', color: '#bbb', lineHeight: 1.5 }}>Odblokuje się po zakończeniu ostatniego zjazdu</div>
+          </div>
+          <span style={{ marginLeft: 'auto', color: '#ccc', fontSize: '18px' }}>🔒</span>
         </div>
       )}
 
