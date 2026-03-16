@@ -2424,10 +2424,6 @@ function EkranZjazdy({ zjazdy, user, kursant }: { zjazdy: Zjazd[]; user: User; k
     await odswiezObecnosci();
   }
 
-  function formatujDate(data: string | null) {
-    if (!data) return null;
-    return new Date(data).toLocaleDateString('pl-PL', { weekday: 'long', day: 'numeric', month: 'long' });
-  }
 
   function KafelekDnia({ zjazd, dzien, label }: { zjazd: Zjazd; dzien: 1 | 2; label: string }) {
     const wpis = pobierzDzien(zjazd.id, dzien);
