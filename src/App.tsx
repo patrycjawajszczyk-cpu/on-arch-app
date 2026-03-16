@@ -387,145 +387,6 @@ function EkranZadania({ user, kursant }: { user: User; kursant: Kursant | null }
 
 // ─── EKRAN OBECNOŚCI (kursant) ───────────────────────────────────────────────
 
-function EkranObecnosc({ user, kursant, zjazdy }: { user: User; kursant: Kursant | null; zjazdy: Zjazd[] }) {
-  const [obecnosci, setObecnosci] = useState<Obecnosc[]>([]);
-  const [ladowanie, setLadowanie] = useState(true);
-  const [wysylanie, setWysylanie] = useState<number | null>(null);
-
-  useEffect(() => {
-    if (!user) return;
-    pobierzObecnosci();
-  }, [user]);
-
-  async function pobierzObecnosci() {
-    setLadowanie(true);
-    const { data } = await supabase
-      .from('obecnosci')
-      .select('*')
-      .eq('user_id', user.id);
-    setObecnosci(data || []);
-    setLadowanie(false);
-  }
-
-  async function potwierdz(zjazd: Zjazd) {
-    if (!kursant) return;
-    setWysylanie(zjazd.id);
-    const { error } = await supabase.from('obecnosci').insert([{
-      zjazd_id: zjazd.id,
-      user_id: user.id,
-      grupa_id: kursant.grupa_id,
-      imie: kursant.imie,
-      nazwisko: kursant.nazwisko,
-    }]);
-    if (!error) await pobierzObecnosci();
-    setWysylanie(null);
-  }
-
-  async function odwolaj(zjazd: Zjazd) {
-    setWysylanie(zjazd.id);
-    const { error } = await supabase
-      .from('obecnosci')
-      .delete()
-      .eq('zjazd_id', zjazd.id)
-      .eq('user_id', user.id);
-    if (!error) await pobierzObecnosci();
-    setWysylanie(null);
-  }
-
-  const czyPotwierdzony = (zjazdId: number) =>
-    obecnosci.some(o => o.zjazd_id === zjazdId);
-
-  if (!kursant?.grupa_id) {
-    return (
-      <div style={{ padding: '24px', textAlign: 'center', color: 'var(--text-muted)' }}>
-        Nie jesteś przypisany do żadnej grupy.
-      </div>
-    );
-  }
-
-  return (
-    <>
-      <h2 className="page-title">Moja obecność</h2>
-      <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '16px', lineHeight: '1.6' }}>
-        Potwierdź swoją obecność przed każdym zjazdem.
-      </p>
-
-      {ladowanie ? (
-        <div style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '24px' }}>Ładowanie...</div>
-      ) : (
-        zjazdy.map(z => {
-          const potwierdzono = czyPotwierdzony(z.id);
-          const trwa = wysylanie === z.id;
-          const zakonczone = z.status === 'zakonczony';
-
-          return (
-            <div key={z.id} className="sess-card" style={{
-              borderColor: potwierdzono ? '#7aab8a' : undefined,
-              opacity: zakonczone && !potwierdzono ? 0.5 : 1,
-            }}>
-              <div className="sess-top" style={{
-                background: potwierdzono ? '#f0faf4' : zakonczone ? undefined : 'var(--brand-light)',
-              }}>
-                <span className="sess-nr">Zjazd {z.nr}</span>
-                {potwierdzono ? (
-                  <span style={{ fontSize: '10px', fontWeight: 600, color: '#2e7d32', background: '#e8f5e9', padding: '3px 8px', borderRadius: '20px', textTransform: 'uppercase', letterSpacing: '0.4px' }}>
-                    ✓ Potwierdzono
-                  </span>
-                ) : (
-                  <span className={`s-badge s-${z.status}`}>
-                    {z.status === 'nadchodzacy' ? 'Nadchodzący' : 'Zakończony'}
-                  </span>
-                )}
-              </div>
-              <div className="sess-date">{z.daty}</div>
-              <div className="sess-rows">
-                <div className="sess-row">{z.sala}</div>
-                <div className="sess-row">{z.adres}</div>
-              </div>
-
-              {/* Przycisk — tylko dla nadchodzących */}
-              {!zakonczone && (
-                <div style={{ padding: '0 14px 14px' }}>
-                  {potwierdzono ? (
-                    <button
-                      onClick={() => odwolaj(z)}
-                      disabled={trwa}
-                      style={{
-                        width: '100%', padding: '10px', borderRadius: '10px',
-                        border: '0.5px solid #c8e6c9', background: 'white',
-                        color: '#2e7d32', fontSize: '13px', fontWeight: 500,
-                        cursor: 'pointer', fontFamily: 'Jost, sans-serif',
-                        transition: 'all 0.15s',
-                      }}
-                    >
-                      {trwa ? 'Cofanie...' : 'Cofnij potwierdzenie'}
-                    </button>
-                  ) : (
-                    <button
-                      onClick={() => potwierdz(z)}
-                      disabled={trwa}
-                      className="login-btn"
-                      style={{ marginTop: 0 }}
-                    >
-                      {trwa ? 'Potwierdzanie...' : 'Potwierdzam obecność'}
-                    </button>
-                  )}
-                </div>
-              )}
-
-              {/* Zakończony i potwierdzony — znaczek */}
-              {zakonczone && potwierdzono && (
-                <div style={{ padding: '0 14px 12px', fontSize: '12px', color: '#2e7d32' }}>
-                  ✓ Byłeś/aś obecny/a
-                </div>
-              )}
-            </div>
-          );
-        })
-      )}
-    </>
-  );
-}
 
 // ─── PANEL BIURA — zakładka OBECNOŚCI ────────────────────────────────────────
 
@@ -1121,6 +982,7 @@ function PanelProwadzacego({ user, kursant, onWyloguj }: { user: User; kursant: 
   const [wybranaGrupa, setWybranaGrupa] = useState('');
   const [aktywnaNotatkaKursant, setAktywnaNotatkaKursant] = useState<string | null>(null);
   const [trescNotatki, setTrescNotatki] = useState('');
+  const [komunikat, setKomunikat] = useState('');
   const [ladowanie, setLadowanie] = useState(true);
 
   useEffect(() => {
@@ -2579,7 +2441,6 @@ export default function App() {
   const [zjazdy, setZjazdy] = useState<Zjazd[]>([]);
   const [zadania, setZadania] = useState<Zadanie[]>([]);
   const [odpowiedziZadan, setOdpowiedziZadan] = useState<ZadanieOdpowiedz[]>([]);
-  const [ostatniaCzatMsg, setOstatniaCzatMsg] = useState<string | null>(null);
   const [noweCzat, setNoweCzat] = useState(false);
   const [ladowanie, setLadowanie] = useState(true);
   const [resetMode, setResetMode] = useState(false);
