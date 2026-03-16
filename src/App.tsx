@@ -1718,33 +1718,29 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
 
         {/* ─── EKRAN GŁÓWNY — KAFELKI ─── */}
         {aktywnaZakladka === 'home' && (
-          <>
-            <p className="greeting" style={{ marginBottom: '20px' }}>Panel biura</p>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-              {[
-                { id: 'ogloszenia', emoji: '📢', label: 'Ogłoszenia', opis: `${ogloszenia.length} ogłoszeń`, kolor: '#f5edec', ramka: 'var(--brand-mid)' },
-                { id: 'zjazdy',     emoji: '📅', label: 'Zjazdy',     opis: `${zjazdy.filter(z => z.status === 'nadchodzacy').length} nadchodzących`, kolor: '#edf2fb', ramka: '#9ab0d8' },
-                { id: 'zadania',    emoji: '📋', label: 'Zadania',    opis: `${zadania.length} zadań`, kolor: '#f0faf4', ramka: '#7aab8a' },
-                { id: 'obecnosci',  emoji: '✅', label: 'Obecności',  opis: 'Lista i weryfikacja', kolor: '#fef9ec', ramka: '#c8a84b' },
-                { id: 'kursanci',   emoji: '👥', label: 'Kursanci',   opis: `${kursanci.length} osób`, kolor: '#f3f0fb', ramka: '#9b8dc8' },
-                { id: 'grupy',      emoji: '🏫', label: 'Grupy',      opis: `${grupy.length} grup`, kolor: '#f0f7fb', ramka: '#7aaec8' },
-                { id: 'prowadzacy', emoji: '👩‍🏫', label: 'Prowadzący', opis: `${prowadzacy.length} osób`, kolor: '#fdf0f5', ramka: '#c87a9b' },
-                { id: 'ankiety',    emoji: '⭐', label: 'Ankiety',    opis: `${ankiety.length} wypełnień`, kolor: '#fffbec', ramka: '#c8b44b' },
-                { id: 'import',     emoji: '📥', label: 'Import CSV', opis: 'Dodaj kursantów', kolor: '#f4f4f4', ramka: '#aaa' },
-              ].map(k => (
-                <div key={k.id} onClick={() => setAktywnaZakladka(k.id)} style={{
-                  background: k.kolor, borderRadius: '18px', padding: '18px 16px',
-                  border: `0.5px solid ${k.ramka}`, cursor: 'pointer',
-                  transition: 'transform 0.1s',
-                  display: 'flex', flexDirection: 'column', gap: '6px',
-                }}>
-                  <div style={{ fontSize: '28px', lineHeight: 1 }}>{k.emoji}</div>
-                  <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text)' }}>{k.label}</div>
-                  <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{k.opis}</div>
-                </div>
-              ))}
-            </div>
-          </>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', paddingTop: '4px' }}>
+            {[
+              { id: 'ogloszenia', emoji: '📢', label: 'Ogłoszenia', opis: `${ogloszenia.length} ogłoszeń`,          kolor: '#f5edec', ramka: 'var(--brand-mid)' },
+              { id: 'zjazdy',     emoji: '📅', label: 'Zjazdy',     opis: `${zjazdy.length} zjazdów`,              kolor: '#edf2fb', ramka: '#9ab0d8' },
+              { id: 'zadania',    emoji: '📋', label: 'Zadania',    opis: `${zadania.length} zadań`,               kolor: '#f0faf4', ramka: '#7aab8a' },
+              { id: 'obecnosci',  emoji: '✅', label: 'Obecności',  opis: 'Lista i weryfikacja',                   kolor: '#fef9ec', ramka: '#c8a84b' },
+              { id: 'kursanci',   emoji: '👥', label: 'Kursanci',   opis: `${kursanci.length} osób`,               kolor: '#f3f0fb', ramka: '#9b8dc8' },
+              { id: 'grupy',      emoji: '🏫', label: 'Grupy',      opis: `${grupy.length} grup`,                  kolor: '#f0f7fb', ramka: '#7aaec8' },
+              { id: 'prowadzacy', emoji: '👩‍🏫', label: 'Prowadzący', opis: `${prowadzacy.length} osób`,             kolor: '#fdf0f5', ramka: '#c87a9b' },
+              { id: 'ankiety',    emoji: '⭐', label: 'Ankiety',    opis: `${ankiety.length} wypełnień`,           kolor: '#fffbec', ramka: '#c8b44b' },
+            ].map(k => (
+              <div key={k.id} onClick={() => setAktywnaZakladka(k.id)} style={{
+                background: k.kolor, borderRadius: '18px', padding: '20px 16px 18px',
+                border: `0.5px solid ${k.ramka}`, cursor: 'pointer',
+                display: 'flex', flexDirection: 'column', gap: '8px',
+                active: { transform: 'scale(0.97)' },
+              }}>
+                <div style={{ fontSize: '30px', lineHeight: 1 }}>{k.emoji}</div>
+                <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text)' }}>{k.label}</div>
+                <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{k.opis}</div>
+              </div>
+            ))}
+          </div>
         )}
 
         {aktywnaZakladka === 'ogloszenia' && (
@@ -1950,6 +1946,25 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
                 <div className="profil-row"><span className="profil-lbl">Grupa</span><span className="profil-val">{grupy.find(g => g.id === k.grupa_id)?.nazwa || '-'}</span></div>
               </div>
             ))}
+
+            {/* Import CSV — przeniesiony z osobnej zakładki */}
+            <h2 className="page-title" style={{ marginTop: '28px' }}>Import z CSV</h2>
+            <div className="profil-card" style={{ marginBottom: '16px' }}>
+              <div className="profil-row" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '8px' }}>
+                <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Format: imie,nazwisko,email,grupa_id</p>
+                <code style={{ fontSize: '12px', background: '#f5f5f5', padding: '8px', borderRadius: '6px', display: 'block', whiteSpace: 'pre', width: '100%' }}>imie,nazwisko,email,grupa_id{'\n'}Anna,Kowalska,a.k@email.pl,1</code>
+              </div>
+            </div>
+            <div className="login-field">
+              <label>Wybierz plik CSV</label>
+              <input ref={fileRef} type="file" accept=".csv" onChange={importujCSV} disabled={importowanie} style={{ padding: '8px', border: '0.5px solid var(--border)', borderRadius: '8px', width: '100%' }} />
+            </div>
+            {importowanie && <div style={{ textAlign: 'center', padding: '12px', color: 'var(--brand)' }}>Importowanie...</div>}
+            {importStatus.map((s, i) => (
+              <div key={i} className="profil-card" style={{ marginBottom: '6px', borderLeft: s.status === 'Dodano!' ? '3px solid #2e7d32' : '3px solid #c62828' }}>
+                <div className="profil-row"><span className="profil-lbl">{s.imie} {s.nazwisko}</span><span className="profil-val" style={{ color: s.status === 'Dodano!' ? '#2e7d32' : '#c62828' }}>{s.status}</span></div>
+              </div>
+            ))}
           </>
         )}
 
@@ -1982,28 +1997,6 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
                     />
                   </div>
                 </div>
-              </div>
-            ))}
-          </>
-        )}
-
-        {aktywnaZakladka === 'import' && (
-          <>
-            <h2 className="page-title">Import kursantow z CSV</h2>
-            <div className="profil-card" style={{ marginBottom: '16px' }}>
-              <div className="profil-row" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '8px' }}>
-                <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Format: imie,nazwisko,email,grupa_id</p>
-                <code style={{ fontSize: '12px', background: '#f5f5f5', padding: '8px', borderRadius: '6px', display: 'block', whiteSpace: 'pre', width: '100%' }}>imie,nazwisko,email,grupa_id{'\n'}Anna,Kowalska,a.k@email.pl,1</code>
-              </div>
-            </div>
-            <div className="login-field">
-              <label>Wybierz plik CSV</label>
-              <input ref={fileRef} type="file" accept=".csv" onChange={importujCSV} disabled={importowanie} style={{ padding: '8px', border: '0.5px solid var(--border)', borderRadius: '8px', width: '100%' }} />
-            </div>
-            {importowanie && <div style={{ textAlign: 'center', padding: '12px', color: 'var(--brand)' }}>Importowanie...</div>}
-            {importStatus.map((s, i) => (
-              <div key={i} className="profil-card" style={{ marginBottom: '6px', borderLeft: s.status === 'Dodano!' ? '3px solid #2e7d32' : '3px solid #c62828' }}>
-                <div className="profil-row"><span className="profil-lbl">{s.imie} {s.nazwisko}</span><span className="profil-val" style={{ color: s.status === 'Dodano!' ? '#2e7d32' : '#c62828' }}>{s.status}</span></div>
               </div>
             ))}
           </>
