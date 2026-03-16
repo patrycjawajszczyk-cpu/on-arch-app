@@ -708,14 +708,31 @@
      flex-direction: row;
      align-items: flex-end;
      gap: 0;
+     width: 100%;
    }
    
    .czat-msg.moja {
      flex-direction: row-reverse;
+     justify-content: flex-start;
    }
    
    .czat-msg.obca {
-     align-self: flex-start;
+     justify-content: flex-start;
+   }
+   
+   .czat-msg.moja .czat-buble {
+     background: var(--brand);
+     color: white;
+     border-bottom-right-radius: 4px;
+     max-width: 100%;
+   }
+   
+   .czat-msg.obca .czat-buble {
+     background: var(--surface);
+     border: 0.5px solid var(--border);
+     color: var(--text);
+     border-bottom-left-radius: 4px;
+     max-width: 100%;
    }
    
    .czat-imie {
