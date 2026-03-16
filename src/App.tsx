@@ -22,6 +22,15 @@ type Prowadzacy = {
   avatar_url: string | null;
 };
 
+type Notatka = {
+  id: number;
+  kursant_user_id: string;
+  prowadzacy_id: number;
+  tresc: string;
+  created_at: string;
+  updated_at: string;
+};
+
 type Zadanie = {
   id: number;
   grupa_id: number;
@@ -1106,10 +1115,12 @@ function PanelProwadzacego({ user, kursant, onWyloguj }: { user: User; kursant: 
   const [ogloszenia, setOgloszenia] = useState<Ogloszenie[]>([]);
   const [zadania, setZadania] = useState<Zadanie[]>([]);
   const [odpowiedziZadan, setOdpowiedziZadan] = useState<ZadanieOdpowiedz[]>([]);
+  const [notatki, setNotatki] = useState<Notatka[]>([]);
   const [aktywneOgloszenie, setAktywneOgloszenie] = useState<Ogloszenie | null>(null);
   const [noweZadanie, setNoweZadanie] = useState({ tytul: '', opis: '', termin: '', link_materialow: '', grupa_id: '', typ: 'zadanie' });
   const [wybranaGrupa, setWybranaGrupa] = useState('');
-  const [komunikat, setKomunikat] = useState('');
+  const [aktywnaNotatkaKursant, setAktywnaNotatkaKursant] = useState<string | null>(null);
+  const [trescNotatki, setTrescNotatki] = useState('');
   const [ladowanie, setLadowanie] = useState(true);
 
   useEffect(() => {
@@ -1172,7 +1183,35 @@ function PanelProwadzacego({ user, kursant, onWyloguj }: { user: User; kursant: 
     setOgloszenia((og || []).filter((o: any) => o.grupa_id === null || grupyIds.includes(o.grupa_id)));
     setZadania(zad || []);
     setOdpowiedziZadan(odp || []);
+
+    // Pobierz notatki
+    if (pid) {
+      const { data: not } = await supabase.from('notatki_kursantow').select('*').eq('prowadzacy_id', pid);
+      setNotatki(not || []);
+    }
     setLadowanie(false);
+  }
+
+  async function zapiszNotatke(kursantUserId: string) {
+    if (!mojeProwadzacyId || !trescNotatki.trim()) return;
+    const istniejaca = notatki.find(n => n.kursant_user_id === kursantUserId);
+    if (istniejaca) {
+      await supabase.from('notatki_kursantow').update({ tresc: trescNotatki, updated_at: new Date().toISOString() }).eq('id', istniejaca.id);
+    } else {
+      await supabase.from('notatki_kursantow').insert([{ kursant_user_id: kursantUserId, prowadzacy_id: mojeProwadzacyId, tresc: trescNotatki }]);
+    }
+    const { data: not } = await supabase.from('notatki_kursantow').select('*').eq('prowadzacy_id', mojeProwadzacyId);
+    setNotatki(not || []);
+    setAktywnaNotatkaKursant(null);
+    setTrescNotatki('');
+  }
+
+  async function usunNotatke(kursantUserId: string) {
+    const n = notatki.find(n => n.kursant_user_id === kursantUserId);
+    if (!n) return;
+    await supabase.from('notatki_kursantow').delete().eq('id', n.id);
+    setNotatki(prev => prev.filter(x => x.id !== n.id));
+    setAktywnaNotatkaKursant(null);
   }
 
   async function dodajZadanie(e: React.FormEvent) {
@@ -1309,13 +1348,52 @@ function PanelProwadzacego({ user, kursant, onWyloguj }: { user: User; kursant: 
                 {mojeGrupy.map(g => (
                   <div key={g.id} style={{ marginBottom: '20px' }}>
                     <h3 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '18px', color: 'var(--brand)', marginBottom: '10px' }}>{g.nazwa}</h3>
-                    {kursanci.filter(k => k.grupa_id === g.id).map(k => (
-                      <div key={k.id} className="profil-card" style={{ marginBottom: '6px' }}>
-                        <div className="profil-row">
-                          <span style={{ fontSize: '14px', fontWeight: 500 }}>{k.imie} {k.nazwisko}</span>
+                    {kursanci.filter(k => k.grupa_id === g.id).map(k => {
+                      const notatka = notatki.find(n => n.kursant_user_id === k.user_id);
+                      const otwarta = aktywnaNotatkaKursant === k.user_id;
+                      return (
+                        <div key={k.id} className="profil-card" style={{ marginBottom: '8px' }}>
+                          <div className="profil-row" style={{ cursor: 'pointer' }} onClick={() => {
+                            if (otwarta) { setAktywnaNotatkaKursant(null); setTrescNotatki(''); }
+                            else { setAktywnaNotatkaKursant(k.user_id); setTrescNotatki(notatka?.tresc || ''); }
+                          }}>
+                            <span style={{ fontSize: '14px', fontWeight: 500 }}>{k.imie} {k.nazwisko}</span>
+                            <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                              {notatka && <span style={{ fontSize: '10px', background: 'var(--brand-light)', color: 'var(--brand)', padding: '2px 8px', borderRadius: '10px' }}>Notatka</span>}
+                              <span style={{ color: 'var(--text-muted)', fontSize: '14px' }}>{otwarta ? '▲' : '▼'}</span>
+                            </div>
+                          </div>
+                          {otwarta && (
+                            <div style={{ padding: '0 16px 14px' }}>
+                              {notatka && !trescNotatki && (
+                                <div style={{ background: '#faf6f3', borderRadius: '10px', padding: '10px 12px', marginBottom: '10px', fontSize: '13px', color: 'var(--text)', lineHeight: '1.6', whiteSpace: 'pre-wrap' }}>
+                                  {notatka.tresc}
+                                </div>
+                              )}
+                              <textarea
+                                value={trescNotatki}
+                                onChange={e => setTrescNotatki(e.target.value)}
+                                placeholder="Notatka prywatna (widoczna tylko dla Ciebie)..."
+                                rows={3}
+                                style={{ width: '100%', fontSize: '13px', padding: '10px', borderRadius: '10px', border: '0.5px solid var(--border)', fontFamily: 'Jost, sans-serif', resize: 'none', background: 'white' }}
+                              />
+                              <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+                                <button onClick={() => zapiszNotatke(k.user_id)} disabled={!trescNotatki.trim()}
+                                  className="login-btn" style={{ flex: 1, marginTop: 0, padding: '9px' }}>
+                                  Zapisz notatkę
+                                </button>
+                                {notatka && (
+                                  <button onClick={() => usunNotatke(k.user_id)}
+                                    style={{ padding: '9px 14px', borderRadius: '10px', border: '0.5px solid #fcc', background: 'white', color: '#c62828', cursor: 'pointer', fontSize: '12px', fontFamily: 'Jost, sans-serif' }}>
+                                    Usuń
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          )}
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                     {kursanci.filter(k => k.grupa_id === g.id).length === 0 && (
                       <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Brak kursantów w tej grupie.</p>
                     )}
@@ -1791,7 +1869,22 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
               <div className="login-field"><label>Grupa</label><select value={nowyKursant.grupa_id} onChange={e => setNowyKursant({ ...nowyKursant, grupa_id: e.target.value })} required><option value="">Wybierz grupe</option>{grupy.map(g => <option key={g.id} value={g.id}>{g.nazwa}</option>)}</select></div>
               <button className="login-btn" type="submit">Dodaj kursanta</button>
             </form>
-            <h2 className="page-title" style={{ marginTop: '24px' }}>Lista kursantow</h2>
+            <h2 className="page-title" style={{ marginTop: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              Lista kursantów
+              <button onClick={() => {
+                const naglowki = ['imie', 'nazwisko', 'grupa'];
+                const wiersze = kursanci.map(k => [
+                  `"${k.imie}"`, `"${k.nazwisko}"`,
+                  `"${grupy.find(g => g.id === k.grupa_id)?.nazwa || ''}"`,
+                ].join(','));
+                const csv = [naglowki.join(','), ...wiersze].join('\n');
+                const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a'); a.href = url; a.download = 'kursanci.csv'; a.click();
+              }} style={{ fontSize: '12px', color: 'var(--brand)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Jost, sans-serif', fontWeight: 500 }}>
+                ⬇ CSV
+              </button>
+            </h2>
             {kursanci.map(k => (
               <div key={k.id} className="profil-card" style={{ marginBottom: '8px' }}>
                 <div className="profil-row"><span className="profil-lbl">Imie i nazwisko</span><span className="profil-val">{k.imie} {k.nazwisko}</span></div>
@@ -2095,13 +2188,64 @@ function liczDni(dataZjazdu: string): string {
   return `Za ${diff} dni`;
 }
 
-function EkranGlowny({ ogloszenia, zjazdy, onOtworzOgloszenie, user, kursant }: { ogloszenia: Ogloszenie[]; zjazdy: Zjazd[]; onOtworzOgloszenie: (o: Ogloszenie) => void; user: User; kursant: Kursant | null }) {
+function EkranGlowny({ ogloszenia, zjazdy, onOtworzOgloszenie, user, kursant, onNavigate, zadania, nieprzeslaneZadania, noweCzat }: {
+  ogloszenia: Ogloszenie[];
+  zjazdy: Zjazd[];
+  onOtworzOgloszenie: (o: Ogloszenie) => void;
+  user: User;
+  kursant: Kursant | null;
+  onNavigate: (zakl: string) => void;
+  zadania: Zadanie[];
+  nieprzeslaneZadania: number;
+  noweCzat: boolean;
+}) {
   const imie = kursant ? kursant.imie : user.email.split('@')[0];
   const najblizszy = zjazdy.find(z => z.status === 'nadchodzacy');
   const odliczanie = najblizszy ? liczDni(najblizszy.data_zjazdu) : '';
+  const najblizszZadanie = zadania
+    .filter(z => z.typ !== 'praca_zaliczeniowa' && z.termin)
+    .sort((a, b) => new Date(a.termin!).getTime() - new Date(b.termin!).getTime())[0];
+
   return (
     <>
       <p className="greeting">Dzień dobry, {imie}</p>
+
+      {/* Kafelki skrótów */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '20px' }}>
+        {nieprzeslaneZadania > 0 && (
+          <div onClick={() => onNavigate('zadania')} style={{
+            background: 'var(--brand-dark)', borderRadius: '16px', padding: '16px',
+            cursor: 'pointer', color: 'white',
+          }}>
+            <div style={{ fontSize: '22px', marginBottom: '6px' }}>📋</div>
+            <div style={{ fontSize: '13px', fontWeight: 600 }}>{nieprzeslaneZadania} {nieprzeslaneZadania === 1 ? 'zadanie' : 'zadania'}</div>
+            <div style={{ fontSize: '11px', opacity: 0.75, marginTop: '2px' }}>do przesłania</div>
+          </div>
+        )}
+        {najblizszZadanie && (
+          <div onClick={() => onNavigate('zadania')} style={{
+            background: 'white', borderRadius: '16px', padding: '16px',
+            cursor: 'pointer', border: '0.5px solid var(--border)',
+          }}>
+            <div style={{ fontSize: '22px', marginBottom: '6px' }}>📌</div>
+            <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text)', lineHeight: 1.3 }}>{najblizszZadanie.tytul}</div>
+            <div style={{ fontSize: '11px', color: 'var(--brand)', marginTop: '4px', fontWeight: 500 }}>
+              do {new Date(najblizszZadanie.termin!).toLocaleDateString('pl-PL')}
+            </div>
+          </div>
+        )}
+        {noweCzat && (
+          <div onClick={() => onNavigate('czat')} style={{
+            background: '#e8f4fd', borderRadius: '16px', padding: '16px',
+            cursor: 'pointer', border: '0.5px solid #b3d9f7',
+          }}>
+            <div style={{ fontSize: '22px', marginBottom: '6px' }}>💬</div>
+            <div style={{ fontSize: '13px', fontWeight: 600, color: '#1565c0' }}>Nowe wiadomości</div>
+            <div style={{ fontSize: '11px', color: '#1976d2', marginTop: '2px' }}>w czacie grupy</div>
+          </div>
+        )}
+      </div>
+
       <section className="section">
         <div className="section-header"><span className="section-title">Najbliższy zjazd</span></div>
         {najblizszy ? (
@@ -2214,61 +2358,99 @@ function ModalProwadzacy({ p, onZamknij }: { p: Prowadzacy; onZamknij: () => voi
   );
 }
 
-function EkranZjazdy({ zjazdy }: { zjazdy: Zjazd[] }) {
+function EkranZjazdy({ zjazdy, user, kursant }: { zjazdy: Zjazd[]; user: User; kursant: Kursant | null }) {
+  const [obecnosci, setObecnosci] = useState<Obecnosc[]>([]);
+  const [wysylanie, setWysylanie] = useState<number | null>(null);
   const [modalProwadzacy, setModalProwadzacy] = useState<Prowadzacy | null>(null);
+
+  useEffect(() => {
+    if (!user) return;
+    supabase.from('obecnosci').select('*').eq('user_id', user.id)
+      .then(({ data }) => setObecnosci(data || []));
+  }, [user]);
+
+  const czyPotwierdzony = (zjazdId: number) => obecnosci.some(o => o.zjazd_id === zjazdId);
+
+  async function potwierdz(z: Zjazd) {
+    if (!kursant) return;
+    setWysylanie(z.id);
+    await supabase.from('obecnosci').insert([{
+      zjazd_id: z.id, user_id: user.id,
+      grupa_id: kursant.grupa_id, imie: kursant.imie, nazwisko: kursant.nazwisko,
+    }]);
+    const { data } = await supabase.from('obecnosci').select('*').eq('user_id', user.id);
+    setObecnosci(data || []);
+    setWysylanie(null);
+  }
+
+  async function odwolaj(z: Zjazd) {
+    setWysylanie(z.id);
+    await supabase.from('obecnosci').delete().eq('zjazd_id', z.id).eq('user_id', user.id);
+    const { data } = await supabase.from('obecnosci').select('*').eq('user_id', user.id);
+    setObecnosci(data || []);
+    setWysylanie(null);
+  }
+
   return (
     <>
       <h2 className="page-title">Plan zjazdów</h2>
-      {zjazdy.map((z) => (
-        <div key={z.id} className={`sess-card ${z.status}`}>
-          <div className="sess-top">
-            <span className="sess-nr">Zjazd {z.nr}</span>
-            <span className={`s-badge s-${z.status}`}>{z.status === 'nadchodzacy' ? 'Nadchodzący' : 'Zakończony'}</span>
+      {zjazdy.map((z) => {
+        const potwierdzono = czyPotwierdzony(z.id);
+        const trwa = wysylanie === z.id;
+        const zakonczone = z.status === 'zakonczony';
+        return (
+          <div key={z.id} className={`sess-card ${z.status}`} style={{ borderColor: potwierdzono ? '#7aab8a' : undefined }}>
+            <div className="sess-top" style={{ background: potwierdzono ? '#f0faf4' : undefined }}>
+              <span className="sess-nr">Zjazd {z.nr}</span>
+              <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                {potwierdzono && <span style={{ fontSize: '10px', fontWeight: 600, color: '#2e7d32', background: '#e8f5e9', padding: '3px 8px', borderRadius: '20px', textTransform: 'uppercase' }}>✓ Obecny/a</span>}
+                <span className={`s-badge s-${z.status}`}>{z.status === 'nadchodzacy' ? 'Nadchodzący' : 'Zakończony'}</span>
+              </div>
+            </div>
+            <div className="sess-date">{z.daty}</div>
+            <div className="sess-rows">
+              {z.sala && z.sala !== 'Do uzupełnienia' && <div className="sess-row"><span className="sess-lbl">Sala:</span> {z.sala}</div>}
+              {z.adres && z.adres !== 'Do uzupełnienia' && <div className="sess-row"><span className="sess-lbl">Adres:</span> {z.adres}</div>}
+              {z.tematy && <div className="sess-row"><span className="sess-lbl">Temat:</span> {z.tematy}</div>}
+              {z.prowadzacy && z.prowadzacy.length > 0 && (
+                <div className="sess-row" style={{ marginTop: '4px', paddingTop: '6px', borderTop: '0.5px solid var(--border-soft)' }}>
+                  <span className="sess-lbl">Prowadzący:</span>{' '}
+                  {z.prowadzacy.map((p, i) => (
+                    <span key={p.id}>
+                      <button onClick={() => setModalProwadzacy(p)} style={{
+                        background: 'none', border: 'none', padding: 0, color: 'var(--brand)', fontWeight: 600,
+                        fontSize: '12px', cursor: 'pointer', fontFamily: 'Jost, sans-serif',
+                        textDecoration: 'underline', textDecorationStyle: 'dotted', textUnderlineOffset: '3px',
+                      }}>{p.imie} {p.nazwisko}</button>
+                      {i < z.prowadzacy!.length - 1 ? ', ' : ''}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+            {/* Potwierdzenie obecności inline */}
+            {!zakonczone && (
+              <div style={{ padding: '0 14px 14px' }}>
+                {potwierdzono ? (
+                  <button onClick={() => odwolaj(z)} disabled={trwa} style={{
+                    width: '100%', padding: '10px', borderRadius: '10px',
+                    border: '0.5px solid #c8e6c9', background: 'white',
+                    color: '#2e7d32', fontSize: '13px', fontWeight: 500,
+                    cursor: 'pointer', fontFamily: 'Jost, sans-serif',
+                  }}>{trwa ? 'Cofanie...' : 'Cofnij potwierdzenie'}</button>
+                ) : (
+                  <button onClick={() => potwierdz(z)} disabled={trwa} className="login-btn" style={{ width: '100%', marginTop: 0, padding: '10px' }}>
+                    {trwa ? 'Potwierdzanie...' : '✓ Potwierdzam obecność'}
+                  </button>
+                )}
+              </div>
+            )}
+            {zakonczone && potwierdzono && (
+              <div style={{ padding: '0 14px 12px', fontSize: '12px', color: '#2e7d32' }}>✓ Byłeś/aś obecny/a</div>
+            )}
           </div>
-          <div className="sess-date">{z.daty}</div>
-          <div className="sess-rows">
-            {z.sala && z.sala !== 'Do uzupełnienia' && (
-              <div className="sess-row">
-                <span className="sess-lbl">Sala:</span> {z.sala}
-              </div>
-            )}
-            {z.adres && z.adres !== 'Do uzupełnienia' && (
-              <div className="sess-row">
-                <span className="sess-lbl">Adres:</span> {z.adres}
-              </div>
-            )}
-            {z.tematy && (
-              <div className="sess-row">
-                <span className="sess-lbl">Temat:</span> {z.tematy}
-              </div>
-            )}
-            {z.prowadzacy && z.prowadzacy.length > 0 && (
-              <div className="sess-row" style={{ marginTop: '4px', paddingTop: '6px', borderTop: '0.5px solid var(--border-soft)' }}>
-                <span className="sess-lbl">Prowadzący:</span>{' '}
-                {z.prowadzacy.map((p, i) => (
-                  <span key={p.id}>
-                    <button
-                      onClick={() => setModalProwadzacy(p)}
-                      style={{
-                        background: 'none', border: 'none', padding: 0,
-                        color: 'var(--brand)', fontWeight: 600,
-                        fontSize: '12px', cursor: 'pointer',
-                        fontFamily: 'Jost, sans-serif',
-                        textDecoration: 'underline',
-                        textDecorationStyle: 'dotted',
-                        textUnderlineOffset: '3px',
-                      }}
-                    >
-                      {p.imie} {p.nazwisko}
-                    </button>
-                    {i < z.prowadzacy!.length - 1 ? ', ' : ''}
-                  </span>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      ))}
+        );
+      })}
       {modalProwadzacy && <ModalProwadzacy p={modalProwadzacy} onZamknij={() => setModalProwadzacy(null)} />}
     </>
   );
@@ -2304,13 +2486,15 @@ function PostepKursu({ zjazdy }: { zjazdy: Zjazd[] }) {
   );
 }
 
-function EkranProfil({ user, kursant, zjazdy, onWyloguj, onAvatarZmieniony, grupaInfo }: { user: User; kursant: Kursant | null; zjazdy: Zjazd[]; onWyloguj: () => void; onAvatarZmieniony: (url: string) => void; grupaInfo: Grupa | null }) {
+function EkranProfil({ user, kursant, zjazdy, onWyloguj, onAvatarZmieniony, grupaInfo, onOtworzAnkiete }: { user: User; kursant: Kursant | null; zjazdy: Zjazd[]; onWyloguj: () => void; onAvatarZmieniony: (url: string) => void; grupaInfo: Grupa | null; onOtworzAnkiete: () => void }) {
   const [uploadowanie, setUploadowanie] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const inicjal = kursant ? kursant.imie[0] : user.email[0].toUpperCase();
   const nazwaGrupy = kursant?.grupy?.nazwa || 'Brak przypisania do grupy';
   const miasto = kursant?.grupy?.miasto || '';
   const edycja = kursant?.grupy?.edycja || '';
+  const ostatniZjazd = zjazdy.length > 0 ? zjazdy[zjazdy.length - 1] : null;
+  const ankietaDostepna = ostatniZjazd?.status === 'zakonczony';
 
   async function wgrajZdjecie(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]; if (!file) return;
@@ -2347,22 +2531,13 @@ function EkranProfil({ user, kursant, zjazdy, onWyloguj, onAvatarZmieniony, grup
 
       {/* Strefa Wiedzy */}
       {grupaInfo?.drive_link && (
-        <a
-          href={grupaInfo.drive_link}
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{ textDecoration: 'none' }}
-        >
+        <a href={grupaInfo.drive_link} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
           <div style={{
             background: 'white', borderRadius: '16px', padding: '16px 18px',
             border: '0.5px solid var(--border)', marginBottom: '10px',
             display: 'flex', alignItems: 'center', gap: '14px',
           }}>
-            <div style={{
-              width: '44px', height: '44px', borderRadius: '12px',
-              background: '#e8f0fe', display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: '22px', flexShrink: 0,
-            }}>📁</div>
+            <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: '#e8f0fe', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px', flexShrink: 0 }}>📁</div>
             <div>
               <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text)', marginBottom: '2px' }}>Strefa Wiedzy</div>
               <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Materiały szkoleniowe grupy · Google Drive</div>
@@ -2370,6 +2545,22 @@ function EkranProfil({ user, kursant, zjazdy, onWyloguj, onAvatarZmieniony, grup
             <span style={{ marginLeft: 'auto', color: 'var(--brand)', fontSize: '18px' }}>→</span>
           </div>
         </a>
+      )}
+
+      {/* Ankieta — widoczna tylko gdy kurs zakończony */}
+      {ankietaDostepna && (
+        <div onClick={onOtworzAnkiete} style={{
+          background: 'var(--brand-dark)', borderRadius: '16px', padding: '16px 18px',
+          marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '14px',
+          cursor: 'pointer',
+        }}>
+          <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: 'rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px', flexShrink: 0 }}>⭐</div>
+          <div>
+            <div style={{ fontSize: '14px', fontWeight: 600, color: 'white', marginBottom: '2px' }}>Ankieta oceny kursu</div>
+            <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.7)' }}>Twoja opinia jest dla nas ważna</div>
+          </div>
+          <span style={{ marginLeft: 'auto', color: 'white', fontSize: '18px' }}>→</span>
+        </div>
       )}
 
       <button className="btn-wyloguj" onClick={onWyloguj}>Wyloguj się</button>
@@ -2383,8 +2574,13 @@ export default function App() {
   const [grupaInfo, setGrupaInfo] = useState<Grupa | null>(null);
   const [aktywnaZakladka, setAktywnaZakladka] = useState('home');
   const [aktywneOgloszenie, setAktywneOgloszenie] = useState<Ogloszenie | null>(null);
+  const [pokazAnkiete, setPokazAnkiete] = useState(false);
   const [ogloszenia, setOgloszenia] = useState<Ogloszenie[]>([]);
   const [zjazdy, setZjazdy] = useState<Zjazd[]>([]);
+  const [zadania, setZadania] = useState<Zadanie[]>([]);
+  const [odpowiedziZadan, setOdpowiedziZadan] = useState<ZadanieOdpowiedz[]>([]);
+  const [ostatniaCzatMsg, setOstatniaCzatMsg] = useState<string | null>(null);
+  const [noweCzat, setNoweCzat] = useState(false);
   const [ladowanie, setLadowanie] = useState(true);
   const [resetMode, setResetMode] = useState(false);
 
@@ -2447,6 +2643,27 @@ export default function App() {
         });
       }
       setZjazdy((zj || []).map((z: any) => ({ ...z, prowadzacy: prowadzacyMap[z.id] || [] })));
+
+      // Pobierz zadania i odpowiedzi kursanta
+      if (grupaId) {
+        const [{ data: zad }, { data: odp }] = await Promise.all([
+          supabase.from('zadania').select('*').eq('grupa_id', grupaId).order('created_at', { ascending: false }),
+          supabase.from('zadania_odpowiedzi').select('*').eq('user_id', user!.id),
+        ]);
+        setZadania(zad || []);
+        setOdpowiedziZadan(odp || []);
+      }
+
+      // Sprawdź czy są nowe wiadomości w czacie (ostatnia wiadomość nie od tego usera)
+      if (grupaId) {
+        const { data: ostatnia } = await supabase
+          .from('wiadomosci').select('*').eq('grupa_id', grupaId)
+          .order('created_at', { ascending: false }).limit(1).single();
+        if (ostatnia && ostatnia.user_id !== user!.id) {
+          const poprzednia = localStorage.getItem(`czat_last_${grupaId}`);
+          if (poprzednia !== ostatnia.id?.toString()) setNoweCzat(true);
+        }
+      }
     }
     pobierzDane();
   }, [user]);
@@ -2487,8 +2704,24 @@ export default function App() {
   const noweCount = ogloszenia.filter((o) => o.nowe).length;
   const avatarUrl = kursant?.avatar_url;
   const inicjal = kursant ? kursant.imie[0] : user?.email?.[0]?.toUpperCase() || '?';
-  const ostatniZjazd = zjazdy.length > 0 ? zjazdy[zjazdy.length - 1] : null;
-  const ankietaDostepna = ostatniZjazd?.status === 'zakonczony';
+  const nieprzeslaneZadania = zadania.filter(z =>
+    z.typ !== 'praca_zaliczeniowa' && !odpowiedziZadan.some(o => o.zadanie_id === z.id)
+  ).length;
+
+  function nawiguj(zakl: string) {
+    setAktywneOgloszenie(null);
+    setPokazAnkiete(false);
+    setAktywnaZakladka(zakl);
+    if (zakl === 'czat') {
+      setNoweCzat(false);
+      const grupaId = kursant?.grupa_id;
+      if (grupaId) {
+        supabase.from('wiadomosci').select('id').eq('grupa_id', grupaId)
+          .order('created_at', { ascending: false }).limit(1).single()
+          .then(({ data }) => { if (data) localStorage.setItem(`czat_last_${grupaId}`, data.id.toString()); });
+      }
+    }
+  }
 
   if (ladowanie) return <div className="ladowanie">Ładowanie...</div>;
   if (resetMode) return <EkranZmianaHasla />;
@@ -2503,36 +2736,57 @@ export default function App() {
         {avatarUrl ? <img src={avatarUrl} alt="avatar" className="avatar-img" /> : <div className="avatar">{inicjal.toUpperCase()}</div>}
       </header>
       <main className="main">
-        {aktywneOgloszenie ? (
+        {pokazAnkiete ? (
+          <div>
+            <button className="btn-wroc" onClick={() => setPokazAnkiete(false)} style={{ marginBottom: '12px' }}>← Wróć do profilu</button>
+            <EkranAnkieta kursant={kursant} zjazdy={zjazdy} user={user} />
+          </div>
+        ) : aktywneOgloszenie ? (
           <EkranSzczegoly o={aktywneOgloszenie} onWroc={() => setAktywneOgloszenie(null)} />
         ) : (
           <>
-            {aktywnaZakladka === 'home' && <EkranGlowny ogloszenia={ogloszenia} zjazdy={zjazdy} onOtworzOgloszenie={otworzOgloszenie} user={user} kursant={kursant} />}
-            {aktywnaZakladka === 'zjazdy' && <EkranZjazdy zjazdy={zjazdy} />}
+            {aktywnaZakladka === 'home' && (
+              <EkranGlowny
+                ogloszenia={ogloszenia} zjazdy={zjazdy}
+                onOtworzOgloszenie={otworzOgloszenie}
+                user={user} kursant={kursant}
+                onNavigate={nawiguj}
+                zadania={zadania}
+                nieprzeslaneZadania={nieprzeslaneZadania}
+                noweCzat={noweCzat}
+              />
+            )}
+            {aktywnaZakladka === 'zjazdy' && <EkranZjazdy zjazdy={zjazdy} user={user} kursant={kursant} />}
             {aktywnaZakladka === 'ogloszenia' && <EkranOgloszenia ogloszenia={ogloszenia} onOtworzOgloszenie={otworzOgloszenie} />}
-            {aktywnaZakladka === 'czat' && <EkranCzat user={user} kursant={kursant} />}
             {aktywnaZakladka === 'zadania' && <EkranZadania user={user} kursant={kursant} />}
-            {aktywnaZakladka === 'obecnosc' && <EkranObecnosc user={user} kursant={kursant} zjazdy={zjazdy} />}
-            {aktywnaZakladka === 'ankieta' && <EkranAnkieta kursant={kursant} zjazdy={zjazdy} user={user} />}
-            {aktywnaZakladka === 'profil' && <EkranProfil user={user} kursant={kursant} zjazdy={zjazdy} onWyloguj={wyloguj} onAvatarZmieniony={onAvatarZmieniony} grupaInfo={grupaInfo} />}
+            {aktywnaZakladka === 'czat' && <EkranCzat user={user} kursant={kursant} />}
+            {aktywnaZakladka === 'profil' && (
+              <EkranProfil
+                user={user} kursant={kursant} zjazdy={zjazdy}
+                onWyloguj={wyloguj} onAvatarZmieniony={onAvatarZmieniony}
+                grupaInfo={grupaInfo}
+                onOtworzAnkiete={() => setPokazAnkiete(true)}
+              />
+            )}
           </>
         )}
       </main>
       <nav className="bottom-nav">
-        <button className={`nav-item ${aktywnaZakladka === 'home' ? 'active' : ''}`} onClick={() => { setAktywneOgloszenie(null); setAktywnaZakladka('home'); }}><Home size={20} /><span className="nav-label">Główna</span></button>
-        <button className={`nav-item ${aktywnaZakladka === 'zjazdy' ? 'active' : ''}`} onClick={() => { setAktywneOgloszenie(null); setAktywnaZakladka('zjazdy'); }}><Calendar size={20} /><span className="nav-label">Zjazdy</span></button>
-        <button className={`nav-item ${aktywnaZakladka === 'ogloszenia' ? 'active' : ''}`} onClick={() => { setAktywneOgloszenie(null); setAktywnaZakladka('ogloszenia'); }}>
+        <button className={`nav-item ${aktywnaZakladka === 'home' ? 'active' : ''}`} onClick={() => nawiguj('home')}><Home size={20} /><span className="nav-label">Główna</span></button>
+        <button className={`nav-item ${aktywnaZakladka === 'zjazdy' ? 'active' : ''}`} onClick={() => nawiguj('zjazdy')}><Calendar size={20} /><span className="nav-label">Zjazdy</span></button>
+        <button className={`nav-item ${aktywnaZakladka === 'ogloszenia' ? 'active' : ''}`} onClick={() => nawiguj('ogloszenia')}>
           <Bell size={20} /><span className="nav-label">Ogłoszenia</span>
           {noweCount > 0 && <span className="nav-badge">{noweCount}</span>}
         </button>
-        <button className={`nav-item ${aktywnaZakladka === 'zadania' ? 'active' : ''}`} onClick={() => { setAktywneOgloszenie(null); setAktywnaZakladka('zadania'); }}><BookOpen size={20} /><span className="nav-label">Zadania</span></button>
-        <button className={`nav-item ${aktywnaZakladka === 'czat' ? 'active' : ''}`} onClick={() => { setAktywneOgloszenie(null); setAktywnaZakladka('czat'); }}><MessageCircle size={20} /><span className="nav-label">Czat</span></button>
-        <button className={`nav-item ${aktywnaZakladka === 'obecnosc' ? 'active' : ''}`} onClick={() => { setAktywneOgloszenie(null); setAktywnaZakladka('obecnosc'); }}><CheckSquare size={20} /><span className="nav-label">Obecność</span></button>
-        <button className={`nav-item ${aktywnaZakladka === 'ankieta' ? 'active' : ''}`} onClick={() => { setAktywneOgloszenie(null); setAktywnaZakladka('ankieta'); }} style={{ opacity: ankietaDostepna ? 1 : 0.4 }}>
-          <Star size={20} /><span className="nav-label">Ankieta</span>
-          {ankietaDostepna && <span className="nav-badge" style={{ background: 'var(--brand)' }}>!</span>}
+        <button className={`nav-item ${aktywnaZakladka === 'zadania' ? 'active' : ''}`} onClick={() => nawiguj('zadania')}>
+          <BookOpen size={20} /><span className="nav-label">Zadania</span>
+          {nieprzeslaneZadania > 0 && <span className="nav-badge">{nieprzeslaneZadania}</span>}
         </button>
-        <button className={`nav-item ${aktywnaZakladka === 'profil' ? 'active' : ''}`} onClick={() => { setAktywneOgloszenie(null); setAktywnaZakladka('profil'); }}><User size={20} /><span className="nav-label">Profil</span></button>
+        <button className={`nav-item ${aktywnaZakladka === 'czat' ? 'active' : ''}`} onClick={() => nawiguj('czat')}>
+          <MessageCircle size={20} /><span className="nav-label">Czat</span>
+          {noweCzat && <span className="nav-badge" style={{ background: '#1976d2' }}>•</span>}
+        </button>
+        <button className={`nav-item ${aktywnaZakladka === 'profil' ? 'active' : ''}`} onClick={() => nawiguj('profil')}><User size={20} /><span className="nav-label">Profil</span></button>
       </nav>
     </div>
   );
