@@ -62,6 +62,8 @@ type Zjazd = {
   tematy: string;
   status: string;
   data_zjazdu: string;
+  data_dzien1: string | null;
+  data_dzien2: string | null;
   grupa_id: number;
   prowadzacy?: Prowadzacy[];
 };
@@ -109,8 +111,14 @@ type Obecnosc = {
   id: string;
   zjazd_id: number;
   user_id: string;
+  grupa_id: number;
   imie: string;
   nazwisko: string;
+  dzien: number;
+  status: string;
+  powod_nieobecnosci: string | null;
+  zweryfikowane_przez: string | null;
+  zweryfikowane_at: string | null;
   confirmed_at: string;
 };
 
@@ -1313,6 +1321,10 @@ function PanelProwadzacego({ user, kursant, onWyloguj }: { user: User; kursant: 
                 )}
               </>
             )}
+
+            {aktywnaZakladka === 'obecnosc' && (
+              <WeryfikacjaObecnosci zjazdy={zjazdy} grupy={mojeGrupy} kursanci={kursanci} prowadzacyUserId={user.id} />
+            )}
           </>
         )}
       </main>
@@ -1320,10 +1332,147 @@ function PanelProwadzacego({ user, kursant, onWyloguj }: { user: User; kursant: 
       <nav className="bottom-nav">
         <button className={`nav-item ${aktywnaZakladka === 'zadania' ? 'active' : ''}`} onClick={() => setAktywnaZakladka('zadania')}><BookOpen size={20} /><span className="nav-label">Zadania</span></button>
         <button className={`nav-item ${aktywnaZakladka === 'zjazdy' ? 'active' : ''}`} onClick={() => setAktywnaZakladka('zjazdy')}><Calendar size={20} /><span className="nav-label">Zjazdy</span></button>
+        <button className={`nav-item ${aktywnaZakladka === 'obecnosc' ? 'active' : ''}`} onClick={() => setAktywnaZakladka('obecnosc')}><CheckSquare size={20} /><span className="nav-label">Obecność</span></button>
         <button className={`nav-item ${aktywnaZakladka === 'kursanci' ? 'active' : ''}`} onClick={() => setAktywnaZakladka('kursanci')}><User size={20} /><span className="nav-label">Kursanci</span></button>
         <button className={`nav-item ${aktywnaZakladka === 'ogloszenia' ? 'active' : ''}`} onClick={() => setAktywnaZakladka('ogloszenia')}><Bell size={20} /><span className="nav-label">Ogłoszenia</span></button>
       </nav>
     </div>
+  );
+}
+
+// ─── WERYFIKACJA OBECNOŚCI (prowadzący) ──────────────────────────────────────
+
+function WeryfikacjaObecnosci({ zjazdy, grupy, kursanci, prowadzacyUserId }: {
+  zjazdy: Zjazd[];
+  grupy: Grupa[];
+  kursanci: KursantAdmin[];
+  prowadzacyUserId: string;
+}) {
+  const [wybranyZjazd, setWybranyZjazd] = useState('');
+  const [obecnosci, setObecnosci] = useState<Obecnosc[]>([]);
+  const [ladowanie, setLadowanie] = useState(false);
+  const [wybranaGrupa, setWybranaGrupa] = useState('');
+
+  const zjazdyFiltr = wybranaGrupa
+    ? zjazdy.filter(z => z.grupa_id === parseInt(wybranaGrupa))
+    : zjazdy;
+
+  useEffect(() => {
+    if (!wybranyZjazd) { setObecnosci([]); return; }
+    setLadowanie(true);
+    supabase.from('obecnosci').select('*').eq('zjazd_id', parseInt(wybranyZjazd))
+      .then(({ data }) => { setObecnosci(data || []); setLadowanie(false); });
+  }, [wybranyZjazd]);
+
+  async function zweryfikuj(obecnoscId: string, zweryfikowano: boolean) {
+    await supabase.from('obecnosci').update({
+      zweryfikowano,
+      zweryfikowano_przez: zweryfikowano ? prowadzacyUserId : null,
+    }).eq('id', obecnoscId);
+    const { data } = await supabase.from('obecnosci').select('*').eq('zjazd_id', parseInt(wybranyZjazd));
+    setObecnosci(data || []);
+  }
+
+  async function dodajRecznieObecnosc(kursantUserId: string, imie: string, nazwisko: string, dzien: 1 | 2, zjazdId: number) {
+    const zjazd = zjazdy.find(z => z.id === zjazdId);
+    if (!zjazd) return;
+    await supabase.from('obecnosci').upsert([{
+      zjazd_id: zjazdId,
+      user_id: kursantUserId,
+      grupa_id: zjazd.grupa_id,
+      imie, nazwisko, dzien,
+      status: 'potwierdzono',
+      zweryfikowane_przez: user.id,
+      zweryfikowano_przez: prowadzacyUserId,
+    }], { onConflict: 'zjazd_id,user_id,dzien' });
+    const { data } = await supabase.from('obecnosci').select('*').eq('zjazd_id', zjazdId);
+    setObecnosci(data || []);
+  }
+
+  const zjazd = zjazdy.find(z => z.id === parseInt(wybranyZjazd));
+  const kursanciZjazdu = zjazd ? kursanci.filter(k => k.grupa_id === zjazd.grupa_id) : [];
+
+  return (
+    <>
+      <h2 className="page-title">Weryfikacja obecności</h2>
+
+      {grupy.length > 1 && (
+        <div className="login-field" style={{ marginBottom: '10px' }}>
+          <label>Grupa</label>
+          <select value={wybranaGrupa} onChange={e => { setWybranaGrupa(e.target.value); setWybranyZjazd(''); }}>
+            <option value="">Wszystkie grupy</option>
+            {grupy.map(g => <option key={g.id} value={g.id}>{g.nazwa}</option>)}
+          </select>
+        </div>
+      )}
+
+      <div className="login-field" style={{ marginBottom: '16px' }}>
+        <label>Zjazd</label>
+        <select value={wybranyZjazd} onChange={e => setWybranyZjazd(e.target.value)}>
+          <option value="">Wybierz zjazd</option>
+          {zjazdyFiltr.map(z => <option key={z.id} value={z.id}>Zjazd {z.nr} — {z.daty}</option>)}
+        </select>
+      </div>
+
+      {wybranyZjazd && ladowanie && <div style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '20px' }}>Ładowanie...</div>}
+
+      {wybranyZjazd && !ladowanie && (
+        <>
+          {[1, 2].map(dzienNr => (
+            <div key={dzienNr} style={{ marginBottom: '20px' }}>
+              <h3 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '18px', color: 'var(--brand)', marginBottom: '10px' }}>
+                Dzień {dzienNr} {dzienNr === 1 ? '· Sobota' : '· Niedziela'}
+              </h3>
+              {kursanciZjazdu.map(k => {
+                const wpis = obecnosci.find(o => o.user_id === k.user_id && o.dzien === dzienNr);
+                return (
+                  <div key={k.id} className="profil-card" style={{ marginBottom: '6px' }}>
+                    <div className="profil-row">
+                      <span style={{ fontSize: '13px', fontWeight: 500 }}>{k.imie} {k.nazwisko}</span>
+                      <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                        {!wpis && (
+                          <button onClick={() => dodajRecznieObecnosc(k.user_id, k.imie, k.nazwisko, dzienNr as 1 | 2, parseInt(wybranyZjazd))}
+                            style={{ fontSize: '11px', padding: '3px 8px', borderRadius: '8px', background: '#e8f5e9', color: '#2e7d32', border: '0.5px solid #c8e6c9', cursor: 'pointer', fontFamily: 'Jost, sans-serif' }}>
+                            + Dodaj
+                          </button>
+                        )}
+                        {wpis && (
+                          <>
+                            <span style={{
+                              fontSize: '10px', fontWeight: 600, padding: '3px 8px', borderRadius: '20px',
+                              background: wpis.status === 'potwierdzono' ? '#e8f5e9' : '#ffebee',
+                              color: wpis.status === 'potwierdzono' ? '#2e7d32' : '#c62828',
+                            }}>
+                              {wpis.status === 'potwierdzono' ? '✓ Obecny/a' : '✕ Nieobecny/a'}
+                            </span>
+                            {wpis.zweryfikowane_przez ? (
+                              <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>✓ zweryfikowano</span>
+                            ) : (
+                              <button onClick={() => zweryfikuj(wpis.id, true)}
+                                style={{ fontSize: '11px', padding: '3px 8px', borderRadius: '8px', background: 'var(--brand-light)', color: 'var(--brand)', border: '0.5px solid var(--brand-mid)', cursor: 'pointer', fontFamily: 'Jost, sans-serif' }}>
+                                Zweryfikuj
+                              </button>
+                            )}
+                          </>
+                        )}
+                      </div>
+                    </div>
+                    {wpis?.powod_nieobecnosci && (
+                      <div style={{ padding: '0 16px 8px', fontSize: '12px', color: 'var(--text-muted)', fontStyle: 'italic' }}>
+                        Powód: {wpis.powod_nieobecnosci}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+              {kursanciZjazdu.length === 0 && (
+                <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Brak kursantów w tej grupie.</p>
+              )}
+            </div>
+          ))}
+        </>
+      )}
+    </>
   );
 }
 
@@ -1428,6 +1577,8 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
       tematy: edytowanyZjazd.tematy,
       status: edytowanyZjazd.status,
       data_zjazdu: edytowanyZjazd.data_zjazdu,
+      data_dzien1: edytowanyZjazd.data_dzien1 || null,
+      data_dzien2: edytowanyZjazd.data_dzien2 || null,
       grupa_id: edytowanyZjazd.grupa_id,
     }).eq('id', edytowanyZjazd.id);
     if (error) { setKomunikat('Blad: ' + error.message); return; }
@@ -1607,6 +1758,8 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
                   <div className="login-field"><label>Numer zjazdu</label><input type="number" value={edytowanyZjazd.nr} onChange={e => setEdytowanyZjazd({ ...edytowanyZjazd, nr: parseInt(e.target.value) })} required /></div>
                   <div className="login-field"><label>Daty</label><input type="text" value={edytowanyZjazd.daty} onChange={e => setEdytowanyZjazd({ ...edytowanyZjazd, daty: e.target.value })} required /></div>
                   <div className="login-field"><label>Data zjazdu</label><input type="date" value={edytowanyZjazd.data_zjazdu} onChange={e => setEdytowanyZjazd({ ...edytowanyZjazd, data_zjazdu: e.target.value })} required /></div>
+                  <div className="login-field"><label>Dzień 1 (Sobota)</label><input type="date" value={edytowanyZjazd.data_dzien1 || ''} onChange={e => setEdytowanyZjazd({ ...edytowanyZjazd, data_dzien1: e.target.value || null })} /></div>
+                  <div className="login-field"><label>Dzień 2 (Niedziela)</label><input type="date" value={edytowanyZjazd.data_dzien2 || ''} onChange={e => setEdytowanyZjazd({ ...edytowanyZjazd, data_dzien2: e.target.value || null })} /></div>
                   <div className="login-field"><label>Sala</label><input type="text" value={edytowanyZjazd.sala} onChange={e => setEdytowanyZjazd({ ...edytowanyZjazd, sala: e.target.value })} required /></div>
                   <div className="login-field"><label>Adres</label><input type="text" value={edytowanyZjazd.adres} onChange={e => setEdytowanyZjazd({ ...edytowanyZjazd, adres: e.target.value })} required /></div>
                   <div className="login-field"><label>Tematy</label><input type="text" value={edytowanyZjazd.tematy} onChange={e => setEdytowanyZjazd({ ...edytowanyZjazd, tematy: e.target.value })} required /></div>
@@ -1623,6 +1776,8 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
                   <div className="login-field"><label>Numer zjazdu</label><input type="number" value={nowyZjazd.nr} onChange={e => setNowyZjazd({ ...nowyZjazd, nr: e.target.value })} required /></div>
                   <div className="login-field"><label>Daty</label><input type="text" value={nowyZjazd.daty} onChange={e => setNowyZjazd({ ...nowyZjazd, daty: e.target.value })} required /></div>
                   <div className="login-field"><label>Data zjazdu</label><input type="date" value={nowyZjazd.data_zjazdu} onChange={e => setNowyZjazd({ ...nowyZjazd, data_zjazdu: e.target.value })} required /></div>
+                  <div className="login-field"><label>Dzień 1 (Sobota)</label><input type="date" value={(nowyZjazd as any).data_dzien1 || ''} onChange={e => setNowyZjazd({ ...nowyZjazd, ...(nowyZjazd as any), data_dzien1: e.target.value || null })} /></div>
+                  <div className="login-field"><label>Dzień 2 (Niedziela)</label><input type="date" value={(nowyZjazd as any).data_dzien2 || ''} onChange={e => setNowyZjazd({ ...nowyZjazd, ...(nowyZjazd as any), data_dzien2: e.target.value || null })} /></div>
                   <div className="login-field"><label>Sala</label><input type="text" value={nowyZjazd.sala} onChange={e => setNowyZjazd({ ...nowyZjazd, sala: e.target.value })} required /></div>
                   <div className="login-field"><label>Adres</label><input type="text" value={nowyZjazd.adres} onChange={e => setNowyZjazd({ ...nowyZjazd, adres: e.target.value })} required /></div>
                   <div className="login-field"><label>Tematy</label><input type="text" value={nowyZjazd.tematy} onChange={e => setNowyZjazd({ ...nowyZjazd, tematy: e.target.value })} required /></div>
@@ -2222,8 +2377,10 @@ function ModalProwadzacy({ p, onZamknij }: { p: Prowadzacy; onZamknij: () => voi
 
 function EkranZjazdy({ zjazdy, user, kursant }: { zjazdy: Zjazd[]; user: User; kursant: Kursant | null }) {
   const [obecnosci, setObecnosci] = useState<Obecnosc[]>([]);
-  const [wysylanie, setWysylanie] = useState<number | null>(null);
   const [modalProwadzacy, setModalProwadzacy] = useState<Prowadzacy | null>(null);
+  const [aktywnyFormularz, setAktywnyFormularz] = useState<{ zjazdId: number; dzien: 1 | 2; typ: 'obecnosc' | 'nieobecnosc' } | null>(null);
+  const [powod, setPowod] = useState('');
+  const [wysylanie, setWysylanie] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -2231,88 +2388,157 @@ function EkranZjazdy({ zjazdy, user, kursant }: { zjazdy: Zjazd[]; user: User; k
       .then(({ data }) => setObecnosci(data || []));
   }, [user]);
 
-  const czyPotwierdzony = (zjazdId: number) => obecnosci.some(o => o.zjazd_id === zjazdId);
-
-  async function potwierdz(z: Zjazd) {
-    if (!kursant) return;
-    setWysylanie(z.id);
-    await supabase.from('obecnosci').insert([{
-      zjazd_id: z.id, user_id: user.id,
-      grupa_id: kursant.grupa_id, imie: kursant.imie, nazwisko: kursant.nazwisko,
-    }]);
+  async function odswiezObecnosci() {
     const { data } = await supabase.from('obecnosci').select('*').eq('user_id', user.id);
     setObecnosci(data || []);
-    setWysylanie(null);
   }
 
-  async function odwolaj(z: Zjazd) {
-    setWysylanie(z.id);
-    await supabase.from('obecnosci').delete().eq('zjazd_id', z.id).eq('user_id', user.id);
-    const { data } = await supabase.from('obecnosci').select('*').eq('user_id', user.id);
-    setObecnosci(data || []);
-    setWysylanie(null);
+  const pobierzDzien = (zjazdId: number, dzien: 1 | 2) =>
+    obecnosci.find(o => o.zjazd_id === zjazdId && o.dzien === dzien);
+
+  async function zapiszObecnosc(zjazd: Zjazd, dzien: 1 | 2, status: 'potwierdzono' | 'nieobecnosc') {
+    if (!kursant) return;
+    setWysylanie(true);
+    const istniejaca = pobierzDzien(zjazd.id, dzien);
+    if (istniejaca) {
+      await supabase.from('obecnosci').update({ status, powod_nieobecnosci: status === 'nieobecnosc' ? powod : null, zweryfikowane_przez: null }).eq('id', istniejaca.id);
+    } else {
+      await supabase.from('obecnosci').insert([{
+        zjazd_id: zjazd.id, user_id: user.id,
+        grupa_id: kursant.grupa_id, imie: kursant.imie, nazwisko: kursant.nazwisko,
+        dzien, status, powod_nieobecnosci: status === 'nieobecnosc' ? powod : null,
+      }]);
+    }
+    await odswiezObecnosci();
+    setAktywnyFormularz(null);
+    setPowod('');
+    setWysylanie(false);
+  }
+
+  async function usunObecnosc(zjazdId: number, dzien: 1 | 2) {
+    await supabase.from('obecnosci').delete().eq('zjazd_id', zjazdId).eq('user_id', user.id).eq('dzien', dzien);
+    await odswiezObecnosci();
+  }
+
+  function formatujDate(data: string | null) {
+    if (!data) return null;
+    return new Date(data).toLocaleDateString('pl-PL', { weekday: 'long', day: 'numeric', month: 'long' });
+  }
+
+  function KafelekDnia({ zjazd, dzien, label }: { zjazd: Zjazd; dzien: 1 | 2; label: string }) {
+    const wpis = pobierzDzien(zjazd.id, dzien);
+    const zakonczone = zjazd.status === 'zakonczony';
+    const formularzAktywny = aktywnyFormularz?.zjazdId === zjazd.id && aktywnyFormularz?.dzien === dzien;
+
+    const kolorTla = !wpis ? 'var(--surface-2)' :
+      wpis.status === 'potwierdzono' ? '#f0faf4' : '#fff8f8';
+    const kolorObramowania = !wpis ? 'var(--border)' :
+      wpis.status === 'potwierdzono' ? '#7aab8a' : '#e57373';
+
+    return (
+      <div style={{ flex: 1, borderRadius: '12px', border: `0.5px solid ${kolorObramowania}`, background: kolorTla, padding: '10px 12px' }}>
+        <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: '4px' }}>{label}</div>
+        <div style={{ fontSize: '12px', color: 'var(--text)', marginBottom: '8px' }}>{formatujDate(dzien === 1 ? zjazd.data_dzien1 : zjazd.data_dzien2) || '—'}</div>
+
+        {/* Status */}
+        {wpis && (
+          <div style={{ marginBottom: '6px' }}>
+            {wpis.status === 'potwierdzono' ? (
+              <span style={{ fontSize: '11px', color: '#2e7d32', fontWeight: 600 }}>
+                ✓ Potwierdzono {wpis.zweryfikowane_przez ? '· ✓ Zweryfikowano' : ''}
+              </span>
+            ) : (
+              <div>
+                <span style={{ fontSize: '11px', color: '#c62828', fontWeight: 600 }}>✕ Nieobecność {wpis.zweryfikowane_przez ? '· ✓ Zweryfikowano' : ''}</span>
+                {wpis.powod_nieobecnosci && <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px', fontStyle: 'italic' }}>{wpis.powod_nieobecnosci}</p>}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Formularz nieobecności */}
+        {formularzAktywny && aktywnyFormularz?.typ === 'nieobecnosc' && (
+          <div style={{ marginBottom: '8px' }}>
+            <textarea value={powod} onChange={e => setPowod(e.target.value)} placeholder="Powód nieobecności..." rows={2}
+              style={{ width: '100%', fontSize: '12px', padding: '6px 8px', borderRadius: '8px', border: '0.5px solid var(--border)', fontFamily: 'Jost, sans-serif', resize: 'none' }} />
+            <div style={{ display: 'flex', gap: '6px', marginTop: '6px' }}>
+              <button onClick={() => zapiszObecnosc(zjazd, dzien, 'nieobecnosc')} disabled={wysylanie}
+                style={{ flex: 1, padding: '7px', borderRadius: '8px', background: '#c62828', color: 'white', border: 'none', fontSize: '11px', cursor: 'pointer', fontFamily: 'Jost, sans-serif', fontWeight: 500 }}>
+                {wysylanie ? '...' : 'Wyślij'}
+              </button>
+              <button onClick={() => { setAktywnyFormularz(null); setPowod(''); }}
+                style={{ padding: '7px 10px', borderRadius: '8px', background: 'white', border: '0.5px solid var(--border)', fontSize: '11px', cursor: 'pointer', color: 'var(--text-muted)' }}>
+                Anuluj
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Przyciski akcji */}
+        {!zakonczone && !formularzAktywny && (
+          <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+            {(!wpis || wpis.status === 'nieobecnosc') && (
+              <button onClick={() => zapiszObecnosc(zjazd, dzien, 'potwierdzono')} disabled={wysylanie}
+                style={{ flex: 1, padding: '6px 4px', borderRadius: '8px', background: '#e8f5e9', color: '#2e7d32', border: '0.5px solid #c8e6c9', fontSize: '11px', cursor: 'pointer', fontWeight: 500, fontFamily: 'Jost, sans-serif', whiteSpace: 'nowrap' }}>
+                ✓ Będę
+              </button>
+            )}
+            {(!wpis || wpis.status === 'potwierdzono') && (
+              <button onClick={() => { setAktywnyFormularz({ zjazdId: zjazd.id, dzien, typ: 'nieobecnosc' }); setPowod(''); }}
+                style={{ flex: 1, padding: '6px 4px', borderRadius: '8px', background: '#fff8f8', color: '#c62828', border: '0.5px solid #ffcdd2', fontSize: '11px', cursor: 'pointer', fontWeight: 500, fontFamily: 'Jost, sans-serif', whiteSpace: 'nowrap' }}>
+                ✕ Nie będę
+              </button>
+            )}
+            {wpis && (
+              <button onClick={() => usunObecnosc(zjazd.id, dzien)}
+                style={{ padding: '6px 8px', borderRadius: '8px', background: 'white', border: '0.5px solid var(--border)', fontSize: '11px', cursor: 'pointer', color: 'var(--text-muted)' }}>
+                ×
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+    );
   }
 
   return (
     <>
       <h2 className="page-title">Plan zjazdów</h2>
-      {zjazdy.map((z) => {
-        const potwierdzono = czyPotwierdzony(z.id);
-        const trwa = wysylanie === z.id;
-        const zakonczone = z.status === 'zakonczony';
-        return (
-          <div key={z.id} className={`sess-card ${z.status}`} style={{ borderColor: potwierdzono ? '#7aab8a' : undefined }}>
-            <div className="sess-top" style={{ background: potwierdzono ? '#f0faf4' : undefined }}>
-              <span className="sess-nr">Zjazd {z.nr}</span>
-              <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-                {potwierdzono && <span style={{ fontSize: '10px', fontWeight: 600, color: '#2e7d32', background: '#e8f5e9', padding: '3px 8px', borderRadius: '20px', textTransform: 'uppercase' }}>✓ Obecny/a</span>}
-                <span className={`s-badge s-${z.status}`}>{z.status === 'nadchodzacy' ? 'Nadchodzący' : 'Zakończony'}</span>
+      {zjazdy.map((z) => (
+        <div key={z.id} className={`sess-card ${z.status}`}>
+          <div className="sess-top">
+            <span className="sess-nr">Zjazd {z.nr}</span>
+            <span className={`s-badge s-${z.status}`}>{z.status === 'nadchodzacy' ? 'Nadchodzący' : 'Zakończony'}</span>
+          </div>
+          <div className="sess-date">{z.daty}</div>
+          <div className="sess-rows">
+            {z.sala && z.sala !== 'Do uzupełnienia' && <div className="sess-row"><span className="sess-lbl">Sala:</span> {z.sala}</div>}
+            {z.adres && z.adres !== 'Do uzupełnienia' && <div className="sess-row"><span className="sess-lbl">Adres:</span> {z.adres}</div>}
+            {z.tematy && <div className="sess-row"><span className="sess-lbl">Temat:</span> {z.tematy}</div>}
+            {z.prowadzacy && z.prowadzacy.length > 0 && (
+              <div className="sess-row" style={{ marginTop: '4px', paddingTop: '6px', borderTop: '0.5px solid var(--border-soft)' }}>
+                <span className="sess-lbl">Prowadzący:</span>{' '}
+                {z.prowadzacy.map((p, i) => (
+                  <span key={p.id}>
+                    <button onClick={() => setModalProwadzacy(p)} style={{
+                      background: 'none', border: 'none', padding: 0, color: 'var(--brand)', fontWeight: 600,
+                      fontSize: '12px', cursor: 'pointer', fontFamily: 'Jost, sans-serif',
+                      textDecoration: 'underline', textDecorationStyle: 'dotted', textUnderlineOffset: '3px',
+                    }}>{p.imie} {p.nazwisko}</button>
+                    {i < z.prowadzacy!.length - 1 ? ', ' : ''}
+                  </span>
+                ))}
               </div>
-            </div>
-            <div className="sess-date">{z.daty}</div>
-            <div className="sess-rows">
-              {z.sala && z.sala !== 'Do uzupełnienia' && <div className="sess-row"><span className="sess-lbl">Sala:</span> {z.sala}</div>}
-              {z.adres && z.adres !== 'Do uzupełnienia' && <div className="sess-row"><span className="sess-lbl">Adres:</span> {z.adres}</div>}
-              {z.tematy && <div className="sess-row"><span className="sess-lbl">Temat:</span> {z.tematy}</div>}
-              {z.prowadzacy && z.prowadzacy.length > 0 && (
-                <div className="sess-row" style={{ marginTop: '4px', paddingTop: '6px', borderTop: '0.5px solid var(--border-soft)' }}>
-                  <span className="sess-lbl">Prowadzący:</span>{' '}
-                  {z.prowadzacy.map((p, i) => (
-                    <span key={p.id}>
-                      <button onClick={() => setModalProwadzacy(p)} style={{
-                        background: 'none', border: 'none', padding: 0, color: 'var(--brand)', fontWeight: 600,
-                        fontSize: '12px', cursor: 'pointer', fontFamily: 'Jost, sans-serif',
-                        textDecoration: 'underline', textDecorationStyle: 'dotted', textUnderlineOffset: '3px',
-                      }}>{p.imie} {p.nazwisko}</button>
-                      {i < z.prowadzacy!.length - 1 ? ', ' : ''}
-                    </span>
-                  ))}
-                </div>
-              )}
-            </div>
-            {/* Potwierdzenie obecności inline */}
-            {!zakonczone && (
-              <div style={{ padding: '0 14px 14px' }}>
-                {potwierdzono ? (
-                  <button onClick={() => odwolaj(z)} disabled={trwa} style={{
-                    width: '100%', padding: '10px', borderRadius: '10px',
-                    border: '0.5px solid #c8e6c9', background: 'white',
-                    color: '#2e7d32', fontSize: '13px', fontWeight: 500,
-                    cursor: 'pointer', fontFamily: 'Jost, sans-serif',
-                  }}>{trwa ? 'Cofanie...' : 'Cofnij potwierdzenie'}</button>
-                ) : (
-                  <button onClick={() => potwierdz(z)} disabled={trwa} className="login-btn" style={{ width: '100%', marginTop: 0, padding: '10px' }}>
-                    {trwa ? 'Potwierdzanie...' : '✓ Potwierdzam obecność'}
-                  </button>
-                )}
-              </div>
-            )}
-            {zakonczone && potwierdzono && (
-              <div style={{ padding: '0 14px 12px', fontSize: '12px', color: '#2e7d32' }}>✓ Byłeś/aś obecny/a</div>
             )}
           </div>
-        );
-      })}
+
+        {/* Kafelki per dzień */}
+          <div style={{ display: 'flex', gap: '8px', padding: '8px 14px 14px' }}>
+            <KafelekDnia zjazd={z} dzien={1} label={z.data_dzien1 ? formatujDate(z.data_dzien1) || 'Dzień 1' : 'Dzień 1'} />
+            {z.data_dzien2 && <KafelekDnia zjazd={z} dzien={2} label={formatujDate(z.data_dzien2) || 'Dzień 2'} />}
+          </div>
+        </div>
+      ))}
       {modalProwadzacy && <ModalProwadzacy p={modalProwadzacy} onZamknij={() => setModalProwadzacy(null)} />}
     </>
   );
