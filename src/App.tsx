@@ -1733,7 +1733,6 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
                 background: k.kolor, borderRadius: '18px', padding: '20px 16px 18px',
                 border: `0.5px solid ${k.ramka}`, cursor: 'pointer',
                 display: 'flex', flexDirection: 'column', gap: '8px',
-                active: { transform: 'scale(0.97)' },
               }}>
                 <div style={{ fontSize: '30px', lineHeight: 1 }}>{k.emoji}</div>
                 <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text)' }}>{k.label}</div>
