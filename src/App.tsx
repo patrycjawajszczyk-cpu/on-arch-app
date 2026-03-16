@@ -981,7 +981,7 @@ function EkranCzat({ user, kursant }: { user: User; kursant: Kursant | null }) {
           const poprzedniaTaSama = idx > 0 && wiadomosci[idx - 1].user_id === w.user_id;
 
           return (
-            <div key={w.id} className={`czat-msg ${moja ? 'moja' : 'obca'}`} style={{ marginBottom: czyPokazac ? '10px' : '2px' }}>
+            <div key={w.id} className={`czat-msg ${moja ? 'moja' : 'obca'}`} style={{ marginBottom: czyPokazac ? '10px' : '2px', maxWidth: '85%' }}>
               {!moja && (
                 <div style={{ width: '24px', flexShrink: 0, alignSelf: 'flex-end', marginRight: '5px' }}>
                   {czyPokazac ? (
@@ -999,11 +999,11 @@ function EkranCzat({ user, kursant }: { user: User; kursant: Kursant | null }) {
                   ) : <div style={{ width: '24px' }} />}
                 </div>
               )}
-              <div style={{ maxWidth: '75%' }}>
+              <div style={{ maxWidth: '100%' }}>
                 {!moja && !poprzedniaTaSama && (
                   <div className="czat-imie" style={{ marginLeft: '2px' }}>{w.imie}</div>
                 )}
-                <div className="czat-buble">{w.tekst}</div>
+                <div className="czat-buble" style={{ maxWidth: '100%', wordBreak: 'break-word', whiteSpace: 'pre-wrap' }}>{w.tekst}</div>
                 {czyPokazac && (
                   <div className="czat-czas">{new Date(w.created_at).toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' })}</div>
                 )}
