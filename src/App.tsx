@@ -1364,10 +1364,10 @@ function WeryfikacjaObecnosci({ zjazdy, grupy, kursanci, prowadzacyUserId }: {
       .then(({ data }) => { setObecnosci(data || []); setLadowanie(false); });
   }, [wybranyZjazd]);
 
-  async function zweryfikuj(obecnoscId: string, zweryfikowano: boolean) {
+  async function zweryfikuj(obecnoscId: string, weryfikuj: boolean) {
     await supabase.from('obecnosci').update({
-      zweryfikowano,
-      zweryfikowano_przez: zweryfikowano ? prowadzacyUserId : null,
+      zweryfikowane_przez: weryfikuj ? user.id : null,
+      zweryfikowane_at: weryfikuj ? new Date().toISOString() : null,
     }).eq('id', obecnoscId);
     const { data } = await supabase.from('obecnosci').select('*').eq('zjazd_id', parseInt(wybranyZjazd));
     setObecnosci(data || []);
@@ -1382,7 +1382,7 @@ function WeryfikacjaObecnosci({ zjazdy, grupy, kursanci, prowadzacyUserId }: {
       grupa_id: zjazd.grupa_id,
       imie, nazwisko, dzien,
       status: 'potwierdzono',
-      zweryfikowane_przez: user.id,
+      zweryfikowano: true,
       zweryfikowano_przez: prowadzacyUserId,
     }], { onConflict: 'zjazd_id,user_id,dzien' });
     const { data } = await supabase.from('obecnosci').select('*').eq('zjazd_id', zjazdId);
@@ -1418,10 +1418,12 @@ function WeryfikacjaObecnosci({ zjazdy, grupy, kursanci, prowadzacyUserId }: {
 
       {wybranyZjazd && !ladowanie && (
         <>
-          {[1, 2].map(dzienNr => (
+          {[1, 2].filter(dzienNr => dzienNr === 1 || zjazd?.data_dzien2).map(dzienNr => (
             <div key={dzienNr} style={{ marginBottom: '20px' }}>
               <h3 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '18px', color: 'var(--brand)', marginBottom: '10px' }}>
-                Dzień {dzienNr} {dzienNr === 1 ? '· Sobota' : '· Niedziela'}
+                Dzień {dzienNr}
+                {dzienNr === 1 && zjazd?.data_dzien1 && ` · ${new Date(zjazd.data_dzien1).toLocaleDateString('pl-PL', { weekday: 'long', day: 'numeric', month: 'long' })}`}
+                {dzienNr === 2 && zjazd?.data_dzien2 && ` · ${new Date(zjazd.data_dzien2).toLocaleDateString('pl-PL', { weekday: 'long', day: 'numeric', month: 'long' })}`}
               </h3>
               {kursanciZjazdu.map(k => {
                 const wpis = obecnosci.find(o => o.user_id === k.user_id && o.dzien === dzienNr);
@@ -1489,7 +1491,7 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
   const [edytowane, setEdytowane] = useState<Ogloszenie | null>(null);
   const [edytowanyZjazd, setEdytowanyZjazd] = useState<Zjazd | null>(null);
   const [noweOgl, setNoweOgl] = useState({ typ: 'Informacja', tytul: '', tresc: '', szczegoly: '', nowe: true, grupa_id: '' });
-  const [nowyZjazd, setNowyZjazd] = useState({ nr: '', daty: '', sala: '', adres: '', tematy: '', status: 'nadchodzacy', data_zjazdu: '', grupa_id: '', prowadzacy_id: '' });
+  const [nowyZjazd, setNowyZjazd] = useState({ nr: '', daty: '', sala: '', adres: '', tematy: '', status: 'nadchodzacy', data_zjazdu: '', data_dzien1: '', data_dzien2: '', grupa_id: '', prowadzacy_id: '' });
   const [nowyKursant, setNowyKursant] = useState({ imie: '', nazwisko: '', email: '', grupa_id: '' });
   const [nowaGrupa, setNowaGrupa] = useState({ nazwa: '', miasto: '', edycja: '', drive_link: '' });
   const [nowyProwadzacy, setNowyProwadzacy] = useState({ imie: '', nazwisko: '', specjalizacja: '' });
@@ -1554,6 +1556,8 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
       tematy: nowyZjazd.tematy,
       status: nowyZjazd.status,
       data_zjazdu: nowyZjazd.data_zjazdu,
+      data_dzien1: nowyZjazd.data_dzien1 || nowyZjazd.data_zjazdu,
+      data_dzien2: nowyZjazd.data_dzien2 || null,
       grupa_id: parseInt(nowyZjazd.grupa_id),
     }]).select().single();
     if (error) { setKomunikat('Blad: ' + error.message); return; }
@@ -1561,7 +1565,7 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
       await supabase.from('zjazdy_prowadzacy').insert([{ zjazd_id: nowyZjazdData.id, prowadzacy_id: parseInt(nowyZjazd.prowadzacy_id) }]);
     }
     setKomunikat('Zjazd dodany!');
-    setNowyZjazd({ nr: '', daty: '', sala: '', adres: '', tematy: '', status: 'nadchodzacy', data_zjazdu: '', grupa_id: '', prowadzacy_id: '' });
+    setNowyZjazd({ nr: '', daty: '', sala: '', adres: '', tematy: '', status: 'nadchodzacy', data_zjazdu: '', data_dzien1: '', data_dzien2: '', grupa_id: '', prowadzacy_id: '' });
     pobierzZjazdy();
   }
 
