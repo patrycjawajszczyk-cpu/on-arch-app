@@ -3,6 +3,20 @@ import './App.css';
 import { supabase } from './supabase';
 import { Home, Calendar, Bell, MessageCircle, User, CheckSquare, BookOpen } from 'lucide-react';
 
+function OnArchLogo({ color = '#2a1f1f', height = 28 }: { color?: string; height?: number }) {
+  const scale = height / 80;
+  const w = 400 * scale;
+  return (
+    <svg width={w} height={height} viewBox="0 0 400 80" xmlns="http://www.w3.org/2000/svg">
+      <g transform="translate(80,40)">
+        <circle cx="22" cy="0" r="22" fill="none" stroke={color} strokeWidth="1.8"/>
+        <path d="M56 0 A22 22 0 0 1 100 0" fill="none" stroke={color} strokeWidth="1.8"/>
+        <text x="116" y="16" fontFamily="'Helvetica Neue',Helvetica,Arial,sans-serif" fontWeight="200" fontSize="48" letterSpacing="4" fill={color}>ARCH</text>
+      </g>
+    </svg>
+  );
+}
+
 type Ogloszenie = {
   id: string;
   typ: string;
@@ -785,7 +799,7 @@ function EkranZmianaHasla() {
 
   if (sukces) return (
     <div className="login-screen"><div className="login-card">
-      <div className="login-logo">On<span>-Arch</span></div>
+      <div className="login-logo"><OnArchLogo height={36} color="#7d3f3f" /></div>
       <div className="reset-success"><div className="reset-icon">✅</div><h3>Haslo zostalo zmienione!</h3><p>Mozesz teraz zalogowac sie nowym haslem.</p></div>
       <button className="login-btn" style={{ marginTop: '20px' }} onClick={() => window.location.href = '/'}>Przejdz do logowania</button>
     </div></div>
@@ -793,7 +807,7 @@ function EkranZmianaHasla() {
 
   return (
     <div className="login-screen"><div className="login-card">
-      <div className="login-logo">On<span>-Arch</span></div>
+      <div className="login-logo"><OnArchLogo height={36} color="#7d3f3f" /></div>
       <p className="login-sub">Ustaw nowe haslo</p>
       <form className="login-form" onSubmit={zmienHaslo}>
         <div className="login-field"><label>Nowe haslo</label><input type="password" value={haslo} onChange={e => setHaslo(e.target.value)} placeholder="password" required /></div>
@@ -865,9 +879,7 @@ function EkranPowitalny({ kursant, user, onDalej }: { kursant: Kursant; user: { 
       justifyContent: 'center', padding: '32px 24px',
     }}>
       {/* Logo */}
-      <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '36px', fontWeight: 400, color: 'white', letterSpacing: '1px', marginBottom: '6px' }}>
-        On-Arch
-      </div>
+      <OnArchLogo height={40} color="white" />
       <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.6)', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '40px' }}>
         Akademia
       </div>
@@ -958,7 +970,7 @@ function EkranLogowania({ onZalogowano }: { onZalogowano: () => void }) {
 
   if (resetWyslany) return (
     <div className="login-screen"><div className="login-card">
-      <div className="login-logo">On<span>-Arch</span></div>
+      <div className="login-logo"><OnArchLogo height={36} color="#7d3f3f" /></div>
       <div className="reset-success"><div className="reset-icon">✉️</div><h3>Sprawdz skrzynke</h3><p>Wyslalismy link na adres <strong>{email}</strong></p></div>
       <button className="login-btn" style={{ marginTop: '20px' }} onClick={() => { setResetMode(false); setResetWyslany(false); }}>Wroce do logowania</button>
     </div></div>
@@ -966,7 +978,7 @@ function EkranLogowania({ onZalogowano }: { onZalogowano: () => void }) {
 
   if (resetMode) return (
     <div className="login-screen"><div className="login-card">
-      <div className="login-logo">On<span>-Arch</span></div>
+      <div className="login-logo"><OnArchLogo height={36} color="#7d3f3f" /></div>
       <p className="login-sub">Resetowanie hasla</p>
       <form className="login-form" onSubmit={resetHasla}>
         <div className="login-field"><label>Email</label><input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="twoj@email.pl" required /></div>
@@ -979,7 +991,7 @@ function EkranLogowania({ onZalogowano }: { onZalogowano: () => void }) {
 
   return (
     <div className="login-screen"><div className="login-card">
-      <div className="login-logo">On<span>-Arch</span></div>
+      <div className="login-logo"><OnArchLogo height={36} color="#7d3f3f" /></div>
       <p className="login-sub">Panel kursanta</p>
       <form className="login-form" onSubmit={zaloguj}>
         <div className="login-field"><label>Email</label><input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="twoj@email.pl" required /></div>
@@ -1269,7 +1281,7 @@ function PanelProwadzacego({ user, kursant, onWyloguj }: { user: User; kursant: 
   return (
     <div className="app">
       <header className="header">
-        <div className="logo">On<span>-Arch</span> <span style={{ fontSize: '11px', opacity: 0.7 }}>Prowadzący</span></div>
+        <div style={{display:'flex',alignItems:'center',gap:'8px'}}><OnArchLogo height={20} color="var(--brand-dark)" /><span style={{fontSize:'10px',opacity:0.6,fontFamily:'Jost,sans-serif'}}>Prowadzący</span></div>
         <button onClick={onWyloguj} style={{ background: 'none', border: 'none', color: 'var(--brand)', fontSize: '13px', cursor: 'pointer' }}>Wyloguj</button>
       </header>
       <main className="main">
@@ -1862,7 +1874,7 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
   return (
     <div className="app">
       <header className="header">
-        <div className="logo">On<span>-Arch</span> <span style={{ fontSize: '11px', opacity: 0.7 }}>Biuro</span></div>
+        <div style={{display:'flex',alignItems:'center',gap:'8px'}}><OnArchLogo height={20} color="var(--brand-dark)" /><span style={{fontSize:'10px',opacity:0.6,fontFamily:'Jost,sans-serif'}}>Biuro</span></div>
         {aktywnaZakladka !== 'home' ? (
           <button onClick={() => { setKomunikat(''); setEdytowane(null); setEdytowanyZjazd(null); setAktywnaZakladka('home'); }}
             style={{ background: 'none', border: 'none', color: 'var(--brand)', fontSize: '13px', cursor: 'pointer' }}>
@@ -3149,7 +3161,7 @@ export default function App() {
   return (
     <div className="app">
       <header className="header">
-        <div className="logo">On<span>-Arch</span></div>
+        <OnArchLogo height={22} color="var(--brand-dark)" />
         {avatarUrl ? <img src={avatarUrl} alt="avatar" className="avatar-img" /> : <div className="avatar">{inicjal.toUpperCase()}</div>}
       </header>
       <main className="main">
