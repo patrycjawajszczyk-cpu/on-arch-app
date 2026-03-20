@@ -2829,6 +2829,155 @@ function ModalProwadzacy({ p, onZamknij }: { p: Prowadzacy; onZamknij: () => voi
   );
 }
 
+
+type KafelekDniaProps = {
+  zjazd: Zjazd;
+  dzien: 1 | 2;
+  label: string;
+  wpis: Obecnosc | undefined;
+  aktywnyFormularz: { zjazdId: number; dzien: 1 | 2; typ: string; powod?: string; godzPrzyb?: string; godzWyj?: string } | null;
+  setAktywnyFormularz: (v: any) => void;
+  zapiszObecnosc: (zjazd: Zjazd, dzien: 1 | 2, status: 'potwierdzono' | 'nieobecnosc') => void;
+  usunObecnosc: (zjazdId: number, dzien: 1 | 2) => void;
+  odswiezObecnosci: () => void;
+  wysylanie: boolean;
+};
+
+function KafelekDnia({ zjazd, dzien, label, wpis, aktywnyFormularz, setAktywnyFormularz, zapiszObecnosc, usunObecnosc, odswiezObecnosci, wysylanie }: KafelekDniaProps) {
+  const zakonczone = zjazd.status === 'zakonczony';
+  const formularzAktywny = aktywnyFormularz?.zjazdId === zjazd.id && aktywnyFormularz?.dzien === dzien;
+
+  const kolorTla = zakonczone
+    ? (wpis?.status === 'potwierdzono' ? '#f5faf6' : wpis?.status === 'nieobecnosc' ? '#fdf5f5' : '#f8f8f8')
+    : (!wpis ? 'var(--surface-2)' : wpis.status === 'potwierdzono' ? '#f0faf4' : '#fff8f8');
+  const kolorObramowania = zakonczone
+    ? (wpis?.status === 'potwierdzono' ? '#c8dfc8' : wpis?.status === 'nieobecnosc' ? '#f0c0c0' : 'var(--border)')
+    : (!wpis ? 'var(--border)' : wpis.status === 'potwierdzono' ? '#7aab8a' : '#e57373');
+
+  return (
+    <div style={{ flex: 1, borderRadius: '12px', border: `0.5px solid ${kolorObramowania}`, background: kolorTla, padding: '10px 12px', opacity: zakonczone && !wpis ? 0.5 : 1 }}>
+      <div style={{ fontSize: '11px', fontWeight: 600, color: zakonczone ? '#aaa' : 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: '8px' }}>{label}</div>
+
+      {zakonczone && (
+        <div style={{ marginBottom: '4px' }}>
+          {wpis?.status === 'potwierdzono' && (
+            <span style={{ fontSize: '12px', color: '#5a8a5a', fontWeight: 500 }}>✓ Obecny/a{wpis.zweryfikowano ? ' · zweryfikowano' : ''}</span>
+          )}
+          {wpis?.status === 'nieobecnosc' && (
+            <div>
+              <span style={{ fontSize: '12px', color: '#b06060', fontWeight: 500 }}>✕ Nieobecny/a{wpis.zweryfikowano ? ' · zweryfikowano' : ''}</span>
+              {wpis.powod_nieobecnosci && <p style={{ fontSize: '11px', color: '#aaa', marginTop: '2px', fontStyle: 'italic' }}>{wpis.powod_nieobecnosci}</p>}
+            </div>
+          )}
+          {!wpis && <span style={{ fontSize: '12px', color: '#bbb' }}>Brak zgłoszenia</span>}
+        </div>
+      )}
+
+      {!zakonczone && wpis && (
+        <div style={{ marginBottom: '6px' }}>
+          {wpis.status === 'potwierdzono' ? (
+            <span style={{ fontSize: '11px', color: '#2e7d32', fontWeight: 600 }}>✓ Potwierdzono{wpis.zweryfikowano ? ' · ✓ zweryfikowano' : ''}</span>
+          ) : (
+            <div>
+              <span style={{ fontSize: '11px', color: '#c62828', fontWeight: 600 }}>✕ Nieobecność{wpis.zweryfikowano ? ' · ✓ zweryfikowano' : ''}</span>
+              {wpis.powod_nieobecnosci && <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px', fontStyle: 'italic' }}>{wpis.powod_nieobecnosci}</p>}
+            </div>
+          )}
+        </div>
+      )}
+
+      {formularzAktywny && aktywnyFormularz?.typ === 'nieobecnosc' && (
+        <div style={{ marginBottom: '8px' }}>
+          <textarea
+            value={aktywnyFormularz.powod || ''}
+            onChange={e => setAktywnyFormularz({ ...aktywnyFormularz, powod: e.target.value })}
+            placeholder="Powód nieobecności..."
+            rows={2}
+            style={{ width: '100%', fontSize: '12px', padding: '6px 8px', borderRadius: '8px', border: '0.5px solid var(--border)', fontFamily: 'Jost, sans-serif', resize: 'none' }}
+          />
+          <div style={{ display: 'flex', gap: '6px', marginTop: '6px' }}>
+            <button onClick={() => zapiszObecnosc(zjazd, dzien, 'nieobecnosc')} disabled={wysylanie}
+              style={{ flex: 1, padding: '7px', borderRadius: '8px', background: '#c62828', color: 'white', border: 'none', fontSize: '11px', cursor: 'pointer', fontFamily: 'Jost, sans-serif', fontWeight: 500 }}>
+              {wysylanie ? '...' : 'Wyślij'}
+            </button>
+            <button onClick={() => setAktywnyFormularz(null)}
+              style={{ padding: '7px 10px', borderRadius: '8px', background: 'white', border: '0.5px solid var(--border)', fontSize: '11px', cursor: 'pointer', color: 'var(--text-muted)' }}>
+              Anuluj
+            </button>
+          </div>
+        </div>
+      )}
+
+      {formularzAktywny && aktywnyFormularz?.typ === 'godziny' && (
+        <div style={{ marginBottom: '8px', background: '#fef9ec', borderRadius: '10px', padding: '10px' }}>
+          <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text)', marginBottom: '8px' }}>Odnotuj spóźnienie / wczesne wyjście</div>
+          <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginBottom: '3px' }}>Przybycie (jeśli późno)</div>
+              <input type="time" value={aktywnyFormularz.godzPrzyb || ''}
+                onChange={e => setAktywnyFormularz({ ...aktywnyFormularz, godzPrzyb: e.target.value })}
+                style={{ width: '100%', fontSize: '12px', padding: '5px 8px', borderRadius: '8px', border: '0.5px solid var(--border)' }} />
+            </div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginBottom: '3px' }}>Wyjście (jeśli wcześnie)</div>
+              <input type="time" value={aktywnyFormularz.godzWyj || ''}
+                onChange={e => setAktywnyFormularz({ ...aktywnyFormularz, godzWyj: e.target.value })}
+                style={{ width: '100%', fontSize: '12px', padding: '5px 8px', borderRadius: '8px', border: '0.5px solid var(--border)' }} />
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: '6px' }}>
+            <button onClick={async () => {
+              if (wpis) {
+                await supabase.from('obecnosci').update({
+                  godzina_przybycia: aktywnyFormularz.godzPrzyb || null,
+                  godzina_wyjscia: aktywnyFormularz.godzWyj || null,
+                }).eq('id', wpis.id);
+                await odswiezObecnosci();
+              }
+              setAktywnyFormularz(null);
+            }} style={{ flex: 1, padding: '7px', borderRadius: '8px', background: 'var(--brand)', color: 'white', border: 'none', fontSize: '11px', cursor: 'pointer', fontFamily: 'Jost, sans-serif' }}>
+              Zapisz
+            </button>
+            <button onClick={() => setAktywnyFormularz(null)}
+              style={{ padding: '7px 10px', borderRadius: '8px', background: 'white', border: '0.5px solid var(--border)', fontSize: '11px', cursor: 'pointer', color: 'var(--text-muted)' }}>
+              Anuluj
+            </button>
+          </div>
+        </div>
+      )}
+
+      {!zakonczone && !formularzAktywny && (
+        <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+          {(!wpis || wpis.status === 'nieobecnosc') && (
+            <button onClick={() => zapiszObecnosc(zjazd, dzien, 'potwierdzono')} disabled={wysylanie}
+              style={{ flex: 1, padding: '6px 4px', borderRadius: '8px', background: '#e8f5e9', color: '#2e7d32', border: '0.5px solid #c8e6c9', fontSize: '11px', cursor: 'pointer', fontWeight: 500, fontFamily: 'Jost, sans-serif', whiteSpace: 'nowrap' }}>
+              ✓ Będę
+            </button>
+          )}
+          {(!wpis || wpis.status === 'potwierdzono') && (
+            <button onClick={() => setAktywnyFormularz({ zjazdId: zjazd.id, dzien, typ: 'nieobecnosc', powod: '' })}
+              style={{ flex: 1, padding: '6px 4px', borderRadius: '8px', background: '#fff8f8', color: '#c62828', border: '0.5px solid #ffcdd2', fontSize: '11px', cursor: 'pointer', fontWeight: 500, fontFamily: 'Jost, sans-serif', whiteSpace: 'nowrap' }}>
+              ✕ Nie będę
+            </button>
+          )}
+          {wpis && wpis.status === 'potwierdzono' && (
+            <button onClick={() => setAktywnyFormularz({ zjazdId: zjazd.id, dzien, typ: 'godziny', godzPrzyb: wpis.godzina_przybycia || '', godzWyj: wpis.godzina_wyjscia || '' })}
+              style={{ padding: '6px 8px', borderRadius: '8px', background: '#fef9ec', color: '#c8a84b', border: '0.5px solid #f0d080', fontSize: '11px', cursor: 'pointer', fontFamily: 'Jost, sans-serif', whiteSpace: 'nowrap' }}>
+              🕐 Spóźnienie
+            </button>
+          )}
+          {wpis && (
+            <button onClick={() => usunObecnosc(zjazd.id, dzien)}
+              style={{ padding: '6px 8px', borderRadius: '8px', background: 'white', border: '0.5px solid var(--border)', fontSize: '11px', cursor: 'pointer', color: 'var(--text-muted)' }}>
+              ×
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function EkranZjazdy({ zjazdy, user, kursant }: { zjazdy: Zjazd[]; user: User; kursant: Kursant | null }) {
   const [obecnosci, setObecnosci] = useState<Obecnosc[]>([]);
   const [modalProwadzacy, setModalProwadzacy] = useState<Prowadzacy | null>(null);
@@ -2882,149 +3031,7 @@ function EkranZjazdy({ zjazdy, user, kursant }: { zjazdy: Zjazd[]; user: User; k
   }
 
 
-  function KafelekDnia({ zjazd, dzien, label }: { zjazd: Zjazd; dzien: 1 | 2; label: string }) {
-    const wpis = pobierzDzien(zjazd.id, dzien);
-    const zakonczone = zjazd.status === 'zakonczony';
-    const formularzAktywny = aktywnyFormularz?.zjazdId === zjazd.id && aktywnyFormularz?.dzien === dzien;
 
-    // Kolory zależne od statusu
-    const kolorTla = zakonczone
-      ? (wpis?.status === 'potwierdzono' ? '#f5faf6' : wpis?.status === 'nieobecnosc' ? '#fdf5f5' : '#f8f8f8')
-      : (!wpis ? 'var(--surface-2)' : wpis.status === 'potwierdzono' ? '#f0faf4' : '#fff8f8');
-    const kolorObramowania = zakonczone
-      ? (wpis?.status === 'potwierdzono' ? '#c8dfc8' : wpis?.status === 'nieobecnosc' ? '#f0c0c0' : 'var(--border)')
-      : (!wpis ? 'var(--border)' : wpis.status === 'potwierdzono' ? '#7aab8a' : '#e57373');
-
-    return (
-      <div style={{ flex: 1, borderRadius: '12px', border: `0.5px solid ${kolorObramowania}`, background: kolorTla, padding: '10px 12px', opacity: zakonczone && !wpis ? 0.5 : 1 }}>
-        {/* Tylko nagłówek dnia — bez powielania daty */}
-        <div style={{ fontSize: '11px', fontWeight: 600, color: zakonczone ? '#aaa' : 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: '8px' }}>{label}</div>
-
-        {/* Status zakończonego zjazdu — wyszarzony */}
-        {zakonczone && (
-          <div style={{ marginBottom: '4px' }}>
-            {wpis?.status === 'potwierdzono' && (
-              <span style={{ fontSize: '12px', color: '#5a8a5a', fontWeight: 500 }}>✓ Obecny/a{wpis.zweryfikowano ? ' · zweryfikowano' : ''}</span>
-            )}
-            {wpis?.status === 'nieobecnosc' && (
-              <div>
-                <span style={{ fontSize: '12px', color: '#b06060', fontWeight: 500 }}>✕ Nieobecny/a{wpis.zweryfikowano ? ' · zweryfikowano' : ''}</span>
-                {wpis.powod_nieobecnosci && <p style={{ fontSize: '11px', color: '#aaa', marginTop: '2px', fontStyle: 'italic' }}>{wpis.powod_nieobecnosci}</p>}
-              </div>
-            )}
-            {!wpis && <span style={{ fontSize: '12px', color: '#bbb' }}>Brak zgłoszenia</span>}
-          </div>
-        )}
-
-        {/* Status nadchodzącego zjazdu */}
-        {!zakonczone && wpis && (
-          <div style={{ marginBottom: '6px' }}>
-            {wpis.status === 'potwierdzono' ? (
-              <span style={{ fontSize: '11px', color: '#2e7d32', fontWeight: 600 }}>✓ Potwierdzono{wpis.zweryfikowano ? ' · ✓ zweryfikowano' : ''}</span>
-            ) : (
-              <div>
-                <span style={{ fontSize: '11px', color: '#c62828', fontWeight: 600 }}>✕ Nieobecność{wpis.zweryfikowano ? ' · ✓ zweryfikowano' : ''}</span>
-                {wpis.powod_nieobecnosci && <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px', fontStyle: 'italic' }}>{wpis.powod_nieobecnosci}</p>}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Formularz nieobecności */}
-        {formularzAktywny && aktywnyFormularz?.typ === 'nieobecnosc' && (
-          <div style={{ marginBottom: '8px' }}>
-            <textarea
-              value={aktywnyFormularz.powod || ''}
-              onChange={e => setAktywnyFormularz(prev => prev ? { ...prev, powod: e.target.value } : prev)}
-              placeholder="Powód nieobecności..."
-              rows={2}
-              style={{ width: '100%', fontSize: '12px', padding: '6px 8px', borderRadius: '8px', border: '0.5px solid var(--border)', fontFamily: 'Jost, sans-serif', resize: 'none' }}
-            />
-            <div style={{ display: 'flex', gap: '6px', marginTop: '6px' }}>
-              <button onClick={() => zapiszObecnosc(zjazd, dzien, 'nieobecnosc')} disabled={wysylanie}
-                style={{ flex: 1, padding: '7px', borderRadius: '8px', background: '#c62828', color: 'white', border: 'none', fontSize: '11px', cursor: 'pointer', fontFamily: 'Jost, sans-serif', fontWeight: 500 }}>
-                {wysylanie ? '...' : 'Wyślij'}
-              </button>
-              <button onClick={() => setAktywnyFormularz(null)}
-                style={{ padding: '7px 10px', borderRadius: '8px', background: 'white', border: '0.5px solid var(--border)', fontSize: '11px', cursor: 'pointer', color: 'var(--text-muted)' }}>
-                Anuluj
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Formularz spóźnienia/wyjścia */}
-        {formularzAktywny && aktywnyFormularz?.typ === 'godziny' && (
-          <div style={{ marginBottom: '8px', background: '#fef9ec', borderRadius: '10px', padding: '10px' }}>
-            <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text)', marginBottom: '8px' }}>Odnotuj spóźnienie / wczesne wyjście</div>
-            <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginBottom: '3px' }}>Przybycie (jeśli późno)</div>
-                <input type="time" value={aktywnyFormularz.godzPrzyb || ''}
-                  onChange={e => setAktywnyFormularz(prev => prev ? { ...prev, godzPrzyb: e.target.value } : prev)}
-                  style={{ width: '100%', fontSize: '12px', padding: '5px 8px', borderRadius: '8px', border: '0.5px solid var(--border)' }} />
-              </div>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginBottom: '3px' }}>Wyjście (jeśli wcześnie)</div>
-                <input type="time" value={aktywnyFormularz.godzWyj || ''}
-                  onChange={e => setAktywnyFormularz(prev => prev ? { ...prev, godzWyj: e.target.value } : prev)}
-                  style={{ width: '100%', fontSize: '12px', padding: '5px 8px', borderRadius: '8px', border: '0.5px solid var(--border)' }} />
-              </div>
-            </div>
-            <div style={{ display: 'flex', gap: '6px' }}>
-              <button onClick={async () => {
-                const istniejaca = pobierzDzien(zjazd.id, dzien);
-                if (istniejaca) {
-                  await supabase.from('obecnosci').update({
-                    godzina_przybycia: aktywnyFormularz.godzPrzyb || null,
-                    godzina_wyjscia: aktywnyFormularz.godzWyj || null,
-                  }).eq('id', istniejaca.id);
-                  await odswiezObecnosci();
-                }
-                setAktywnyFormularz(null);
-              }} style={{ flex: 1, padding: '7px', borderRadius: '8px', background: 'var(--brand)', color: 'white', border: 'none', fontSize: '11px', cursor: 'pointer', fontFamily: 'Jost, sans-serif' }}>
-                Zapisz
-              </button>
-              <button onClick={() => setAktywnyFormularz(null)}
-                style={{ padding: '7px 10px', borderRadius: '8px', background: 'white', border: '0.5px solid var(--border)', fontSize: '11px', cursor: 'pointer', color: 'var(--text-muted)' }}>
-                Anuluj
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Przyciski akcji — tylko dla nadchodzących */}
-        {!zakonczone && !formularzAktywny && (
-          <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
-            {(!wpis || wpis.status === 'nieobecnosc') && (
-              <button onClick={() => zapiszObecnosc(zjazd, dzien, 'potwierdzono')} disabled={wysylanie}
-                style={{ flex: 1, padding: '6px 4px', borderRadius: '8px', background: '#e8f5e9', color: '#2e7d32', border: '0.5px solid #c8e6c9', fontSize: '11px', cursor: 'pointer', fontWeight: 500, fontFamily: 'Jost, sans-serif', whiteSpace: 'nowrap' }}>
-                ✓ Będę
-              </button>
-            )}
-            {(!wpis || wpis.status === 'potwierdzono') && (
-              <button onClick={() => setAktywnyFormularz({ zjazdId: zjazd.id, dzien, typ: 'nieobecnosc', powod: '' })}
-                style={{ flex: 1, padding: '6px 4px', borderRadius: '8px', background: '#fff8f8', color: '#c62828', border: '0.5px solid #ffcdd2', fontSize: '11px', cursor: 'pointer', fontWeight: 500, fontFamily: 'Jost, sans-serif', whiteSpace: 'nowrap' }}>
-                ✕ Nie będę
-              </button>
-            )}
-            {wpis && wpis.status === 'potwierdzono' && (
-              <button onClick={() => setAktywnyFormularz({ zjazdId: zjazd.id, dzien, typ: 'godziny', godzPrzyb: wpis.godzina_przybycia || '', godzWyj: wpis.godzina_wyjscia || '' })}
-                style={{ padding: '6px 8px', borderRadius: '8px', background: '#fef9ec', color: '#c8a84b', border: '0.5px solid #f0d080', fontSize: '11px', cursor: 'pointer', fontFamily: 'Jost, sans-serif', whiteSpace: 'nowrap' }}>
-                🕐 Spóźnienie
-              </button>
-            )}
-            {wpis && (
-              <button onClick={() => usunObecnosc(zjazd.id, dzien)}
-                style={{ padding: '6px 8px', borderRadius: '8px', background: 'white', border: '0.5px solid var(--border)', fontSize: '11px', cursor: 'pointer', color: 'var(--text-muted)' }}>
-                ×
-              </button>
-            )}
-          </div>
-        )}
-      </div>
-    );
-  }
 
   return (
     <>
@@ -3059,8 +3066,8 @@ function EkranZjazdy({ zjazdy, user, kursant }: { zjazdy: Zjazd[]; user: User; k
 
           {/* Kafelki per dzień */}
           <div style={{ display: 'flex', gap: '8px', padding: '8px 14px 14px' }}>
-            <KafelekDnia zjazd={z} dzien={1} label={z.data_dzien1 ? new Date(z.data_dzien1).toLocaleDateString('pl-PL', { weekday: 'long', day: 'numeric', month: 'long' }) : 'Dzień 1'} />
-            {z.data_dzien2 && <KafelekDnia zjazd={z} dzien={2} label={new Date(z.data_dzien2).toLocaleDateString('pl-PL', { weekday: 'long', day: 'numeric', month: 'long' })} />}
+            <KafelekDnia zjazd={z} dzien={1} wpis={obecnosci.find(o => o.zjazd_id === z.id && o.dzien === 1)} aktywnyFormularz={aktywnyFormularz} setAktywnyFormularz={setAktywnyFormularz} zapiszObecnosc={zapiszObecnosc} usunObecnosc={usunObecnosc} odswiezObecnosci={odswiezObecnosci} wysylanie={wysylanie} label={z.data_dzien1 ? new Date(z.data_dzien1).toLocaleDateString('pl-PL', { weekday: 'long', day: 'numeric', month: 'long' }) : 'Dzień 1'} />
+            {z.data_dzien2 && <KafelekDnia zjazd={z} dzien={2} wpis={obecnosci.find(o => o.zjazd_id === z.id && o.dzien === 2)} aktywnyFormularz={aktywnyFormularz} setAktywnyFormularz={setAktywnyFormularz} zapiszObecnosc={zapiszObecnosc} usunObecnosc={usunObecnosc} odswiezObecnosci={odswiezObecnosci} wysylanie={wysylanie} label={new Date(z.data_dzien2).toLocaleDateString('pl-PL', { weekday: 'long', day: 'numeric', month: 'long' })} />}
           </div>
         </div>
       ))}
