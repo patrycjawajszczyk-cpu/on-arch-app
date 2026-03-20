@@ -78,6 +78,10 @@ type Zjazd = {
   data_zjazdu: string;
   data_dzien1: string | null;
   data_dzien2: string | null;
+  godzina_start_d1: string | null;
+  godzina_end_d1: string | null;
+  godzina_start_d2: string | null;
+  godzina_end_d2: string | null;
   grupa_id: number;
   prowadzacy?: Prowadzacy[];
 };
@@ -85,12 +89,13 @@ type Zjazd = {
 type Kursant = {
   imie: string;
   nazwisko: string;
+  email?: string;
   grupa_id: number;
   rola: string;
   avatar_url: string | null;
   certyfikat_url: string | null;
   onboarding_done: boolean;
-  grupy: { nazwa: string; miasto: string; edycja: string } | null;
+  grupy: { nazwa: string; miasto: string; edycja: string; numer_uslugi?: string | null } | null;
 };
 
 type KursantAdmin = {
@@ -99,6 +104,7 @@ type KursantAdmin = {
   nazwisko: string;
   grupa_id: number;
   user_id: string;
+  email: string | null;
   certyfikat_url: string | null;
 };
 
@@ -108,6 +114,7 @@ type Grupa = {
   miasto: string;
   edycja: string;
   drive_link: string | null;
+  numer_uslugi: string | null;
 };
 
 type User = {
@@ -134,6 +141,9 @@ type Obecnosc = {
   dzien: number;
   status: string;
   powod_nieobecnosci: string | null;
+  godzina_przybycia: string | null;
+  godzina_wyjscia: string | null;
+  uwagi_godzinowe: string | null;
   zweryfikowano: boolean;
   zweryfikowano_przez: string | null;
   confirmed_at: string;
@@ -421,42 +431,108 @@ function AdminObecnosci({ grupy, zjazdy }: { grupy: Grupa[]; zjazdy: Zjazd[] }) 
   const [lista, setLista] = useState<Obecnosc[]>([]);
   const [ladowanie, setLadowanie] = useState(false);
 
-  const zjazdyGrupy = wybranaGrupa
-    ? zjazdy.filter(z => z.grupa_id === parseInt(wybranaGrupa))
-    : [];
+  const zjazdyGrupy = wybranaGrupa ? zjazdy.filter(z => z.grupa_id === parseInt(wybranaGrupa)) : [];
+  const zjazd = zjazdy.find(z => z.id === parseInt(wybranyZjazd));
+  const grupa = grupy.find(g => g.id === parseInt(wybranaGrupa));
 
   useEffect(() => {
     if (!wybranyZjazd) { setLista([]); return; }
     setLadowanie(true);
-    supabase
-      .from('obecnosci')
-      .select('*')
-      .eq('zjazd_id', parseInt(wybranyZjazd))
-      .order('nazwisko', { ascending: true })
+    supabase.from('obecnosci').select('*').eq('zjazd_id', parseInt(wybranyZjazd))
+      .order('dzien', { ascending: true }).order('nazwisko', { ascending: true })
       .then(({ data }) => { setLista(data || []); setLadowanie(false); });
   }, [wybranyZjazd]);
 
   function eksportujCSV() {
-    const zjazd = zjazdy.find(z => z.id === parseInt(wybranyZjazd));
-    const naglowki = ['imie', 'nazwisko', 'confirmed_at'];
-    const wiersze = lista.map(o => [
-      `"${o.imie}"`,
-      `"${o.nazwisko}"`,
-      `"${new Date(o.confirmed_at).toLocaleString('pl-PL')}"`,
-    ].join(','));
-    const csv = [naglowki.join(','), ...wiersze].join('\n');
+    const naglowki = [
+      'imie', 'nazwisko', 'dzien', 'data', 'godziny_zajec',
+      'temat', 'tytul_uslugi', 'numer_uslugi', 'prowadzacy',
+      'status', 'powod_nieobecnosci', 'godzina_przybycia', 'godzina_wyjscia',
+      'zweryfikowano', 'data_potwierdzenia'
+    ];
+    const wiersze = lista.map(o => {
+      const dzienNr = o.dzien;
+      const data = dzienNr === 1 ? zjazd?.data_dzien1 : zjazd?.data_dzien2;
+      const gStart = dzienNr === 1 ? zjazd?.godzina_start_d1 : zjazd?.godzina_start_d2;
+      const gEnd = dzienNr === 1 ? zjazd?.godzina_end_d1 : zjazd?.godzina_end_d2;
+      const prowadzacy = (zjazd?.prowadzacy || []).map(p => `${p.imie} ${p.nazwisko}`).join('; ');
+      return [
+        `"${o.imie}"`, `"${o.nazwisko}"`,
+        `"Dzień ${dzienNr}"`,
+        `"${data ? new Date(data).toLocaleDateString('pl-PL') : ''}"`,
+        `"${gStart && gEnd ? `${gStart}–${gEnd}` : ''}"`,
+        `"${zjazd?.tematy || ''}"`,
+        `"${grupa?.nazwa || ''}"`,
+        `"${(grupa as any)?.numer_uslugi || ''}"`,
+        `"${prowadzacy}"`,
+        `"${o.status === 'potwierdzono' ? 'obecny/a' : 'nieobecny/a'}"`,
+        `"${o.powod_nieobecnosci || ''}"`,
+        `"${o.godzina_przybycia || ''}"`,
+        `"${o.godzina_wyjscia || ''}"`,
+        `"${o.zweryfikowano ? 'tak' : 'nie'}"`,
+        `"${new Date(o.confirmed_at).toLocaleString('pl-PL')}"`,
+      ].join(',');
+    });
+    const csv = '\uFEFF' + [naglowki.join(','), ...wiersze].join('\n');
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = url;
-    a.download = `obecnosc_zjazd${zjazd?.nr || ''}.csv`;
-    a.click();
+    a.href = url; a.download = `lista_obecnosci_zjazd${zjazd?.nr || ''}.csv`; a.click();
   }
+
+  function eksportujXML() {
+    const prowadzacy = (zjazd?.prowadzacy || []).map(p => `${p.imie} ${p.nazwisko}`).join(', ');
+    const wiersze = lista.map(o => {
+      const dzienNr = o.dzien;
+      const data = dzienNr === 1 ? zjazd?.data_dzien1 : zjazd?.data_dzien2;
+      const gStart = dzienNr === 1 ? zjazd?.godzina_start_d1 : zjazd?.godzina_start_d2;
+      const gEnd = dzienNr === 1 ? zjazd?.godzina_end_d1 : zjazd?.godzina_end_d2;
+      return `    <uczestnik>
+      <imie>${o.imie}</imie>
+      <nazwisko>${o.nazwisko}</nazwisko>
+      <dzien>Dzień ${dzienNr}</dzien>
+      <data>${data ? new Date(data).toLocaleDateString('pl-PL') : ''}</data>
+      <godziny_zajec>${gStart && gEnd ? `${gStart}–${gEnd}` : ''}</godziny_zajec>
+      <temat_zajec>${zjazd?.tematy || ''}</temat_zajec>
+      <tytul_uslugi>${grupa?.nazwa || ''}</tytul_uslugi>
+      <numer_uslugi>${(grupa as any)?.numer_uslugi || ''}</numer_uslugi>
+      <osoba_prowadzaca>${prowadzacy}</osoba_prowadzaca>
+      <status>${o.status === 'potwierdzono' ? 'obecny/a' : 'nieobecny/a'}</status>
+      <powod_nieobecnosci>${o.powod_nieobecnosci || ''}</powod_nieobecnosci>
+      <godzina_przybycia>${o.godzina_przybycia || ''}</godzina_przybycia>
+      <godzina_wyjscia>${o.godzina_wyjscia || ''}</godzina_wyjscia>
+      <zweryfikowano>${o.zweryfikowano ? 'tak' : 'nie'}</zweryfikowano>
+      <data_potwierdzenia>${new Date(o.confirmed_at).toLocaleString('pl-PL')}</data_potwierdzenia>
+    </uczestnik>`;
+    }).join('\n');
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<lista_obecnosci>
+  <informacje>
+    <tytul_uslugi>${grupa?.nazwa || ''}</tytul_uslugi>
+    <numer_uslugi>${(grupa as any)?.numer_uslugi || ''}</numer_uslugi>
+    <zjazd>Zjazd ${zjazd?.nr || ''}</zjazd>
+    <daty>${zjazd?.daty || ''}</daty>
+    <sala>${zjazd?.sala || ''}</sala>
+    <adres>${zjazd?.adres || ''}</adres>
+    <osoba_prowadzaca>${prowadzacy}</osoba_prowadzaca>
+    <data_eksportu>${new Date().toLocaleString('pl-PL')}</data_eksportu>
+  </informacje>
+  <uczestnicy>
+${wiersze}
+  </uczestnicy>
+</lista_obecnosci>`;
+    const blob = new Blob([xml], { type: 'application/xml;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `lista_obecnosci_zjazd${zjazd?.nr || ''}.xml`; a.click();
+  }
+
+  const statusKolor = (status: string) => status === 'potwierdzono'
+    ? { bg: '#e8f5e9', color: '#2e7d32' } : { bg: '#ffebee', color: '#c62828' };
 
   return (
     <>
       <h2 className="page-title">Lista obecności</h2>
-
       <div className="login-field" style={{ marginBottom: '10px' }}>
         <label>Grupa</label>
         <select value={wybranaGrupa} onChange={e => { setWybranaGrupa(e.target.value); setWybranyZjazd(''); setLista([]); }}>
@@ -464,57 +540,89 @@ function AdminObecnosci({ grupy, zjazdy }: { grupy: Grupa[]; zjazdy: Zjazd[] }) 
           {grupy.map(g => <option key={g.id} value={g.id}>{g.nazwa}</option>)}
         </select>
       </div>
-
       {wybranaGrupa && (
         <div className="login-field" style={{ marginBottom: '16px' }}>
           <label>Zjazd</label>
           <select value={wybranyZjazd} onChange={e => setWybranyZjazd(e.target.value)}>
             <option value="">Wybierz zjazd</option>
-            {zjazdyGrupy.map(z => (
-              <option key={z.id} value={z.id}>Zjazd {z.nr} — {z.daty}</option>
-            ))}
+            {zjazdyGrupy.map(z => <option key={z.id} value={z.id}>Zjazd {z.nr} — {z.daty}</option>)}
           </select>
         </div>
       )}
 
       {wybranyZjazd && (
         <>
+          {/* Nagłówek z info o zjeździe */}
+          {zjazd && (
+            <div className="profil-card" style={{ marginBottom: '12px', background: 'var(--brand-light)' }}>
+              <div className="profil-row"><span className="profil-lbl">Usługa</span><span className="profil-val" style={{ fontSize: '11px' }}>{grupa?.nazwa || '—'}</span></div>
+              {(grupa as any)?.numer_uslugi && <div className="profil-row"><span className="profil-lbl">Nr usługi</span><span className="profil-val" style={{ fontSize: '11px' }}>{(grupa as any).numer_uslugi}</span></div>}
+              <div className="profil-row"><span className="profil-lbl">Temat</span><span className="profil-val" style={{ fontSize: '11px' }}>{zjazd.tematy || '—'}</span></div>
+              <div className="profil-row"><span className="profil-lbl">Prowadzący</span><span className="profil-val" style={{ fontSize: '11px' }}>{(zjazd.prowadzacy || []).map(p => `${p.imie} ${p.nazwisko}`).join(', ') || '—'}</span></div>
+            </div>
+          )}
+
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
             <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
-              {ladowanie ? 'Ładowanie...' : `${lista.length} potwierdzeń`}
+              {ladowanie ? 'Ładowanie...' : `${lista.length} wpisów`}
             </span>
             {lista.length > 0 && (
-              <button
-                onClick={eksportujCSV}
-                style={{ fontSize: '12px', color: 'var(--brand)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Jost, sans-serif', fontWeight: 500 }}
-              >
-                ⬇ Eksportuj CSV
-              </button>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button onClick={eksportujCSV} style={{ fontSize: '12px', color: 'var(--brand)', background: 'none', border: '0.5px solid var(--brand-mid)', borderRadius: '8px', padding: '5px 10px', cursor: 'pointer', fontFamily: 'Jost, sans-serif' }}>
+                  ⬇ CSV
+                </button>
+                <button onClick={eksportujXML} style={{ fontSize: '12px', color: '#1565c0', background: 'none', border: '0.5px solid #9ab0d8', borderRadius: '8px', padding: '5px 10px', cursor: 'pointer', fontFamily: 'Jost, sans-serif' }}>
+                  ⬇ XML
+                </button>
+              </div>
             )}
           </div>
 
+          {ladowanie && <div style={{ textAlign: 'center', padding: '20px', color: 'var(--text-muted)' }}>Ładowanie...</div>}
           {!ladowanie && lista.length === 0 && (
-            <div className="profil-card">
-              <div className="profil-row">
-                <span style={{ color: 'var(--text-muted)', fontSize: '13px' }}>Brak potwierdzeń dla tego zjazdu.</span>
-              </div>
-            </div>
+            <div className="profil-card"><div className="profil-row"><span style={{ color: 'var(--text-muted)', fontSize: '13px' }}>Brak wpisów dla tego zjazdu.</span></div></div>
           )}
 
-          {lista.length > 0 && (
-            <div className="profil-card">
-              {lista.map((o, i) => (
-                <div key={o.id} className="profil-row">
-                  <span className="profil-lbl" style={{ fontWeight: 500, color: 'var(--text)' }}>
-                    {i + 1}. {o.imie} {o.nazwisko}
-                  </span>
-                  <span className="profil-val" style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-                    {new Date(o.confirmed_at).toLocaleDateString('pl-PL')}
-                  </span>
+          {[1, 2].map(dzienNr => {
+            const wpisDnia = lista.filter(o => o.dzien === dzienNr);
+            if (wpisDnia.length === 0) return null;
+            const data = dzienNr === 1 ? zjazd?.data_dzien1 : zjazd?.data_dzien2;
+            const gStart = dzienNr === 1 ? zjazd?.godzina_start_d1 : zjazd?.godzina_start_d2;
+            const gEnd = dzienNr === 1 ? zjazd?.godzina_end_d1 : zjazd?.godzina_end_d2;
+            return (
+              <div key={dzienNr} style={{ marginBottom: '16px' }}>
+                <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--brand-dark)', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  Dzień {dzienNr} {data ? `· ${new Date(data).toLocaleDateString('pl-PL', { weekday: 'long', day: 'numeric', month: 'long' })}` : ''}
+                  {gStart && gEnd && <span style={{ fontWeight: 400, color: 'var(--text-muted)' }}> · {gStart}–{gEnd}</span>}
                 </div>
-              ))}
-            </div>
-          )}
+                {wpisDnia.map(o => {
+                  const kol = statusKolor(o.status);
+                  return (
+                    <div key={o.id} className="profil-card" style={{ marginBottom: '6px' }}>
+                      <div className="profil-row">
+                        <span style={{ fontSize: '13px', fontWeight: 500 }}>{o.imie} {o.nazwisko}</span>
+                        <span style={{ fontSize: '10px', fontWeight: 600, padding: '3px 8px', borderRadius: '20px', background: kol.bg, color: kol.color }}>
+                          {o.status === 'potwierdzono' ? '✓ Obecny/a' : '✕ Nieobecny/a'}
+                        </span>
+                      </div>
+                      {o.powod_nieobecnosci && <div className="profil-row"><span className="profil-lbl">Powód</span><span className="profil-val" style={{ fontSize: '11px', fontStyle: 'italic' }}>{o.powod_nieobecnosci}</span></div>}
+                      {(o.godzina_przybycia || o.godzina_wyjscia) && (
+                        <div className="profil-row">
+                          {o.godzina_przybycia && <span style={{ fontSize: '11px', color: '#c8a84b' }}>⏰ przybycie: {o.godzina_przybycia}</span>}
+                          {o.godzina_wyjscia && <span style={{ fontSize: '11px', color: '#c8a84b' }}>⏰ wyjście: {o.godzina_wyjscia}</span>}
+                        </div>
+                      )}
+                      <div className="profil-row">
+                        <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>
+                          {o.zweryfikowano ? '✓ zweryfikowano' : 'niezweryfikowane'} · {new Date(o.confirmed_at).toLocaleString('pl-PL')}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })}
         </>
       )}
     </>
@@ -1664,7 +1772,7 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
   const [noweOgl, setNoweOgl] = useState({ typ: 'Informacja', tytul: '', tresc: '', szczegoly: '', nowe: true, grupa_id: '' });
   const [nowyZjazd, setNowyZjazd] = useState({ nr: '', daty: '', sala: '', adres: '', tematy: '', status: 'nadchodzacy', data_zjazdu: '', data_dzien1: '', data_dzien2: '', grupa_id: '', prowadzacy_id: '' });
   const [nowyKursant, setNowyKursant] = useState({ imie: '', nazwisko: '', email: '', grupa_id: '' });
-  const [nowaGrupa, setNowaGrupa] = useState({ nazwa: '', miasto: '', edycja: '', drive_link: '' });
+  const [nowaGrupa, setNowaGrupa] = useState({ nazwa: '', miasto: '', edycja: '', drive_link: '', numer_uslugi: '' });
   const [nowyProwadzacy, setNowyProwadzacy] = useState({ imie: '', nazwisko: '', specjalizacja: '' });
   const [noweZadanie, setNoweZadanie] = useState({ tytul: '', opis: '', termin: '', link_materialow: '', grupa_id: '', typ: 'zadanie' });
   const [komunikat, setKomunikat] = useState('');
@@ -1800,7 +1908,7 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
 
   async function dodajGrupe(e: React.FormEvent) {
     e.preventDefault();
-    const { error } = await supabase.from('grupy').insert([{ nazwa: nowaGrupa.nazwa, miasto: nowaGrupa.miasto, edycja: nowaGrupa.edycja, drive_link: nowaGrupa.drive_link || null }]);
+    const { error } = await supabase.from('grupy').insert([{ nazwa: nowaGrupa.nazwa, miasto: nowaGrupa.miasto, edycja: nowaGrupa.edycja, drive_link: nowaGrupa.drive_link || null, numer_uslugi: nowaGrupa.numer_uslugi || null }]);
     if (error) { setKomunikat('Blad: ' + error.message); } else { setKomunikat('Grupa dodana!'); setNowaGrupa({ nazwa: '', miasto: '', edycja: '', drive_link: '' }); pobierzGrupy(); }
   }
 
@@ -1987,8 +2095,16 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
                   <div className="login-field"><label>Numer zjazdu</label><input type="number" value={edytowanyZjazd.nr} onChange={e => setEdytowanyZjazd({ ...edytowanyZjazd, nr: parseInt(e.target.value) })} required /></div>
                   <div className="login-field"><label>Daty</label><input type="text" value={edytowanyZjazd.daty} onChange={e => setEdytowanyZjazd({ ...edytowanyZjazd, daty: e.target.value })} required /></div>
                   <div className="login-field"><label>Data zjazdu</label><input type="date" value={edytowanyZjazd.data_zjazdu} onChange={e => setEdytowanyZjazd({ ...edytowanyZjazd, data_zjazdu: e.target.value })} required /></div>
-                  <div className="login-field"><label>Dzień 1 (Sobota)</label><input type="date" value={edytowanyZjazd.data_dzien1 || ''} onChange={e => setEdytowanyZjazd({ ...edytowanyZjazd, data_dzien1: e.target.value || null })} /></div>
-                  <div className="login-field"><label>Dzień 2 (Niedziela)</label><input type="date" value={edytowanyZjazd.data_dzien2 || ''} onChange={e => setEdytowanyZjazd({ ...edytowanyZjazd, data_dzien2: e.target.value || null })} /></div>
+                  <div className="login-field"><label>Dzień 1 (Sobota) — data</label><input type="date" value={edytowanyZjazd.data_dzien1 || ''} onChange={e => setEdytowanyZjazd({ ...edytowanyZjazd, data_dzien1: e.target.value || null })} /></div>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <div className="login-field" style={{ flex: 1 }}><label>Godz. start D1</label><input type="time" value={(edytowanyZjazd as any).godzina_start_d1 || ''} onChange={e => setEdytowanyZjazd({ ...edytowanyZjazd, ...(edytowanyZjazd as any), godzina_start_d1: e.target.value || null })} /></div>
+                    <div className="login-field" style={{ flex: 1 }}><label>Godz. koniec D1</label><input type="time" value={(edytowanyZjazd as any).godzina_end_d1 || ''} onChange={e => setEdytowanyZjazd({ ...edytowanyZjazd, ...(edytowanyZjazd as any), godzina_end_d1: e.target.value || null })} /></div>
+                  </div>
+                  <div className="login-field"><label>Dzień 2 (Niedziela) — data</label><input type="date" value={edytowanyZjazd.data_dzien2 || ''} onChange={e => setEdytowanyZjazd({ ...edytowanyZjazd, data_dzien2: e.target.value || null })} /></div>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <div className="login-field" style={{ flex: 1 }}><label>Godz. start D2</label><input type="time" value={(edytowanyZjazd as any).godzina_start_d2 || ''} onChange={e => setEdytowanyZjazd({ ...edytowanyZjazd, ...(edytowanyZjazd as any), godzina_start_d2: e.target.value || null })} /></div>
+                    <div className="login-field" style={{ flex: 1 }}><label>Godz. koniec D2</label><input type="time" value={(edytowanyZjazd as any).godzina_end_d2 || ''} onChange={e => setEdytowanyZjazd({ ...edytowanyZjazd, ...(edytowanyZjazd as any), godzina_end_d2: e.target.value || null })} /></div>
+                  </div>
                   <div className="login-field"><label>Sala</label><input type="text" value={edytowanyZjazd.sala} onChange={e => setEdytowanyZjazd({ ...edytowanyZjazd, sala: e.target.value })} required /></div>
                   <div className="login-field"><label>Adres</label><input type="text" value={edytowanyZjazd.adres} onChange={e => setEdytowanyZjazd({ ...edytowanyZjazd, adres: e.target.value })} required /></div>
                   <div className="login-field"><label>Tematy</label><input type="text" value={edytowanyZjazd.tematy} onChange={e => setEdytowanyZjazd({ ...edytowanyZjazd, tematy: e.target.value })} required /></div>
@@ -2005,8 +2121,16 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
                   <div className="login-field"><label>Numer zjazdu</label><input type="number" value={nowyZjazd.nr} onChange={e => setNowyZjazd({ ...nowyZjazd, nr: e.target.value })} required /></div>
                   <div className="login-field"><label>Daty</label><input type="text" value={nowyZjazd.daty} onChange={e => setNowyZjazd({ ...nowyZjazd, daty: e.target.value })} required /></div>
                   <div className="login-field"><label>Data zjazdu</label><input type="date" value={nowyZjazd.data_zjazdu} onChange={e => setNowyZjazd({ ...nowyZjazd, data_zjazdu: e.target.value })} required /></div>
-                  <div className="login-field"><label>Dzień 1 (Sobota)</label><input type="date" value={(nowyZjazd as any).data_dzien1 || ''} onChange={e => setNowyZjazd({ ...nowyZjazd, ...(nowyZjazd as any), data_dzien1: e.target.value || null })} /></div>
-                  <div className="login-field"><label>Dzień 2 (Niedziela)</label><input type="date" value={(nowyZjazd as any).data_dzien2 || ''} onChange={e => setNowyZjazd({ ...nowyZjazd, ...(nowyZjazd as any), data_dzien2: e.target.value || null })} /></div>
+                  <div className="login-field"><label>Dzień 1 (Sobota) — data</label><input type="date" value={(nowyZjazd as any).data_dzien1 || ''} onChange={e => setNowyZjazd({ ...nowyZjazd, ...(nowyZjazd as any), data_dzien1: e.target.value || null })} /></div>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <div className="login-field" style={{ flex: 1 }}><label>Godz. start D1</label><input type="time" value={(nowyZjazd as any).godzina_start_d1 || ''} onChange={e => setNowyZjazd({ ...nowyZjazd, ...(nowyZjazd as any), godzina_start_d1: e.target.value || null })} /></div>
+                    <div className="login-field" style={{ flex: 1 }}><label>Godz. koniec D1</label><input type="time" value={(nowyZjazd as any).godzina_end_d1 || ''} onChange={e => setNowyZjazd({ ...nowyZjazd, ...(nowyZjazd as any), godzina_end_d1: e.target.value || null })} /></div>
+                  </div>
+                  <div className="login-field"><label>Dzień 2 (Niedziela) — data</label><input type="date" value={(nowyZjazd as any).data_dzien2 || ''} onChange={e => setNowyZjazd({ ...nowyZjazd, ...(nowyZjazd as any), data_dzien2: e.target.value || null })} /></div>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <div className="login-field" style={{ flex: 1 }}><label>Godz. start D2</label><input type="time" value={(nowyZjazd as any).godzina_start_d2 || ''} onChange={e => setNowyZjazd({ ...nowyZjazd, ...(nowyZjazd as any), godzina_start_d2: e.target.value || null })} /></div>
+                    <div className="login-field" style={{ flex: 1 }}><label>Godz. koniec D2</label><input type="time" value={(nowyZjazd as any).godzina_end_d2 || ''} onChange={e => setNowyZjazd({ ...nowyZjazd, ...(nowyZjazd as any), godzina_end_d2: e.target.value || null })} /></div>
+                  </div>
                   <div className="login-field"><label>Sala</label><input type="text" value={nowyZjazd.sala} onChange={e => setNowyZjazd({ ...nowyZjazd, sala: e.target.value })} required /></div>
                   <div className="login-field"><label>Adres</label><input type="text" value={nowyZjazd.adres} onChange={e => setNowyZjazd({ ...nowyZjazd, adres: e.target.value })} required /></div>
                   <div className="login-field"><label>Tematy</label><input type="text" value={nowyZjazd.tematy} onChange={e => setNowyZjazd({ ...nowyZjazd, tematy: e.target.value })} required /></div>
@@ -2190,6 +2314,7 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
               <div className="login-field"><label>Miasto</label><input type="text" value={nowaGrupa.miasto} onChange={e => setNowaGrupa({ ...nowaGrupa, miasto: e.target.value })} required /></div>
               <div className="login-field"><label>Edycja</label><input type="text" value={nowaGrupa.edycja} onChange={e => setNowaGrupa({ ...nowaGrupa, edycja: e.target.value })} required /></div>
               <div className="login-field"><label>Strefa Wiedzy — link Google Drive (opcjonalnie)</label><input type="url" value={nowaGrupa.drive_link} onChange={e => setNowaGrupa({ ...nowaGrupa, drive_link: e.target.value })} placeholder="https://drive.google.com/..." /></div>
+              <div className="login-field"><label>Numer usługi BUR (opcjonalnie)</label><input type="text" value={nowaGrupa.numer_uslugi} onChange={e => setNowaGrupa({ ...nowaGrupa, numer_uslugi: e.target.value })} placeholder="np. 2025/09/24/195975/3028966" /></div>
               <button className="login-btn" type="submit">Dodaj grupe</button>
             </form>
             <h2 className="page-title" style={{ marginTop: '24px' }}>Lista grup</h2>
@@ -2640,8 +2765,10 @@ function ModalProwadzacy({ p, onZamknij }: { p: Prowadzacy; onZamknij: () => voi
 function EkranZjazdy({ zjazdy, user, kursant }: { zjazdy: Zjazd[]; user: User; kursant: Kursant | null }) {
   const [obecnosci, setObecnosci] = useState<Obecnosc[]>([]);
   const [modalProwadzacy, setModalProwadzacy] = useState<Prowadzacy | null>(null);
-  const [aktywnyFormularz, setAktywnyFormularz] = useState<{ zjazdId: number; dzien: 1 | 2; typ: 'obecnosc' | 'nieobecnosc' } | null>(null);
+  const [aktywnyFormularz, setAktywnyFormularz] = useState<{ zjazdId: number; dzien: 1 | 2; typ: 'obecnosc' | 'nieobecnosc' | 'godziny' } | null>(null);
   const [powod, setPowod] = useState('');
+  const [godzinaSpoznienia, setGodzinaSpoznienia] = useState('');
+  const [godzinaWyjscia, setGodzinaWyjscia] = useState('');
   const [wysylanie, setWysylanie] = useState(false);
 
   useEffect(() => {
@@ -2662,18 +2789,28 @@ function EkranZjazdy({ zjazdy, user, kursant }: { zjazdy: Zjazd[]; user: User; k
     if (!kursant) return;
     setWysylanie(true);
     const istniejaca = pobierzDzien(zjazd.id, dzien);
+    const godzinaData = {
+      godzina_przybycia: godzinaSpoznienia || null,
+      godzina_wyjscia: godzinaWyjscia || null,
+    };
     if (istniejaca) {
-      await supabase.from('obecnosci').update({ status, powod_nieobecnosci: status === 'nieobecnosc' ? powod : null, zweryfikowano: false }).eq('id', istniejaca.id);
+      await supabase.from('obecnosci').update({
+        status, powod_nieobecnosci: status === 'nieobecnosc' ? powod : null,
+        zweryfikowano: false, ...godzinaData,
+      }).eq('id', istniejaca.id);
     } else {
       await supabase.from('obecnosci').insert([{
         zjazd_id: zjazd.id, user_id: user.id,
         grupa_id: kursant.grupa_id, imie: kursant.imie, nazwisko: kursant.nazwisko,
         dzien, status, powod_nieobecnosci: status === 'nieobecnosc' ? powod : null,
+        ...godzinaData,
       }]);
     }
     await odswiezObecnosci();
     setAktywnyFormularz(null);
     setPowod('');
+    setGodzinaSpoznienia('');
+    setGodzinaWyjscia('');
     setWysylanie(false);
   }
 
@@ -2749,6 +2886,45 @@ function EkranZjazdy({ zjazdy, user, kursant }: { zjazdy: Zjazd[]; user: User; k
           </div>
         )}
 
+        {/* Formularz spóźnienia/wyjścia */}
+        {formularzAktywny && aktywnyFormularz?.typ === 'godziny' && (
+          <div style={{ marginBottom: '8px', background: '#fef9ec', borderRadius: '10px', padding: '10px' }}>
+            <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text)', marginBottom: '8px' }}>Odnotuj spóźnienie / wczesne wyjście</div>
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginBottom: '3px' }}>Przybycie (jeśli późno)</div>
+                <input type="time" value={godzinaSpoznienia} onChange={e => setGodzinaSpoznienia(e.target.value)}
+                  style={{ width: '100%', fontSize: '12px', padding: '5px 8px', borderRadius: '8px', border: '0.5px solid var(--border)' }} />
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginBottom: '3px' }}>Wyjście (jeśli wcześnie)</div>
+                <input type="time" value={godzinaWyjscia} onChange={e => setGodzinaWyjscia(e.target.value)}
+                  style={{ width: '100%', fontSize: '12px', padding: '5px 8px', borderRadius: '8px', border: '0.5px solid var(--border)' }} />
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: '6px' }}>
+              <button onClick={async () => {
+                const istniejaca = pobierzDzien(zjazd.id, dzien);
+                if (istniejaca) {
+                  await supabase.from('obecnosci').update({
+                    godzina_przybycia: godzinaSpoznienia || null,
+                    godzina_wyjscia: godzinaWyjscia || null,
+                  }).eq('id', istniejaca.id);
+                  await odswiezObecnosci();
+                }
+                setAktywnyFormularz(null);
+                setGodzinaSpoznienia(''); setGodzinaWyjscia('');
+              }} style={{ flex: 1, padding: '7px', borderRadius: '8px', background: 'var(--brand)', color: 'white', border: 'none', fontSize: '11px', cursor: 'pointer', fontFamily: 'Jost, sans-serif' }}>
+                Zapisz
+              </button>
+              <button onClick={() => { setAktywnyFormularz(null); setGodzinaSpoznienia(''); setGodzinaWyjscia(''); }}
+                style={{ padding: '7px 10px', borderRadius: '8px', background: 'white', border: '0.5px solid var(--border)', fontSize: '11px', cursor: 'pointer', color: 'var(--text-muted)' }}>
+                Anuluj
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Przyciski akcji — tylko dla nadchodzących */}
         {!zakonczone && !formularzAktywny && (
           <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
@@ -2762,6 +2938,12 @@ function EkranZjazdy({ zjazdy, user, kursant }: { zjazdy: Zjazd[]; user: User; k
               <button onClick={() => { setAktywnyFormularz({ zjazdId: zjazd.id, dzien, typ: 'nieobecnosc' }); setPowod(''); }}
                 style={{ flex: 1, padding: '6px 4px', borderRadius: '8px', background: '#fff8f8', color: '#c62828', border: '0.5px solid #ffcdd2', fontSize: '11px', cursor: 'pointer', fontWeight: 500, fontFamily: 'Jost, sans-serif', whiteSpace: 'nowrap' }}>
                 ✕ Nie będę
+              </button>
+            )}
+            {wpis && wpis.status === 'potwierdzono' && (
+              <button onClick={() => { setAktywnyFormularz({ zjazdId: zjazd.id, dzien, typ: 'godziny' }); setGodzinaSpoznienia(wpis.godzina_przybycia || ''); setGodzinaWyjscia(wpis.godzina_wyjscia || ''); }}
+                style={{ padding: '6px 8px', borderRadius: '8px', background: '#fef9ec', color: '#c8a84b', border: '0.5px solid #f0d080', fontSize: '11px', cursor: 'pointer', fontFamily: 'Jost, sans-serif', whiteSpace: 'nowrap' }}>
+                🕐 Spóźnienie
               </button>
             )}
             {wpis && (
