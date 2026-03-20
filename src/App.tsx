@@ -1177,7 +1177,7 @@ function EkranLogowania({ onZalogowano }: { onZalogowano: () => void }) {
     e.preventDefault();
     setLadowanie(true); setBlad('');
     const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: 'https://on-arch-akademia.vercel.app', captchaToken: turnstileTokenRef.current || undefined });
-    if (error) { setBlad('Blad wysylania emaila. Sprawdz adres.'); } else { setResetWyslany(true); }
+    if (error) { setBlad('Blad: ' + error.message); } else { setResetWyslany(true); }
     setLadowanie(false);
   }
 
