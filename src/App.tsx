@@ -1631,10 +1631,10 @@ function WeryfikacjaObecnosci({ zjazdy, grupy, kursanci, prowadzacyUserId }: {
   const [obecnosci, setObecnosci] = useState<Obecnosc[]>([]);
   const [ladowanie, setLadowanie] = useState(false);
   const [wybranaGrupa, setWybranaGrupa] = useState('');
+  const [aktywneGodziny, setAktywneGodziny] = useState<string | null>(null); // "id_dzien"
+  const [godz, setGodz] = useState({ przybycie: '', wyjscie: '' });
 
-  const zjazdyFiltr = wybranaGrupa
-    ? zjazdy.filter(z => z.grupa_id === parseInt(wybranaGrupa))
-    : zjazdy;
+  const zjazdyFiltr = wybranaGrupa ? zjazdy.filter(z => z.grupa_id === parseInt(wybranaGrupa)) : zjazdy;
 
   useEffect(() => {
     if (!wybranyZjazd) { setObecnosci([]); return; }
@@ -1643,29 +1643,38 @@ function WeryfikacjaObecnosci({ zjazdy, grupy, kursanci, prowadzacyUserId }: {
       .then(({ data }) => { setObecnosci(data || []); setLadowanie(false); });
   }, [wybranyZjazd]);
 
+  async function odswiezObecnosci() {
+    const { data } = await supabase.from('obecnosci').select('*').eq('zjazd_id', parseInt(wybranyZjazd));
+    setObecnosci(data || []);
+  }
+
   async function zweryfikuj(obecnoscId: string, weryfikuj: boolean) {
     await supabase.from('obecnosci').update({
       zweryfikowano: weryfikuj,
       zweryfikowano_przez: weryfikuj ? prowadzacyUserId : null,
     }).eq('id', obecnoscId);
-    const { data } = await supabase.from('obecnosci').select('*').eq('zjazd_id', parseInt(wybranyZjazd));
-    setObecnosci(data || []);
+    await odswiezObecnosci();
+  }
+
+  async function zapiszGodziny(obecnoscId: string) {
+    await supabase.from('obecnosci').update({
+      godzina_przybycia: godz.przybycie || null,
+      godzina_wyjscia: godz.wyjscie || null,
+    }).eq('id', obecnoscId);
+    await odswiezObecnosci();
+    setAktywneGodziny(null);
+    setGodz({ przybycie: '', wyjscie: '' });
   }
 
   async function dodajRecznieObecnosc(kursantUserId: string, imie: string, nazwisko: string, dzien: 1 | 2, zjazdId: number) {
     const zjazd = zjazdy.find(z => z.id === zjazdId);
     if (!zjazd) return;
     await supabase.from('obecnosci').upsert([{
-      zjazd_id: zjazdId,
-      user_id: kursantUserId,
-      grupa_id: zjazd.grupa_id,
-      imie, nazwisko, dzien,
-      status: 'potwierdzono',
-      zweryfikowano: true,
-      zweryfikowano_przez: prowadzacyUserId,
+      zjazd_id: zjazdId, user_id: kursantUserId,
+      grupa_id: zjazd.grupa_id, imie, nazwisko, dzien,
+      status: 'potwierdzono', zweryfikowano: true, zweryfikowano_przez: prowadzacyUserId,
     }], { onConflict: 'zjazd_id,user_id,dzien' });
-    const { data } = await supabase.from('obecnosci').select('*').eq('zjazd_id', zjazdId);
-    setObecnosci(data || []);
+    await odswiezObecnosci();
   }
 
   const zjazd = zjazdy.find(z => z.id === parseInt(wybranyZjazd));
@@ -1697,60 +1706,118 @@ function WeryfikacjaObecnosci({ zjazdy, grupy, kursanci, prowadzacyUserId }: {
 
       {wybranyZjazd && !ladowanie && (
         <>
-          {[1, 2].filter(dzienNr => dzienNr === 1 || zjazd?.data_dzien2).map(dzienNr => (
-            <div key={dzienNr} style={{ marginBottom: '20px' }}>
-              <h3 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '18px', color: 'var(--brand)', marginBottom: '10px' }}>
-                Dzień {dzienNr}
-                {dzienNr === 1 && zjazd?.data_dzien1 && ` · ${new Date(zjazd.data_dzien1).toLocaleDateString('pl-PL', { weekday: 'long', day: 'numeric', month: 'long' })}`}
-                {dzienNr === 2 && zjazd?.data_dzien2 && ` · ${new Date(zjazd.data_dzien2).toLocaleDateString('pl-PL', { weekday: 'long', day: 'numeric', month: 'long' })}`}
-              </h3>
-              {kursanciZjazdu.map(k => {
-                const wpis = obecnosci.find(o => o.user_id === k.user_id && o.dzien === dzienNr);
-                return (
-                  <div key={k.id} className="profil-card" style={{ marginBottom: '6px' }}>
-                    <div className="profil-row">
-                      <span style={{ fontSize: '13px', fontWeight: 500 }}>{k.imie} {k.nazwisko}</span>
-                      <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-                        {!wpis && (
-                          <button onClick={() => dodajRecznieObecnosc(k.user_id, k.imie, k.nazwisko, dzienNr as 1 | 2, parseInt(wybranyZjazd))}
-                            style={{ fontSize: '11px', padding: '3px 8px', borderRadius: '8px', background: '#e8f5e9', color: '#2e7d32', border: '0.5px solid #c8e6c9', cursor: 'pointer', fontFamily: 'Jost, sans-serif' }}>
-                            + Dodaj
-                          </button>
-                        )}
-                        {wpis && (
-                          <>
-                            <span style={{
-                              fontSize: '10px', fontWeight: 600, padding: '3px 8px', borderRadius: '20px',
-                              background: wpis.status === 'potwierdzono' ? '#e8f5e9' : '#ffebee',
-                              color: wpis.status === 'potwierdzono' ? '#2e7d32' : '#c62828',
-                            }}>
-                              {wpis.status === 'potwierdzono' ? '✓ Obecny/a' : '✕ Nieobecny/a'}
-                            </span>
-                            {wpis.zweryfikowano ? (
-                              <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>✓ zweryfikowano</span>
-                            ) : (
-                              <button onClick={() => zweryfikuj(wpis.id, true)}
-                                style={{ fontSize: '11px', padding: '3px 8px', borderRadius: '8px', background: 'var(--brand-light)', color: 'var(--brand)', border: '0.5px solid var(--brand-mid)', cursor: 'pointer', fontFamily: 'Jost, sans-serif' }}>
-                                Zweryfikuj
+          {[1, 2].filter(dzienNr => dzienNr === 1 || zjazd?.data_dzien2).map(dzienNr => {
+            const data = dzienNr === 1 ? zjazd?.data_dzien1 : zjazd?.data_dzien2;
+            const gStart = dzienNr === 1 ? zjazd?.godzina_start_d1 : zjazd?.godzina_start_d2;
+            const gEnd = dzienNr === 1 ? zjazd?.godzina_end_d1 : zjazd?.godzina_end_d2;
+            return (
+              <div key={dzienNr} style={{ marginBottom: '20px' }}>
+                <h3 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '18px', color: 'var(--brand)', marginBottom: '4px' }}>
+                  Dzień {dzienNr}
+                  {data && ` · ${new Date(data).toLocaleDateString('pl-PL', { weekday: 'long', day: 'numeric', month: 'long' })}`}
+                </h3>
+                {gStart && gEnd && <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '10px' }}>Godziny zajęć: {gStart}–{gEnd}</div>}
+                {!gStart && <div style={{ marginBottom: '10px' }} />}
+
+                {kursanciZjazdu.map(k => {
+                  const wpis = obecnosci.find(o => o.user_id === k.user_id && o.dzien === dzienNr);
+                  const kluczGodzin = `${k.user_id}_${dzienNr}`;
+                  const godzinaAktywna = aktywneGodziny === kluczGodzin;
+                  return (
+                    <div key={k.id} className="profil-card" style={{ marginBottom: '6px' }}>
+                      <div className="profil-row">
+                        <span style={{ fontSize: '13px', fontWeight: 500 }}>{k.imie} {k.nazwisko}</span>
+                        <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' }}>
+                          {!wpis && (
+                            <button onClick={() => dodajRecznieObecnosc(k.user_id, k.imie, k.nazwisko, dzienNr as 1 | 2, parseInt(wybranyZjazd))}
+                              style={{ fontSize: '11px', padding: '3px 8px', borderRadius: '8px', background: '#e8f5e9', color: '#2e7d32', border: '0.5px solid #c8e6c9', cursor: 'pointer', fontFamily: 'Jost, sans-serif' }}>
+                              + Dodaj
+                            </button>
+                          )}
+                          {wpis && (
+                            <>
+                              <span style={{
+                                fontSize: '10px', fontWeight: 600, padding: '3px 8px', borderRadius: '20px',
+                                background: wpis.status === 'potwierdzono' ? '#e8f5e9' : '#ffebee',
+                                color: wpis.status === 'potwierdzono' ? '#2e7d32' : '#c62828',
+                              }}>
+                                {wpis.status === 'potwierdzono' ? '✓ Obecny/a' : '✕ Nieobecny/a'}
+                              </span>
+                              {wpis.zweryfikowano ? (
+                                <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>✓ zweryfikowano</span>
+                              ) : (
+                                <button onClick={() => zweryfikuj(wpis.id, true)}
+                                  style={{ fontSize: '11px', padding: '3px 8px', borderRadius: '8px', background: 'var(--brand-light)', color: 'var(--brand)', border: '0.5px solid var(--brand-mid)', cursor: 'pointer', fontFamily: 'Jost, sans-serif' }}>
+                                  Zweryfikuj
+                                </button>
+                              )}
+                              {wpis.status === 'potwierdzono' && (
+                                <button onClick={() => {
+                                  setAktywneGodziny(godzinaAktywna ? null : kluczGodzin);
+                                  setGodz({ przybycie: wpis.godzina_przybycia || '', wyjscie: wpis.godzina_wyjscia || '' });
+                                }}
+                                  style={{ fontSize: '11px', padding: '3px 8px', borderRadius: '8px', background: '#fef9ec', color: '#c8a84b', border: '0.5px solid #f0d080', cursor: 'pointer', fontFamily: 'Jost, sans-serif' }}>
+                                  🕐
+                                </button>
+                              )}
+                            </>
+                          )}
+                        </div>
+                      </div>
+
+                      {wpis?.powod_nieobecnosci && (
+                        <div style={{ padding: '0 16px 6px', fontSize: '12px', color: 'var(--text-muted)', fontStyle: 'italic' }}>
+                          Powód: {wpis.powod_nieobecnosci}
+                        </div>
+                      )}
+
+                      {/* Godziny spóźnienia/wyjścia */}
+                      {wpis && (wpis.godzina_przybycia || wpis.godzina_wyjscia) && !godzinaAktywna && (
+                        <div style={{ padding: '0 16px 6px', display: 'flex', gap: '12px' }}>
+                          {wpis.godzina_przybycia && <span style={{ fontSize: '11px', color: '#c8a84b' }}>⏰ przybycie: {wpis.godzina_przybycia}</span>}
+                          {wpis.godzina_wyjscia && <span style={{ fontSize: '11px', color: '#c8a84b' }}>⏰ wyjście: {wpis.godzina_wyjscia}</span>}
+                        </div>
+                      )}
+
+                      {/* Formularz godzin */}
+                      {godzinaAktywna && wpis && (
+                        <div style={{ padding: '0 16px 12px' }}>
+                          <div style={{ background: '#fef9ec', borderRadius: '10px', padding: '10px' }}>
+                            <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text)', marginBottom: '8px' }}>Spóźnienie / wczesne wyjście</div>
+                            <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
+                              <div style={{ flex: 1 }}>
+                                <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginBottom: '3px' }}>Przybycie</div>
+                                <input type="time" value={godz.przybycie} onChange={e => setGodz(g => ({ ...g, przybycie: e.target.value }))}
+                                  style={{ width: '100%', fontSize: '12px', padding: '5px 8px', borderRadius: '8px', border: '0.5px solid var(--border)' }} />
+                              </div>
+                              <div style={{ flex: 1 }}>
+                                <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginBottom: '3px' }}>Wyjście</div>
+                                <input type="time" value={godz.wyjscie} onChange={e => setGodz(g => ({ ...g, wyjscie: e.target.value }))}
+                                  style={{ width: '100%', fontSize: '12px', padding: '5px 8px', borderRadius: '8px', border: '0.5px solid var(--border)' }} />
+                              </div>
+                            </div>
+                            <div style={{ display: 'flex', gap: '6px' }}>
+                              <button onClick={() => zapiszGodziny(wpis.id)}
+                                className="login-btn" style={{ flex: 1, marginTop: 0, padding: '8px' }}>
+                                Zapisz
                               </button>
-                            )}
-                          </>
-                        )}
-                      </div>
+                              <button onClick={() => setAktywneGodziny(null)}
+                                style={{ padding: '8px 12px', borderRadius: '10px', background: 'white', border: '0.5px solid var(--border)', fontSize: '12px', cursor: 'pointer', color: 'var(--text-muted)' }}>
+                                Anuluj
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
-                    {wpis?.powod_nieobecnosci && (
-                      <div style={{ padding: '0 16px 8px', fontSize: '12px', color: 'var(--text-muted)', fontStyle: 'italic' }}>
-                        Powód: {wpis.powod_nieobecnosci}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-              {kursanciZjazdu.length === 0 && (
-                <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Brak kursantów w tej grupie.</p>
-              )}
-            </div>
-          ))}
+                  );
+                })}
+                {kursanciZjazdu.length === 0 && (
+                  <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Brak kursantów w tej grupie.</p>
+                )}
+              </div>
+            );
+          })}
         </>
       )}
     </>
