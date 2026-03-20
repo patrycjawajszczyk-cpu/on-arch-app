@@ -1909,7 +1909,7 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
   async function dodajGrupe(e: React.FormEvent) {
     e.preventDefault();
     const { error } = await supabase.from('grupy').insert([{ nazwa: nowaGrupa.nazwa, miasto: nowaGrupa.miasto, edycja: nowaGrupa.edycja, drive_link: nowaGrupa.drive_link || null, numer_uslugi: nowaGrupa.numer_uslugi || null }]);
-    if (error) { setKomunikat('Blad: ' + error.message); } else { setKomunikat('Grupa dodana!'); setNowaGrupa({ nazwa: '', miasto: '', edycja: '', drive_link: '' }); pobierzGrupy(); }
+    if (error) { setKomunikat('Blad: ' + error.message); } else { setKomunikat('Grupa dodana!'); setNowaGrupa({ nazwa: '', miasto: '', edycja: '', drive_link: '', numer_uslugi: '' }); pobierzGrupy(); }
   }
 
   async function zapiszDriveLink(grupaId: number, link: string) {
