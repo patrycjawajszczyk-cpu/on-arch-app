@@ -75,6 +75,8 @@ type Zjazd = {
   adres: string;
   tematy: string;
   status: string;
+  typ: 'stacjonarny' | 'online';
+  link_online: string | null;
   data_zjazdu: string;
   data_dzien1: string | null;
   data_dzien2: string | null;
@@ -1579,8 +1581,17 @@ function PanelProwadzacego({ user, kursant, onWyloguj }: { user: User; kursant: 
                       <div className="sess-date">{z.daty}</div>
                       <div className="sess-rows">
                         {mojeGrupy.length > 1 && <div className="sess-row"><span className="sess-lbl">Grupa:</span> {mojeGrupy.find(g => g.id === z.grupa_id)?.nazwa || '-'}</div>}
-                        {z.sala && z.sala !== 'Do uzupełnienia' && <div className="sess-row"><span className="sess-lbl">Sala:</span> {z.sala}</div>}
-                        {z.adres && z.adres !== 'Do uzupełnienia' && <div className="sess-row"><span className="sess-lbl">Adres:</span> {z.adres}</div>}
+                        {z.typ === 'online' ? (
+                          <div className="sess-row" style={{ gap: '8px', flexDirection: 'column', alignItems: 'flex-start' }}>
+                            <span style={{ fontSize: '10px', fontWeight: 600, background: '#e8f0fe', color: '#1565c0', padding: '2px 8px', borderRadius: '10px' }}>🌐 Online</span>
+                            {z.link_online && <a href={z.link_online} target="_blank" rel="noopener noreferrer" style={{ fontSize: '12px', color: '#1565c0', textDecoration: 'underline' }}>Link do zajęć →</a>}
+                          </div>
+                        ) : (
+                          <>
+                            {z.sala && z.sala !== 'Do uzupełnienia' && <div className="sess-row"><span className="sess-lbl">Sala:</span> {z.sala}</div>}
+                            {z.adres && z.adres !== 'Do uzupełnienia' && <div className="sess-row"><span className="sess-lbl">Adres:</span> {z.adres}</div>}
+                          </>
+                        )}
                         {z.tematy && <div className="sess-row"><span className="sess-lbl">Temat:</span> {z.tematy}</div>}
                       </div>
                     </div>
@@ -1864,7 +1875,7 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
   const [edytowane, setEdytowane] = useState<Ogloszenie | null>(null);
   const [edytowanyZjazd, setEdytowanyZjazd] = useState<Zjazd | null>(null);
   const [noweOgl, setNoweOgl] = useState({ typ: 'Informacja', tytul: '', tresc: '', szczegoly: '', nowe: true, grupa_id: '' });
-  const [nowyZjazd, setNowyZjazd] = useState({ nr: '', daty: '', sala: '', adres: '', tematy: '', status: 'nadchodzacy', data_zjazdu: '', data_dzien1: '', data_dzien2: '', grupa_id: '', prowadzacy_id: '' });
+  const [nowyZjazd, setNowyZjazd] = useState({ nr: '', daty: '', sala: '', adres: '', tematy: '', status: 'nadchodzacy', typ: 'stacjonarny', link_online: '', data_zjazdu: '', data_dzien1: '', data_dzien2: '', grupa_id: '', prowadzacy_id: '' });
   const [nowyKursant, setNowyKursant] = useState({ imie: '', nazwisko: '', email: '', grupa_id: '' });
   const [nowaGrupa, setNowaGrupa] = useState({ nazwa: '', miasto: '', edycja: '', drive_link: '', numer_uslugi: '' });
   const [nowyProwadzacy, setNowyProwadzacy] = useState({ imie: '', nazwisko: '', specjalizacja: '' });
@@ -1928,6 +1939,8 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
       adres: nowyZjazd.adres,
       tematy: nowyZjazd.tematy,
       status: nowyZjazd.status,
+      typ: (nowyZjazd as any).typ || 'stacjonarny',
+      link_online: (nowyZjazd as any).link_online || null,
       data_zjazdu: nowyZjazd.data_zjazdu,
       data_dzien1: nowyZjazd.data_dzien1 || nowyZjazd.data_zjazdu,
       data_dzien2: nowyZjazd.data_dzien2 || null,
@@ -1938,7 +1951,7 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
       await supabase.from('zjazdy_prowadzacy').insert([{ zjazd_id: nowyZjazdData.id, prowadzacy_id: parseInt(nowyZjazd.prowadzacy_id) }]);
     }
     setKomunikat('Zjazd dodany!');
-    setNowyZjazd({ nr: '', daty: '', sala: '', adres: '', tematy: '', status: 'nadchodzacy', data_zjazdu: '', data_dzien1: '', data_dzien2: '', grupa_id: '', prowadzacy_id: '' });
+    setNowyZjazd({ nr: '', daty: '', sala: '', adres: '', tematy: '', status: 'nadchodzacy', typ: 'stacjonarny', link_online: '', data_zjazdu: '', data_dzien1: '', data_dzien2: '', grupa_id: '', prowadzacy_id: '' });
     pobierzZjazdy();
   }
 
@@ -1953,6 +1966,8 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
       adres: edytowanyZjazd.adres,
       tematy: edytowanyZjazd.tematy,
       status: edytowanyZjazd.status,
+      typ: (edytowanyZjazd as any).typ || 'stacjonarny',
+      link_online: (edytowanyZjazd as any).link_online || null,
       data_zjazdu: edytowanyZjazd.data_zjazdu,
       data_dzien1: edytowanyZjazd.data_dzien1 || null,
       data_dzien2: edytowanyZjazd.data_dzien2 || null,
@@ -2199,8 +2214,15 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
                     <div className="login-field" style={{ flex: 1 }}><label>Godz. start D2</label><input type="time" value={(edytowanyZjazd as any).godzina_start_d2 || ''} onChange={e => setEdytowanyZjazd({ ...edytowanyZjazd, ...(edytowanyZjazd as any), godzina_start_d2: e.target.value || null })} /></div>
                     <div className="login-field" style={{ flex: 1 }}><label>Godz. koniec D2</label><input type="time" value={(edytowanyZjazd as any).godzina_end_d2 || ''} onChange={e => setEdytowanyZjazd({ ...edytowanyZjazd, ...(edytowanyZjazd as any), godzina_end_d2: e.target.value || null })} /></div>
                   </div>
-                  <div className="login-field"><label>Sala</label><input type="text" value={edytowanyZjazd.sala} onChange={e => setEdytowanyZjazd({ ...edytowanyZjazd, sala: e.target.value })} required /></div>
-                  <div className="login-field"><label>Adres</label><input type="text" value={edytowanyZjazd.adres} onChange={e => setEdytowanyZjazd({ ...edytowanyZjazd, adres: e.target.value })} required /></div>
+                  <div className="login-field"><label>Typ zajęć</label><select value={(edytowanyZjazd as any).typ || 'stacjonarny'} onChange={e => setEdytowanyZjazd({ ...edytowanyZjazd, ...(edytowanyZjazd as any), typ: e.target.value })}><option value="stacjonarny">Stacjonarny</option><option value="online">Online</option></select></div>
+                  {(edytowanyZjazd as any).typ === 'online' ? (
+                    <div className="login-field"><label>Link do zajęć (Google Meet / Zoom)</label><input type="url" value={(edytowanyZjazd as any).link_online || ''} onChange={e => setEdytowanyZjazd({ ...edytowanyZjazd, ...(edytowanyZjazd as any), link_online: e.target.value || null })} placeholder="https://meet.google.com/..." /></div>
+                  ) : (
+                    <>
+                      <div className="login-field"><label>Sala</label><input type="text" value={edytowanyZjazd.sala} onChange={e => setEdytowanyZjazd({ ...edytowanyZjazd, sala: e.target.value })} /></div>
+                      <div className="login-field"><label>Adres</label><input type="text" value={edytowanyZjazd.adres} onChange={e => setEdytowanyZjazd({ ...edytowanyZjazd, adres: e.target.value })} /></div>
+                    </>
+                  )}
                   <div className="login-field"><label>Tematy</label><input type="text" value={edytowanyZjazd.tematy} onChange={e => setEdytowanyZjazd({ ...edytowanyZjazd, tematy: e.target.value })} required /></div>
                   <div className="login-field"><label>Status</label><select value={edytowanyZjazd.status} onChange={e => setEdytowanyZjazd({ ...edytowanyZjazd, status: e.target.value })}><option value="nadchodzacy">Nadchodzacy</option><option value="zakonczony">Zakonczony</option></select></div>
                   <button className="login-btn" type="submit">Zapisz zmiany</button>
@@ -2225,8 +2247,15 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
                     <div className="login-field" style={{ flex: 1 }}><label>Godz. start D2</label><input type="time" value={(nowyZjazd as any).godzina_start_d2 || ''} onChange={e => setNowyZjazd({ ...nowyZjazd, ...(nowyZjazd as any), godzina_start_d2: e.target.value || null })} /></div>
                     <div className="login-field" style={{ flex: 1 }}><label>Godz. koniec D2</label><input type="time" value={(nowyZjazd as any).godzina_end_d2 || ''} onChange={e => setNowyZjazd({ ...nowyZjazd, ...(nowyZjazd as any), godzina_end_d2: e.target.value || null })} /></div>
                   </div>
-                  <div className="login-field"><label>Sala</label><input type="text" value={nowyZjazd.sala} onChange={e => setNowyZjazd({ ...nowyZjazd, sala: e.target.value })} required /></div>
-                  <div className="login-field"><label>Adres</label><input type="text" value={nowyZjazd.adres} onChange={e => setNowyZjazd({ ...nowyZjazd, adres: e.target.value })} required /></div>
+                  <div className="login-field"><label>Typ zajęć</label><select value={(nowyZjazd as any).typ || 'stacjonarny'} onChange={e => setNowyZjazd({ ...nowyZjazd, ...(nowyZjazd as any), typ: e.target.value })}><option value="stacjonarny">Stacjonarny</option><option value="online">Online</option></select></div>
+                  {(nowyZjazd as any).typ === 'online' ? (
+                    <div className="login-field"><label>Link do zajęć (Google Meet / Zoom)</label><input type="url" value={(nowyZjazd as any).link_online || ''} onChange={e => setNowyZjazd({ ...nowyZjazd, ...(nowyZjazd as any), link_online: e.target.value || null })} placeholder="https://meet.google.com/..." /></div>
+                  ) : (
+                    <>
+                      <div className="login-field"><label>Sala</label><input type="text" value={nowyZjazd.sala} onChange={e => setNowyZjazd({ ...nowyZjazd, sala: e.target.value })} /></div>
+                      <div className="login-field"><label>Adres</label><input type="text" value={nowyZjazd.adres} onChange={e => setNowyZjazd({ ...nowyZjazd, adres: e.target.value })} /></div>
+                    </>
+                  )}
                   <div className="login-field"><label>Tematy</label><input type="text" value={nowyZjazd.tematy} onChange={e => setNowyZjazd({ ...nowyZjazd, tematy: e.target.value })} required /></div>
                   <div className="login-field"><label>Prowadzący (opcjonalnie)</label>
                     <select value={nowyZjazd.prowadzacy_id} onChange={e => setNowyZjazd({ ...nowyZjazd, prowadzacy_id: e.target.value })}>
@@ -2751,11 +2780,26 @@ function EkranGlowny({ ogloszenia, zjazdy, onOtworzOgloszenie, user, kursant, on
             <div className="hero-label">Zjazd {najblizszy.nr}</div>
             {odliczanie && <div style={{ display: 'inline-block', background: 'rgba(255,255,255,0.18)', color: 'white', fontSize: '11px', fontWeight: 600, padding: '4px 12px', borderRadius: '20px', marginBottom: '8px', letterSpacing: '0.5px' }}>{odliczanie}</div>}
             <div className="hero-date">{najblizszy.daty}</div>
-            <div className="hero-sub">{kursant?.grupy?.miasto || 'Warszawa'}</div>
-            <div className="hero-pills">
-              <span className="pill">{najblizszy.sala}</span>
-              <span className="pill">{najblizszy.adres}</span>
-            </div>
+            {najblizszy.typ === 'online' ? (
+              <div className="hero-pills">
+                <span className="pill">🌐 Zajęcia online</span>
+                {najblizszy.link_online && (
+                  <a href={najblizszy.link_online} target="_blank" rel="noopener noreferrer"
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', background: 'rgba(255,255,255,0.2)', color: 'white', padding: '4px 12px', borderRadius: '20px', fontSize: '11px', fontWeight: 600, textDecoration: 'none', border: '0.5px solid rgba(255,255,255,0.3)' }}>
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+                    Dołącz
+                  </a>
+                )}
+              </div>
+            ) : (
+              <>
+                <div className="hero-sub">{kursant?.grupy?.miasto || 'Warszawa'}</div>
+                <div className="hero-pills">
+                  <span className="pill">{najblizszy.sala}</span>
+                  <span className="pill">{najblizszy.adres}</span>
+                </div>
+              </>
+            )}
           </div>
         ) : (
           <div className="hero-card"><div className="hero-date">Brak nadchodzących zjazdów</div></div>
@@ -3070,9 +3114,30 @@ function EkranZjazdy({ zjazdy, user, kursant }: { zjazdy: Zjazd[]; user: User; k
             <span className={`s-badge s-${z.status}`}>{z.status === 'nadchodzacy' ? 'Nadchodzący' : 'Zakończony'}</span>
           </div>
           <div className="sess-date">{z.daty}</div>
+          {z.typ === 'online' && (
+            <div style={{ padding: '6px 14px 2px' }}>
+              <span style={{ display: 'inline-block', fontSize: '10px', fontWeight: 600, background: '#e8f0fe', color: '#1565c0', padding: '3px 10px', borderRadius: '20px', marginBottom: '6px' }}>
+                🌐 Zajęcia online
+              </span>
+            </div>
+          )}
           <div className="sess-rows">
-            {z.sala && z.sala !== 'Do uzupełnienia' && <div className="sess-row"><span className="sess-lbl">Sala:</span> {z.sala}</div>}
-            {z.adres && z.adres !== 'Do uzupełnienia' && <div className="sess-row"><span className="sess-lbl">Adres:</span> {z.adres}</div>}
+            {z.typ === 'online' ? (
+              z.link_online && (
+                <div className="sess-row" style={{ paddingBottom: '4px' }}>
+                  <a href={z.link_online} target="_blank" rel="noopener noreferrer"
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: '#1565c0', color: 'white', padding: '8px 16px', borderRadius: '10px', fontSize: '13px', fontWeight: 600, textDecoration: 'none' }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+                    Dołącz do zajęć
+                  </a>
+                </div>
+              )
+            ) : (
+              <>
+                {z.sala && z.sala !== 'Do uzupełnienia' && <div className="sess-row"><span className="sess-lbl">Sala:</span> {z.sala}</div>}
+                {z.adres && z.adres !== 'Do uzupełnienia' && <div className="sess-row"><span className="sess-lbl">Adres:</span> {z.adres}</div>}
+              </>
+            )}
             {z.tematy && <div className="sess-row"><span className="sess-lbl">Temat:</span> {z.tematy}</div>}
             {z.prowadzacy && z.prowadzacy.length > 0 && (
               <div className="sess-row" style={{ marginTop: '4px', paddingTop: '6px', borderTop: '0.5px solid var(--border-soft)' }}>
