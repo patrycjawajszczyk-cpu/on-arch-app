@@ -1048,6 +1048,41 @@ function EkranPowitalny({ kursant, user, onDalej }: { kursant: Kursant; user: { 
   );
 }
 
+// Stała — wstaw Site Key z Cloudflare Turnstile gdy będzie gotowy
+const TURNSTILE_SITE_KEY = '0x4AAAAAACty6p1M9mvVALXM';
+
+const MAX_PROB = 5;
+const BLOKADA_MINUT = 15;
+
+function sprawdzBlokade(email: string): { zablokowany: boolean; pozostalo: number } {
+  const klucz = `login_${email.toLowerCase()}`;
+  const dane = localStorage.getItem(klucz);
+  if (!dane) return { zablokowany: false, pozostalo: 0 };
+  const { proby, czas } = JSON.parse(dane);
+  const minuty = (Date.now() - czas) / 60000;
+  if (proby >= MAX_PROB && minuty < BLOKADA_MINUT) {
+    return { zablokowany: true, pozostalo: Math.ceil(BLOKADA_MINUT - minuty) };
+  }
+  if (minuty >= BLOKADA_MINUT) {
+    localStorage.removeItem(klucz);
+    return { zablokowany: false, pozostalo: 0 };
+  }
+  return { zablokowany: false, pozostalo: 0 };
+}
+
+function zapiszProbe(email: string, reset = false) {
+  const klucz = `login_${email.toLowerCase()}`;
+  if (reset) { localStorage.removeItem(klucz); return; }
+  const dane = localStorage.getItem(klucz);
+  const obecne = dane ? JSON.parse(dane) : { proby: 0, czas: Date.now() };
+  const minuty = (Date.now() - obecne.czas) / 60000;
+  if (minuty >= BLOKADA_MINUT) {
+    localStorage.setItem(klucz, JSON.stringify({ proby: 1, czas: Date.now() }));
+  } else {
+    localStorage.setItem(klucz, JSON.stringify({ proby: obecne.proby + 1, czas: obecne.czas }));
+  }
+}
+
 function EkranLogowania({ onZalogowano }: { onZalogowano: () => void }) {
   const [email, setEmail] = useState('');
   const [haslo, setHaslo] = useState('');
@@ -1058,12 +1093,83 @@ function EkranLogowania({ onZalogowano }: { onZalogowano: () => void }) {
   const [zgodaRodo, setZgodaRodo] = useState(false);
   const [pokazPolityka, setPokazPolityka] = useState(false);
   const [pokazRegulamin, setPokazRegulamin] = useState(false);
+  const [pozostalePróby, setPozostalePróby] = useState(MAX_PROB);
+  const [zablokowany, setZablokowany] = useState(false);
+  const [pozostaloCzas, setPozostaloCzas] = useState(0);
+  const turnstileRef = useRef<HTMLDivElement>(null);
+  const turnstileTokenRef = useRef<string>('');
+
+  useEffect(() => {
+    // Wczytaj Turnstile jeśli jest skonfigurowany
+    if (!TURNSTILE_SITE_KEY) return;
+    const script = document.createElement('script');
+    script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js';
+    script.async = true;
+    document.head.appendChild(script);
+    script.onload = () => {
+      if ((window as any).turnstile && turnstileRef.current) {
+        (window as any).turnstile.render(turnstileRef.current, {
+          sitekey: TURNSTILE_SITE_KEY,
+          callback: (token: string) => { turnstileTokenRef.current = token; },
+          'expired-callback': () => { turnstileTokenRef.current = ''; },
+        });
+      }
+    };
+    return () => { document.head.removeChild(script); };
+  }, []);
+
+  // Odświeżaj timer blokady
+  useEffect(() => {
+    if (!email) return;
+    const { zablokowany: z, pozostalo } = sprawdzBlokade(email);
+    setZablokowany(z);
+    setPozostaloCzas(pozostalo);
+    if (!z) setPozostalePróby(MAX_PROB - ((() => {
+      const dane = localStorage.getItem(`login_${email.toLowerCase()}`);
+      return dane ? JSON.parse(dane).proby : 0;
+    })()));
+  }, [email]);
+
+  useEffect(() => {
+    if (!zablokowany) return;
+    const interval = setInterval(() => {
+      const { zablokowany: z, pozostalo } = sprawdzBlokade(email);
+      setZablokowany(z);
+      setPozostaloCzas(pozostalo);
+      if (!z) setBlad('');
+    }, 10000);
+    return () => clearInterval(interval);
+  }, [zablokowany, email]);
 
   async function zaloguj(e: React.FormEvent) {
     e.preventDefault();
+    const { zablokowany: z, pozostalo } = sprawdzBlokade(email);
+    if (z) { setBlad(`Zbyt wiele prób. Spróbuj ponownie za ${pozostalo} min.`); return; }
+    if (TURNSTILE_SITE_KEY && !turnstileTokenRef.current) { setBlad('Potwierdź że nie jesteś robotem.'); return; }
     setLadowanie(true); setBlad('');
     const { error } = await supabase.auth.signInWithPassword({ email, password: haslo });
-    if (error) { setBlad('Nieprawidlowy email lub haslo'); } else { onZalogowano(); }
+    if (error) {
+      zapiszProbe(email);
+      const { zablokowany: zNowy, pozostalo: pNowy } = sprawdzBlokade(email);
+      const dane = localStorage.getItem(`login_${email.toLowerCase()}`);
+      const proby = dane ? JSON.parse(dane).proby : 1;
+      if (zNowy) {
+        setZablokowany(true);
+        setPozostaloCzas(pNowy);
+        setBlad(`Zbyt wiele nieudanych prób. Konto tymczasowo zablokowane na ${BLOKADA_MINUT} minut.`);
+      } else {
+        const pozostale = MAX_PROB - proby;
+        setPozostalePróby(pozostale);
+        setBlad(`Nieprawidłowy email lub hasło.${pozostale <= 2 ? ` Pozostało prób: ${pozostale}.` : ''}`);
+      }
+      if (TURNSTILE_SITE_KEY && (window as any).turnstile) {
+        (window as any).turnstile.reset();
+        turnstileTokenRef.current = '';
+      }
+    } else {
+      zapiszProbe(email, true);
+      onZalogowano();
+    }
     setLadowanie(false);
   }
 
@@ -1107,13 +1213,24 @@ function EkranLogowania({ onZalogowano }: { onZalogowano: () => void }) {
         <div className="login-field"><label>Email</label><input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="twoj@email.pl" required /></div>
         <div className="login-field"><label>Haslo</label><input type="password" value={haslo} onChange={e => setHaslo(e.target.value)} placeholder="password" required /></div>
         {blad && <div className="login-error">{blad}</div>}
+        {zablokowany && (
+          <div style={{ background: '#ffebee', border: '0.5px solid #ffcdd2', borderRadius: '10px', padding: '12px 14px', fontSize: '12px', color: '#c62828', lineHeight: 1.6, marginBottom: '8px' }}>
+            🔒 Logowanie zablokowane na {pozostaloCzas} min. z powodu zbyt wielu nieudanych prób.
+          </div>
+        )}
+        {!zablokowany && pozostalePróby < MAX_PROB && pozostalePróby > 0 && (
+          <div style={{ fontSize: '11px', color: '#e57373', textAlign: 'center', marginBottom: '4px' }}>
+            Pozostało prób: {pozostalePróby} z {MAX_PROB}
+          </div>
+        )}
+        {TURNSTILE_SITE_KEY && <div ref={turnstileRef} style={{ margin: '10px 0' }} />}
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', margin: '12px 0' }}>
           <input type="checkbox" id="zgoda" checked={zgodaRodo} onChange={e => setZgodaRodo(e.target.checked)} style={{ marginTop: '3px', accentColor: 'var(--brand)' }} />
           <label htmlFor="zgoda" style={{ fontSize: '12px', color: 'var(--text-muted)', lineHeight: '1.6' }}>
             Akceptuję <button type="button" className="btn-link" style={{ display: 'inline', fontSize: '12px' }} onClick={() => setPokazRegulamin(true)}>Regulamin</button> oraz <button type="button" className="btn-link" style={{ display: 'inline', fontSize: '12px' }} onClick={() => setPokazPolityka(true)}>Politykę Prywatności</button>
           </label>
         </div>
-        <button className="login-btn" type="submit" disabled={ladowanie || !zgodaRodo}>{ladowanie ? 'Logowanie...' : 'Zaloguj sie'}</button>
+        <button className="login-btn" type="submit" disabled={ladowanie || !zgodaRodo || zablokowany}>{ladowanie ? 'Logowanie...' : 'Zaloguj sie'}</button>
       </form>
       <button className="btn-link" onClick={() => setResetMode(true)}>Nie pamietasz hasla?</button>
       <div style={{ marginTop: '20px', background: 'var(--brand-light)', borderRadius: '14px', padding: '14px 16px', textAlign: 'left' }}>
