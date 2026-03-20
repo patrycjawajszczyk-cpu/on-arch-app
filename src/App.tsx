@@ -1147,7 +1147,7 @@ function EkranLogowania({ onZalogowano }: { onZalogowano: () => void }) {
     if (z) { setBlad(`Zbyt wiele prób. Spróbuj ponownie za ${pozostalo} min.`); return; }
     if (TURNSTILE_SITE_KEY && !turnstileTokenRef.current) { setBlad('Potwierdź że nie jesteś robotem.'); return; }
     setLadowanie(true); setBlad('');
-    const { error } = await supabase.auth.signInWithPassword({ email, password: haslo });
+    const { error } = await supabase.auth.signInWithPassword({ email, password: haslo, options: { captchaToken: turnstileTokenRef.current || undefined } });
     if (error) {
       zapiszProbe(email);
       const { zablokowany: zNowy, pozostalo: pNowy } = sprawdzBlokade(email);
@@ -1176,7 +1176,7 @@ function EkranLogowania({ onZalogowano }: { onZalogowano: () => void }) {
   async function resetHasla(e: React.FormEvent) {
     e.preventDefault();
     setLadowanie(true); setBlad('');
-    const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: 'https://on-arch-akademia.vercel.app' });
+    const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: 'https://on-arch-akademia.vercel.app', captchaToken: turnstileTokenRef.current || undefined });
     if (error) { setBlad('Blad wysylania emaila. Sprawdz adres.'); } else { setResetWyslany(true); }
     setLadowanie(false);
   }
