@@ -5,9 +5,9 @@ import { Home, Calendar, Bell, MessageCircle, User, CheckSquare, BookOpen } from
 
 function OnArchLogo({ color = '#2a1f1f', height = 28 }: { color?: string; height?: number }) {
   const scale = height / 80;
-  const w = 400 * scale;
+  const w = 420 * scale;
   return (
-    <svg width={w} height={height} viewBox="0 0 400 80" xmlns="http://www.w3.org/2000/svg">
+    <svg width={w} height={height} viewBox="0 0 420 80" xmlns="http://www.w3.org/2000/svg">
       <g transform="translate(80,40)">
         <circle cx="22" cy="0" r="22" fill="none" stroke={color} strokeWidth="1.8"/>
         <path d="M56 0 A22 22 0 0 1 100 0" fill="none" stroke={color} strokeWidth="1.8"/>
@@ -729,7 +729,7 @@ function EkranAnkieta({ kursant, zjazdy, user }: { kursant: Kursant | null; zjaz
         </p>
         <div style={{ marginTop: '24px', background: 'var(--surface)', borderRadius: '12px', padding: '16px', border: '0.5px solid var(--border)' }}>
           <p style={{ fontSize: '13px', color: 'var(--brand)', fontWeight: '600' }}>On-Arch Barbara Szczęsna-Dyńska</p>
-          <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px' }}>biuro@on-arch.pl | 883 659 069</p>
+          <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px' }}>info@on-arch.pl | +48 533 718 412</p>
         </div>
       </div>
     );
@@ -933,7 +933,7 @@ function EkranPolitykaPrywatnosci({ onWroc }: { onWroc: () => void }) {
       <button className="btn-wroc" onClick={onWroc} style={{ marginBottom: '16px' }}>← Wróć</button>
       <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '22px', marginBottom: '16px' }}>Polityka Prywatności</h2>
       <div style={{ fontSize: '13px', lineHeight: '1.7', color: 'var(--text)' }}>
-        <p style={{ marginBottom: '12px' }}><strong>Administrator danych osobowych:</strong><br />On-Arch Barbara Szczęsna-Dyńska<br />ul. Tymienieckiego 25D/53, 90-350 Łódź<br />Email: biuro@on-arch.pl</p>
+        <p style={{ marginBottom: '12px' }}><strong>Administrator danych osobowych:</strong><br />On-Arch Barbara Szczęsna-Dyńska<br />ul. Tymienieckiego 25D/53, 90-350 Łódź<br />Email: info@on-arch.pl</p>
         <p style={{ marginBottom: '8px' }}><strong>1. Jakie dane zbieramy?</strong></p>
         <p style={{ marginBottom: '12px' }}>Imię i nazwisko, adres e-mail, numer telefonu, zdjęcie profilowe (opcjonalne).</p>
         <p style={{ marginBottom: '8px' }}><strong>2. W jakim celu?</strong></p>
@@ -945,7 +945,7 @@ function EkranPolitykaPrywatnosci({ onWroc }: { onWroc: () => void }) {
         <p style={{ marginBottom: '8px' }}><strong>5. Twoje prawa</strong></p>
         <p style={{ marginBottom: '12px' }}>Dostęp, sprostowanie, usunięcie, ograniczenie, przenoszenie, skarga do UODO.</p>
         <p style={{ marginBottom: '8px' }}><strong>6. Kontakt</strong></p>
-        <p>biuro@on-arch.pl | 883 659 069</p>
+        <p>info@on-arch.pl | +48 533 718 412</p>
       </div>
     </div>
   );
@@ -965,7 +965,7 @@ function EkranRegulamin({ onWroc }: { onWroc: () => void }) {
         <p style={{ marginBottom: '8px' }}><strong>3. Czat grupowy</strong></p>
         <p style={{ marginBottom: '12px' }}>Zabrania się treści obraźliwych i niezgodnych z prawem. Biuro może usuwać nieodpowiednie treści.</p>
         <p style={{ marginBottom: '8px' }}><strong>4. Kontakt</strong></p>
-        <p>On-Arch Barbara Szczęsna-Dyńska<br />ul. Tymienieckiego 25D/53, 90-350 Łódź<br />biuro@on-arch.pl | 883 659 069</p>
+        <p>On-Arch Barbara Szczęsna-Dyńska<br />ul. Tymienieckiego 25D/53, 90-350 Łódź<br />info@on-arch.pl | +48 533 718 412</p>
       </div>
     </div>
   );
@@ -1114,7 +1114,7 @@ function EkranLogowania({ onZalogowano }: { onZalogowano: () => void }) {
         <button className="login-btn" type="submit" disabled={ladowanie || !zgodaRodo}>{ladowanie ? 'Logowanie...' : 'Zaloguj sie'}</button>
       </form>
       <button className="btn-link" onClick={() => setResetMode(true)}>Nie pamietasz hasla?</button>
-      <p className="login-kontakt">Problemy z logowaniem? Zadzwon do biura:<br /><strong>883 659 069</strong></p>
+      <p className="login-kontakt">Problemy z logowaniem? Zadzwon do biura:<br /><strong>+48 533 718 412</strong></p>
     </div></div>
   );
 }
@@ -3121,10 +3121,10 @@ function EkranOgloszenia({ ogloszenia, onOtworzOgloszenie }: { ogloszenia: Oglos
       }}>
         <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--brand-dark)', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Kontakt z biurem</div>
         <a href="tel:883659069" style={{ display: 'block', fontSize: '18px', fontWeight: 600, color: 'var(--brand-dark)', textDecoration: 'none', marginBottom: '4px' }}>
-          883 659 069
+          +48 533 718 412
         </a>
-        <a href="mailto:biuro@on-arch.pl" style={{ fontSize: '12px', color: 'var(--text-muted)', textDecoration: 'none' }}>
-          biuro@on-arch.pl
+        <a href="mailto:info@on-arch.pl" style={{ fontSize: '12px', color: 'var(--text-muted)', textDecoration: 'none' }}>
+          info@on-arch.pl
         </a>
       </div>
     </>
