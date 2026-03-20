@@ -2064,13 +2064,34 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
 
   async function importujCSV(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]; if (!file) return;
-    // Czytamy plik od razu zanim re-render go wyczyści
-    const text = await file.text();
+
+    // Czytamy plik jako ArrayBuffer żeby wykryć kodowanie
+    const buffer = await file.arrayBuffer();
+    const bytes = new Uint8Array(buffer);
+
+    // Sprawdź BOM UTF-8 (EF BB BF) lub spróbuj UTF-8, fallback na Windows-1250
+    let text: string;
+    const hasBOM = bytes[0] === 0xEF && bytes[1] === 0xBB && bytes[2] === 0xBF;
+    try {
+      const decoder = new TextDecoder(hasBOM ? 'utf-8' : 'utf-8', { fatal: true });
+      text = decoder.decode(buffer);
+      // Jeśli UTF-8 zadziałało ale nie ma polskich znaków a są dziwne — spróbuj Windows-1250
+      if (!hasBOM && /[\x80-\x9F]/.test(text)) throw new Error('likely wrong encoding');
+    } catch {
+      // Fallback: Windows-1250 (Excel Polska)
+      const decoder = new TextDecoder('windows-1250');
+      text = decoder.decode(buffer);
+    }
+
     setImportowanie(true); setImportStatus([]);
+    // Obsługa separatorów: przecinek lub średnik (Excel PL używa średnika)
+    const firstLine = text.trim().split('\n')[0];
+    const separator = firstLine.includes(';') ? ';' : ',';
     const rows = text.trim().split('\n').slice(1);
     const wyniki: { imie: string; nazwisko: string; email: string; status: string }[] = [];
     for (const row of rows) {
-      const [imie, nazwisko, email, grupa_id] = row.split(',').map(s => s.trim());
+      if (!row.trim()) continue;
+      const [imie, nazwisko, email, grupa_id] = row.split(separator).map(s => s.trim().replace(/^"|"$/g, ''));
       if (!imie || !nazwisko || !email || !grupa_id) continue;
       const { data: authData, error: authError } = await supabase.auth.signUp({ email, password: Math.random().toString(36).slice(-10) });
       if (authError) { wyniki.push({ imie, nazwisko, email, status: 'Blad: ' + authError.message }); continue; }
@@ -2078,7 +2099,6 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
       wyniki.push({ imie, nazwisko, email, status: error ? 'Blad: ' + error.message : 'Dodano!' });
       await new Promise(r => setTimeout(r, 1000));
     }
-    // Aktualizujemy stan dopiero po zakończeniu całego importu
     setImportStatus([...wyniki]);
     setImportowanie(false);
     const { data } = await supabase.from('kursanci').select('id, imie, nazwisko, grupa_id, user_id, certyfikat_url'); setKursanci((data || []) as unknown as KursantAdmin[]);
@@ -2427,7 +2447,7 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
             <h2 className="page-title" style={{ marginTop: '28px' }}>Import z CSV</h2>
             <div className="profil-card" style={{ marginBottom: '16px' }}>
               <div className="profil-row" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '8px' }}>
-                <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Format: imie,nazwisko,email,grupa_id</p>
+                <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Format: imie,nazwisko,email,grupa_id — przecinek lub średnik, UTF-8 lub Windows-1250 (Excel PL)</p>
                 <code style={{ fontSize: '12px', background: '#f5f5f5', padding: '8px', borderRadius: '6px', display: 'block', whiteSpace: 'pre', width: '100%' }}>imie,nazwisko,email,grupa_id{'\n'}Anna,Kowalska,a.k@email.pl,1</code>
               </div>
             </div>
