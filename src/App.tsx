@@ -1723,16 +1723,22 @@ function WeryfikacjaObecnosci({ zjazdy, grupy, kursanci, prowadzacyUserId }: {
                   const wpis = obecnosci.find(o => o.user_id === k.user_id && o.dzien === dzienNr);
                   const kluczGodzin = `${k.user_id}_${dzienNr}`;
                   const godzinaAktywna = aktywneGodziny === kluczGodzin;
+                  // Edycja możliwa tylko w dniu zajęć
+                  const dzisiaj = new Date().toISOString().split('T')[0];
+                  const moznaEdytowac = data === dzisiaj;
                   return (
                     <div key={k.id} className="profil-card" style={{ marginBottom: '6px' }}>
                       <div className="profil-row">
                         <span style={{ fontSize: '13px', fontWeight: 500 }}>{k.imie} {k.nazwisko}</span>
                         <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' }}>
-                          {!wpis && (
+                          {!wpis && moznaEdytowac && (
                             <button onClick={() => dodajRecznieObecnosc(k.user_id, k.imie, k.nazwisko, dzienNr as 1 | 2, parseInt(wybranyZjazd))}
                               style={{ fontSize: '11px', padding: '3px 8px', borderRadius: '8px', background: '#e8f5e9', color: '#2e7d32', border: '0.5px solid #c8e6c9', cursor: 'pointer', fontFamily: 'Jost, sans-serif' }}>
                               + Dodaj
                             </button>
+                          )}
+                          {!wpis && !moznaEdytowac && (
+                            <span style={{ fontSize: '10px', color: '#bbb' }}>—</span>
                           )}
                           {wpis && (
                             <>
@@ -1751,13 +1757,34 @@ function WeryfikacjaObecnosci({ zjazdy, grupy, kursanci, prowadzacyUserId }: {
                                   Zweryfikuj
                                 </button>
                               )}
-                              {wpis.status === 'potwierdzono' && (
+                              {wpis.status === 'potwierdzono' && moznaEdytowac && (
                                 <button onClick={() => {
                                   setAktywneGodziny(godzinaAktywna ? null : kluczGodzin);
                                   setGodz({ przybycie: wpis.godzina_przybycia || '', wyjscie: wpis.godzina_wyjscia || '' });
                                 }}
                                   style={{ fontSize: '11px', padding: '3px 8px', borderRadius: '8px', background: '#fef9ec', color: '#c8a84b', border: '0.5px solid #f0d080', cursor: 'pointer', fontFamily: 'Jost, sans-serif' }}>
                                   🕐
+                                </button>
+                              )}
+                              {moznaEdytowac && (
+                                <button onClick={async () => {
+                                  const nowyStatus = wpis.status === 'potwierdzono' ? 'nieobecnosc' : 'potwierdzono';
+                                  await supabase.from('obecnosci').update({ status: nowyStatus, zweryfikowano: false, zweryfikowano_przez: null }).eq('id', wpis.id);
+                                  await odswiezObecnosci();
+                                }}
+                                  style={{ fontSize: '11px', padding: '3px 8px', borderRadius: '8px', background: '#f5f5f5', color: 'var(--text-muted)', border: '0.5px solid var(--border)', cursor: 'pointer', fontFamily: 'Jost, sans-serif' }}>
+                                  {wpis.status === 'potwierdzono' ? '↩ Nieobecność' : '↩ Obecność'}
+                                </button>
+                              )}
+                              {moznaEdytowac && (
+                                <button onClick={async () => {
+                                  if (window.confirm(`Usunąć wpis dla ${k.imie} ${k.nazwisko}?`)) {
+                                    await supabase.from('obecnosci').delete().eq('id', wpis.id);
+                                    await odswiezObecnosci();
+                                  }
+                                }}
+                                  style={{ fontSize: '11px', padding: '3px 6px', borderRadius: '8px', background: '#ffebee', color: '#c62828', border: '0.5px solid #ffcdd2', cursor: 'pointer', fontFamily: 'Jost, sans-serif' }}>
+                                  ×
                                 </button>
                               )}
                             </>
