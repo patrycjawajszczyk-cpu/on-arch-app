@@ -1097,26 +1097,34 @@ function EkranLogowania({ onZalogowano }: { onZalogowano: () => void }) {
   const [zablokowany, setZablokowany] = useState(false);
   const [pozostaloCzas, setPozostaloCzas] = useState(0);
   const turnstileRef = useRef<HTMLDivElement>(null);
+  const turnstileResetRef = useRef<HTMLDivElement>(null);
   const turnstileTokenRef = useRef<string>('');
 
   useEffect(() => {
-    // Wczytaj Turnstile jeśli jest skonfigurowany
     if (!TURNSTILE_SITE_KEY) return;
     const script = document.createElement('script');
     script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js';
     script.async = true;
     document.head.appendChild(script);
-    script.onload = () => {
-      if ((window as any).turnstile && turnstileRef.current) {
-        (window as any).turnstile.render(turnstileRef.current, {
+    return () => { try { document.head.removeChild(script); } catch {} };
+  }, []);
+
+  // Renderuj widget na właściwym ekranie
+  useEffect(() => {
+    if (!TURNSTILE_SITE_KEY) return;
+    const ref = resetMode ? turnstileResetRef : turnstileRef;
+    const init = () => {
+      if ((window as any).turnstile && ref.current && !ref.current.hasChildNodes()) {
+        (window as any).turnstile.render(ref.current, {
           sitekey: TURNSTILE_SITE_KEY,
           callback: (token: string) => { turnstileTokenRef.current = token; },
           'expired-callback': () => { turnstileTokenRef.current = ''; },
         });
       }
     };
-    return () => { document.head.removeChild(script); };
-  }, []);
+    const timer = setTimeout(init, 300);
+    return () => clearTimeout(timer);
+  }, [resetMode]);
 
   // Odświeżaj timer blokady
   useEffect(() => {
@@ -1177,7 +1185,14 @@ function EkranLogowania({ onZalogowano }: { onZalogowano: () => void }) {
     e.preventDefault();
     setLadowanie(true); setBlad('');
     const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: 'https://on-arch-akademia.vercel.app', captchaToken: turnstileTokenRef.current || undefined });
-    if (error) { setBlad('Blad: ' + error.message); } else { setResetWyslany(true); }
+    if (error) {
+      setBlad('Blad: ' + error.message);
+      // Odśwież token Turnstile po błędzie
+      if (TURNSTILE_SITE_KEY && (window as any).turnstile) {
+        (window as any).turnstile.reset();
+        turnstileTokenRef.current = '';
+      }
+    } else { setResetWyslany(true); }
     setLadowanie(false);
   }
 
@@ -1199,6 +1214,7 @@ function EkranLogowania({ onZalogowano }: { onZalogowano: () => void }) {
       <form className="login-form" onSubmit={resetHasla}>
         <div className="login-field"><label>Email</label><input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="twoj@email.pl" required /></div>
         {blad && <div className="login-error">{blad}</div>}
+        {TURNSTILE_SITE_KEY && <div ref={turnstileResetRef} style={{ margin: '10px 0' }} />}
         <button className="login-btn" type="submit" disabled={ladowanie}>{ladowanie ? 'Wysylanie...' : 'Wyslij link resetujacy'}</button>
       </form>
       <button className="btn-link" onClick={() => setResetMode(false)}>Wroce do logowania</button>
