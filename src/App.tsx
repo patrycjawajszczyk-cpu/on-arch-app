@@ -2832,10 +2832,7 @@ function ModalProwadzacy({ p, onZamknij }: { p: Prowadzacy; onZamknij: () => voi
 function EkranZjazdy({ zjazdy, user, kursant }: { zjazdy: Zjazd[]; user: User; kursant: Kursant | null }) {
   const [obecnosci, setObecnosci] = useState<Obecnosc[]>([]);
   const [modalProwadzacy, setModalProwadzacy] = useState<Prowadzacy | null>(null);
-  const [aktywnyFormularz, setAktywnyFormularz] = useState<{ zjazdId: number; dzien: 1 | 2; typ: 'obecnosc' | 'nieobecnosc' | 'godziny' } | null>(null);
-  const [powod, setPowod] = useState('');
-  const [godzinaSpoznienia, setGodzinaSpoznienia] = useState('');
-  const [godzinaWyjscia, setGodzinaWyjscia] = useState('');
+  const [aktywnyFormularz, setAktywnyFormularz] = useState<{ zjazdId: number; dzien: 1 | 2; typ: 'obecnosc' | 'nieobecnosc' | 'godziny'; powod?: string; godzPrzyb?: string; godzWyj?: string } | null>(null);
   const [wysylanie, setWysylanie] = useState(false);
 
   useEffect(() => {
@@ -2856,9 +2853,10 @@ function EkranZjazdy({ zjazdy, user, kursant }: { zjazdy: Zjazd[]; user: User; k
     if (!kursant) return;
     setWysylanie(true);
     const istniejaca = pobierzDzien(zjazd.id, dzien);
+    const powod = aktywnyFormularz?.powod || '';
     const godzinaData = {
-      godzina_przybycia: godzinaSpoznienia || null,
-      godzina_wyjscia: godzinaWyjscia || null,
+      godzina_przybycia: aktywnyFormularz?.godzPrzyb || null,
+      godzina_wyjscia: aktywnyFormularz?.godzWyj || null,
     };
     if (istniejaca) {
       await supabase.from('obecnosci').update({
@@ -2875,9 +2873,6 @@ function EkranZjazdy({ zjazdy, user, kursant }: { zjazdy: Zjazd[]; user: User; k
     }
     await odswiezObecnosci();
     setAktywnyFormularz(null);
-    setPowod('');
-    setGodzinaSpoznienia('');
-    setGodzinaWyjscia('');
     setWysylanie(false);
   }
 
@@ -2938,14 +2933,19 @@ function EkranZjazdy({ zjazdy, user, kursant }: { zjazdy: Zjazd[]; user: User; k
         {/* Formularz nieobecności */}
         {formularzAktywny && aktywnyFormularz?.typ === 'nieobecnosc' && (
           <div style={{ marginBottom: '8px' }}>
-            <textarea value={powod} onChange={e => setPowod(e.target.value)} placeholder="Powód nieobecności..." rows={2}
-              style={{ width: '100%', fontSize: '12px', padding: '6px 8px', borderRadius: '8px', border: '0.5px solid var(--border)', fontFamily: 'Jost, sans-serif', resize: 'none' }} />
+            <textarea
+              value={aktywnyFormularz.powod || ''}
+              onChange={e => setAktywnyFormularz(prev => prev ? { ...prev, powod: e.target.value } : prev)}
+              placeholder="Powód nieobecności..."
+              rows={2}
+              style={{ width: '100%', fontSize: '12px', padding: '6px 8px', borderRadius: '8px', border: '0.5px solid var(--border)', fontFamily: 'Jost, sans-serif', resize: 'none' }}
+            />
             <div style={{ display: 'flex', gap: '6px', marginTop: '6px' }}>
               <button onClick={() => zapiszObecnosc(zjazd, dzien, 'nieobecnosc')} disabled={wysylanie}
                 style={{ flex: 1, padding: '7px', borderRadius: '8px', background: '#c62828', color: 'white', border: 'none', fontSize: '11px', cursor: 'pointer', fontFamily: 'Jost, sans-serif', fontWeight: 500 }}>
                 {wysylanie ? '...' : 'Wyślij'}
               </button>
-              <button onClick={() => { setAktywnyFormularz(null); setPowod(''); }}
+              <button onClick={() => setAktywnyFormularz(null)}
                 style={{ padding: '7px 10px', borderRadius: '8px', background: 'white', border: '0.5px solid var(--border)', fontSize: '11px', cursor: 'pointer', color: 'var(--text-muted)' }}>
                 Anuluj
               </button>
@@ -2960,12 +2960,14 @@ function EkranZjazdy({ zjazdy, user, kursant }: { zjazdy: Zjazd[]; user: User; k
             <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginBottom: '3px' }}>Przybycie (jeśli późno)</div>
-                <input type="time" value={godzinaSpoznienia} onChange={e => setGodzinaSpoznienia(e.target.value)}
+                <input type="time" value={aktywnyFormularz.godzPrzyb || ''}
+                  onChange={e => setAktywnyFormularz(prev => prev ? { ...prev, godzPrzyb: e.target.value } : prev)}
                   style={{ width: '100%', fontSize: '12px', padding: '5px 8px', borderRadius: '8px', border: '0.5px solid var(--border)' }} />
               </div>
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginBottom: '3px' }}>Wyjście (jeśli wcześnie)</div>
-                <input type="time" value={godzinaWyjscia} onChange={e => setGodzinaWyjscia(e.target.value)}
+                <input type="time" value={aktywnyFormularz.godzWyj || ''}
+                  onChange={e => setAktywnyFormularz(prev => prev ? { ...prev, godzWyj: e.target.value } : prev)}
                   style={{ width: '100%', fontSize: '12px', padding: '5px 8px', borderRadius: '8px', border: '0.5px solid var(--border)' }} />
               </div>
             </div>
@@ -2974,17 +2976,16 @@ function EkranZjazdy({ zjazdy, user, kursant }: { zjazdy: Zjazd[]; user: User; k
                 const istniejaca = pobierzDzien(zjazd.id, dzien);
                 if (istniejaca) {
                   await supabase.from('obecnosci').update({
-                    godzina_przybycia: godzinaSpoznienia || null,
-                    godzina_wyjscia: godzinaWyjscia || null,
+                    godzina_przybycia: aktywnyFormularz.godzPrzyb || null,
+                    godzina_wyjscia: aktywnyFormularz.godzWyj || null,
                   }).eq('id', istniejaca.id);
                   await odswiezObecnosci();
                 }
                 setAktywnyFormularz(null);
-                setGodzinaSpoznienia(''); setGodzinaWyjscia('');
               }} style={{ flex: 1, padding: '7px', borderRadius: '8px', background: 'var(--brand)', color: 'white', border: 'none', fontSize: '11px', cursor: 'pointer', fontFamily: 'Jost, sans-serif' }}>
                 Zapisz
               </button>
-              <button onClick={() => { setAktywnyFormularz(null); setGodzinaSpoznienia(''); setGodzinaWyjscia(''); }}
+              <button onClick={() => setAktywnyFormularz(null)}
                 style={{ padding: '7px 10px', borderRadius: '8px', background: 'white', border: '0.5px solid var(--border)', fontSize: '11px', cursor: 'pointer', color: 'var(--text-muted)' }}>
                 Anuluj
               </button>
@@ -3002,13 +3003,13 @@ function EkranZjazdy({ zjazdy, user, kursant }: { zjazdy: Zjazd[]; user: User; k
               </button>
             )}
             {(!wpis || wpis.status === 'potwierdzono') && (
-              <button onClick={() => { setAktywnyFormularz({ zjazdId: zjazd.id, dzien, typ: 'nieobecnosc' }); setPowod(''); }}
+              <button onClick={() => setAktywnyFormularz({ zjazdId: zjazd.id, dzien, typ: 'nieobecnosc', powod: '' })}
                 style={{ flex: 1, padding: '6px 4px', borderRadius: '8px', background: '#fff8f8', color: '#c62828', border: '0.5px solid #ffcdd2', fontSize: '11px', cursor: 'pointer', fontWeight: 500, fontFamily: 'Jost, sans-serif', whiteSpace: 'nowrap' }}>
                 ✕ Nie będę
               </button>
             )}
             {wpis && wpis.status === 'potwierdzono' && (
-              <button onClick={() => { setAktywnyFormularz({ zjazdId: zjazd.id, dzien, typ: 'godziny' }); setGodzinaSpoznienia(wpis.godzina_przybycia || ''); setGodzinaWyjscia(wpis.godzina_wyjscia || ''); }}
+              <button onClick={() => setAktywnyFormularz({ zjazdId: zjazd.id, dzien, typ: 'godziny', godzPrzyb: wpis.godzina_przybycia || '', godzWyj: wpis.godzina_wyjscia || '' })}
                 style={{ padding: '6px 8px', borderRadius: '8px', background: '#fef9ec', color: '#c8a84b', border: '0.5px solid #f0d080', fontSize: '11px', cursor: 'pointer', fontFamily: 'Jost, sans-serif', whiteSpace: 'nowrap' }}>
                 🕐 Spóźnienie
               </button>
