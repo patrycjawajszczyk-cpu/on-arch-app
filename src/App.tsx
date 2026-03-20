@@ -2064,8 +2064,9 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
 
   async function importujCSV(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]; if (!file) return;
-    setImportowanie(true); setImportStatus([]);
+    // Czytamy plik od razu zanim re-render go wyczyści
     const text = await file.text();
+    setImportowanie(true); setImportStatus([]);
     const rows = text.trim().split('\n').slice(1);
     const wyniki: { imie: string; nazwisko: string; email: string; status: string }[] = [];
     for (const row of rows) {
@@ -2075,9 +2076,10 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
       if (authError) { wyniki.push({ imie, nazwisko, email, status: 'Blad: ' + authError.message }); continue; }
       const { error } = await supabase.from('kursanci').insert([{ imie, nazwisko, grupa_id: parseInt(grupa_id), user_id: authData.user!.id, rola: 'kursant' }]);
       wyniki.push({ imie, nazwisko, email, status: error ? 'Blad: ' + error.message : 'Dodano!' });
-      setImportStatus([...wyniki]);
       await new Promise(r => setTimeout(r, 1000));
     }
+    // Aktualizujemy stan dopiero po zakończeniu całego importu
+    setImportStatus([...wyniki]);
     setImportowanie(false);
     const { data } = await supabase.from('kursanci').select('id, imie, nazwisko, grupa_id, user_id, certyfikat_url'); setKursanci((data || []) as unknown as KursantAdmin[]);
     if (fileRef.current) fileRef.current.value = '';
@@ -2431,9 +2433,15 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
             </div>
             <div className="login-field">
               <label>Wybierz plik CSV</label>
-              <input ref={fileRef} type="file" accept=".csv" onChange={importujCSV} disabled={importowanie} style={{ padding: '8px', border: '0.5px solid var(--border)', borderRadius: '8px', width: '100%' }} />
+              {importowanie ? (
+                <div style={{ padding: '14px 12px', background: 'var(--brand-light)', borderRadius: '10px', border: '0.5px solid var(--border)', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <div style={{ width: '16px', height: '16px', border: '2px solid var(--brand)', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite', flexShrink: 0 }} />
+                  <span style={{ fontSize: '13px', color: 'var(--brand)' }}>Trwa import — proszę czekać...</span>
+                </div>
+              ) : (
+                <input ref={fileRef} type="file" accept=".csv" onChange={importujCSV} style={{ padding: '8px', border: '0.5px solid var(--border)', borderRadius: '8px', width: '100%' }} />
+              )}
             </div>
-            {importowanie && <div style={{ textAlign: 'center', padding: '12px', color: 'var(--brand)' }}>Importowanie...</div>}
             {importStatus.map((s, i) => (
               <div key={i} className="profil-card" style={{ marginBottom: '6px', borderLeft: s.status === 'Dodano!' ? '3px solid #2e7d32' : '3px solid #c62828' }}>
                 <div className="profil-row"><span className="profil-lbl">{s.imie} {s.nazwisko}</span><span className="profil-val" style={{ color: s.status === 'Dodano!' ? '#2e7d32' : '#c62828' }}>{s.status}</span></div>
