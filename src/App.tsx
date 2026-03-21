@@ -3128,7 +3128,7 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
                 <thead>
                   <tr style={{ background: 'var(--bg)', borderBottom: '0.5px solid var(--border)' }}>
-                    {['ID', 'Nazwa', 'Miasto', 'Edycja', 'Tryb', 'Strefa Wiedzy (Drive)', ''].map((h, i) => (
+                    {['ID', 'Nazwa', 'Miasto', 'Edycja', 'Tryb', 'Strefa Wiedzy (Drive)'].map((h, i) => (
                       <th key={i} style={{ padding: '8px 12px', textAlign: 'left', fontWeight: 600, color: 'var(--text-muted)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.3px', whiteSpace: 'nowrap' }}>{h}</th>
                     ))}
                   </tr>
@@ -3137,7 +3137,12 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
                   {grupy.map((g, idx) => (
                     <tr key={g.id} style={{ borderBottom: idx < grupy.length - 1 ? '0.5px solid var(--border-soft)' : 'none', background: idx % 2 === 0 ? 'white' : '#fdf9f8' }}>
                       <td style={{ padding: '9px 12px', fontWeight: 700, color: 'var(--brand)', width: '40px' }}>{g.id}</td>
-                      <td style={{ padding: '9px 12px', fontWeight: 500, color: 'var(--text)', whiteSpace: 'nowrap' }}>{g.nazwa}</td>
+                      <td style={{ padding: '9px 12px', fontWeight: 500, color: 'var(--text)', whiteSpace: 'nowrap' }}>
+                        {g.nazwa}
+                        <span style={{ marginLeft: '8px', fontSize: '10px', color: 'var(--text-muted)', background: 'var(--bg)', padding: '1px 6px', borderRadius: '6px', border: '0.5px solid var(--border)', fontWeight: 400 }}>
+                          {kursanci.filter(k => k.grupa_id === g.id).length} os.
+                        </span>
+                      </td>
                       <td style={{ padding: '9px 12px', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>{g.miasto}</td>
                       <td style={{ padding: '9px 12px', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>{g.edycja}</td>
                       <td style={{ padding: '7px 12px', whiteSpace: 'nowrap' }}>
@@ -3150,15 +3155,10 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
                           <option value="hybrydowy">⚡ Hybrydowy</option>
                         </select>
                       </td>
-                      <td style={{ padding: '6px 12px', minWidth: '220px' }}>
+                      <td style={{ padding: '6px 12px', minWidth: '180px' }}>
                         <input type="url" defaultValue={g.drive_link || ''} placeholder="https://drive.google.com/..."
                           onBlur={e => { if (e.target.value !== (g.drive_link || '')) zapiszDriveLink(g.id, e.target.value); }}
                           style={{ width: '100%', fontSize: '11px', padding: '5px 8px', borderRadius: '6px', border: '0.5px solid var(--border)', fontFamily: 'Jost, sans-serif', background: g.drive_link ? '#f0faf4' : 'white' }} />
-                      </td>
-                      <td style={{ padding: '9px 12px', whiteSpace: 'nowrap' }}>
-                        <span style={{ fontSize: '11px', color: 'var(--text-muted)', background: 'var(--bg)', padding: '2px 8px', borderRadius: '6px', border: '0.5px solid var(--border)' }}>
-                          {kursanci.filter(k => k.grupa_id === g.id).length} os.
-                        </span>
                       </td>
                     </tr>
                   ))}
