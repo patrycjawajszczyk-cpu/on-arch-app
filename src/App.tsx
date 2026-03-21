@@ -2512,6 +2512,38 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
                   )}
                   <div className="login-field"><label>Tematy</label><input type="text" value={edytowanyZjazd.tematy} onChange={e => setEdytowanyZjazd({ ...edytowanyZjazd, tematy: e.target.value })} required /></div>
                   <div className="login-field"><label>Status</label><select value={edytowanyZjazd.status} onChange={e => setEdytowanyZjazd({ ...edytowanyZjazd, status: e.target.value })}><option value="nadchodzacy">Nadchodzacy</option><option value="zakonczony">Zakonczony</option></select></div>
+
+                  {/* Prowadzący */}
+                  <div className="login-field">
+                    <label>Prowadzący</label>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '8px' }}>
+                      {(edytowanyZjazd.prowadzacy || []).map(p => (
+                        <span key={p.id} style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'var(--brand-light)', color: 'var(--brand-dark)', fontSize: '12px', padding: '3px 10px', borderRadius: '20px', fontWeight: 500 }}>
+                          {p.imie} {p.nazwisko}
+                          <button type="button" onClick={async () => {
+                            await supabase.from('zjazdy_prowadzacy').delete().eq('zjazd_id', edytowanyZjazd.id).eq('prowadzacy_id', p.id);
+                            setEdytowanyZjazd({ ...edytowanyZjazd, prowadzacy: (edytowanyZjazd.prowadzacy || []).filter(x => x.id !== p.id) });
+                          }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--brand)', fontSize: '14px', padding: '0 0 0 2px', lineHeight: 1 }}>×</button>
+                        </span>
+                      ))}
+                    </div>
+                    {prowadzacy.filter(p => !(edytowanyZjazd.prowadzacy || []).some(ep => ep.id === p.id)).length > 0 && (
+                      <select defaultValue="" onChange={async e => {
+                        const pid = parseInt(e.target.value);
+                        if (!pid) return;
+                        await supabase.from('zjazdy_prowadzacy').insert([{ zjazd_id: edytowanyZjazd.id, prowadzacy_id: pid }]);
+                        const nowy = prowadzacy.find(p => p.id === pid);
+                        if (nowy) setEdytowanyZjazd({ ...edytowanyZjazd, prowadzacy: [...(edytowanyZjazd.prowadzacy || []), nowy] });
+                        e.target.value = '';
+                      }} style={{ fontSize: '13px', padding: '7px 12px', border: '0.5px solid var(--border)', borderRadius: '10px', fontFamily: 'Jost, sans-serif', background: 'white', width: '100%' }}>
+                        <option value="">+ Dodaj prowadzącego…</option>
+                        {prowadzacy.filter(p => !(edytowanyZjazd.prowadzacy || []).some(ep => ep.id === p.id)).map(p => (
+                          <option key={p.id} value={p.id}>{p.imie} {p.nazwisko}</option>
+                        ))}
+                      </select>
+                    )}
+                  </div>
+
                   <button className="login-btn" type="submit">Zapisz zmiany</button>
                   <button className="btn-link" onClick={() => setEdytowanyZjazd(null)}>Anuluj</button>
                 </form>
