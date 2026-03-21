@@ -69,6 +69,8 @@ type ZadanieOdpowiedz = {
   link_pracy: string;
   komentarz: string | null;
   created_at: string;
+  uwagi_prowadzacego: string | null;
+  sprawdzona: boolean | null;
 };
 
 type Zjazd = {
@@ -294,12 +296,25 @@ function EkranZadania({ user, kursant }: { user: User; kursant: Kursant | null }
             {wyslano && !rozwinięte && (
               <div style={{ padding: '0 14px 12px' }}>
                 <div style={{ background: '#f0faf4', borderRadius: '10px', padding: '10px 12px' }}>
-                  <p style={{ fontSize: '11px', color: '#2e7d32', fontWeight: 600, marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.4px' }}>Twoja praca</p>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
+                    <p style={{ fontSize: '11px', color: '#2e7d32', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.4px' }}>Twoja praca</p>
+                    <span style={{ fontSize: '10px', fontWeight: 700, padding: '2px 7px', borderRadius: '8px',
+                      background: odp!.sprawdzona ? '#e8f5e9' : '#fff8e1',
+                      color: odp!.sprawdzona ? '#2e7d32' : '#c8a84b' }}>
+                      {odp!.sprawdzona ? '✓ Sprawdzona' : '⏳ Do sprawdzenia'}
+                    </span>
+                  </div>
                   <a href={odp!.link_pracy} target="_blank" rel="noopener noreferrer"
                     style={{ fontSize: '12px', color: 'var(--brand)', textDecoration: 'underline', wordBreak: 'break-all' }}>
                     {odp!.link_pracy}
                   </a>
                   {odp!.komentarz && <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px' }}>{odp!.komentarz}</p>}
+                  {odp!.uwagi_prowadzacego && (
+                    <div style={{ marginTop: '8px', padding: '8px 10px', background: '#fffbeb', borderRadius: '8px', border: '0.5px solid #fef3c7' }}>
+                      <p style={{ fontSize: '10px', fontWeight: 700, color: '#c8a84b', textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: '3px' }}>💬 Uwagi prowadzącego</p>
+                      <p style={{ fontSize: '12px', color: 'var(--text)', lineHeight: 1.5 }}>{odp!.uwagi_prowadzacego}</p>
+                    </div>
+                  )}
                 </div>
                 <button onClick={() => { setAktywneZadanie(z); setLinkPracy(odp!.link_pracy); setKomentarz(odp!.komentarz || ''); }}
                   style={{ marginTop: '8px', fontSize: '12px', color: 'var(--brand)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Jost, sans-serif' }}>
@@ -377,12 +392,25 @@ function EkranZadania({ user, kursant }: { user: User; kursant: Kursant | null }
             {wyslano && !rozwinięte && (
               <div style={{ padding: '0 14px 12px' }}>
                 <div style={{ background: '#f0faf4', borderRadius: '10px', padding: '10px 12px' }}>
-                  <p style={{ fontSize: '11px', color: '#2e7d32', fontWeight: 600, marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.4px' }}>Twoja praca</p>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
+                    <p style={{ fontSize: '11px', color: '#2e7d32', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.4px' }}>Twoja praca</p>
+                    <span style={{ fontSize: '10px', fontWeight: 700, padding: '2px 7px', borderRadius: '8px',
+                      background: odp!.sprawdzona ? '#e8f5e9' : '#fff8e1',
+                      color: odp!.sprawdzona ? '#2e7d32' : '#c8a84b' }}>
+                      {odp!.sprawdzona ? '✓ Sprawdzona' : '⏳ Do sprawdzenia'}
+                    </span>
+                  </div>
                   <a href={odp!.link_pracy} target="_blank" rel="noopener noreferrer"
                     style={{ fontSize: '12px', color: 'var(--brand)', textDecoration: 'underline', wordBreak: 'break-all' }}>
                     {odp!.link_pracy}
                   </a>
                   {odp!.komentarz && <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px' }}>{odp!.komentarz}</p>}
+                  {odp!.uwagi_prowadzacego && (
+                    <div style={{ marginTop: '8px', padding: '8px 10px', background: '#fffbeb', borderRadius: '8px', border: '0.5px solid #fef3c7' }}>
+                      <p style={{ fontSize: '10px', fontWeight: 700, color: '#c8a84b', textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: '3px' }}>💬 Uwagi prowadzącego</p>
+                      <p style={{ fontSize: '12px', color: 'var(--text)', lineHeight: 1.5 }}>{odp!.uwagi_prowadzacego}</p>
+                    </div>
+                  )}
                 </div>
                 <button onClick={() => { setAktywneZadanie(z); setLinkPracy(odp!.link_pracy); setKomentarz(odp!.komentarz || ''); }}
                   style={{ marginTop: '8px', fontSize: '12px', color: 'var(--brand)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Jost, sans-serif' }}>
@@ -1687,10 +1715,38 @@ function PanelProwadzacego({ user, kursant, onWyloguj }: { user: User; kursant: 
                             {odp.length > 0 && (
                               <div style={{ borderTop: '0.5px solid var(--border-soft)', background: 'var(--bg)' }}>
                                 {odp.map((o, oi) => (
-                                  <div key={o.id} style={{ display: 'flex', alignItems: 'baseline', gap: '10px', padding: '8px 14px', borderBottom: oi < odp.length - 1 ? '0.5px solid var(--border-soft)' : 'none', flexWrap: 'wrap' }}>
-                                    <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text)', whiteSpace: 'nowrap', minWidth: '120px' }}>{o.imie} {o.nazwisko}</span>
-                                    <a href={o.link_pracy} target="_blank" rel="noopener noreferrer" style={{ fontSize: '11px', color: 'var(--brand)', textDecoration: 'none', fontWeight: 500 }}>→ Otwórz pracę</a>
-                                    {o.komentarz && <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontStyle: 'italic' }}>{o.komentarz}</span>}
+                                  <div key={o.id} style={{ padding: '10px 14px', borderBottom: oi < odp.length - 1 ? '0.5px solid var(--border-soft)' : 'none' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                                      <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text)', minWidth: '120px' }}>{o.imie} {o.nazwisko}</span>
+                                      <a href={o.link_pracy} target="_blank" rel="noopener noreferrer" style={{ fontSize: '11px', color: 'var(--brand)', textDecoration: 'none', fontWeight: 500 }}>→ Otwórz pracę</a>
+                                      {o.komentarz && <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontStyle: 'italic' }}>{o.komentarz}</span>}
+                                      {/* Status sprawdzenia */}
+                                      <button onClick={async () => {
+                                        await supabase.from('zadania_odpowiedzi').update({ sprawdzona: !o.sprawdzona }).eq('id', o.id);
+                                        const { data } = await supabase.from('zadania_odpowiedzi').select('*').in('zadanie_id', zadania.map(z => z.id));
+                                        setOdpowiedziZadan(data || []);
+                                      }} style={{ fontSize: '10px', fontWeight: 700, padding: '2px 8px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontFamily: 'Jost, sans-serif',
+                                        background: o.sprawdzona ? '#e8f5e9' : '#fff8e1',
+                                        color: o.sprawdzona ? '#2e7d32' : '#c8a84b' }}>
+                                        {o.sprawdzona ? '✓ Sprawdzona' : '⏳ Do sprawdzenia'}
+                                      </button>
+                                    </div>
+                                    {/* Uwagi prowadzącego */}
+                                    <div style={{ marginTop: '6px', display: 'flex', gap: '6px', alignItems: 'flex-start' }}>
+                                      <input type="text"
+                                        defaultValue={o.uwagi_prowadzacego || ''}
+                                        placeholder="Dodaj uwagi do pracy…"
+                                        onBlur={async e => {
+                                          const val = e.target.value.trim();
+                                          if (val !== (o.uwagi_prowadzacego || '').trim()) {
+                                            await supabase.from('zadania_odpowiedzi').update({ uwagi_prowadzacego: val || null }).eq('id', o.id);
+                                            const { data } = await supabase.from('zadania_odpowiedzi').select('*').in('zadanie_id', zadania.map(z => z.id));
+                                            setOdpowiedziZadan(data || []);
+                                          }
+                                        }}
+                                        style={{ flex: 1, fontSize: '11px', padding: '5px 8px', border: '0.5px solid var(--border)', borderRadius: '7px', fontFamily: 'Jost, sans-serif', background: 'white' }} />
+                                    </div>
+                                    {o.uwagi_prowadzacego && <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '2px' }}>💬 {o.uwagi_prowadzacego}</div>}
                                   </div>
                                 ))}
                               </div>
@@ -3451,18 +3507,24 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
                                       {z.opis && <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '3px', lineHeight: 1.5 }}>{z.opis}</div>}
                                       {/* Odpowiedzi */}
                                       {odp.length > 0 && (
-                                        <div style={{ marginTop: '8px', background: 'var(--bg)', borderRadius: '8px', padding: '8px 10px' }}>
-                                          <div style={{ fontSize: '10px', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: '6px' }}>
+                                        <div style={{ marginTop: '8px', background: 'var(--bg)', borderRadius: '8px', overflow: 'hidden' }}>
+                                          <div style={{ fontSize: '10px', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.4px', padding: '8px 10px 4px' }}>
                                             Przesłane prace ({odp.length})
                                           </div>
-                                          {odp.map(o => (
-                                            <div key={o.id} style={{ display: 'flex', alignItems: 'baseline', gap: '8px', marginBottom: '4px', flexWrap: 'wrap' }}>
-                                              <span style={{ fontSize: '12px', fontWeight: 500, color: 'var(--text)', whiteSpace: 'nowrap' }}>{o.imie} {o.nazwisko}</span>
-                                              <a href={o.link_pracy} target="_blank" rel="noopener noreferrer"
-                                                style={{ fontSize: '11px', color: 'var(--brand)', textDecoration: 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '200px' }}>
-                                                → Otwórz pracę
-                                              </a>
-                                              {o.komentarz && <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontStyle: 'italic' }}>{o.komentarz}</span>}
+                                          {odp.map((o, oi) => (
+                                            <div key={o.id} style={{ padding: '6px 10px', borderTop: '0.5px solid var(--border-soft)' }}>
+                                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                                                <span style={{ fontSize: '12px', fontWeight: 500, color: 'var(--text)', whiteSpace: 'nowrap' }}>{o.imie} {o.nazwisko}</span>
+                                                <a href={o.link_pracy} target="_blank" rel="noopener noreferrer"
+                                                  style={{ fontSize: '11px', color: 'var(--brand)', textDecoration: 'none' }}>→ Otwórz pracę</a>
+                                                {o.komentarz && <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontStyle: 'italic' }}>{o.komentarz}</span>}
+                                                <span style={{ fontSize: '10px', fontWeight: 700, padding: '1px 7px', borderRadius: '8px',
+                                                  background: o.sprawdzona ? '#e8f5e9' : '#fff8e1',
+                                                  color: o.sprawdzona ? '#2e7d32' : '#c8a84b' }}>
+                                                  {o.sprawdzona ? '✓ Sprawdzona' : '⏳ Do sprawdzenia'}
+                                                </span>
+                                              </div>
+                                              {o.uwagi_prowadzacego && <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '3px', fontStyle: 'italic' }}>💬 {o.uwagi_prowadzacego}</div>}
                                             </div>
                                           ))}
                                         </div>
