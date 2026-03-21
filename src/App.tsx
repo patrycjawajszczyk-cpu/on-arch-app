@@ -3,6 +3,14 @@ import './App.css';
 import { supabase } from './supabase';
 import { Home, Calendar, Bell, MessageCircle, User, CheckSquare, BookOpen, Star } from 'lucide-react';
 
+// Przelicza status zjazdu na podstawie dat — nie z bazy danych
+function przeliczStatus(z: { data_dzien1?: string | null; data_dzien2?: string | null; status: string }): string {
+  const dzisiaj = new Date().toISOString().split('T')[0];
+  if (!z.data_dzien1) return z.status; // brak dat — status z bazy (kursy bez określonych dni)
+  const ostatniDzien = (z.data_dzien2 || z.data_dzien1).substring(0, 10);
+  return ostatniDzien < dzisiaj ? 'zakonczony' : 'nadchodzacy';
+}
+
 function OnArchLogo({ color = '#2a1f1f', height = 28 }: { color?: string; height?: number }) {
   const scale = height / 80;
   const w = 420 * scale;
@@ -1527,7 +1535,7 @@ function PanelProwadzacego({ user, kursant, onWyloguj }: { user: User; kursant: 
 
     const grupyIds = [...new Set((zjData || []).map((z: any) => z.grupa_id))] as number[];
     setMojeGrupyIds(grupyIds);
-    setZjazdy(zjData || []);
+    setZjazdy((zjData || []).map((z: any) => ({ ...z, status: przeliczStatus(z) })));
 
     // 4. Pobierz tylko swoje grupy, kursantów, zadania, ogłoszenia
     const [{ data: gr }, { data: ku }, { data: og }, { data: zad }, { data: odp }] = await Promise.all([
@@ -2232,7 +2240,7 @@ function PanelBiura({ onWyloguj, user }: { onWyloguj: () => void; user: User | n
       if (!map[row.zjazd_id]) map[row.zjazd_id] = [];
       if (row.prowadzacy) map[row.zjazd_id].push(row.prowadzacy);
     });
-    setZjazdy(zjData.map((z: any) => ({ ...z, prowadzacy: map[z.id] || [] })));
+    setZjazdy(zjData.map((z: any) => ({ ...z, status: przeliczStatus(z), prowadzacy: map[z.id] || [] })));
   }
   async function pobierzProwadzacy() { const { data } = await supabase.from('prowadzacy').select('*').order('nazwisko', { ascending: true }); setProwadzacy(data || []); }
 
@@ -5072,13 +5080,11 @@ export default function App() {
         });
       }
       const dzisiaj = new Date().toISOString().split('T')[0];
-      setZjazdy((zj || []).map((z: any) => {
-        const ostatniDzien = z.data_dzien2 || z.data_dzien1 || z.data_zjazdu;
-        // Jeśli baza mówi zakończony ale data jest przyszła — napraw lokalnie
-        const status = (z.status === 'zakonczony' && ostatniDzien && ostatniDzien >= dzisiaj)
-          ? 'nadchodzacy' : z.status;
-        return { ...z, status, prowadzacy: prowadzacyMap[z.id] || [] };
-      }));
+      setZjazdy((zj || []).map((z: any) => ({
+        ...z,
+        status: przeliczStatus(z),
+        prowadzacy: prowadzacyMap[z.id] || [],
+      })));
 
       // Pobierz zadania i odpowiedzi kursanta
       if (grupaId) {
@@ -5105,35 +5111,11 @@ export default function App() {
   }, [user]);
 
   async function aktualizujStatusyZjazdow() {
-    const dzisiaj = new Date().toISOString().split('T')[0];
-
-    // Napraw błędnie oznaczone jako zakończone (data przyszła)
-    const { data: bledne } = await supabase.from('zjazdy').select('id, data_zjazdu, data_dzien1, data_dzien2').eq('status', 'zakonczony');
-    for (const z of (bledne || [])) {
-      const ostatni = z.data_dzien2 || z.data_dzien1 || z.data_zjazdu;
-      if (ostatni && ostatni >= dzisiaj) {
-        await supabase.from('zjazdy').update({ status: 'nadchodzacy' }).eq('id', z.id);
-      }
-    }
-
-    // Oznacz jako zakończone te których ostatni dzień już minął
-    const { data: przestarzale } = await supabase.from('zjazdy').select('*').eq('status', 'nadchodzacy');
-    if (!przestarzale || przestarzale.length === 0) return;
-    for (const zjazd of przestarzale) {
-      const ostatniDzien = zjazd.data_dzien2 || zjazd.data_dzien1 || zjazd.data_zjazdu;
-      if (!ostatniDzien || ostatniDzien >= dzisiaj) continue;
-      await supabase.from('zjazdy').update({ status: 'zakonczony' }).eq('id', zjazd.id);
-      const { data: wszystkieZjazdy } = await supabase.from('zjazdy').select('*').eq('grupa_id', zjazd.grupa_id).order('data_zjazdu', { ascending: true });
-      const pozostaleNadchodzace = (wszystkieZjazdy || []).filter(z => z.id !== zjazd.id && z.status === 'nadchodzacy' && z.data_zjazdu >= dzisiaj);
-      if (pozostaleNadchodzace.length === 0) {
-        const { data: istniejace } = await supabase.from('ogloszenia').select('id').eq('tytul', 'Wypełnij ankietę oceny kursu ⭐').maybeSingle();
-        if (!istniejace) {
-          const { data: grupaInfo } = await supabase.from('grupy').select('nazwa').eq('id', zjazd.grupa_id).single();
-          await supabase.from('ogloszenia').insert([{ typ: 'Informacja', tytul: 'Wypełnij ankietę oceny kursu ⭐', tresc: 'Twój kurs dobiegł końca. Prosimy o wypełnienie krótkiej ankiety — to tylko kilka minut!', szczegoly: 'Dziękujemy za udział w kursie ' + (grupaInfo?.nazwa || 'Twoja grupa') + '!\n\nProsimy o wypełnienie krótkiej ankiety. Znajdziesz ją w zakładce Ankieta.\n\nZ góry dziękujemy!\nZespół On-Arch', nowe: true, data_utworzenia: new Date().toISOString() }]);
-        }
-      }
-    }
+    // Status przeliczany na żywo przy fetchowaniu — nie zapisujemy do bazy
+    return;
   }
+
+  // Status przeliczany na żywo — patrz przeliczStatus() na poziomie modułu
 
   async function wyloguj() {
     await supabase.auth.signOut();
