@@ -324,6 +324,9 @@ function EkranZadania({ user, kursant }: { user: User; kursant: Kursant | null }
             )}
             {rozwinięte && (
               <div style={{ padding: '0 14px 14px' }}>
+                <div style={{ background: '#fffbeb', border: '0.5px solid #fef3c7', borderRadius: '10px', padding: '10px 12px', marginBottom: '12px', fontSize: '12px', color: '#92400e', lineHeight: 1.6 }}>
+                  💡 <strong>Dodaj link do Google Drive</strong> i pamiętaj, że musisz ustawić uprawnienia do przeglądania dla <strong>wszystkich, którzy mają link</strong> (Udostępnij → Każda osoba z linkiem → Przeglądający).
+                </div>
                 <div className="login-field" style={{ marginBottom: '8px' }}>
                   <label style={{ fontSize: '12px' }}>Link do pracy (Google Drive, Dropbox...)</label>
                   <input type="url" value={linkPracy} onChange={e => setLinkPracy(e.target.value)} placeholder="https://drive.google.com/..." style={{ fontSize: '13px' }} />
@@ -420,6 +423,9 @@ function EkranZadania({ user, kursant }: { user: User; kursant: Kursant | null }
             )}
             {rozwinięte && (
               <div style={{ padding: '0 14px 14px' }}>
+                <div style={{ background: '#fffbeb', border: '0.5px solid #fef3c7', borderRadius: '10px', padding: '10px 12px', marginBottom: '12px', fontSize: '12px', color: '#92400e', lineHeight: 1.6 }}>
+                  💡 <strong>Dodaj link do Google Drive</strong> i pamiętaj o ustawieniu uprawnień: <strong>każda osoba z linkiem → Przeglądający</strong>.
+                </div>
                 <div className="login-field" style={{ marginBottom: '8px' }}>
                   <label style={{ fontSize: '12px' }}>Link do pracy (Google Drive, Dropbox...)</label>
                   <input type="url" value={linkPracy} onChange={e => setLinkPracy(e.target.value)} placeholder="https://drive.google.com/..." style={{ fontSize: '13px' }} />
@@ -1804,6 +1810,7 @@ function PanelProwadzacego({ user, kursant, onWyloguj }: { user: User; kursant: 
               {aktywnaZakladka === 'zjazdy' && (
                 <>
                   <h2 className="page-title">Moje zjazdy</h2>
+                  <KalendarzZjazdow zjazdy={zjazdy} grupy={mojeGrupy} />
                   {zjazdy.map(z => (
                     <div key={z.id} className="profil-card" style={{ marginBottom: '8px' }}>
                       <div className="profil-row">
@@ -4422,6 +4429,122 @@ function PostepKursu({ zjazdy }: { zjazdy: Zjazd[] }) {
   );
 }
 
+// ─── KALENDARZ ZJAZDÓW ───────────────────────────────────────────────────────
+
+function KalendarzZjazdow({ zjazdy, grupy }: { zjazdy: Zjazd[]; grupy?: { id: number; nazwa: string }[] }) {
+  const [miesiac, setMiesiac] = useState(() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+  });
+
+  const [rok, mies] = miesiac.split('-').map(Number);
+  const pierwszyDzien = new Date(rok, mies - 1, 1);
+  const liczbaDni = new Date(rok, mies, 0).getDate();
+  const startDow = (pierwszyDzien.getDay() + 6) % 7;
+  const nazwyMiesiecy = ['Styczeń','Luty','Marzec','Kwiecień','Maj','Czerwiec','Lipiec','Sierpień','Wrzesień','Październik','Listopad','Grudzień'];
+  const nazwyDni = ['Pon','Wt','Śr','Czw','Pt','Sob','Nd'];
+  const dzisiaj = new Date().toISOString().split('T')[0];
+
+  // Kolory per grupa
+  const koloryCykl = ['#a05c5c','#1565c0','#2e7d32','#c8a84b','#6a1b9a','#d84315','#00838f'];
+  const grupaKolor: Record<number, string> = {};
+  (grupy || []).forEach((g, i) => { grupaKolor[g.id] = koloryCykl[i % koloryCykl.length]; });
+
+  // Mapa dzień → zjazdy
+  const mapa: Record<string, { zjazd: Zjazd; dzien: 1 | 2 }[]> = {};
+  zjazdy.forEach(z => {
+    [z.data_dzien1, z.data_dzien2].forEach((data, idx) => {
+      if (!data) return;
+      const d = data.substring(0, 10);
+      if (!mapa[d]) mapa[d] = [];
+      mapa[d].push({ zjazd: z, dzien: (idx + 1) as 1 | 2 });
+    });
+  });
+
+  const komorki: (number | null)[] = [
+    ...Array(startDow).fill(null),
+    ...Array.from({ length: liczbaDni }, (_, i) => i + 1),
+  ];
+  while (komorki.length % 7 !== 0) komorki.push(null);
+
+  return (
+    <div style={{ background: 'white', borderRadius: '14px', border: '0.5px solid var(--border)', overflow: 'hidden', marginBottom: '16px' }}>
+      {/* Nagłówek */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderBottom: '0.5px solid var(--border)' }}>
+        <button onClick={() => { const d = new Date(rok, mies - 2, 1); setMiesiac(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`); }}
+          style={{ background: 'none', border: '0.5px solid var(--border)', borderRadius: '8px', width: '28px', height: '28px', cursor: 'pointer', fontSize: '14px', color: 'var(--text-muted)' }}>‹</button>
+        <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '17px', fontWeight: 400, color: 'var(--brand-dark)' }}>
+          {nazwyMiesiecy[mies - 1]} {rok}
+        </span>
+        <button onClick={() => { const d = new Date(rok, mies, 1); setMiesiac(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`); }}
+          style={{ background: 'none', border: '0.5px solid var(--border)', borderRadius: '8px', width: '28px', height: '28px', cursor: 'pointer', fontSize: '14px', color: 'var(--text-muted)' }}>›</button>
+      </div>
+      {/* Dni tygodnia */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', background: 'var(--bg)', borderBottom: '0.5px solid var(--border)' }}>
+        {nazwyDni.map(d => (
+          <div key={d} style={{ padding: '6px 4px', textAlign: 'center', fontSize: '10px', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.3px' }}>{d}</div>
+        ))}
+      </div>
+      {/* Siatka */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)' }}>
+        {komorki.map((dzien, idx) => {
+          const dataStr = dzien ? `${rok}-${String(mies).padStart(2,'0')}-${String(dzien).padStart(2,'0')}` : '';
+          const wpisy = dataStr ? (mapa[dataStr] || []) : [];
+          const czyDzisiaj = dataStr === dzisiaj;
+          const czyWeekend = idx % 7 >= 5;
+          return (
+            <div key={idx} style={{
+              minHeight: '64px', padding: '4px 4px 3px',
+              borderBottom: '0.5px solid var(--border-soft)',
+              borderRight: idx % 7 < 6 ? '0.5px solid var(--border-soft)' : 'none',
+              background: !dzien ? '#fafaf9' : czyWeekend ? '#fdf8f7' : 'white',
+            }}>
+              {dzien && (
+                <>
+                  <div style={{
+                    width: '20px', height: '20px', borderRadius: '50%',
+                    background: czyDzisiaj ? 'var(--brand)' : 'transparent',
+                    color: czyDzisiaj ? 'white' : czyWeekend ? 'var(--brand)' : 'var(--text)',
+                    fontSize: '11px', fontWeight: czyDzisiaj ? 700 : 400,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    marginBottom: '2px',
+                  }}>{dzien}</div>
+                  {wpisy.map((w, i) => {
+                    const kolor = grupy ? (grupaKolor[w.zjazd.grupa_id] || 'var(--brand)') : 'var(--brand)';
+                    const nazwa = grupy ? grupy.find(g => g.id === w.zjazd.grupa_id)?.nazwa : null;
+                    return (
+                      <div key={i} title={`Zjazd ${w.zjazd.nr} — D${w.dzien}${nazwa ? '\n' + nazwa : ''}\n${w.zjazd.tematy || ''}`}
+                        style={{
+                          background: kolor + '20', borderLeft: `2px solid ${kolor}`,
+                          borderRadius: '0 3px 3px 0', padding: '1px 4px', marginBottom: '1px',
+                          fontSize: '9px', color: kolor, fontWeight: 700, lineHeight: 1.4,
+                          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                        }}>
+                        {nazwa ? (nazwa.split(' ').slice(0, 2).join(' ')) : `Zjazd ${w.zjazd.nr}`} D{w.dzien}
+                      </div>
+                    );
+                  })}
+                </>
+              )}
+            </div>
+          );
+        })}
+      </div>
+      {/* Legenda (tylko gdy wiele grup) */}
+      {grupy && grupy.length > 1 && (
+        <div style={{ padding: '8px 12px', borderTop: '0.5px solid var(--border)', display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+          {grupy.map(g => (
+            <div key={g.id} style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '10px', color: 'var(--text-muted)' }}>
+              <div style={{ width: '8px', height: '8px', borderRadius: '2px', background: grupaKolor[g.id] || 'var(--brand)', flexShrink: 0 }} />
+              {g.nazwa}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function EkranProfil({ user, kursant, zjazdy, onWyloguj, onAvatarZmieniony, grupaInfo, onOtworzAnkiete }: { user: User; kursant: Kursant | null; zjazdy: Zjazd[]; onWyloguj: () => void; onAvatarZmieniony: (url: string) => void; grupaInfo: Grupa | null; onOtworzAnkiete: () => void }) {
   const [uploadowanie, setUploadowanie] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -4543,6 +4666,14 @@ function EkranProfil({ user, kursant, zjazdy, onWyloguj, onAvatarZmieniony, grup
             <div style={{ fontSize: '12px', color: '#bbb', lineHeight: 1.5 }}>Odblokuje się po zakończeniu ostatniego zjazdu</div>
           </div>
           <span style={{ marginLeft: 'auto', color: '#ccc', fontSize: '18px' }}>🔒</span>
+        </div>
+      )}
+
+      {/* Kalendarz zjazdów */}
+      {zjazdy.length > 0 && (
+        <div style={{ marginBottom: '10px' }}>
+          <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text)', marginBottom: '8px', padding: '0 2px' }}>📅 Mój harmonogram</div>
+          <KalendarzZjazdow zjazdy={zjazdy} />
         </div>
       )}
 
