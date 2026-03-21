@@ -2924,7 +2924,7 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
                             if (!start || !end) return 0;
                             const [sh, sm] = start.split(':').map(Number);
                             const [eh, em] = end.split(':').map(Number);
-                            return Math.max(0, (eh * 60 + em) - (sh * 60 + sm)) / 60;
+                            return Math.max(0, Math.round(((eh * 60 + em) - (sh * 60 + sm))));
                           };
                           let sumaD1 = 0, sumaD2 = 0;
                           zjazdyGrupy.forEach(z => {
@@ -2933,13 +2933,18 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
                           });
                           const suma = sumaD1 + sumaD2;
                           if (suma === 0) return null;
+                          const fmt = (min: number) => {
+                            const h = Math.floor(min / 60);
+                            const m = min % 60;
+                            return m > 0 ? `${h}h ${m}min` : `${h}h`;
+                          };
                           return (
-                            <div style={{ display: 'flex', gap: '16px', padding: '8px 14px', background: 'var(--brand-light)', borderRadius: '0 0 12px 12px', borderTop: 'none', flexWrap: 'wrap' }}>
+                            <div style={{ display: 'flex', gap: '16px', padding: '8px 14px', background: 'var(--brand-light)', borderRadius: '0 0 12px 12px', flexWrap: 'wrap' }}>
                               <span style={{ fontSize: '11px', color: 'var(--brand-dark)', fontWeight: 600 }}>
-                                Łącznie: {suma} h
+                                Łącznie: {fmt(suma)}
                               </span>
-                              {sumaD1 > 0 && <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Dzień 1: {sumaD1} h</span>}
-                              {sumaD2 > 0 && <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Dzień 2: {sumaD2} h</span>}
+                              {sumaD1 > 0 && <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Dzień 1: {fmt(sumaD1)}</span>}
+                              {sumaD2 > 0 && <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Dzień 2: {fmt(sumaD2)}</span>}
                               <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>({zjazdyGrupy.length} zjazdów)</span>
                             </div>
                           );
