@@ -5071,7 +5071,14 @@ export default function App() {
           if (row.prowadzacy) prowadzacyMap[row.zjazd_id].push(row.prowadzacy);
         });
       }
-      setZjazdy((zj || []).map((z: any) => ({ ...z, prowadzacy: prowadzacyMap[z.id] || [] })));
+      const dzisiaj = new Date().toISOString().split('T')[0];
+      setZjazdy((zj || []).map((z: any) => {
+        const ostatniDzien = z.data_dzien2 || z.data_dzien1 || z.data_zjazdu;
+        // Jeśli baza mówi zakończony ale data jest przyszła — napraw lokalnie
+        const status = (z.status === 'zakonczony' && ostatniDzien && ostatniDzien >= dzisiaj)
+          ? 'nadchodzacy' : z.status;
+        return { ...z, status, prowadzacy: prowadzacyMap[z.id] || [] };
+      }));
 
       // Pobierz zadania i odpowiedzi kursanta
       if (grupaId) {
