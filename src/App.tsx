@@ -118,6 +118,7 @@ type Grupa = {
   edycja: string;
   drive_link: string | null;
   numer_uslugi: string | null;
+  tryb: 'stacjonarny' | 'online' | 'hybrydowy' | null;
 };
 
 type User = {
@@ -2030,12 +2031,12 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
     sala: string; adres: string; tematy: string;
     prowadzacy_id: string; typ: string; link_online: string;
   };
-  const pustyWiersz = (): WierszZjazdu => ({
+  const pustyWiersz = (typ = 'stacjonarny'): WierszZjazdu => ({
     _id: Math.random().toString(36).slice(2),
     nr: '', data_dzien1: '', data_dzien2: '',
     godzina_start_d1: '', godzina_end_d1: '',
     sala: '', adres: '', tematy: '',
-    prowadzacy_id: '', typ: 'stacjonarny', link_online: '',
+    prowadzacy_id: '', typ, link_online: '',
   });
   const [tabelaZjazdow, setTabelaZjazdow] = useState<WierszZjazdu[]>([pustyWiersz(), pustyWiersz(), pustyWiersz()]);
   const [tabelaGrupa, setTabelaGrupa] = useState('');
@@ -2084,7 +2085,7 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
     if (nowe.length > 0) setTabelaZjazdow(nowe);
   }
   const [nowyKursant, setNowyKursant] = useState({ imie: '', nazwisko: '', email: '', grupa_id: '' });
-  const [nowaGrupa, setNowaGrupa] = useState({ nazwa: '', miasto: '', edycja: '', drive_link: '', numer_uslugi: '' });
+  const [nowaGrupa, setNowaGrupa] = useState({ nazwa: '', miasto: '', edycja: '', drive_link: '', numer_uslugi: '', tryb: 'stacjonarny' });
   const [nowyProwadzacy, setNowyProwadzacy] = useState({ imie: '', nazwisko: '', bio: '', avatar_url: '' });
   const [noweZadanie, setNoweZadanie] = useState({ tytul: '', opis: '', termin: '', link_materialow: '', grupa_id: '', typ: 'zadanie' });
   const [komunikat, setKomunikat] = useState('');
@@ -2247,8 +2248,8 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
 
   async function dodajGrupe(e: React.FormEvent) {
     e.preventDefault();
-    const { error } = await supabase.from('grupy').insert([{ nazwa: nowaGrupa.nazwa, miasto: nowaGrupa.miasto, edycja: nowaGrupa.edycja, drive_link: nowaGrupa.drive_link || null, numer_uslugi: nowaGrupa.numer_uslugi || null }]);
-    if (error) { setKomunikat('Blad: ' + error.message); } else { setKomunikat('Grupa dodana!'); setNowaGrupa({ nazwa: '', miasto: '', edycja: '', drive_link: '', numer_uslugi: '' }); pobierzGrupy(); }
+    const { error } = await supabase.from('grupy').insert([{ nazwa: nowaGrupa.nazwa, miasto: nowaGrupa.miasto, edycja: nowaGrupa.edycja, drive_link: nowaGrupa.drive_link || null, numer_uslugi: nowaGrupa.numer_uslugi || null, tryb: nowaGrupa.tryb }]);
+    if (error) { setKomunikat('Blad: ' + error.message); } else { setKomunikat('Grupa dodana!'); setNowaGrupa({ nazwa: '', miasto: '', edycja: '', drive_link: '', numer_uslugi: '', tryb: 'stacjonarny' }); pobierzGrupy(); }
   }
 
   async function zapiszDriveLink(grupaId: number, link: string) {
@@ -2668,12 +2669,24 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
                 <div style={{ marginBottom: '8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
                   <h2 className="page-title" style={{ margin: 0 }}>Dodaj zjazdy</h2>
                   <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
-                    <select value={tabelaGrupa} onChange={e => setTabelaGrupa(e.target.value)}
+                    <select value={tabelaGrupa} onChange={e => {
+                      const gId = e.target.value;
+                      setTabelaGrupa(gId);
+                      if (gId) {
+                        const g = grupy.find(g => g.id === parseInt(gId));
+                        const typ = g?.tryb === 'online' ? 'online' : 'stacjonarny';
+                        setTabelaZjazdow(t => t.map(w => ({ ...w, typ })));
+                      }
+                    }}
                       style={{ fontSize: '13px', padding: '7px 12px', border: '0.5px solid var(--border)', borderRadius: '10px', fontFamily: 'Jost, sans-serif', background: 'white' }}>
                       <option value="">Wybierz grupę…</option>
                       {grupy.map(g => <option key={g.id} value={g.id}>{g.nazwa}</option>)}
                     </select>
-                    <button onClick={() => setTabelaZjazdow(t => [...t, pustyWiersz()])}
+                    <button onClick={() => {
+                      const g = grupy.find(g => g.id === parseInt(tabelaGrupa));
+                      const typ = g?.tryb === 'online' ? 'online' : 'stacjonarny';
+                      setTabelaZjazdow(t => [...t, pustyWiersz(typ)]);
+                    }}
                       style={{ fontSize: '12px', padding: '7px 14px', border: '0.5px solid var(--border)', borderRadius: '10px', background: 'white', cursor: 'pointer', fontFamily: 'Jost, sans-serif', color: 'var(--text-muted)' }}>
                       + Dodaj wiersz
                     </button>
@@ -3107,15 +3120,33 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
               <div className="login-field"><label>Edycja</label><input type="text" value={nowaGrupa.edycja} onChange={e => setNowaGrupa({ ...nowaGrupa, edycja: e.target.value })} required /></div>
               <div className="login-field"><label>Strefa Wiedzy — link Google Drive (opcjonalnie)</label><input type="url" value={nowaGrupa.drive_link} onChange={e => setNowaGrupa({ ...nowaGrupa, drive_link: e.target.value })} placeholder="https://drive.google.com/..." /></div>
               <div className="login-field"><label>Numer usługi BUR (opcjonalnie)</label><input type="text" value={nowaGrupa.numer_uslugi} onChange={e => setNowaGrupa({ ...nowaGrupa, numer_uslugi: e.target.value })} placeholder="np. 2025/09/24/195975/3028966" /></div>
+              <div className="login-field"><label>Tryb zajęć</label><select value={nowaGrupa.tryb} onChange={e => setNowaGrupa({ ...nowaGrupa, tryb: e.target.value })}><option value="stacjonarny">Stacjonarny</option><option value="online">Online</option><option value="hybrydowy">Hybrydowy</option></select></div>
               <button className="login-btn" type="submit">Dodaj grupe</button>
             </form>
             <h2 className="page-title" style={{ marginTop: '24px' }}>Lista grup</h2>
             {grupy.map(g => (
               <div key={g.id} className="profil-card" style={{ marginBottom: '8px' }}>
-                <div className="profil-row"><span className="profil-lbl">ID do CSV</span><span className="profil-val" style={{ fontWeight: '700', color: 'var(--brand)' }}>{g.id}</span></div>
+                <div className="profil-row">
+                  <span className="profil-lbl" style={{ fontWeight: '700', color: 'var(--brand)' }}>ID: {g.id}</span>
+                  <span style={{ fontSize: '10px', fontWeight: 600, padding: '2px 8px', borderRadius: '10px',
+                    background: g.tryb === 'online' ? '#e8f0fe' : g.tryb === 'hybrydowy' ? '#fef9ec' : 'var(--brand-light)',
+                    color: g.tryb === 'online' ? '#1565c0' : g.tryb === 'hybrydowy' ? '#c8a84b' : 'var(--brand-dark)' }}>
+                    {g.tryb === 'online' ? '🌐 Online' : g.tryb === 'hybrydowy' ? '⚡ Hybrydowy' : '📍 Stacjonarny'}
+                  </span>
+                </div>
                 <div className="profil-row"><span className="profil-lbl">Nazwa</span><span className="profil-val">{g.nazwa}</span></div>
                 <div className="profil-row"><span className="profil-lbl">Miasto</span><span className="profil-val">{g.miasto}</span></div>
                 <div className="profil-row"><span className="profil-lbl">Edycja</span><span className="profil-val">{g.edycja}</span></div>
+                <div className="profil-row">
+                  <span className="profil-lbl">Tryb zajęć</span>
+                  <select defaultValue={g.tryb || 'stacjonarny'}
+                    onBlur={async e => { await supabase.from('grupy').update({ tryb: e.target.value }).eq('id', g.id); pobierzGrupy(); }}
+                    style={{ fontSize: '12px', padding: '4px 8px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif', background: 'white' }}>
+                    <option value="stacjonarny">Stacjonarny</option>
+                    <option value="online">Online</option>
+                    <option value="hybrydowy">Hybrydowy</option>
+                  </select>
+                </div>
                 <div style={{ padding: '4px 16px 12px' }}>
                   <label style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.4px', fontWeight: 600 }}>Strefa Wiedzy (Drive)</label>
                   <div style={{ display: 'flex', gap: '8px', marginTop: '6px' }}>
