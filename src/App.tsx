@@ -2918,6 +2918,32 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
                             </tbody>
                           </table>
                         </div>
+                        {/* Podsumowanie godzin */}
+                        {(() => {
+                          const liczGodziny = (start: string | null, end: string | null) => {
+                            if (!start || !end) return 0;
+                            const [sh, sm] = start.split(':').map(Number);
+                            const [eh, em] = end.split(':').map(Number);
+                            return Math.max(0, (eh * 60 + em) - (sh * 60 + sm)) / 60;
+                          };
+                          let sumaD1 = 0, sumaD2 = 0;
+                          zjazdyGrupy.forEach(z => {
+                            sumaD1 += liczGodziny((z as any).godzina_start_d1, (z as any).godzina_end_d1);
+                            sumaD2 += liczGodziny((z as any).godzina_start_d2, (z as any).godzina_end_d2);
+                          });
+                          const suma = sumaD1 + sumaD2;
+                          if (suma === 0) return null;
+                          return (
+                            <div style={{ display: 'flex', gap: '16px', padding: '8px 14px', background: 'var(--brand-light)', borderRadius: '0 0 12px 12px', borderTop: 'none', flexWrap: 'wrap' }}>
+                              <span style={{ fontSize: '11px', color: 'var(--brand-dark)', fontWeight: 600 }}>
+                                Łącznie: {suma} h
+                              </span>
+                              {sumaD1 > 0 && <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Dzień 1: {sumaD1} h</span>}
+                              {sumaD2 > 0 && <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Dzień 2: {sumaD2} h</span>}
+                              <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>({zjazdyGrupy.length} zjazdów)</span>
+                            </div>
+                          );
+                        })()}
                       </div>
                     );
                   })}
