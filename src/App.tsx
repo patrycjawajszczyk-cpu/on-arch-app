@@ -4004,7 +4004,7 @@ function PanelBiura({ onWyloguj, user }: { onWyloguj: () => void; user: User | n
   );
 }
 
-function KartaOgloszenia({ o, onClick }: { o: Ogloszenie; onClick: () => void }) {
+function KartaOgloszenia({ o, onClick }: { o: Ogloszenie; onClick: () => void; key?: string | number }) {
   return (
     <div className="ann-card" onClick={onClick}>
       <div className="ann-top">
@@ -4475,6 +4475,9 @@ function KafelekDnia({ zjazd, dzien, label, wpis, aktywnyFormularz, setAktywnyFo
           )}
         </div>
       )}
+    </div>
+  );
+}
 
 function EkranZjazdy({ zjazdy, user, kursant, grupaInfo }: { zjazdy: Zjazd[]; user: User; kursant: Kursant | null; grupaInfo?: Grupa | null }) {
   const [obecnosci, setObecnosci] = useState<Obecnosc[]>([]);
