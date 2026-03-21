@@ -2200,6 +2200,10 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
       data_zjazdu: edytowanyZjazd.data_zjazdu,
       data_dzien1: edytowanyZjazd.data_dzien1 || null,
       data_dzien2: edytowanyZjazd.data_dzien2 || null,
+      godzina_start_d1: (edytowanyZjazd as any).godzina_start_d1 || null,
+      godzina_end_d1: (edytowanyZjazd as any).godzina_end_d1 || null,
+      godzina_start_d2: (edytowanyZjazd as any).godzina_start_d2 || null,
+      godzina_end_d2: (edytowanyZjazd as any).godzina_end_d2 || null,
       grupa_id: edytowanyZjazd.grupa_id,
     }).eq('id', edytowanyZjazd.id);
     if (error) { setKomunikat('Blad: ' + error.message); return; }
