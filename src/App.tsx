@@ -94,6 +94,30 @@ type Zjazd = {
   prowadzacy?: Prowadzacy[];
 };
 
+type MaterialZjazdu = {
+  id: number;
+  zjazd_id: number;
+  tytul: string;
+  link: string | null;
+  kolejnosc: number;
+};
+
+type PytanieZjazdu = {
+  id: number;
+  zjazd_id: number;
+  user_id: string;
+  imie: string;
+  nazwisko: string;
+  tresc: string;
+  omowione: boolean;
+  created_at: string;
+};
+
+// Czy grupa używa modelu odwróconej klasy (PWO lub POO)
+function czyOdwroconaKlasa(nazwaGrupy: string): boolean {
+  return nazwaGrupy.startsWith('PWO') || nazwaGrupy.startsWith('POO');
+}
+
 type Kursant = {
   imie: string;
   nazwisko: string;
@@ -1811,20 +1835,29 @@ function PanelProwadzacego({ user, kursant, onWyloguj }: { user: User; kursant: 
                 <>
                   <h2 className="page-title">Moje zjazdy</h2>
                   <KalendarzZjazdow zjazdy={zjazdy} grupy={mojeGrupy} />
-                  {zjazdy.map(z => (
+                  {zjazdy.map(z => {
+                    const grupa = mojeGrupy.find(g => g.id === z.grupa_id);
+                    return (
                     <div key={z.id} className="profil-card" style={{ marginBottom: '8px' }}>
                       <div className="profil-row">
                         <span className="profil-lbl" style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '16px' }}>Zjazd {z.nr} — {z.daty}</span>
                         <span className={`s-badge s-${z.status}`}>{z.status === 'nadchodzacy' ? 'Nadchodzący' : 'Zakończony'}</span>
                       </div>
-                      <div className="profil-row"><span className="profil-lbl">Grupa</span><span className="profil-val">{mojeGrupy.find(g => g.id === z.grupa_id)?.nazwa || '-'}</span></div>
+                      <div className="profil-row"><span className="profil-lbl">Grupa</span><span className="profil-val">{grupa?.nazwa || '-'}</span></div>
                       {z.typ === 'online' ? (
                         <div className="profil-row"><span className="profil-lbl">🌐 Online</span>{z.link_online && <a href={z.link_online} target="_blank" rel="noopener noreferrer" style={{ fontSize: '12px', color: 'var(--brand)' }}>Dołącz →</a>}</div>
                       ) : (
                         z.sala && <div className="profil-row"><span className="profil-lbl">Sala</span><span className="profil-val">{z.sala}</span></div>
                       )}
+                      {/* Sekcja przygotowania — tylko dla grup PWO/POO */}
+                      {grupa && czyOdwroconaKlasa(grupa.nazwa) && (
+                        <div style={{ padding: '0 14px 12px' }}>
+                          <SekcjaPrzygotowania zjazd={z} user={user} czyProwadzacy={true} />
+                        </div>
+                      )}
                     </div>
-                  ))}
+                    );
+                  })}
                 </>
               )}
               {aktywnaZakladka === 'ogloszenia' && (
@@ -4261,7 +4294,7 @@ function KafelekDnia({ zjazd, dzien, label, wpis, aktywnyFormularz, setAktywnyFo
   );
 }
 
-function EkranZjazdy({ zjazdy, user, kursant }: { zjazdy: Zjazd[]; user: User; kursant: Kursant | null }) {
+function EkranZjazdy({ zjazdy, user, kursant, grupaInfo }: { zjazdy: Zjazd[]; user: User; kursant: Kursant | null; grupaInfo?: Grupa | null }) {
   const [obecnosci, setObecnosci] = useState<Obecnosc[]>([]);
   const [modalProwadzacy, setModalProwadzacy] = useState<Prowadzacy | null>(null);
   const [aktywnyFormularz, setAktywnyFormularz] = useState<{ zjazdId: number; dzien: 1 | 2; typ: 'obecnosc' | 'nieobecnosc' | 'godziny'; powod?: string; godzPrzyb?: string; godzWyj?: string } | null>(null);
@@ -4372,6 +4405,10 @@ function EkranZjazdy({ zjazdy, user, kursant }: { zjazdy: Zjazd[]; user: User; k
           <div style={{ display: 'flex', gap: '8px', padding: '8px 14px 14px' }}>
             <KafelekDnia zjazd={z} dzien={1} wpis={obecnosci.find(o => o.zjazd_id === z.id && o.dzien === 1)} aktywnyFormularz={aktywnyFormularz} setAktywnyFormularz={setAktywnyFormularz} zapiszObecnosc={zapiszObecnosc} usunObecnosc={usunObecnosc} odswiezObecnosci={odswiezObecnosci} wysylanie={wysylanie} label={z.data_dzien1 ? new Date(z.data_dzien1).toLocaleDateString('pl-PL', { weekday: 'long', day: 'numeric', month: 'long' }) : 'Dzień 1'} />
             {z.data_dzien2 && <KafelekDnia zjazd={z} dzien={2} wpis={obecnosci.find(o => o.zjazd_id === z.id && o.dzien === 2)} aktywnyFormularz={aktywnyFormularz} setAktywnyFormularz={setAktywnyFormularz} zapiszObecnosc={zapiszObecnosc} usunObecnosc={usunObecnosc} odswiezObecnosci={odswiezObecnosci} wysylanie={wysylanie} label={new Date(z.data_dzien2).toLocaleDateString('pl-PL', { weekday: 'long', day: 'numeric', month: 'long' })} />}
+            {/* Sekcja przygotowania — tylko dla grup PWO/POO */}
+            {grupaInfo && czyOdwroconaKlasa(grupaInfo.nazwa) && (
+              <SekcjaPrzygotowania zjazd={z} user={user} kursant={kursant} />
+            )}
           </div>
         </div>
       ))}
@@ -4430,6 +4467,234 @@ function PostepKursu({ zjazdy }: { zjazdy: Zjazd[] }) {
 }
 
 // ─── KALENDARZ ZJAZDÓW ───────────────────────────────────────────────────────
+
+// ─── SEKCJA PRZYGOTOWANIA DO ZJAZDU (odwrócona klasa) ────────────────────────
+
+function SekcjaPrzygotowania({ zjazd, user, kursant, czyProwadzacy = false }: {
+  zjazd: Zjazd; user: { id: string }; kursant?: { imie: string; nazwisko: string } | null; czyProwadzacy?: boolean;
+}) {
+  const [materialy, setMaterialy] = useState<MaterialZjazdu[]>([]);
+  const [pytania, setPytania] = useState<PytanieZjazdu[]>([]);
+  const [nowyMat, setNowyMat] = useState({ tytul: '', link: '' });
+  const [nowePytanie, setNowePytanie] = useState('');
+  const [edytowanePytanie, setEdytowanePytanie] = useState<number | null>(null);
+  const [edytowanaTresc, setEdytowanaTresc] = useState('');
+  const [ladowanie, setLadowanie] = useState(true);
+
+  useEffect(() => {
+    pobierz();
+  }, [zjazd.id]);
+
+  async function pobierz() {
+    setLadowanie(true);
+    const [{ data: mat }, { data: pyt }] = await Promise.all([
+      supabase.from('materialy_zjazdu').select('*').eq('zjazd_id', zjazd.id).order('kolejnosc'),
+      supabase.from('pytania_przed_zjazdem').select('*').eq('zjazd_id', zjazd.id).order('created_at'),
+    ]);
+    setMaterialy(mat || []);
+    setPytania(pyt || []);
+    setLadowanie(false);
+  }
+
+  async function dodajMaterial(e: React.FormEvent) {
+    e.preventDefault();
+    if (!nowyMat.tytul.trim()) return;
+    await supabase.from('materialy_zjazdu').insert([{
+      zjazd_id: zjazd.id, tytul: nowyMat.tytul.trim(),
+      link: nowyMat.link.trim() || null, kolejnosc: materialy.length,
+    }]);
+    setNowyMat({ tytul: '', link: '' });
+    pobierz();
+  }
+
+  async function usunMaterial(id: number) {
+    await supabase.from('materialy_zjazdu').delete().eq('id', id);
+    pobierz();
+  }
+
+  async function dodajPytanie(e: React.FormEvent) {
+    e.preventDefault();
+    if (!nowePytanie.trim() || !kursant) return;
+    await supabase.from('pytania_przed_zjazdem').insert([{
+      zjazd_id: zjazd.id, user_id: user.id,
+      imie: kursant.imie, nazwisko: kursant.nazwisko,
+      tresc: nowePytanie.trim(),
+    }]);
+    setNowePytanie('');
+    pobierz();
+  }
+
+  async function zapiszEdycje(id: number) {
+    if (!edytowanaTresc.trim()) return;
+    await supabase.from('pytania_przed_zjazdem').update({ tresc: edytowanaTresc.trim() }).eq('id', id);
+    setEdytowanePytanie(null);
+    pobierz();
+  }
+
+  async function usunPytanie(id: number) {
+    await supabase.from('pytania_przed_zjazdem').delete().eq('id', id);
+    pobierz();
+  }
+
+  async function toggleOmowione(id: number, obecny: boolean) {
+    await supabase.from('pytania_przed_zjazdem').update({ omowione: !obecny }).eq('id', id);
+    pobierz();
+  }
+
+  const mojePytania = pytania.filter(p => p.user_id === user.id);
+  const nieomowione = pytania.filter(p => !p.omowione);
+  const omowione = pytania.filter(p => p.omowione);
+
+  if (ladowanie) return null;
+
+  return (
+    <div style={{ marginTop: '12px' }}>
+      {/* Materiały do przyswojenia */}
+      <div style={{ background: '#eef4ff', border: '0.5px solid #c5d8f7', borderRadius: '12px', padding: '14px 16px', marginBottom: '12px' }}>
+        <div style={{ fontWeight: 700, fontSize: '12px', color: '#1565c0', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+          📚 Materiały do przyswojenia przed zjazdem
+        </div>
+        {materialy.length === 0 && !czyProwadzacy && (
+          <div style={{ fontSize: '12px', color: '#5c85c8', fontStyle: 'italic' }}>Materiały zostaną dodane przez prowadzącego.</div>
+        )}
+        {materialy.map(m => (
+          <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+            <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#1565c0', flexShrink: 0 }} />
+            <div style={{ flex: 1, fontSize: '13px', color: '#1a1a1a' }}>
+              {m.link ? (
+                <a href={m.link} target="_blank" rel="noopener noreferrer"
+                  style={{ color: '#1565c0', textDecoration: 'none', fontWeight: 500 }}>
+                  {m.tytul} →
+                </a>
+              ) : (
+                <span style={{ fontWeight: 500 }}>{m.tytul}</span>
+              )}
+            </div>
+            {czyProwadzacy && (
+              <button onClick={() => usunMaterial(m.id)}
+                style={{ background: 'none', border: 'none', color: '#e57373', cursor: 'pointer', fontSize: '14px', padding: '0 2px' }}>×</button>
+            )}
+          </div>
+        ))}
+        {/* Formularz dodawania materiałów (prowadzący/biuro) */}
+        {czyProwadzacy && (
+          <form onSubmit={dodajMaterial} style={{ marginTop: '10px', display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+            <input type="text" value={nowyMat.tytul} onChange={e => setNowyMat(v => ({ ...v, tytul: e.target.value }))}
+              placeholder="Tytuł materiału *" required
+              style={{ flex: 2, minWidth: '140px', fontSize: '12px', padding: '6px 8px', border: '0.5px solid #c5d8f7', borderRadius: '7px', fontFamily: 'Jost, sans-serif' }} />
+            <input type="url" value={nowyMat.link} onChange={e => setNowyMat(v => ({ ...v, link: e.target.value }))}
+              placeholder="Link (opcjonalnie)"
+              style={{ flex: 2, minWidth: '140px', fontSize: '12px', padding: '6px 8px', border: '0.5px solid #c5d8f7', borderRadius: '7px', fontFamily: 'Jost, sans-serif' }} />
+            <button type="submit"
+              style={{ padding: '6px 12px', background: '#1565c0', color: 'white', border: 'none', borderRadius: '7px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', fontFamily: 'Jost, sans-serif', whiteSpace: 'nowrap' }}>
+              + Dodaj
+            </button>
+          </form>
+        )}
+      </div>
+
+      {/* Pytania kursanta (widok kursanta) */}
+      {!czyProwadzacy && (
+        <div style={{ background: '#fef9ec', border: '0.5px solid #fde68a', borderRadius: '12px', padding: '14px 16px', marginBottom: '12px' }}>
+          <div style={{ fontWeight: 700, fontSize: '12px', color: '#c8a84b', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+            ❓ Twoje pytania do prowadzącego
+          </div>
+          {mojePytania.length === 0 && (
+            <div style={{ fontSize: '12px', color: '#b48a2a', marginBottom: '8px', fontStyle: 'italic' }}>
+              Masz pytania do materiału? Zadaj je tutaj — prowadzący odpowie na zajęciach.
+            </div>
+          )}
+          {mojePytania.map(p => (
+            <div key={p.id} style={{ marginBottom: '8px', padding: '8px 10px', background: p.omowione ? '#f0faf4' : 'white', borderRadius: '8px', border: `0.5px solid ${p.omowione ? '#c8e6c9' : '#fde68a'}` }}>
+              {edytowanePytanie === p.id ? (
+                <div style={{ display: 'flex', gap: '6px' }}>
+                  <textarea value={edytowanaTresc} onChange={e => setEdytowanaTresc(e.target.value)} rows={2}
+                    style={{ flex: 1, fontSize: '12px', padding: '5px 8px', border: '0.5px solid #fde68a', borderRadius: '7px', fontFamily: 'Jost, sans-serif', resize: 'vertical' }} />
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    <button onClick={() => zapiszEdycje(p.id)}
+                      style={{ padding: '4px 10px', background: 'var(--brand)', color: 'white', border: 'none', borderRadius: '6px', fontSize: '11px', cursor: 'pointer', fontFamily: 'Jost, sans-serif' }}>✓</button>
+                    <button onClick={() => setEdytowanePytanie(null)}
+                      style={{ padding: '4px 10px', background: 'none', border: '0.5px solid var(--border)', borderRadius: '6px', fontSize: '11px', cursor: 'pointer', color: 'var(--text-muted)' }}>✕</button>
+                  </div>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: '12px', color: 'var(--text)', lineHeight: 1.5 }}>{p.tresc}</div>
+                    {p.omowione && <div style={{ fontSize: '10px', color: '#2e7d32', marginTop: '3px', fontWeight: 600 }}>✓ Omówione na zajęciach</div>}
+                  </div>
+                  {!p.omowione && (
+                    <div style={{ display: 'flex', gap: '4px', flexShrink: 0 }}>
+                      <button onClick={() => { setEdytowanePytanie(p.id); setEdytowanaTresc(p.tresc); }}
+                        style={{ fontSize: '10px', padding: '2px 7px', border: '0.5px solid var(--border)', borderRadius: '6px', background: 'white', cursor: 'pointer', color: 'var(--brand)', fontFamily: 'Jost, sans-serif' }}>Edytuj</button>
+                      <button onClick={() => usunPytanie(p.id)}
+                        style={{ fontSize: '10px', padding: '2px 6px', border: 'none', background: 'none', cursor: 'pointer', color: '#e57373' }}>×</button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          ))}
+          {/* Formularz pytania */}
+          {zjazd.status !== 'zakonczony' && (
+            <form onSubmit={dodajPytanie} style={{ display: 'flex', gap: '6px', marginTop: '4px' }}>
+              <textarea value={nowePytanie} onChange={e => setNowePytanie(e.target.value)}
+                placeholder="Wpisz pytanie do prowadzącego…" rows={2} required
+                style={{ flex: 1, fontSize: '12px', padding: '6px 8px', border: '0.5px solid #fde68a', borderRadius: '8px', fontFamily: 'Jost, sans-serif', resize: 'vertical' }} />
+              <button type="submit" disabled={!nowePytanie.trim()}
+                style={{ padding: '6px 12px', background: nowePytanie.trim() ? '#c8a84b' : '#ddd', color: 'white', border: 'none', borderRadius: '8px', fontSize: '12px', fontWeight: 600, cursor: nowePytanie.trim() ? 'pointer' : 'default', fontFamily: 'Jost, sans-serif', alignSelf: 'flex-end', whiteSpace: 'nowrap' }}>
+                Wyślij
+              </button>
+            </form>
+          )}
+        </div>
+      )}
+
+      {/* Pytania kursantów (widok prowadzącego) */}
+      {czyProwadzacy && pytania.length > 0 && (
+        <div style={{ background: '#fef9ec', border: '0.5px solid #fde68a', borderRadius: '12px', padding: '14px 16px' }}>
+          <div style={{ fontWeight: 700, fontSize: '12px', color: '#c8a84b', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+            ❓ Pytania kursantów ({nieomowione.length} do omówienia{omowione.length > 0 ? `, ${omowione.length} omówionych` : ''})
+          </div>
+          {nieomowione.map(p => (
+            <div key={p.id} style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', padding: '8px 10px', background: 'white', borderRadius: '8px', border: '0.5px solid #fde68a', marginBottom: '6px' }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--brand-dark)', marginBottom: '2px' }}>{p.imie} {p.nazwisko}</div>
+                <div style={{ fontSize: '12px', color: 'var(--text)', lineHeight: 1.5 }}>{p.tresc}</div>
+              </div>
+              <button onClick={() => toggleOmowione(p.id, p.omowione)}
+                style={{ fontSize: '10px', padding: '4px 10px', background: '#e8f5e9', color: '#2e7d32', border: '0.5px solid #c8e6c9', borderRadius: '6px', cursor: 'pointer', fontFamily: 'Jost, sans-serif', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                ✓ Omówione
+              </button>
+            </div>
+          ))}
+          {omowione.length > 0 && (
+            <details style={{ marginTop: '8px' }}>
+              <summary style={{ fontSize: '11px', color: '#2e7d32', cursor: 'pointer', userSelect: 'none' }}>
+                ▾ Omówione ({omowione.length})
+              </summary>
+              {omowione.map(p => (
+                <div key={p.id} style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', padding: '6px 10px', background: '#f0faf4', borderRadius: '8px', border: '0.5px solid #c8e6c9', marginTop: '4px' }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: '11px', fontWeight: 700, color: '#2e7d32', marginBottom: '2px' }}>{p.imie} {p.nazwisko}</div>
+                    <div style={{ fontSize: '12px', color: 'var(--text-muted)', lineHeight: 1.5 }}>{p.tresc}</div>
+                  </div>
+                  <button onClick={() => toggleOmowione(p.id, p.omowione)}
+                    style={{ fontSize: '10px', padding: '3px 8px', background: 'none', color: 'var(--text-muted)', border: '0.5px solid var(--border)', borderRadius: '6px', cursor: 'pointer', fontFamily: 'Jost, sans-serif', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                    ↩ Cofnij
+                  </button>
+                </div>
+              ))}
+            </details>
+          )}
+        </div>
+      )}
+      {czyProwadzacy && pytania.length === 0 && (
+        <div style={{ fontSize: '12px', color: 'var(--text-muted)', fontStyle: 'italic', padding: '4px 0' }}>Brak pytań od kursantów.</div>
+      )}
+    </div>
+  );
+}
 
 function KalendarzZjazdow({ zjazdy, grupy, zadania, odpowiedziZadan }: { zjazdy: Zjazd[]; grupy?: { id: number; nazwa: string }[]; zadania?: Zadanie[]; odpowiedziZadan?: ZadanieOdpowiedz[] }) {
   const [miesiac, setMiesiac] = useState(() => {
@@ -4907,7 +5172,7 @@ export default function App() {
                 noweCzat={noweCzat}
               />
             )}
-            {aktywnaZakladka === 'zjazdy' && <EkranZjazdy zjazdy={zjazdy} user={user} kursant={kursant} />}
+            {aktywnaZakladka === 'zjazdy' && <EkranZjazdy zjazdy={zjazdy} user={user} kursant={kursant} grupaInfo={grupaInfo} />}
             {aktywnaZakladka === 'ogloszenia' && <EkranOgloszenia ogloszenia={ogloszenia} onOtworzOgloszenie={otworzOgloszenie} />}
             {aktywnaZakladka === 'zadania' && <EkranZadania user={user} kursant={kursant} />}
             {aktywnaZakladka === 'czat' && <EkranCzat user={user} kursant={kursant} />}
