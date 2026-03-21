@@ -1217,3 +1217,25 @@
        margin-bottom: 28px;
      }
    }
+   
+   /* ── Tabela zjazdów — edytowalna ── */
+   .tabela-zjazdow td input,
+   .tabela-zjazdow td select {
+     background: transparent;
+     border: none;
+     outline: none;
+     font-family: 'Jost', sans-serif;
+     font-size: 12px;
+     width: 100%;
+     padding: 2px 0;
+     color: var(--text);
+   }
+   .tabela-zjazdow td input:focus,
+   .tabela-zjazdow td select:focus {
+     background: var(--brand-light);
+     border-radius: 4px;
+     padding: 2px 4px;
+   }
+   .tabela-zjazdow tr:hover td {
+     background: #fdf6f5;
+   }

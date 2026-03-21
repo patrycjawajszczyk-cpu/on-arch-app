@@ -2021,6 +2021,60 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
   const [edytowanyZjazd, setEdytowanyZjazd] = useState<Zjazd | null>(null);
   const [noweOgl, setNoweOgl] = useState({ typ: 'Informacja', tytul: '', tresc: '', szczegoly: '', nowe: true, grupa_id: '' });
   const [nowyZjazd, setNowyZjazd] = useState({ nr: '', daty: '', sala: '', adres: '', tematy: '', status: 'nadchodzacy', typ: 'stacjonarny', link_online: '', data_zjazdu: '', data_dzien1: '', data_dzien2: '', grupa_id: '', prowadzacy_id: '' });
+
+  type WierszZjazdu = {
+    _id: string;
+    nr: string; data_dzien1: string; data_dzien2: string;
+    godzina_start_d1: string; godzina_end_d1: string;
+    sala: string; adres: string; tematy: string;
+    prowadzacy_id: string; typ: string; link_online: string;
+  };
+  const pustyWiersz = (): WierszZjazdu => ({
+    _id: Math.random().toString(36).slice(2),
+    nr: '', data_dzien1: '', data_dzien2: '',
+    godzina_start_d1: '', godzina_end_d1: '',
+    sala: '', adres: '', tematy: '',
+    prowadzacy_id: '', typ: 'stacjonarny', link_online: '',
+  });
+  const [tabelaZjazdow, setTabelaZjazdow] = useState<WierszZjazdu[]>([pustyWiersz(), pustyWiersz(), pustyWiersz()]);
+  const [tabelaGrupa, setTabelaGrupa] = useState('');
+  const [tabelaZapis, setTabelaZapis] = useState(false);
+  const [tabelaWyniki, setTabelaWyniki] = useState<{ nr: string; status: string }[]>([]);
+  const [pokazInstrukcjePaste, setPokazInstrukcjePaste] = useState(false);
+
+  function wklejZExcela(tekst: string) {
+    const wiersze = tekst.trim().split('\n').filter(r => r.trim());
+    // Pomiń nagłówek jeśli pierwsza kolumna nie jest liczbą
+    const start = isNaN(parseInt(wiersze[0]?.split('\t')[0])) ? 1 : 0;
+    const nowe: WierszZjazdu[] = wiersze.slice(start).map(row => {
+      const kol = row.split('\t').map(c => c.trim().replace(/"/g, ''));
+      // Kolumny: Nr | Data D1 | Data D2 | Godz. start | Godz. koniec | Typ | Sala/Link | Adres | Temat
+      const parseData = (s: string) => {
+        if (!s) return '';
+        // Obsługa formatu DD.MM.YYYY lub YYYY-MM-DD
+        if (s.includes('.')) {
+          const [d, m, y] = s.split('.');
+          return `${y}-${m?.padStart(2,'0')}-${d?.padStart(2,'0')}`;
+        }
+        return s;
+      };
+      return {
+        _id: Math.random().toString(36).slice(2),
+        nr: kol[0] || '',
+        data_dzien1: parseData(kol[1] || ''),
+        data_dzien2: parseData(kol[2] || ''),
+        godzina_start_d1: kol[3] || '',
+        godzina_end_d1: kol[4] || '',
+        typ: (kol[5] || '').toLowerCase().includes('online') ? 'online' : 'stacjonarny',
+        sala: kol[6] || '',
+        link_online: (kol[5] || '').toLowerCase().includes('online') ? (kol[6] || '') : '',
+        adres: kol[7] || '',
+        tematy: kol[8] || '',
+        prowadzacy_id: '',
+      };
+    }).filter(w => w.nr);
+    if (nowe.length > 0) setTabelaZjazdow(nowe);
+  }
   const [nowyKursant, setNowyKursant] = useState({ imie: '', nazwisko: '', email: '', grupa_id: '' });
   const [nowaGrupa, setNowaGrupa] = useState({ nazwa: '', miasto: '', edycja: '', drive_link: '', numer_uslugi: '' });
   const [nowyProwadzacy, setNowyProwadzacy] = useState({ imie: '', nazwisko: '', specjalizacja: '' });
@@ -2098,6 +2152,51 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
     setKomunikat('Zjazd dodany!');
     setNowyZjazd({ nr: '', daty: '', sala: '', adres: '', tematy: '', status: 'nadchodzacy', typ: 'stacjonarny', link_online: '', data_zjazdu: '', data_dzien1: '', data_dzien2: '', grupa_id: '', prowadzacy_id: '' });
     pobierzZjazdy();
+  }
+
+  async function zapiszTabelaZjazdow() {
+    if (!tabelaGrupa) { setKomunikat('Wybierz grupę przed zapisem.'); return; }
+    const wiersze = tabelaZjazdow.filter(w => w.nr && w.data_dzien1);
+    if (wiersze.length === 0) { setKomunikat('Wypełnij co najmniej jeden wiersz (Nr + Data D1).'); return; }
+    setTabelaZapis(true); setTabelaWyniki([]);
+    const wyniki: { nr: string; status: string }[] = [];
+    for (const w of wiersze) {
+      const daty = w.data_dzien1 && w.data_dzien2
+        ? `${new Date(w.data_dzien1).toLocaleDateString('pl-PL', { day: 'numeric', month: 'numeric' })}–${new Date(w.data_dzien2).toLocaleDateString('pl-PL', { day: 'numeric', month: 'numeric', year: 'numeric' })}`
+        : new Date(w.data_dzien1).toLocaleDateString('pl-PL', { day: 'numeric', month: 'numeric', year: 'numeric' });
+      const { data: nowy, error } = await supabase.from('zjazdy').insert([{
+        nr: parseInt(w.nr),
+        daty,
+        sala: w.typ === 'online' ? '' : w.sala,
+        adres: w.typ === 'online' ? '' : w.adres,
+        tematy: w.tematy,
+        status: 'nadchodzacy',
+        typ: w.typ || 'stacjonarny',
+        link_online: w.typ === 'online' ? w.link_online || null : null,
+        data_zjazdu: w.data_dzien1,
+        data_dzien1: w.data_dzien1 || null,
+        data_dzien2: w.data_dzien2 || null,
+        godzina_start_d1: w.godzina_start_d1 || null,
+        godzina_end_d1: w.godzina_end_d1 || null,
+        godzina_start_d2: w.godzina_start_d1 || null,
+        godzina_end_d2: w.godzina_end_d1 || null,
+        grupa_id: parseInt(tabelaGrupa),
+      }]).select().single();
+      if (error) {
+        wyniki.push({ nr: w.nr, status: '✕ Błąd: ' + error.message });
+      } else {
+        if (w.prowadzacy_id && nowy) {
+          await supabase.from('zjazdy_prowadzacy').insert([{ zjazd_id: nowy.id, prowadzacy_id: parseInt(w.prowadzacy_id) }]);
+        }
+        wyniki.push({ nr: w.nr, status: '✓ Dodano' });
+      }
+    }
+    setTabelaWyniki(wyniki);
+    setTabelaZapis(false);
+    pobierzZjazdy();
+    // Reset wypełnionych wierszy
+    setTabelaZjazdow([pustyWiersz(), pustyWiersz(), pustyWiersz()]);
+    setKomunikat(`Zapisano ${wyniki.filter(w => w.status.startsWith('✓')).length} z ${wyniki.length} zjazdów.`);
   }
 
   async function zapiszEdycjeZjazdu(e: React.FormEvent) {
@@ -2432,42 +2531,143 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
               </>
             ) : (
               <>
-                <h2 className="page-title">Nowy zjazd</h2>
-                <form className="admin-form" onSubmit={dodajZjazd}>
-                  <div className="login-field"><label>Grupa</label><select value={nowyZjazd.grupa_id} onChange={e => setNowyZjazd({ ...nowyZjazd, grupa_id: e.target.value })} required><option value="">Wybierz grupe</option>{grupy.map(g => <option key={g.id} value={g.id}>{g.nazwa}</option>)}</select></div>
-                  <div className="login-field"><label>Numer zjazdu</label><input type="number" value={nowyZjazd.nr} onChange={e => setNowyZjazd({ ...nowyZjazd, nr: e.target.value })} required /></div>
-                  <div className="login-field"><label>Daty</label><input type="text" value={nowyZjazd.daty} onChange={e => setNowyZjazd({ ...nowyZjazd, daty: e.target.value })} required /></div>
-                  <div className="login-field"><label>Data zjazdu</label><input type="date" value={nowyZjazd.data_zjazdu} onChange={e => setNowyZjazd({ ...nowyZjazd, data_zjazdu: e.target.value })} required /></div>
-                  <div className="login-field"><label>Dzień 1 (Sobota) — data</label><input type="date" value={(nowyZjazd as any).data_dzien1 || ''} onChange={e => setNowyZjazd({ ...nowyZjazd, ...(nowyZjazd as any), data_dzien1: e.target.value || null })} /></div>
-                  <div style={{ display: 'flex', gap: '8px' }}>
-                    <div className="login-field" style={{ flex: 1 }}><label>Godz. start D1</label><input type="time" value={(nowyZjazd as any).godzina_start_d1 || ''} onChange={e => setNowyZjazd({ ...nowyZjazd, ...(nowyZjazd as any), godzina_start_d1: e.target.value || null })} /></div>
-                    <div className="login-field" style={{ flex: 1 }}><label>Godz. koniec D1</label><input type="time" value={(nowyZjazd as any).godzina_end_d1 || ''} onChange={e => setNowyZjazd({ ...nowyZjazd, ...(nowyZjazd as any), godzina_end_d1: e.target.value || null })} /></div>
-                  </div>
-                  <div className="login-field"><label>Dzień 2 (Niedziela) — data</label><input type="date" value={(nowyZjazd as any).data_dzien2 || ''} onChange={e => setNowyZjazd({ ...nowyZjazd, ...(nowyZjazd as any), data_dzien2: e.target.value || null })} /></div>
-                  <div style={{ display: 'flex', gap: '8px' }}>
-                    <div className="login-field" style={{ flex: 1 }}><label>Godz. start D2</label><input type="time" value={(nowyZjazd as any).godzina_start_d2 || ''} onChange={e => setNowyZjazd({ ...nowyZjazd, ...(nowyZjazd as any), godzina_start_d2: e.target.value || null })} /></div>
-                    <div className="login-field" style={{ flex: 1 }}><label>Godz. koniec D2</label><input type="time" value={(nowyZjazd as any).godzina_end_d2 || ''} onChange={e => setNowyZjazd({ ...nowyZjazd, ...(nowyZjazd as any), godzina_end_d2: e.target.value || null })} /></div>
-                  </div>
-                  <div className="login-field"><label>Typ zajęć</label><select value={(nowyZjazd as any).typ || 'stacjonarny'} onChange={e => setNowyZjazd({ ...nowyZjazd, ...(nowyZjazd as any), typ: e.target.value })}><option value="stacjonarny">Stacjonarny</option><option value="online">Online</option></select></div>
-                  {(nowyZjazd as any).typ === 'online' ? (
-                    <div className="login-field"><label>Link do zajęć (Google Meet / Zoom)</label><input type="url" value={(nowyZjazd as any).link_online || ''} onChange={e => setNowyZjazd({ ...nowyZjazd, ...(nowyZjazd as any), link_online: e.target.value || null })} placeholder="https://meet.google.com/..." /></div>
-                  ) : (
-                    <>
-                      <div className="login-field"><label>Sala</label><input type="text" value={nowyZjazd.sala} onChange={e => setNowyZjazd({ ...nowyZjazd, sala: e.target.value })} /></div>
-                      <div className="login-field"><label>Adres</label><input type="text" value={nowyZjazd.adres} onChange={e => setNowyZjazd({ ...nowyZjazd, adres: e.target.value })} /></div>
-                    </>
-                  )}
-                  <div className="login-field"><label>Tematy</label><input type="text" value={nowyZjazd.tematy} onChange={e => setNowyZjazd({ ...nowyZjazd, tematy: e.target.value })} required /></div>
-                  <div className="login-field"><label>Prowadzący (opcjonalnie)</label>
-                    <select value={nowyZjazd.prowadzacy_id} onChange={e => setNowyZjazd({ ...nowyZjazd, prowadzacy_id: e.target.value })}>
-                      <option value="">— brak —</option>
-                      {prowadzacy.map(p => <option key={p.id} value={p.id}>{p.imie} {p.nazwisko}</option>)}
+                {/* ── TABELA DODAWANIA ZJAZDÓW ── */}
+                <div style={{ marginBottom: '8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
+                  <h2 className="page-title" style={{ margin: 0 }}>Dodaj zjazdy</h2>
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+                    <select value={tabelaGrupa} onChange={e => setTabelaGrupa(e.target.value)}
+                      style={{ fontSize: '13px', padding: '7px 12px', border: '0.5px solid var(--border)', borderRadius: '10px', fontFamily: 'Jost, sans-serif', background: 'white' }}>
+                      <option value="">Wybierz grupę…</option>
+                      {grupy.map(g => <option key={g.id} value={g.id}>{g.nazwa}</option>)}
                     </select>
+                    <button onClick={() => setTabelaZjazdow(t => [...t, pustyWiersz()])}
+                      style={{ fontSize: '12px', padding: '7px 14px', border: '0.5px solid var(--border)', borderRadius: '10px', background: 'white', cursor: 'pointer', fontFamily: 'Jost, sans-serif', color: 'var(--text-muted)' }}>
+                      + Dodaj wiersz
+                    </button>
+                    <button onClick={() => setPokazInstrukcjePaste(v => !v)}
+                      style={{ fontSize: '12px', padding: '7px 14px', border: '0.5px solid var(--brand-mid)', borderRadius: '10px', background: 'var(--brand-light)', cursor: 'pointer', fontFamily: 'Jost, sans-serif', color: 'var(--brand-dark)' }}>
+                      📋 Wklej z Excela
+                    </button>
+                    <button onClick={zapiszTabelaZjazdow} disabled={tabelaZapis || !tabelaGrupa}
+                      style={{ fontSize: '13px', padding: '7px 20px', border: 'none', borderRadius: '10px', background: tabelaGrupa ? 'var(--brand)' : '#ccc', color: 'white', cursor: tabelaGrupa ? 'pointer' : 'not-allowed', fontFamily: 'Jost, sans-serif', fontWeight: 600 }}>
+                      {tabelaZapis ? 'Zapisywanie…' : '💾 Zapisz wszystkie'}
+                    </button>
                   </div>
-                  <div className="login-field"><label>Status</label><select value={nowyZjazd.status} onChange={e => setNowyZjazd({ ...nowyZjazd, status: e.target.value })}><option value="nadchodzacy">Nadchodzacy</option><option value="zakonczony">Zakonczony</option></select></div>
-                  <button className="login-btn" type="submit">Dodaj zjazd</button>
-                </form>
-                <h2 className="page-title" style={{ marginTop: '24px' }}>Lista zjazdów</h2>
+                </div>
+
+                {/* Panel wklejania z Excela */}
+                {pokazInstrukcjePaste && (
+                  <div style={{ background: 'white', border: '0.5px solid var(--border)', borderRadius: '14px', padding: '16px 20px', marginBottom: '12px' }}>
+                    <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text)', marginBottom: '8px' }}>📋 Wklej z Excela / Arkuszy Google</div>
+                    <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '10px', lineHeight: 1.7 }}>
+                      Skopiuj kolumny z arkusza w kolejności:<br/>
+                      <strong>Nr · Data D1 · Data D2 · Godz. start · Godz. koniec · Typ · Sala lub Link · Adres · Temat</strong><br/>
+                      Format dat: DD.MM.YYYY lub YYYY-MM-DD. Nagłówek zostanie automatycznie pominięty.
+                    </div>
+                    <textarea
+                      rows={5}
+                      placeholder="Wklej skopiowane komórki z Excela tutaj (Ctrl+V)…"
+                      onPaste={e => {
+                        const tekst = e.clipboardData.getData('text');
+                        if (tekst) { wklejZExcela(tekst); setPokazInstrukcjePaste(false); e.preventDefault(); }
+                      }}
+                      style={{ width: '100%', fontSize: '12px', padding: '8px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'monospace', resize: 'vertical', color: 'var(--text)' }}
+                    />
+                    <button onClick={() => setPokazInstrukcjePaste(false)}
+                      style={{ marginTop: '8px', fontSize: '12px', padding: '6px 14px', border: '0.5px solid var(--border)', borderRadius: '8px', background: 'white', cursor: 'pointer', fontFamily: 'Jost, sans-serif', color: 'var(--text-muted)' }}>
+                      Anuluj
+                    </button>
+                  </div>
+                )}
+
+                {/* Wyniki zapisu */}
+                {tabelaWyniki.length > 0 && (
+                  <div style={{ background: '#e8f5e9', border: '0.5px solid #c8e6c9', borderRadius: '10px', padding: '10px 14px', marginBottom: '12px' }}>
+                    {tabelaWyniki.map((w, i) => (
+                      <div key={i} style={{ fontSize: '12px', color: w.status.startsWith('✓') ? '#2e7d32' : '#c62828' }}>
+                        Zjazd {w.nr}: {w.status}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Tabela */}
+                <div style={{ overflowX: 'auto', marginBottom: '24px', borderRadius: '14px', border: '0.5px solid var(--border)', background: 'white' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', minWidth: '900px' }}>
+                    <thead>
+                      <tr style={{ background: 'var(--bg)', borderBottom: '0.5px solid var(--border)' }}>
+                        {['Nr', 'Data D1', 'Data D2', 'Godz. start', 'Godz. koniec', 'Typ', 'Sala / Link', 'Adres', 'Temat', 'Prowadzący', ''].map(h => (
+                          <th key={h} style={{ padding: '9px 10px', textAlign: 'left', fontWeight: 600, color: 'var(--text-muted)', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.3px', whiteSpace: 'nowrap' }}>{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {tabelaZjazdow.map((w, idx) => {
+                        const update = (field: keyof WierszZjazdu, val: string) =>
+                          setTabelaZjazdow(t => t.map((r, i) => i === idx ? { ...r, [field]: val } : r));
+                        const kopiujWiersz = () =>
+                          setTabelaZjazdow(t => [...t.slice(0, idx + 1), { ...w, _id: Math.random().toString(36).slice(2), nr: String(parseInt(w.nr || '0') + 1) }, ...t.slice(idx + 1)]);
+                        const usunWiersz = () =>
+                          setTabelaZjazdow(t => t.filter((_, i) => i !== idx));
+                        const inputStyle = { width: '100%', border: 'none', outline: 'none', fontSize: '12px', fontFamily: 'Jost, sans-serif', background: 'transparent', padding: '2px 0' };
+                        const tdStyle = { padding: '6px 10px', borderBottom: '0.5px solid var(--border-soft)', verticalAlign: 'middle' as const };
+                        return (
+                          <tr key={w._id} style={{ background: idx % 2 === 0 ? 'white' : '#fdf9f8' }}>
+                            <td style={{ ...tdStyle, width: '48px' }}>
+                              <input style={{ ...inputStyle, width: '40px', textAlign: 'center', fontWeight: 600 }} type="number" min="1" value={w.nr} onChange={e => update('nr', e.target.value)} placeholder="1" />
+                            </td>
+                            <td style={{ ...tdStyle, width: '130px' }}>
+                              <input style={inputStyle} type="date" value={w.data_dzien1} onChange={e => update('data_dzien1', e.target.value)} />
+                            </td>
+                            <td style={{ ...tdStyle, width: '130px' }}>
+                              <input style={inputStyle} type="date" value={w.data_dzien2} onChange={e => update('data_dzien2', e.target.value)} />
+                            </td>
+                            <td style={{ ...tdStyle, width: '90px' }}>
+                              <input style={inputStyle} type="time" value={w.godzina_start_d1} onChange={e => update('godzina_start_d1', e.target.value)} />
+                            </td>
+                            <td style={{ ...tdStyle, width: '90px' }}>
+                              <input style={inputStyle} type="time" value={w.godzina_end_d1} onChange={e => update('godzina_end_d1', e.target.value)} />
+                            </td>
+                            <td style={{ ...tdStyle, width: '110px' }}>
+                              <select value={w.typ} onChange={e => update('typ', e.target.value)}
+                                style={{ ...inputStyle, cursor: 'pointer' }}>
+                                <option value="stacjonarny">Stacjonarny</option>
+                                <option value="online">Online</option>
+                              </select>
+                            </td>
+                            <td style={{ ...tdStyle, minWidth: '140px' }}>
+                              {w.typ === 'online'
+                                ? <input style={inputStyle} type="url" value={w.link_online} onChange={e => update('link_online', e.target.value)} placeholder="https://meet.google.com/…" />
+                                : <input style={inputStyle} type="text" value={w.sala} onChange={e => update('sala', e.target.value)} placeholder="Sala A" />
+                              }
+                            </td>
+                            <td style={{ ...tdStyle, minWidth: '140px' }}>
+                              <input style={inputStyle} type="text" value={w.adres} onChange={e => update('adres', e.target.value)} placeholder="ul. Przykładowa 1, Warszawa" />
+                            </td>
+                            <td style={{ ...tdStyle, minWidth: '160px' }}>
+                              <input style={inputStyle} type="text" value={w.tematy} onChange={e => update('tematy', e.target.value)} placeholder="Temat zajęć…" />
+                            </td>
+                            <td style={{ ...tdStyle, width: '140px' }}>
+                              <select value={w.prowadzacy_id} onChange={e => update('prowadzacy_id', e.target.value)}
+                                style={{ ...inputStyle, cursor: 'pointer' }}>
+                                <option value="">— brak —</option>
+                                {prowadzacy.map(p => <option key={p.id} value={p.id}>{p.imie} {p.nazwisko}</option>)}
+                              </select>
+                            </td>
+                            <td style={{ ...tdStyle, width: '60px', whiteSpace: 'nowrap' }}>
+                              <button onClick={kopiujWiersz} title="Kopiuj wiersz"
+                                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: '14px', padding: '2px 4px' }}>⎘</button>
+                              <button onClick={usunWiersz} title="Usuń wiersz"
+                                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#e57373', fontSize: '14px', padding: '2px 4px' }}>×</button>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+
+                <h2 className="page-title" style={{ marginTop: '8px' }}>Lista zjazdów</h2>
 
                 {/* Filtr po grupie */}
                 {grupy.length > 1 && (
