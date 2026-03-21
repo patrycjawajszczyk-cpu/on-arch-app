@@ -2649,7 +2649,7 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
 
                 {/* Filtr po grupie */}
                 {grupy.length > 1 && (
-                  <div className="login-field" style={{ marginBottom: '12px' }}>
+                  <div className="login-field" style={{ marginBottom: '16px' }}>
                     <label>Filtruj po grupie</label>
                     <select
                       value={(nowyZjazd as any)._filterGrupa || ''}
@@ -2661,71 +2661,67 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
                   </div>
                 )}
 
-                {zjazdy
-                  .filter(z => !(nowyZjazd as any)._filterGrupa || z.grupa_id === parseInt((nowyZjazd as any)._filterGrupa))
-                  .map(z => (
-                  <div key={z.id} className="profil-card" style={{ marginBottom: '10px' }}>
-                    <div className="profil-row">
-                      <span className="profil-lbl" style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '16px', fontWeight: 500 }}>
-                        Zjazd {z.nr} — {z.daty}
-                      </span>
-                      <span className={`s-badge s-${z.status}`} style={{ fontSize: '9px' }}>
-                        {z.status === 'nadchodzacy' ? 'Nadchodzący' : 'Zakończony'}
-                      </span>
-                    </div>
-                    <div className="profil-row"><span className="profil-lbl">Grupa</span><span className="profil-val">{grupy.find(g => g.id === z.grupa_id)?.nazwa || '-'}</span></div>
-
-                    {/* Prowadzący inline */}
-                    <div className="profil-row" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '6px' }}>
-                      <span className="profil-lbl">Prowadzący</span>
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', width: '100%' }}>
-                        {(z.prowadzacy || []).map(p => (
-                          <span key={p.id} style={{
-                            display: 'inline-flex', alignItems: 'center', gap: '4px',
-                            background: 'var(--brand-light)', color: 'var(--brand-dark)',
-                            fontSize: '12px', padding: '3px 10px 3px 10px', borderRadius: '20px',
-                            fontWeight: 500,
-                          }}>
-                            {p.imie} {p.nazwisko}
-                            <button onClick={async () => {
-                              await supabase.from('zjazdy_prowadzacy').delete().eq('zjazd_id', z.id).eq('prowadzacy_id', p.id);
-                              pobierzZjazdy();
-                            }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--brand)', fontSize: '14px', padding: '0 0 0 2px', lineHeight: 1 }}>×</button>
+                {/* Zgrupowane per grupa */}
+                {grupy
+                  .filter(g => !((nowyZjazd as any)._filterGrupa) || g.id === parseInt((nowyZjazd as any)._filterGrupa))
+                  .map(g => {
+                    const zjazdyGrupy = zjazdy.filter(z => z.grupa_id === g.id);
+                    if (zjazdyGrupy.length === 0) return null;
+                    return (
+                      <div key={g.id} style={{ marginBottom: '24px' }}>
+                        {/* Nagłówek grupy */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+                          <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '18px', fontWeight: 400, color: 'var(--brand-dark)' }}>{g.nazwa}</span>
+                          <span style={{ fontSize: '11px', color: 'var(--text-muted)', background: 'var(--bg)', padding: '2px 8px', borderRadius: '10px', border: '0.5px solid var(--border)' }}>
+                            {zjazdyGrupy.length} zjazdów
                           </span>
-                        ))}
-                        {/* Dropdown dodawania */}
-                        {prowadzacy.filter(p => !(z.prowadzacy || []).some(ep => ep.id === p.id)).length > 0 && (
-                          <select
-                            defaultValue=""
-                            onChange={async (e) => {
-                              const pid = parseInt(e.target.value);
-                              if (!pid) return;
-                              await supabase.from('zjazdy_prowadzacy').insert([{ zjazd_id: z.id, prowadzacy_id: pid }]);
-                              e.target.value = '';
-                              pobierzZjazdy();
-                            }}
-                            style={{
-                              fontSize: '12px', padding: '3px 8px', borderRadius: '20px',
-                              border: '0.5px dashed var(--brand-mid)', background: 'white',
-                              color: 'var(--brand)', cursor: 'pointer', fontFamily: 'Jost, sans-serif',
-                            }}
-                          >
-                            <option value="">+ dodaj</option>
-                            {prowadzacy
-                              .filter(p => !(z.prowadzacy || []).some(ep => ep.id === p.id))
-                              .map(p => <option key={p.id} value={p.id}>{p.imie} {p.nazwisko}</option>)
-                            }
-                          </select>
-                        )}
+                        </div>
+                        {/* Tabela */}
+                        <div style={{ background: 'white', borderRadius: '12px', border: '0.5px solid var(--border)', overflow: 'hidden' }}>
+                          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+                            <thead>
+                              <tr style={{ background: 'var(--bg)', borderBottom: '0.5px solid var(--border)' }}>
+                                {['#', 'Daty', 'Temat', 'Prowadzący', 'Status', ''].map((h, i) => (
+                                  <th key={i} style={{ padding: '8px 12px', textAlign: 'left', fontWeight: 600, color: 'var(--text-muted)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.3px', whiteSpace: 'nowrap' }}>{h}</th>
+                                ))}
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {zjazdyGrupy.map((z, idx) => (
+                                <tr key={z.id} style={{ borderBottom: idx < zjazdyGrupy.length - 1 ? '0.5px solid var(--border-soft)' : 'none', background: idx % 2 === 0 ? 'white' : '#fdf9f8' }}>
+                                  <td style={{ padding: '9px 12px', fontWeight: 700, color: 'var(--brand-dark)', width: '32px' }}>{z.nr}</td>
+                                  <td style={{ padding: '9px 12px', whiteSpace: 'nowrap' }}>
+                                    {z.daty}
+                                    {z.typ === 'online' && <span style={{ marginLeft: '6px', fontSize: '10px', background: '#e8f0fe', color: '#1565c0', padding: '1px 6px', borderRadius: '8px', fontWeight: 600 }}>online</span>}
+                                  </td>
+                                  <td style={{ padding: '9px 12px', color: 'var(--text-muted)', maxWidth: '180px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{z.tematy || '—'}</td>
+                                  <td style={{ padding: '9px 12px', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
+                                    {(z.prowadzacy || []).map(p => `${p.imie} ${p.nazwisko}`).join(', ') || '—'}
+                                  </td>
+                                  <td style={{ padding: '9px 12px', whiteSpace: 'nowrap' }}>
+                                    <span style={{ fontSize: '10px', fontWeight: 600, padding: '2px 8px', borderRadius: '10px', background: z.status === 'nadchodzacy' ? '#e8f5e9' : '#f5f5f5', color: z.status === 'nadchodzacy' ? '#2e7d32' : '#999' }}>
+                                      {z.status === 'nadchodzacy' ? 'Nadchodzący' : 'Zakończony'}
+                                    </span>
+                                  </td>
+                                  <td style={{ padding: '9px 12px', whiteSpace: 'nowrap' }}>
+                                    <button onClick={() => { setEdytowanyZjazd(z); setKomunikat(''); }}
+                                      style={{ fontSize: '11px', padding: '3px 10px', border: '0.5px solid var(--border)', borderRadius: '6px', background: 'white', cursor: 'pointer', color: 'var(--brand)', fontFamily: 'Jost, sans-serif', marginRight: '4px' }}>
+                                      Edytuj
+                                    </button>
+                                    <button onClick={() => usunZjazd(z.id)}
+                                      style={{ fontSize: '11px', padding: '3px 6px', border: 'none', borderRadius: '6px', background: 'none', cursor: 'pointer', color: '#e57373' }}>
+                                      ×
+                                    </button>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
                       </div>
-                    </div>
+                    );
+                  })}
 
-                    <div style={{ display: 'flex', gap: '8px', margin: '8px 16px 12px' }}>
-                      <button className="login-btn" style={{ flex: 1, padding: '8px' }} onClick={() => { setEdytowanyZjazd(z); setKomunikat(''); }}>Edytuj</button>
-                      <button className="btn-wyloguj" style={{ flex: 1, padding: '8px', marginTop: 0 }} onClick={() => usunZjazd(z.id)}>Usuń</button>
-                    </div>
-                  </div>
-                ))}
               </>
             )}
           </>
