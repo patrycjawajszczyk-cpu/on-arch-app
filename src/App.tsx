@@ -107,6 +107,7 @@ type KursantAdmin = {
   grupa_id: number;
   user_id: string;
   email: string | null;
+  telefon: string | null;
   certyfikat_url: string | null;
 };
 
@@ -1468,7 +1469,7 @@ function PanelProwadzacego({ user, kursant, onWyloguj }: { user: User; kursant: 
     // 4. Pobierz tylko swoje grupy, kursantów, zadania, ogłoszenia
     const [{ data: gr }, { data: ku }, { data: og }, { data: zad }, { data: odp }] = await Promise.all([
       supabase.from('grupy').select('*').in('id', grupyIds),
-      supabase.from('kursanci').select('id, imie, nazwisko, email, grupa_id, user_id, certyfikat_url').eq('rola', 'kursant').in('grupa_id', grupyIds),
+      supabase.from('kursanci').select('id, imie, nazwisko, email, telefon, grupa_id, user_id, certyfikat_url').eq('rola', 'kursant').in('grupa_id', grupyIds),
       supabase.from('ogloszenia').select('*').order('data_utworzenia', { ascending: false }),
       supabase.from('zadania').select('*').in('grupa_id', grupyIds).order('created_at', { ascending: false }),
       supabase.from('zadania_odpowiedzi').select('*').order('created_at', { ascending: false }),
@@ -2042,7 +2043,8 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
   const [kalFiltrGrupa, setKalFiltrGrupa] = useState('');
   const [kalFiltrProwadzacy, setKalFiltrProwadzacy] = useState('');
   const [zwinieteGrupy, setZwinieteGrupy] = useState<Set<number>>(new Set());
-  const [edytowanyKursant, setEdytowanyKursant] = useState<{ id: number; imie: string; nazwisko: string; email: string } | null>(null);
+  const [edytowanyKursant, setEdytowanyKursant] = useState<{ id: number; imie: string; nazwisko: string; email: string; telefon: string } | null>(null);
+  const [szukajKursant, setSzukajKursant] = useState('');
   const [kalMiesiac, setKalMiesiac] = useState(() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`; });
   const [tabelaZapis, setTabelaZapis] = useState(false);
   const [tabelaWyniki, setTabelaWyniki] = useState<{ nr: string; status: string }[]>([]);
@@ -2094,7 +2096,7 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
 
   useEffect(() => {
     pobierzGrupy(); pobierzOgloszenia(); pobierzZjazdy(); pobierzProwadzacy(); pobierzZadania();
-    supabase.from('kursanci').select('id, imie, nazwisko, email, grupa_id, user_id, certyfikat_url').then(({ data }) => setKursanci((data || []) as unknown as KursantAdmin[]));
+    supabase.from('kursanci').select('id, imie, nazwisko, email, telefon, grupa_id, user_id, certyfikat_url').then(({ data }) => setKursanci((data || []) as unknown as KursantAdmin[]));
     supabase.from('ankiety').select('*').order('created_at', { ascending: false }).then(({ data }) => setAnkiety((data || []) as unknown as OdpowiedziAnkiety[]));
     supabase.from('zadania_odpowiedzi').select('*').order('created_at', { ascending: false }).then(({ data }) => setOdpowiedziZadan(data || []));
   }, []);
@@ -2240,7 +2242,7 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
     const { data: authData, error: authError } = await supabase.auth.signUp({ email: nowyKursant.email, password: Math.random().toString(36).slice(-10) });
     if (authError) { setKomunikat('Blad: ' + authError.message); return; }
     const { error } = await supabase.from('kursanci').insert([{ imie: nowyKursant.imie, nazwisko: nowyKursant.nazwisko, grupa_id: parseInt(nowyKursant.grupa_id), user_id: authData.user!.id, rola: 'kursant' }]);
-    if (error) { setKomunikat('Blad: ' + error.message); } else { setKomunikat('Kursant dodany!'); setNowyKursant({ imie: '', nazwisko: '', email: '', grupa_id: '' }); const { data } = await supabase.from('kursanci').select('id, imie, nazwisko, email, grupa_id, user_id, certyfikat_url'); setKursanci((data || []) as unknown as KursantAdmin[]); }
+    if (error) { setKomunikat('Blad: ' + error.message); } else { setKomunikat('Kursant dodany!'); setNowyKursant({ imie: '', nazwisko: '', email: '', grupa_id: '' }); const { data } = await supabase.from('kursanci').select('id, imie, nazwisko, email, telefon, grupa_id, user_id, certyfikat_url'); setKursanci((data || []) as unknown as KursantAdmin[]); }
   }
 
   async function dodajGrupe(e: React.FormEvent) {
@@ -2316,7 +2318,7 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
     }
     setImportStatus([...wyniki]);
     setImportowanie(false);
-    const { data } = await supabase.from('kursanci').select('id, imie, nazwisko, email, grupa_id, user_id, certyfikat_url'); setKursanci((data || []) as unknown as KursantAdmin[]);
+    const { data } = await supabase.from('kursanci').select('id, imie, nazwisko, email, telefon, grupa_id, user_id, certyfikat_url'); setKursanci((data || []) as unknown as KursantAdmin[]);
     if (fileRef.current) fileRef.current.value = '';
   }
 
@@ -2928,36 +2930,59 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
             </div>
 
             {/* LISTA KURSANTÓW — pogrupowana, zwijana, z edycją */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px', gap: '12px', flexWrap: 'wrap' }}>
               <h2 className="page-title" style={{ margin: 0 }}>Lista kursantów</h2>
-              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap', flex: 1, justifyContent: 'flex-end' }}>
+                {/* Wyszukiwarka */}
+                <div style={{ position: 'relative', flex: '1', maxWidth: '280px', minWidth: '160px' }}>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ position: 'absolute', left: '9px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                  <input
+                    type="text"
+                    value={szukajKursant}
+                    onChange={e => { setSzukajKursant(e.target.value); setZwinieteGrupy(new Set()); }}
+                    placeholder="Szukaj po nazwisku lub emailu…"
+                    style={{ width: '100%', fontSize: '12px', padding: '7px 10px 7px 28px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif', background: 'white' }}
+                  />
+                  {szukajKursant && (
+                    <button onClick={() => setSzukajKursant('')} style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: '14px', lineHeight: 1 }}>×</button>
+                  )}
+                </div>
                 <button onClick={() => setZwinieteGrupy(new Set(grupy.map(g => g.id)))}
-                  style={{ fontSize: '11px', color: 'var(--text-muted)', background: 'none', border: '0.5px solid var(--border)', borderRadius: '6px', padding: '4px 10px', cursor: 'pointer', fontFamily: 'Jost, sans-serif' }}>
+                  style={{ fontSize: '11px', color: 'var(--text-muted)', background: 'none', border: '0.5px solid var(--border)', borderRadius: '6px', padding: '4px 10px', cursor: 'pointer', fontFamily: 'Jost, sans-serif', whiteSpace: 'nowrap' }}>
                   Zwiń wszystkie
                 </button>
                 <button onClick={() => setZwinieteGrupy(new Set())}
-                  style={{ fontSize: '11px', color: 'var(--text-muted)', background: 'none', border: '0.5px solid var(--border)', borderRadius: '6px', padding: '4px 10px', cursor: 'pointer', fontFamily: 'Jost, sans-serif' }}>
+                  style={{ fontSize: '11px', color: 'var(--text-muted)', background: 'none', border: '0.5px solid var(--border)', borderRadius: '6px', padding: '4px 10px', cursor: 'pointer', fontFamily: 'Jost, sans-serif', whiteSpace: 'nowrap' }}>
                   Rozwiń wszystkie
                 </button>
                 <button onClick={() => {
-                  const naglowki = ['imie', 'nazwisko', 'email', 'grupa'];
+                  const naglowki = ['imie', 'nazwisko', 'email', 'telefon', 'grupa'];
                   const wiersze = kursanci.map(k => [
                     `"${k.imie}"`, `"${k.nazwisko}"`,
-                    `"${k.email || ''}"`,
+                    `"${k.email || ''}"`, `"${k.telefon || ''}"`,
                     `"${grupy.find(g => g.id === k.grupa_id)?.nazwa || ''}"`,
                   ].join(','));
                   const csv = '\uFEFF' + [naglowki.join(','), ...wiersze].join('\n');
                   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
                   const url = URL.createObjectURL(blob);
                   const a = document.createElement('a'); a.href = url; a.download = 'kursanci.csv'; a.click();
-                }} style={{ fontSize: '12px', color: 'var(--brand)', background: 'none', border: '0.5px solid var(--border)', borderRadius: '8px', padding: '5px 12px', cursor: 'pointer', fontFamily: 'Jost, sans-serif' }}>
+                }} style={{ fontSize: '12px', color: 'var(--brand)', background: 'none', border: '0.5px solid var(--border)', borderRadius: '8px', padding: '5px 12px', cursor: 'pointer', fontFamily: 'Jost, sans-serif', whiteSpace: 'nowrap' }}>
                   ⬇ CSV
                 </button>
               </div>
             </div>
 
             {grupy.map(g => {
-              const kursanciGrupy = kursanci.filter(k => k.grupa_id === g.id);
+              const szukaj = szukajKursant.toLowerCase().trim();
+              const kursanciGrupy = kursanci.filter(k => {
+                if (k.grupa_id !== g.id) return false;
+                if (!szukaj) return true;
+                return (
+                  `${k.imie} ${k.nazwisko}`.toLowerCase().includes(szukaj) ||
+                  (k.email || '').toLowerCase().includes(szukaj) ||
+                  (k.telefon || '').includes(szukaj)
+                );
+              });
               if (kursanciGrupy.length === 0) return null;
               const zwinieta = zwinieteGrupy.has(g.id);
               return (
@@ -2970,7 +2995,7 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
                     <span style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'inline-block', transform: zwinieta ? 'rotate(-90deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}>▾</span>
                     <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '17px', fontWeight: 400, color: 'var(--brand-dark)', flex: 1 }}>{g.nazwa}</span>
                     <span style={{ fontSize: '11px', color: 'var(--text-muted)', background: 'var(--bg)', padding: '2px 8px', borderRadius: '10px', border: '0.5px solid var(--border)' }}>
-                      {kursanciGrupy.length} osób
+                      {kursanciGrupy.length} {szukaj ? 'wyników' : 'osób'}
                     </span>
                   </div>
                   {!zwinieta && (
@@ -2978,7 +3003,7 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
                       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
                         <thead>
                           <tr style={{ background: 'var(--bg)', borderBottom: '0.5px solid var(--border)' }}>
-                            {['Imię i nazwisko', 'Email', 'Certyfikat', ''].map((h, i) => (
+                            {['Imię i nazwisko', 'Email', 'Telefon', 'Certyfikat', ''].map((h, i) => (
                               <th key={i} style={{ padding: '7px 12px', textAlign: 'left', fontWeight: 600, color: 'var(--text-muted)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.3px' }}>{h}</th>
                             ))}
                           </tr>
@@ -3003,12 +3028,23 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
                                 <td style={{ padding: '7px 12px' }}>
                                   {edytuje ? (
                                     <input value={edytowanyKursant.email} onChange={e => setEdytowanyKursant({ ...edytowanyKursant, email: e.target.value })}
-                                      style={{ width: '100%', fontSize: '12px', padding: '4px 6px', border: '0.5px solid var(--brand-mid)', borderRadius: '6px', fontFamily: 'Jost, sans-serif' }} />
+                                      style={{ width: '160px', fontSize: '12px', padding: '4px 6px', border: '0.5px solid var(--brand-mid)', borderRadius: '6px', fontFamily: 'Jost, sans-serif' }} />
                                   ) : (
                                     <span style={{ fontSize: '11px', color: k.email ? 'var(--text-muted)' : '#ccc' }}>{k.email || '—'}</span>
                                   )}
                                 </td>
-                                <td style={{ padding: '6px 12px', minWidth: '220px' }}>
+                                <td style={{ padding: '7px 12px' }}>
+                                  {edytuje ? (
+                                    <input value={edytowanyKursant.telefon} onChange={e => setEdytowanyKursant({ ...edytowanyKursant, telefon: e.target.value })}
+                                      placeholder="+48 600 000 000"
+                                      style={{ width: '130px', fontSize: '12px', padding: '4px 6px', border: '0.5px solid var(--brand-mid)', borderRadius: '6px', fontFamily: 'Jost, sans-serif' }} />
+                                  ) : (
+                                    k.telefon
+                                      ? <a href={`tel:${k.telefon}`} style={{ fontSize: '11px', color: 'var(--text-muted)', textDecoration: 'none' }}>{k.telefon}</a>
+                                      : <span style={{ fontSize: '11px', color: '#ccc' }}>—</span>
+                                  )}
+                                </td>
+                                <td style={{ padding: '6px 12px', minWidth: '200px' }}>
                                   <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
                                     <input type="url" defaultValue={k.certyfikat_url || ''} placeholder="https://drive.google.com/..."
                                       onBlur={async e => {
@@ -3027,8 +3063,8 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
                                   {edytuje ? (
                                     <div style={{ display: 'flex', gap: '4px' }}>
                                       <button onClick={async () => {
-                                        await supabase.from('kursanci').update({ imie: edytowanyKursant.imie, nazwisko: edytowanyKursant.nazwisko, email: edytowanyKursant.email || null }).eq('id', k.id);
-                                        const { data } = await supabase.from('kursanci').select('id, imie, nazwisko, email, grupa_id, user_id, certyfikat_url');
+                                        await supabase.from('kursanci').update({ imie: edytowanyKursant.imie, nazwisko: edytowanyKursant.nazwisko, email: edytowanyKursant.email || null, telefon: edytowanyKursant.telefon || null }).eq('id', k.id);
+                                        const { data } = await supabase.from('kursanci').select('id, imie, nazwisko, email, telefon, grupa_id, user_id, certyfikat_url');
                                         setKursanci((data || []) as unknown as KursantAdmin[]);
                                         setEdytowanyKursant(null); setKomunikat('Zapisano!');
                                       }} style={{ fontSize: '11px', padding: '3px 10px', background: 'var(--brand)', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontFamily: 'Jost, sans-serif' }}>✓</button>
@@ -3037,12 +3073,12 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
                                     </div>
                                   ) : (
                                     <div style={{ display: 'flex', gap: '4px' }}>
-                                      <button onClick={() => setEdytowanyKursant({ id: k.id, imie: k.imie, nazwisko: k.nazwisko, email: k.email || '' })}
+                                      <button onClick={() => setEdytowanyKursant({ id: k.id, imie: k.imie, nazwisko: k.nazwisko, email: k.email || '', telefon: k.telefon || '' })}
                                         style={{ fontSize: '11px', padding: '3px 10px', border: '0.5px solid var(--border)', borderRadius: '6px', background: 'white', cursor: 'pointer', color: 'var(--brand)', fontFamily: 'Jost, sans-serif' }}>Edytuj</button>
                                       <button onClick={async () => {
                                         if (window.confirm(`Usunąć ${k.imie} ${k.nazwisko}?`)) {
                                           await supabase.from('kursanci').delete().eq('id', k.id);
-                                          const { data } = await supabase.from('kursanci').select('id, imie, nazwisko, email, grupa_id, user_id, certyfikat_url');
+                                          const { data } = await supabase.from('kursanci').select('id, imie, nazwisko, email, telefon, grupa_id, user_id, certyfikat_url');
                                           setKursanci((data || []) as unknown as KursantAdmin[]); setKomunikat('Usunięto.');
                                         }
                                       }} style={{ fontSize: '11px', padding: '3px 6px', border: 'none', borderRadius: '6px', background: 'none', cursor: 'pointer', color: '#e57373' }}>×</button>
