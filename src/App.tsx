@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import './App.css';
 import { supabase } from './supabase';
-import { Home, Calendar, Bell, MessageCircle, User, CheckSquare, BookOpen } from 'lucide-react';
+import { Home, Calendar, Bell, MessageCircle, User, CheckSquare, BookOpen, Star } from 'lucide-react';
 
 function OnArchLogo({ color = '#2a1f1f', height = 28 }: { color?: string; height?: number }) {
   const scale = height / 80;
@@ -1184,10 +1184,9 @@ function EkranLogowania({ onZalogowano }: { onZalogowano: () => void }) {
   async function resetHasla(e: React.FormEvent) {
     e.preventDefault();
     setLadowanie(true); setBlad('');
-    const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: 'https://on-arch-akademia.vercel.app', captchaToken: turnstileTokenRef.current || undefined });
+    const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: 'https://on-arch-akademia.vercel.app' });
     if (error) {
       setBlad('Blad: ' + error.message);
-      // Odśwież token Turnstile po błędzie
       if (TURNSTILE_SITE_KEY && (window as any).turnstile) {
         (window as any).turnstile.reset();
         turnstileTokenRef.current = '';
@@ -2257,67 +2256,101 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
   const ankietyFiltrowane = wybranaGrupaAnkiety ? ankiety.filter((a: any) => a.grupa_id === parseInt(wybranaGrupaAnkiety)) : ankiety;
 
   return (
-    <div className="app">
-      <header className="header">
-        <div style={{display:'flex',alignItems:'center',gap:'8px'}}><OnArchLogo height={20} color="var(--brand-dark)" /><span style={{fontSize:'10px',opacity:0.6,fontFamily:'Jost,sans-serif'}}>Biuro</span></div>
-        {aktywnaZakladka !== 'home' ? (
-          <button onClick={() => { setKomunikat(''); setEdytowane(null); setEdytowanyZjazd(null); setAktywnaZakladka('home'); }}
-            style={{ background: 'none', border: 'none', color: 'var(--brand)', fontSize: '13px', cursor: 'pointer' }}>
-            ← Wróć
-          </button>
-        ) : (
-          <button onClick={onWyloguj} style={{ background: 'none', border: 'none', color: 'var(--brand)', fontSize: '13px', cursor: 'pointer' }}>Wyloguj</button>
-        )}
-      </header>
-      <main className="main">
-        {komunikat && <div className="login-error" style={{ background: '#e8f5e9', color: '#2e7d32', marginBottom: '12px' }}>{komunikat}</div>}
+    <div className="biuro-shell">
+      {/* ── SIDEBAR (desktop) ── */}
+      <aside className="biuro-sidebar">
+        <div className="biuro-sidebar-logo">
+          <OnArchLogo height={24} color="var(--brand-dark)" />
+          <span className="biuro-sidebar-role">Biuro</span>
+        </div>
+        <nav className="biuro-sidebar-nav">
+          {[
+            { id: 'home',      icon: <Home size={18}/>,        label: 'Pulpit' },
+            { id: 'ogloszenia',icon: <Bell size={18}/>,        label: 'Ogłoszenia' },
+            { id: 'zjazdy',    icon: <Calendar size={18}/>,    label: 'Zjazdy' },
+            { id: 'zadania',   icon: <BookOpen size={18}/>,    label: 'Zadania' },
+            { id: 'obecnosci', icon: <CheckSquare size={18}/>, label: 'Obecności' },
+            { id: 'kursanci',  icon: <User size={18}/>,        label: 'Kursanci' },
+            { id: 'grupy',     icon: <Home size={18}/>,        label: 'Grupy' },
+            { id: 'prowadzacy',icon: <User size={18}/>,        label: 'Prowadzący' },
+            { id: 'ankiety',   icon: <Star size={18}/>,        label: 'Ankiety' },
+          ].map(item => (
+            <button key={item.id}
+              className={`biuro-sidebar-item ${aktywnaZakladka === item.id ? 'active' : ''}`}
+              onClick={() => { setKomunikat(''); setEdytowane(null); setEdytowanyZjazd(null); setAktywnaZakladka(item.id); }}>
+              {item.icon}
+              <span>{item.label}</span>
+            </button>
+          ))}
+        </nav>
+        <button onClick={onWyloguj} className="biuro-sidebar-wyloguj">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          Wyloguj
+        </button>
+      </aside>
 
-        {/* ─── EKRAN GŁÓWNY — KAFELKI ─── */}
-        {aktywnaZakladka === 'home' && (
-          <>
-            <div style={{ textAlign: 'center', marginBottom: '16px', paddingTop: '4px' }}>
-              <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '26px', fontWeight: 400, color: 'var(--brand-dark)', letterSpacing: '0.5px' }}>On-Arch</div>
-              <div style={{ fontSize: '11px', color: 'var(--text-muted)', letterSpacing: '1.5px', textTransform: 'uppercase', marginTop: '2px' }}>Panel biura</div>
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-              {[
-                { id: 'ogloszenia', emoji: '📢', label: 'Ogłoszenia', opis: `${ogloszenia.length} ogłoszeń` },
-                { id: 'zjazdy',     emoji: '📅', label: 'Zjazdy',     opis: `${zjazdy.length} zjazdów` },
-                { id: 'zadania',    emoji: '📋', label: 'Zadania',    opis: `${zadania.length} zadań` },
-                { id: 'obecnosci',  emoji: '✅', label: 'Obecności',  opis: 'Lista i weryfikacja' },
-                { id: 'kursanci',   emoji: '👥', label: 'Kursanci',   opis: `${kursanci.length} osób` },
-                { id: 'grupy',      emoji: '🏫', label: 'Grupy',      opis: `${grupy.length} grup` },
-                { id: 'prowadzacy', emoji: '👩‍🏫', label: 'Prowadzący', opis: `${prowadzacy.length} osób` },
-                { id: 'ankiety',    emoji: '⭐', label: 'Ankiety',    opis: `${ankiety.length} wypełnień` },
-              ].map(k => (
-                <div key={k.id} onClick={() => setAktywnaZakladka(k.id)} style={{
-                  background: 'white',
-                  borderRadius: '18px',
-                  padding: '16px 12px 14px',
-                  border: '0.5px solid var(--border)',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  textAlign: 'center',
-                  gap: '8px',
-                  boxShadow: '0 2px 10px rgba(160,92,92,0.06)',
-                }}>
-                  <div style={{
-                    width: '40px', height: '40px', borderRadius: '12px',
-                    background: 'var(--brand-light)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: '20px',
-                  }}>{k.emoji}</div>
-                  <div>
-                    <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text)', marginBottom: '2px' }}>{k.label}</div>
-                    <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{k.opis}</div>
+      {/* ── MAIN CONTENT ── */}
+      <div className="biuro-content">
+        {/* Mobile header */}
+        <header className="biuro-mobile-header">
+          <div style={{display:'flex',alignItems:'center',gap:'8px'}}><OnArchLogo height={20} color="var(--brand-dark)" /><span style={{fontSize:'10px',opacity:0.6}}>Biuro</span></div>
+          {aktywnaZakladka !== 'home' ? (
+            <button onClick={() => { setKomunikat(''); setEdytowane(null); setEdytowanyZjazd(null); setAktywnaZakladka('home'); }}
+              style={{ background: 'none', border: 'none', color: 'var(--brand)', fontSize: '13px', cursor: 'pointer' }}>
+              ← Wróć
+            </button>
+          ) : (
+            <button onClick={onWyloguj} style={{ background: 'none', border: 'none', color: 'var(--brand)', fontSize: '13px', cursor: 'pointer' }}>Wyloguj</button>
+          )}
+        </header>
+
+        {/* Desktop page header */}
+        <div className="biuro-page-header">
+          <div className="biuro-page-title">
+            {aktywnaZakladka === 'home' && 'Pulpit'}
+            {aktywnaZakladka === 'ogloszenia' && 'Ogłoszenia'}
+            {aktywnaZakladka === 'zjazdy' && 'Zjazdy'}
+            {aktywnaZakladka === 'zadania' && 'Zadania'}
+            {aktywnaZakladka === 'obecnosci' && 'Obecności'}
+            {aktywnaZakladka === 'kursanci' && 'Kursanci'}
+            {aktywnaZakladka === 'grupy' && 'Grupy'}
+            {aktywnaZakladka === 'prowadzacy' && 'Prowadzący'}
+            {aktywnaZakladka === 'ankiety' && 'Ankiety'}
+          </div>
+        </div>
+
+        <main className="biuro-main">
+          {komunikat && <div className="login-error" style={{ background: '#e8f5e9', color: '#2e7d32', marginBottom: '12px' }}>{komunikat}</div>}
+
+          {/* ─── EKRAN GŁÓWNY — KAFELKI ─── */}
+          {aktywnaZakladka === 'home' && (
+            <>
+              <div className="biuro-welcome">
+                <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '28px', fontWeight: 400, color: 'var(--brand-dark)' }}>Witaj w panelu biura</div>
+                <div style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '4px' }}>On-Arch Akademia</div>
+              </div>
+              <div className="biuro-kafelki">
+                {[
+                  { id: 'ogloszenia', label: 'Ogłoszenia', opis: `${ogloszenia.length} ogłoszeń`,       icon: <Bell size={22}/> },
+                  { id: 'zjazdy',     label: 'Zjazdy',     opis: `${zjazdy.length} zjazdów`,            icon: <Calendar size={22}/> },
+                  { id: 'zadania',    label: 'Zadania',     opis: `${zadania.length} zadań`,             icon: <BookOpen size={22}/> },
+                  { id: 'obecnosci',  label: 'Obecności',  opis: 'Lista i eksport',                     icon: <CheckSquare size={22}/> },
+                  { id: 'kursanci',   label: 'Kursanci',   opis: `${kursanci.length} osób`,             icon: <User size={22}/> },
+                  { id: 'grupy',      label: 'Grupy',      opis: `${grupy.length} grup`,                icon: <Home size={22}/> },
+                  { id: 'prowadzacy', label: 'Prowadzący', opis: `${prowadzacy.length} osób`,           icon: <User size={22}/> },
+                  { id: 'ankiety',    label: 'Ankiety',    opis: `${ankiety.length} wypełnień`,         icon: <Star size={22}/> },
+                ].map(k => (
+                  <div key={k.id} onClick={() => setAktywnaZakladka(k.id)} className="biuro-kafelek">
+                    <div className="biuro-kafelek-icon">{k.icon}</div>
+                    <div>
+                      <div className="biuro-kafelek-label">{k.label}</div>
+                      <div className="biuro-kafelek-opis">{k.opis}</div>
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          </>
-        )}
+                ))}
+              </div>
+            </>
+          )}
 
         {aktywnaZakladka === 'ogloszenia' && (
           <>
@@ -2789,6 +2822,7 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
           </>
         )}
       </main>
+      </div>
     </div>
   );
 }

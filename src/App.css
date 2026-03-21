@@ -965,3 +965,255 @@
    }
    
    @keyframes spin { to { transform: rotate(360deg); } }
+   
+   /* ═══════════════════════════════════════════════════
+      PANEL BIURA — Responsywny layout desktop/mobile
+      ═══════════════════════════════════════════════════ */
+   
+   .biuro-shell {
+     display: flex;
+     min-height: 100vh;
+     background: var(--bg);
+   }
+   
+   /* ── SIDEBAR ── */
+   .biuro-sidebar {
+     display: none;
+   }
+   
+   /* ── MOBILE HEADER ── */
+   .biuro-mobile-header {
+     display: flex;
+     justify-content: space-between;
+     align-items: center;
+     padding: 14px 20px;
+     background: var(--surface);
+     border-bottom: 0.5px solid var(--border);
+     position: sticky;
+     top: 0;
+     z-index: 10;
+   }
+   
+   /* ── PAGE HEADER (desktop) ── */
+   .biuro-page-header {
+     display: none;
+   }
+   
+   /* ── CONTENT ── */
+   .biuro-content {
+     flex: 1;
+     display: flex;
+     flex-direction: column;
+     min-width: 0;
+   }
+   
+   .biuro-main {
+     padding: 16px 20px 100px;
+     flex: 1;
+   }
+   
+   /* ── WELCOME ── */
+   .biuro-welcome {
+     margin-bottom: 24px;
+     padding-bottom: 16px;
+     border-bottom: 0.5px solid var(--border);
+   }
+   
+   /* ── KAFELKI (mobile — 2 kolumny jak było) ── */
+   .biuro-kafelki {
+     display: grid;
+     grid-template-columns: 1fr 1fr;
+     gap: 10px;
+   }
+   
+   .biuro-kafelek {
+     background: white;
+     border-radius: 18px;
+     padding: 16px 14px;
+     border: 0.5px solid var(--border);
+     cursor: pointer;
+     display: flex;
+     flex-direction: column;
+     align-items: center;
+     text-align: center;
+     gap: 10px;
+     box-shadow: 0 2px 10px rgba(160,92,92,0.06);
+     transition: transform 0.12s, box-shadow 0.12s;
+   }
+   
+   .biuro-kafelek:hover {
+     transform: translateY(-2px);
+     box-shadow: 0 6px 20px rgba(160,92,92,0.1);
+   }
+   
+   .biuro-kafelek-icon {
+     width: 44px;
+     height: 44px;
+     border-radius: 13px;
+     background: var(--brand-light);
+     display: flex;
+     align-items: center;
+     justify-content: center;
+     color: var(--brand);
+   }
+   
+   .biuro-kafelek-label {
+     font-size: 13px;
+     font-weight: 600;
+     color: var(--text);
+     margin-bottom: 2px;
+   }
+   
+   .biuro-kafelek-opis {
+     font-size: 11px;
+     color: var(--text-muted);
+   }
+   
+   /* ═══════════════════════════════════════
+      DESKTOP — min-width: 900px
+      ═══════════════════════════════════════ */
+   @media (min-width: 900px) {
+   
+     .biuro-shell {
+       max-width: 100%;
+     }
+   
+     /* Ukryj mobile header */
+     .biuro-mobile-header {
+       display: none;
+     }
+   
+     /* Pokaż sidebar */
+     .biuro-sidebar {
+       display: flex;
+       flex-direction: column;
+       width: 220px;
+       min-height: 100vh;
+       background: var(--surface);
+       border-right: 0.5px solid var(--border);
+       position: sticky;
+       top: 0;
+       height: 100vh;
+       flex-shrink: 0;
+     }
+   
+     .biuro-sidebar-logo {
+       padding: 24px 20px 20px;
+       border-bottom: 0.5px solid var(--border);
+       display: flex;
+       align-items: center;
+       gap: 8px;
+     }
+   
+     .biuro-sidebar-role {
+       font-size: 11px;
+       color: var(--text-muted);
+       letter-spacing: 1px;
+       text-transform: uppercase;
+     }
+   
+     .biuro-sidebar-nav {
+       flex: 1;
+       padding: 12px 10px;
+       display: flex;
+       flex-direction: column;
+       gap: 2px;
+     }
+   
+     .biuro-sidebar-item {
+       display: flex;
+       align-items: center;
+       gap: 10px;
+       padding: 10px 12px;
+       border-radius: 10px;
+       border: none;
+       background: none;
+       cursor: pointer;
+       font-family: 'Jost', sans-serif;
+       font-size: 13px;
+       color: var(--text-muted);
+       text-align: left;
+       width: 100%;
+       transition: background 0.1s, color 0.1s;
+     }
+   
+     .biuro-sidebar-item:hover {
+       background: var(--bg);
+       color: var(--text);
+     }
+   
+     .biuro-sidebar-item.active {
+       background: var(--brand-light);
+       color: var(--brand-dark);
+       font-weight: 600;
+     }
+   
+     .biuro-sidebar-item svg {
+       flex-shrink: 0;
+     }
+   
+     .biuro-sidebar-wyloguj {
+       display: flex;
+       align-items: center;
+       gap: 8px;
+       padding: 14px 22px;
+       border-top: 0.5px solid var(--border);
+       border-left: none;
+       border-right: none;
+       border-bottom: none;
+       background: none;
+       cursor: pointer;
+       font-family: 'Jost', sans-serif;
+       font-size: 12px;
+       color: var(--text-muted);
+       width: 100%;
+       transition: color 0.1s;
+     }
+   
+     .biuro-sidebar-wyloguj:hover {
+       color: var(--brand);
+     }
+   
+     /* Pokaż desktop page header */
+     .biuro-page-header {
+       display: flex;
+       align-items: center;
+       padding: 20px 32px 16px;
+       border-bottom: 0.5px solid var(--border);
+       background: var(--surface);
+       position: sticky;
+       top: 0;
+       z-index: 10;
+     }
+   
+     .biuro-page-title {
+       font-family: 'Cormorant Garamond', serif;
+       font-size: 24px;
+       font-weight: 400;
+       color: var(--brand-dark);
+     }
+   
+     /* Szerszy main */
+     .biuro-main {
+       padding: 28px 32px 60px;
+       max-width: 1100px;
+     }
+   
+     /* Kafelki — 4 kolumny na desktopie */
+     .biuro-kafelki {
+       grid-template-columns: repeat(4, 1fr);
+       gap: 14px;
+     }
+   
+     .biuro-kafelek {
+       flex-direction: row;
+       text-align: left;
+       padding: 18px 20px;
+       gap: 14px;
+       align-items: center;
+     }
+   
+     .biuro-welcome {
+       margin-bottom: 28px;
+     }
+   }
