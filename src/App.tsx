@@ -1976,7 +1976,7 @@ function PanelProwadzacego({ user, kursant, onWyloguj }: { user: User; kursant: 
                           : ogloszenia.map(o => (
                             <div key={o.id} style={{ position: 'relative' }}>
                               <KartaOgloszenia o={o} onClick={() => { setAktywneOgloszenie(o); setEdytowaneOglProw(null); }} />
-                              {o.autor_user_id === user.id && (
+                              {(o.autor_user_id === user.id || (!o.autor_user_id && o.grupa_id && mojeGrupyIds.includes(Number(o.grupa_id)))) && (
                                 <div style={{ position: 'absolute', top: '10px', right: '10px', display: 'flex', gap: '4px' }}>
                                   <button onClick={e => { e.stopPropagation(); setEdytowaneOglProw(o); setAktywneOgloszenie(null); }}
                                     style={{ fontSize: '11px', padding: '2px 10px', border: '0.5px solid var(--border)', borderRadius: '6px', background: 'white', cursor: 'pointer', color: 'var(--brand)', fontFamily: 'Jost, sans-serif' }}>
