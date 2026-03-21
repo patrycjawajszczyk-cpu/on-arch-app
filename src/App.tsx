@@ -1468,7 +1468,7 @@ function PanelProwadzacego({ user, kursant, onWyloguj }: { user: User; kursant: 
     // 4. Pobierz tylko swoje grupy, kursantów, zadania, ogłoszenia
     const [{ data: gr }, { data: ku }, { data: og }, { data: zad }, { data: odp }] = await Promise.all([
       supabase.from('grupy').select('*').in('id', grupyIds),
-      supabase.from('kursanci').select('id, imie, nazwisko, grupa_id, user_id, certyfikat_url').eq('rola', 'kursant').in('grupa_id', grupyIds),
+      supabase.from('kursanci').select('id, imie, nazwisko, grupa_id, user_id, certyfikat_url, email').eq('rola', 'kursant').in('grupa_id', grupyIds),
       supabase.from('ogloszenia').select('*').order('data_utworzenia', { ascending: false }),
       supabase.from('zadania').select('*').in('grupa_id', grupyIds).order('created_at', { ascending: false }),
       supabase.from('zadania_odpowiedzi').select('*').order('created_at', { ascending: false }),
@@ -2092,7 +2092,7 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
 
   useEffect(() => {
     pobierzGrupy(); pobierzOgloszenia(); pobierzZjazdy(); pobierzProwadzacy(); pobierzZadania();
-    supabase.from('kursanci').select('id, imie, nazwisko, grupa_id, user_id, certyfikat_url').then(({ data }) => setKursanci((data || []) as unknown as KursantAdmin[]));
+    supabase.from('kursanci').select('id, imie, nazwisko, grupa_id, user_id, certyfikat_url, email').then(({ data }) => setKursanci((data || []) as unknown as KursantAdmin[]));
     supabase.from('ankiety').select('*').order('created_at', { ascending: false }).then(({ data }) => setAnkiety((data || []) as unknown as OdpowiedziAnkiety[]));
     supabase.from('zadania_odpowiedzi').select('*').order('created_at', { ascending: false }).then(({ data }) => setOdpowiedziZadan(data || []));
   }, []);
@@ -2238,7 +2238,7 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
     const { data: authData, error: authError } = await supabase.auth.signUp({ email: nowyKursant.email, password: Math.random().toString(36).slice(-10) });
     if (authError) { setKomunikat('Blad: ' + authError.message); return; }
     const { error } = await supabase.from('kursanci').insert([{ imie: nowyKursant.imie, nazwisko: nowyKursant.nazwisko, grupa_id: parseInt(nowyKursant.grupa_id), user_id: authData.user!.id, rola: 'kursant' }]);
-    if (error) { setKomunikat('Blad: ' + error.message); } else { setKomunikat('Kursant dodany!'); setNowyKursant({ imie: '', nazwisko: '', email: '', grupa_id: '' }); const { data } = await supabase.from('kursanci').select('id, imie, nazwisko, grupa_id, user_id, certyfikat_url'); setKursanci((data || []) as unknown as KursantAdmin[]); }
+    if (error) { setKomunikat('Blad: ' + error.message); } else { setKomunikat('Kursant dodany!'); setNowyKursant({ imie: '', nazwisko: '', email: '', grupa_id: '' }); const { data } = await supabase.from('kursanci').select('id, imie, nazwisko, grupa_id, user_id, certyfikat_url, email'); setKursanci((data || []) as unknown as KursantAdmin[]); }
   }
 
   async function dodajGrupe(e: React.FormEvent) {
@@ -2314,7 +2314,7 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
     }
     setImportStatus([...wyniki]);
     setImportowanie(false);
-    const { data } = await supabase.from('kursanci').select('id, imie, nazwisko, grupa_id, user_id, certyfikat_url'); setKursanci((data || []) as unknown as KursantAdmin[]);
+    const { data } = await supabase.from('kursanci').select('id, imie, nazwisko, grupa_id, user_id, certyfikat_url, email'); setKursanci((data || []) as unknown as KursantAdmin[]);
     if (fileRef.current) fileRef.current.value = '';
   }
 
@@ -2880,84 +2880,141 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
 
         {aktywnaZakladka === 'kursanci' && (
           <>
-            <h2 className="page-title">Nowy kursant</h2>
-            <form className="admin-form" onSubmit={dodajKursanta}>
-              <div className="login-field"><label>Imie</label><input type="text" value={nowyKursant.imie} onChange={e => setNowyKursant({ ...nowyKursant, imie: e.target.value })} required /></div>
-              <div className="login-field"><label>Nazwisko</label><input type="text" value={nowyKursant.nazwisko} onChange={e => setNowyKursant({ ...nowyKursant, nazwisko: e.target.value })} required /></div>
-              <div className="login-field"><label>Email</label><input type="email" value={nowyKursant.email} onChange={e => setNowyKursant({ ...nowyKursant, email: e.target.value })} required /></div>
-              <div className="login-field"><label>Grupa</label><select value={nowyKursant.grupa_id} onChange={e => setNowyKursant({ ...nowyKursant, grupa_id: e.target.value })} required><option value="">Wybierz grupe</option>{grupy.map(g => <option key={g.id} value={g.id}>{g.nazwa}</option>)}</select></div>
-              <button className="login-btn" type="submit">Dodaj kursanta</button>
-            </form>
-            <h2 className="page-title" style={{ marginTop: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              Lista kursantów
+            {/* TOOLBAR — dodaj ręcznie + CSV */}
+            <div style={{ display: 'flex', gap: '12px', marginBottom: '20px', flexWrap: 'wrap', alignItems: 'flex-start' }}>
+              {/* Formularz dodawania */}
+              <div style={{ background: 'white', border: '0.5px solid var(--border)', borderRadius: '14px', padding: '16px 20px', flex: '1', minWidth: '280px' }}>
+                <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text)', marginBottom: '12px' }}>Dodaj kursanta</div>
+                <form onSubmit={dodajKursanta}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '8px' }}>
+                    <input type="text" value={nowyKursant.imie} onChange={e => setNowyKursant({ ...nowyKursant, imie: e.target.value })} placeholder="Imię" required style={{ fontSize: '12px', padding: '7px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif' }} />
+                    <input type="text" value={nowyKursant.nazwisko} onChange={e => setNowyKursant({ ...nowyKursant, nazwisko: e.target.value })} placeholder="Nazwisko" required style={{ fontSize: '12px', padding: '7px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif' }} />
+                  </div>
+                  <input type="email" value={nowyKursant.email} onChange={e => setNowyKursant({ ...nowyKursant, email: e.target.value })} placeholder="Email" required style={{ width: '100%', fontSize: '12px', padding: '7px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif', marginBottom: '8px' }} />
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <select value={nowyKursant.grupa_id} onChange={e => setNowyKursant({ ...nowyKursant, grupa_id: e.target.value })} required style={{ flex: 1, fontSize: '12px', padding: '7px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif', background: 'white' }}>
+                      <option value="">Wybierz grupę</option>
+                      {grupy.map(g => <option key={g.id} value={g.id}>{g.nazwa}</option>)}
+                    </select>
+                    <button type="submit" style={{ padding: '7px 16px', background: 'var(--brand)', color: 'white', border: 'none', borderRadius: '8px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', fontFamily: 'Jost, sans-serif', whiteSpace: 'nowrap' }}>+ Dodaj</button>
+                  </div>
+                </form>
+              </div>
+
+              {/* Import CSV */}
+              <div style={{ background: 'white', border: '0.5px solid var(--border)', borderRadius: '14px', padding: '16px 20px', flex: '1', minWidth: '280px' }}>
+                <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text)', marginBottom: '8px' }}>Import z CSV</div>
+                <code style={{ fontSize: '11px', background: 'var(--bg)', padding: '6px 8px', borderRadius: '6px', display: 'block', marginBottom: '10px', color: 'var(--text-muted)' }}>imie,nazwisko,email,grupa_id</code>
+                {importowanie ? (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: 'var(--brand)', padding: '8px' }}>
+                    <div style={{ width: '14px', height: '14px', border: '2px solid var(--brand)', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+                    Trwa import…
+                  </div>
+                ) : (
+                  <input ref={fileRef} type="file" accept=".csv" onChange={importujCSV} style={{ fontSize: '12px', width: '100%' }} />
+                )}
+                {importStatus.length > 0 && (
+                  <div style={{ marginTop: '8px', maxHeight: '80px', overflowY: 'auto' }}>
+                    {importStatus.map((s, i) => (
+                      <div key={i} style={{ fontSize: '11px', color: s.status === 'Dodano!' ? '#2e7d32' : '#c62828', padding: '2px 0' }}>
+                        {s.imie} {s.nazwisko} — {s.status}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* LISTA KURSANTÓW — pogrupowana per grupa */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+              <h2 className="page-title" style={{ margin: 0 }}>Lista kursantów</h2>
               <button onClick={() => {
-                const naglowki = ['imie', 'nazwisko', 'grupa'];
+                const naglowki = ['imie', 'nazwisko', 'email', 'grupa'];
                 const wiersze = kursanci.map(k => [
                   `"${k.imie}"`, `"${k.nazwisko}"`,
+                  `"${k.email || ''}"`,
                   `"${grupy.find(g => g.id === k.grupa_id)?.nazwa || ''}"`,
                 ].join(','));
-                const csv = [naglowki.join(','), ...wiersze].join('\n');
+                const csv = '\uFEFF' + [naglowki.join(','), ...wiersze].join('\n');
                 const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a'); a.href = url; a.download = 'kursanci.csv'; a.click();
-              }} style={{ fontSize: '12px', color: 'var(--brand)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Jost, sans-serif', fontWeight: 500 }}>
-                ⬇ CSV
+              }} style={{ fontSize: '12px', color: 'var(--brand)', background: 'none', border: '0.5px solid var(--border)', borderRadius: '8px', padding: '5px 12px', cursor: 'pointer', fontFamily: 'Jost, sans-serif' }}>
+                ⬇ Eksportuj CSV
               </button>
-            </h2>
-            {kursanci.map(k => (
-              <div key={k.id} className="profil-card" style={{ marginBottom: '8px' }}>
-                <div className="profil-row"><span className="profil-lbl">Imie i nazwisko</span><span className="profil-val">{k.imie} {k.nazwisko}</span></div>
-                <div className="profil-row"><span className="profil-lbl">Grupa</span><span className="profil-val">{grupy.find(g => g.id === k.grupa_id)?.nazwa || '-'}</span></div>
-                <div style={{ padding: '4px 16px 12px' }}>
-                  <label style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.4px', fontWeight: 600 }}>Link do certyfikatu</label>
-                  <div style={{ display: 'flex', gap: '8px', marginTop: '6px' }}>
-                    <input
-                      type="url"
-                      defaultValue={k.certyfikat_url || ''}
-                      placeholder="https://drive.google.com/..."
-                      onBlur={async (e) => {
-                        if (e.target.value !== (k.certyfikat_url || '')) {
-                          await supabase.from('kursanci').update({ certyfikat_url: e.target.value || null }).eq('id', k.id);
-                          setKomunikat(`Certyfikat zapisany dla ${k.imie} ${k.nazwisko}`);
-                        }
-                      }}
-                      style={{ flex: 1, fontSize: '12px', padding: '8px 10px', borderRadius: '8px', border: '0.5px solid var(--border)', fontFamily: 'Jost, sans-serif' }}
-                    />
-                    {k.certyfikat_url && (
-                      <a href={k.certyfikat_url} target="_blank" rel="noopener noreferrer"
-                        style={{ padding: '8px 12px', borderRadius: '8px', background: 'var(--brand-light)', color: 'var(--brand)', fontSize: '12px', textDecoration: 'none', display: 'flex', alignItems: 'center', whiteSpace: 'nowrap', border: '0.5px solid var(--brand-mid)' }}>
-                        Podgląd
-                      </a>
-                    )}
+            </div>
+
+            {grupy.map(g => {
+              const kursanciGrupy = kursanci.filter(k => k.grupa_id === g.id);
+              if (kursanciGrupy.length === 0) return null;
+              return (
+                <div key={g.id} style={{ marginBottom: '24px' }}>
+                  {/* Nagłówek grupy */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+                    <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '18px', fontWeight: 400, color: 'var(--brand-dark)' }}>{g.nazwa}</span>
+                    <span style={{ fontSize: '11px', color: 'var(--text-muted)', background: 'var(--bg)', padding: '2px 8px', borderRadius: '10px', border: '0.5px solid var(--border)' }}>
+                      {kursanciGrupy.length} osób
+                    </span>
+                  </div>
+                  {/* Tabela */}
+                  <div style={{ background: 'white', borderRadius: '12px', border: '0.5px solid var(--border)', overflow: 'hidden' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+                      <thead>
+                        <tr style={{ background: 'var(--bg)', borderBottom: '0.5px solid var(--border)' }}>
+                          {['Imię i nazwisko', 'Email', 'Certyfikat', ''].map((h, i) => (
+                            <th key={i} style={{ padding: '8px 12px', textAlign: 'left', fontWeight: 600, color: 'var(--text-muted)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.3px' }}>{h}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {kursanciGrupy.map((k, idx) => (
+                          <tr key={k.id} style={{ borderBottom: idx < kursanciGrupy.length - 1 ? '0.5px solid var(--border-soft)' : 'none', background: idx % 2 === 0 ? 'white' : '#fdf9f8' }}>
+                            <td style={{ padding: '9px 12px', fontWeight: 500, color: 'var(--text)', whiteSpace: 'nowrap' }}>
+                              {k.imie} {k.nazwisko}
+                            </td>
+                            <td style={{ padding: '9px 12px', color: 'var(--text-muted)', fontSize: '11px' }}>
+                              {k.email || '—'}
+                            </td>
+                            <td style={{ padding: '6px 12px', minWidth: '240px' }}>
+                              <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                                <input
+                                  type="url"
+                                  defaultValue={k.certyfikat_url || ''}
+                                  placeholder="https://drive.google.com/..."
+                                  onBlur={async e => {
+                                    if (e.target.value !== (k.certyfikat_url || '')) {
+                                      await supabase.from('kursanci').update({ certyfikat_url: e.target.value || null }).eq('id', k.id);
+                                      setKomunikat(`Certyfikat zapisany dla ${k.imie} ${k.nazwisko}`);
+                                    }
+                                  }}
+                                  style={{ flex: 1, fontSize: '11px', padding: '5px 8px', borderRadius: '6px', border: '0.5px solid var(--border)', fontFamily: 'Jost, sans-serif', background: k.certyfikat_url ? '#f0faf4' : 'white' }}
+                                />
+                                {k.certyfikat_url && (
+                                  <a href={k.certyfikat_url} target="_blank" rel="noopener noreferrer"
+                                    style={{ fontSize: '11px', color: '#2e7d32', textDecoration: 'none', whiteSpace: 'nowrap' }}>
+                                    🎓 Podgląd
+                                  </a>
+                                )}
+                              </div>
+                            </td>
+                            <td style={{ padding: '9px 12px', whiteSpace: 'nowrap' }}>
+                              <button onClick={async () => {
+                                if (window.confirm(`Usunąć kursanta ${k.imie} ${k.nazwisko}?`)) {
+                                  await supabase.from('kursanci').delete().eq('id', k.id);
+                                  const { data } = await supabase.from('kursanci').select('id, imie, nazwisko, grupa_id, user_id, certyfikat_url, email');
+                                  setKursanci((data || []) as unknown as KursantAdmin[]);
+                                  setKomunikat('Kursant usunięty.');
+                                }
+                              }} style={{ fontSize: '11px', padding: '3px 6px', border: 'none', borderRadius: '6px', background: 'none', cursor: 'pointer', color: '#e57373' }}>×</button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
                 </div>
-              </div>
-            ))}
-
-            {/* Import CSV — przeniesiony z osobnej zakładki */}
-            <h2 className="page-title" style={{ marginTop: '28px' }}>Import z CSV</h2>
-            <div className="profil-card" style={{ marginBottom: '16px' }}>
-              <div className="profil-row" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '8px' }}>
-                <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Format: imie,nazwisko,email,grupa_id — przecinek lub średnik, UTF-8 lub Windows-1250 (Excel PL)</p>
-                <code style={{ fontSize: '12px', background: '#f5f5f5', padding: '8px', borderRadius: '6px', display: 'block', whiteSpace: 'pre', width: '100%' }}>imie,nazwisko,email,grupa_id{'\n'}Anna,Kowalska,a.k@email.pl,1</code>
-              </div>
-            </div>
-            <div className="login-field">
-              <label>Wybierz plik CSV</label>
-              {importowanie ? (
-                <div style={{ padding: '14px 12px', background: 'var(--brand-light)', borderRadius: '10px', border: '0.5px solid var(--border)', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <div style={{ width: '16px', height: '16px', border: '2px solid var(--brand)', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite', flexShrink: 0 }} />
-                  <span style={{ fontSize: '13px', color: 'var(--brand)' }}>Trwa import — proszę czekać...</span>
-                </div>
-              ) : (
-                <input ref={fileRef} type="file" accept=".csv" onChange={importujCSV} style={{ padding: '8px', border: '0.5px solid var(--border)', borderRadius: '8px', width: '100%' }} />
-              )}
-            </div>
-            {importStatus.map((s, i) => (
-              <div key={i} className="profil-card" style={{ marginBottom: '6px', borderLeft: s.status === 'Dodano!' ? '3px solid #2e7d32' : '3px solid #c62828' }}>
-                <div className="profil-row"><span className="profil-lbl">{s.imie} {s.nazwisko}</span><span className="profil-val" style={{ color: s.status === 'Dodano!' ? '#2e7d32' : '#c62828' }}>{s.status}</span></div>
-              </div>
-            ))}
+              );
+            })}
           </>
         )}
 
