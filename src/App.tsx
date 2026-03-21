@@ -34,6 +34,9 @@ type Prowadzacy = {
   nazwisko: string;
   bio: string | null;
   avatar_url: string | null;
+  email: string | null;
+  telefon: string | null;
+  notatki: string | null;
 };
 
 type Notatka = {
@@ -2087,7 +2090,7 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
   }
   const [nowyKursant, setNowyKursant] = useState({ imie: '', nazwisko: '', email: '', grupa_id: '' });
   const [nowaGrupa, setNowaGrupa] = useState({ nazwa: '', miasto: '', edycja: '', drive_link: '', numer_uslugi: '', tryb: 'stacjonarny' });
-  const [nowyProwadzacy, setNowyProwadzacy] = useState({ imie: '', nazwisko: '', bio: '', avatar_url: '' });
+  const [nowyProwadzacy, setNowyProwadzacy] = useState({ imie: '', nazwisko: '', bio: '', avatar_url: '', email: '', telefon: '', notatki: '' });
   const [noweZadanie, setNoweZadanie] = useState({ tytul: '', opis: '', termin: '', link_materialow: '', grupa_id: '', typ: 'zadanie' });
   const [komunikat, setKomunikat] = useState('');
   const [importStatus, setImportStatus] = useState<{ imie: string; nazwisko: string; email: string; status: string }[]>([]);
@@ -2227,8 +2230,11 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
       nazwisko: nowyProwadzacy.nazwisko,
       bio: nowyProwadzacy.bio || null,
       avatar_url: nowyProwadzacy.avatar_url || null,
+      email: nowyProwadzacy.email || null,
+      telefon: nowyProwadzacy.telefon || null,
+      notatki: nowyProwadzacy.notatki || null,
     }]);
-    if (error) { setKomunikat('Blad: ' + error.message); } else { setKomunikat('Prowadzący dodany!'); setNowyProwadzacy({ imie: '', nazwisko: '', bio: '', avatar_url: '' }); pobierzProwadzacy(); }
+    if (error) { setKomunikat('Blad: ' + error.message); } else { setKomunikat('Prowadzący dodany!'); setNowyProwadzacy({ imie: '', nazwisko: '', bio: '', avatar_url: '', email: '', telefon: '', notatki: '' }); pobierzProwadzacy(); }
   }
 
   async function usunProwadzacego(id: number) {
@@ -3385,12 +3391,21 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
                       {wolni.length === 0
                         ? <div style={{ fontSize: '12px', color: 'var(--text-muted)', fontStyle: 'italic' }}>Wszyscy zajęci</div>
                         : wolni.map(p => (
-                          <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '7px 10px', background: '#f0faf4', borderRadius: '8px', marginBottom: '4px', border: '0.5px solid #c8e6c9' }}>
+                          <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 10px', background: '#f0faf4', borderRadius: '8px', marginBottom: '4px', border: '0.5px solid #c8e6c9' }}>
                             {p.avatar_url
-                              ? <img src={p.avatar_url} style={{ width: '28px', height: '28px', borderRadius: '50%', objectFit: 'cover' }} alt="" />
+                              ? <img src={p.avatar_url} style={{ width: '28px', height: '28px', borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} alt="" />
                               : <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#c8e6c9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 700, color: '#2e7d32', flexShrink: 0 }}>{p.imie[0]}{p.nazwisko[0]}</div>
                             }
-                            <span style={{ fontSize: '13px', fontWeight: 500, color: '#1b5e20' }}>{p.imie} {p.nazwisko}</span>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ fontSize: '13px', fontWeight: 500, color: '#1b5e20' }}>{p.imie} {p.nazwisko}</div>
+                              {(p.email || p.telefon) && (
+                                <div style={{ display: 'flex', gap: '8px', marginTop: '2px', flexWrap: 'wrap' }}>
+                                  {p.email && <a href={`mailto:${p.email}`} style={{ fontSize: '10px', color: '#2e7d32', textDecoration: 'none' }}>✉ {p.email}</a>}
+                                  {p.telefon && <a href={`tel:${p.telefon}`} style={{ fontSize: '10px', color: '#2e7d32', textDecoration: 'none' }}>📞 {p.telefon}</a>}
+                                </div>
+                              )}
+                              {p.notatki && <div style={{ fontSize: '10px', color: '#c8a84b', marginTop: '2px', fontStyle: 'italic' }}>⚠ {p.notatki}</div>}
+                            </div>
                           </div>
                         ))
                       }
@@ -3436,8 +3451,13 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
                 <div className="login-field" style={{ flex: 1 }}><label>Imię</label><input type="text" value={nowyProwadzacy.imie} onChange={e => setNowyProwadzacy({ ...nowyProwadzacy, imie: e.target.value })} required /></div>
                 <div className="login-field" style={{ flex: 1 }}><label>Nazwisko</label><input type="text" value={nowyProwadzacy.nazwisko} onChange={e => setNowyProwadzacy({ ...nowyProwadzacy, nazwisko: e.target.value })} required /></div>
               </div>
+              <div style={{ display: 'flex', gap: '12px' }}>
+                <div className="login-field" style={{ flex: 1 }}><label>Email</label><input type="email" value={nowyProwadzacy.email} onChange={e => setNowyProwadzacy({ ...nowyProwadzacy, email: e.target.value })} placeholder="architekt@email.pl" /></div>
+                <div className="login-field" style={{ flex: 1 }}><label>Telefon</label><input type="text" value={nowyProwadzacy.telefon} onChange={e => setNowyProwadzacy({ ...nowyProwadzacy, telefon: e.target.value })} placeholder="+48 600 000 000" /></div>
+              </div>
               <div className="login-field"><label>Link do zdjęcia (URL)</label><input type="url" value={nowyProwadzacy.avatar_url} onChange={e => setNowyProwadzacy({ ...nowyProwadzacy, avatar_url: e.target.value })} placeholder="https://..." /></div>
-              <div className="login-field"><label>Opis / biogram</label><textarea value={nowyProwadzacy.bio} onChange={e => setNowyProwadzacy({ ...nowyProwadzacy, bio: e.target.value })} rows={3} placeholder="Krótki opis prowadzącego widoczny dla kursantów…" style={{ width: '100%', fontSize: '13px', padding: '8px 12px', border: '0.5px solid var(--border)', borderRadius: '10px', fontFamily: 'Jost, sans-serif', resize: 'vertical' }} /></div>
+              <div className="login-field"><label>Opis / biogram</label><textarea value={nowyProwadzacy.bio} onChange={e => setNowyProwadzacy({ ...nowyProwadzacy, bio: e.target.value })} rows={2} placeholder="Krótki opis widoczny dla kursantów…" style={{ width: '100%', fontSize: '13px', padding: '8px 12px', border: '0.5px solid var(--border)', borderRadius: '10px', fontFamily: 'Jost, sans-serif', resize: 'vertical' }} /></div>
+              <div className="login-field"><label>Notatki wewnętrzne</label><textarea value={nowyProwadzacy.notatki} onChange={e => setNowyProwadzacy({ ...nowyProwadzacy, notatki: e.target.value })} rows={2} placeholder="Np. nie może weekendowo, dostępny od września…" style={{ width: '100%', fontSize: '13px', padding: '8px 12px', border: '0.5px solid var(--border)', borderRadius: '10px', fontFamily: 'Jost, sans-serif', resize: 'vertical' }} /></div>
               <button className="login-btn" type="submit">Dodaj prowadzącego</button>
             </form>
 
@@ -3461,13 +3481,43 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
                   <button onClick={() => usunProwadzacego(p.id)} style={{ background: 'none', border: 'none', color: '#c62828', cursor: 'pointer', fontSize: '18px', padding: '0 4px' }}>×</button>
                 </div>
 
+                {/* Kontakt */}
+                <div className="profil-row" style={{ gap: '12px', flexWrap: 'wrap' }}>
+                  <div style={{ flex: 1, minWidth: '180px' }}>
+                    <span className="profil-lbl" style={{ display: 'block', marginBottom: '4px' }}>Email</span>
+                    <input type="email" defaultValue={p.email || ''} placeholder="architekt@email.pl"
+                      onBlur={async e => {
+                        if (e.target.value.trim() !== (p.email || '').trim()) {
+                          await supabase.from('prowadzacy').update({ email: e.target.value.trim() || null }).eq('id', p.id);
+                          pobierzProwadzacy();
+                        }
+                      }}
+                      style={{ width: '100%', fontSize: '12px', padding: '6px 8px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif' }} />
+                  </div>
+                  <div style={{ flex: 1, minWidth: '140px' }}>
+                    <span className="profil-lbl" style={{ display: 'block', marginBottom: '4px' }}>Telefon</span>
+                    <input type="text" defaultValue={p.telefon || ''} placeholder="+48 600 000 000"
+                      onBlur={async e => {
+                        if (e.target.value.trim() !== (p.telefon || '').trim()) {
+                          await supabase.from('prowadzacy').update({ telefon: e.target.value.trim() || null }).eq('id', p.id);
+                          pobierzProwadzacy();
+                        }
+                      }}
+                      style={{ width: '100%', fontSize: '12px', padding: '6px 8px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif' }} />
+                  </div>
+                </div>
+                {/* Szybki kontakt — przyciski gdy dane są */}
+                {(p.email || p.telefon) && (
+                  <div className="profil-row" style={{ gap: '8px' }}>
+                    {p.email && <a href={`mailto:${p.email}`} style={{ fontSize: '11px', padding: '4px 10px', background: 'var(--brand-light)', color: 'var(--brand-dark)', borderRadius: '6px', textDecoration: 'none', border: '0.5px solid var(--brand-mid)' }}>✉ Napisz</a>}
+                    {p.telefon && <a href={`tel:${p.telefon}`} style={{ fontSize: '11px', padding: '4px 10px', background: '#e8f5e9', color: '#2e7d32', borderRadius: '6px', textDecoration: 'none', border: '0.5px solid #c8e6c9' }}>📞 Zadzwoń</a>}
+                  </div>
+                )}
+
                 {/* Bio */}
                 <div className="profil-row" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '4px' }}>
-                  <span className="profil-lbl">Opis</span>
-                  <textarea
-                    defaultValue={p.bio || ''}
-                    rows={2}
-                    placeholder="Brak opisu — kliknij żeby dodać"
+                  <span className="profil-lbl">Opis (widoczny dla kursantów)</span>
+                  <textarea defaultValue={p.bio || ''} rows={2} placeholder="Krótki opis…"
                     onBlur={async e => {
                       const nowe = e.target.value.trim();
                       if (nowe !== (p.bio || '').trim()) {
@@ -3475,17 +3525,28 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
                         pobierzProwadzacy();
                       }
                     }}
-                    style={{ width: '100%', fontSize: '12px', padding: '6px 8px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif', resize: 'vertical', color: 'var(--text)' }}
-                  />
+                    style={{ width: '100%', fontSize: '12px', padding: '6px 8px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif', resize: 'vertical', color: 'var(--text)' }} />
+                </div>
+
+                {/* Notatki wewnętrzne */}
+                <div className="profil-row" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '4px' }}>
+                  <span className="profil-lbl">Notatki wewnętrzne 🔒</span>
+                  <textarea defaultValue={p.notatki || ''} rows={2} placeholder="Np. nie może weekendowo, dostępny od września…"
+                    onBlur={async e => {
+                      const nowe = e.target.value.trim();
+                      if (nowe !== (p.notatki || '').trim()) {
+                        await supabase.from('prowadzacy').update({ notatki: nowe || null }).eq('id', p.id);
+                        pobierzProwadzacy();
+                      }
+                    }}
+                    style={{ width: '100%', fontSize: '12px', padding: '6px 8px', border: '0.5px solid #fef3c7', borderRadius: '8px', fontFamily: 'Jost, sans-serif', resize: 'vertical', color: 'var(--text)', background: p.notatki ? '#fffbeb' : 'white' }} />
+                  {p.notatki && <div style={{ fontSize: '10px', color: '#c8a84b', fontStyle: 'italic' }}>Notatka widoczna tylko w panelu biura</div>}
                 </div>
 
                 {/* Avatar URL */}
                 <div className="profil-row" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '4px' }}>
                   <span className="profil-lbl">Link do zdjęcia</span>
-                  <input
-                    type="url"
-                    defaultValue={p.avatar_url || ''}
-                    placeholder="https://... (zostaw puste żeby usunąć)"
+                  <input type="url" defaultValue={p.avatar_url || ''} placeholder="https://..."
                     onBlur={async e => {
                       const nowe = e.target.value.trim();
                       if (nowe !== (p.avatar_url || '').trim()) {
@@ -3493,8 +3554,7 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
                         pobierzProwadzacy();
                       }
                     }}
-                    style={{ width: '100%', fontSize: '12px', padding: '6px 8px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif', color: 'var(--text)' }}
-                  />
+                    style={{ width: '100%', fontSize: '12px', padding: '6px 8px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif', color: 'var(--text)' }} />
                 </div>
 
                 {/* Zjazdy przypisane */}
