@@ -5099,10 +5099,20 @@ export default function App() {
 
   async function aktualizujStatusyZjazdow() {
     const dzisiaj = new Date().toISOString().split('T')[0];
+
+    // Napraw błędnie oznaczone jako zakończone (data przyszła)
+    const { data: bledne } = await supabase.from('zjazdy').select('id, data_zjazdu, data_dzien1, data_dzien2').eq('status', 'zakonczony');
+    for (const z of (bledne || [])) {
+      const ostatni = z.data_dzien2 || z.data_dzien1 || z.data_zjazdu;
+      if (ostatni && ostatni >= dzisiaj) {
+        await supabase.from('zjazdy').update({ status: 'nadchodzacy' }).eq('id', z.id);
+      }
+    }
+
+    // Oznacz jako zakończone te których ostatni dzień już minął
     const { data: przestarzale } = await supabase.from('zjazdy').select('*').eq('status', 'nadchodzacy');
     if (!przestarzale || przestarzale.length === 0) return;
     for (const zjazd of przestarzale) {
-      // Używaj ostatniego dnia zjazdu (dzien2 lub dzien1 lub data_zjazdu)
       const ostatniDzien = zjazd.data_dzien2 || zjazd.data_dzien1 || zjazd.data_zjazdu;
       if (!ostatniDzien || ostatniDzien >= dzisiaj) continue;
       await supabase.from('zjazdy').update({ status: 'zakonczony' }).eq('id', zjazd.id);
