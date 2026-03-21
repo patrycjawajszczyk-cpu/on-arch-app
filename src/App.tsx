@@ -3511,7 +3511,7 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
                                           <div style={{ fontSize: '10px', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.4px', padding: '8px 10px 4px' }}>
                                             Przesłane prace ({odp.length})
                                           </div>
-                                          {odp.map((o, oi) => (
+                                          {odp.map((o) => (
                                             <div key={o.id} style={{ padding: '6px 10px', borderTop: '0.5px solid var(--border-soft)' }}>
                                               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                                                 <span style={{ fontSize: '12px', fontWeight: 500, color: 'var(--text)', whiteSpace: 'nowrap' }}>{o.imie} {o.nazwisko}</span>
