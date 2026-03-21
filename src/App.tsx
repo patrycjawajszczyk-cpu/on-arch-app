@@ -2077,7 +2077,7 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
   }
   const [nowyKursant, setNowyKursant] = useState({ imie: '', nazwisko: '', email: '', grupa_id: '' });
   const [nowaGrupa, setNowaGrupa] = useState({ nazwa: '', miasto: '', edycja: '', drive_link: '', numer_uslugi: '' });
-  const [nowyProwadzacy, setNowyProwadzacy] = useState({ imie: '', nazwisko: '', specjalizacja: '' });
+  const [nowyProwadzacy, setNowyProwadzacy] = useState({ imie: '', nazwisko: '', bio: '', avatar_url: '' });
   const [noweZadanie, setNoweZadanie] = useState({ tytul: '', opis: '', termin: '', link_materialow: '', grupa_id: '', typ: 'zadanie' });
   const [komunikat, setKomunikat] = useState('');
   const [importStatus, setImportStatus] = useState<{ imie: string; nazwisko: string; email: string; status: string }[]>([]);
@@ -2211,8 +2211,10 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
     const { error } = await supabase.from('prowadzacy').insert([{
       imie: nowyProwadzacy.imie,
       nazwisko: nowyProwadzacy.nazwisko,
+      bio: nowyProwadzacy.bio || null,
+      avatar_url: nowyProwadzacy.avatar_url || null,
     }]);
-    if (error) { setKomunikat('Blad: ' + error.message); } else { setKomunikat('Prowadzący dodany!'); setNowyProwadzacy({ imie: '', nazwisko: '', specjalizacja: '' }); pobierzProwadzacy(); }
+    if (error) { setKomunikat('Blad: ' + error.message); } else { setKomunikat('Prowadzący dodany!'); setNowyProwadzacy({ imie: '', nazwisko: '', bio: '', avatar_url: '' }); pobierzProwadzacy(); }
   }
 
   async function usunProwadzacego(id: number) {
@@ -2963,10 +2965,15 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
           <>
             <h2 className="page-title">Nowy prowadzący</h2>
             <form className="admin-form" onSubmit={dodajProwadzacego}>
-              <div className="login-field"><label>Imię</label><input type="text" value={nowyProwadzacy.imie} onChange={e => setNowyProwadzacy({ ...nowyProwadzacy, imie: e.target.value })} required /></div>
-              <div className="login-field"><label>Nazwisko</label><input type="text" value={nowyProwadzacy.nazwisko} onChange={e => setNowyProwadzacy({ ...nowyProwadzacy, nazwisko: e.target.value })} required /></div>
+              <div style={{ display: 'flex', gap: '12px' }}>
+                <div className="login-field" style={{ flex: 1 }}><label>Imię</label><input type="text" value={nowyProwadzacy.imie} onChange={e => setNowyProwadzacy({ ...nowyProwadzacy, imie: e.target.value })} required /></div>
+                <div className="login-field" style={{ flex: 1 }}><label>Nazwisko</label><input type="text" value={nowyProwadzacy.nazwisko} onChange={e => setNowyProwadzacy({ ...nowyProwadzacy, nazwisko: e.target.value })} required /></div>
+              </div>
+              <div className="login-field"><label>Link do zdjęcia (URL)</label><input type="url" value={nowyProwadzacy.avatar_url} onChange={e => setNowyProwadzacy({ ...nowyProwadzacy, avatar_url: e.target.value })} placeholder="https://..." /></div>
+              <div className="login-field"><label>Opis / biogram</label><textarea value={nowyProwadzacy.bio} onChange={e => setNowyProwadzacy({ ...nowyProwadzacy, bio: e.target.value })} rows={3} placeholder="Krótki opis prowadzącego widoczny dla kursantów…" style={{ width: '100%', fontSize: '13px', padding: '8px 12px', border: '0.5px solid var(--border)', borderRadius: '10px', fontFamily: 'Jost, sans-serif', resize: 'vertical' }} /></div>
               <button className="login-btn" type="submit">Dodaj prowadzącego</button>
             </form>
+
             <h2 className="page-title" style={{ marginTop: '24px' }}>Lista prowadzących</h2>
             {prowadzacy.length === 0 && (
               <div className="profil-card"><div className="profil-row"><span style={{ color: 'var(--text-muted)', fontSize: '13px' }}>Brak prowadzących. Dodaj pierwszego powyżej.</span></div></div>
@@ -2974,10 +2981,56 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
             {prowadzacy.map(p => (
               <div key={p.id} className="profil-card" style={{ marginBottom: '8px' }}>
                 <div className="profil-row">
-                  <span className="profil-lbl" style={{ fontWeight: 600 }}>{p.imie} {p.nazwisko}</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    {p.avatar_url ? (
+                      <img src={p.avatar_url} alt={p.imie} style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover', border: '0.5px solid var(--border)' }} />
+                    ) : (
+                      <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'var(--brand-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: 600, color: 'var(--brand-dark)', flexShrink: 0 }}>
+                        {p.imie[0]}{p.nazwisko[0]}
+                      </div>
+                    )}
+                    <span className="profil-lbl" style={{ fontWeight: 600 }}>{p.imie} {p.nazwisko}</span>
+                  </div>
                   <button onClick={() => usunProwadzacego(p.id)} style={{ background: 'none', border: 'none', color: '#c62828', cursor: 'pointer', fontSize: '18px', padding: '0 4px' }}>×</button>
                 </div>
-                {/* Zjazdy przypisane do tego prowadzącego */}
+
+                {/* Bio */}
+                <div className="profil-row" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '4px' }}>
+                  <span className="profil-lbl">Opis</span>
+                  <textarea
+                    defaultValue={p.bio || ''}
+                    rows={2}
+                    placeholder="Brak opisu — kliknij żeby dodać"
+                    onBlur={async e => {
+                      const nowe = e.target.value.trim();
+                      if (nowe !== (p.bio || '').trim()) {
+                        await supabase.from('prowadzacy').update({ bio: nowe || null }).eq('id', p.id);
+                        pobierzProwadzacy();
+                      }
+                    }}
+                    style={{ width: '100%', fontSize: '12px', padding: '6px 8px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif', resize: 'vertical', color: 'var(--text)' }}
+                  />
+                </div>
+
+                {/* Avatar URL */}
+                <div className="profil-row" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '4px' }}>
+                  <span className="profil-lbl">Link do zdjęcia</span>
+                  <input
+                    type="url"
+                    defaultValue={p.avatar_url || ''}
+                    placeholder="https://... (zostaw puste żeby usunąć)"
+                    onBlur={async e => {
+                      const nowe = e.target.value.trim();
+                      if (nowe !== (p.avatar_url || '').trim()) {
+                        await supabase.from('prowadzacy').update({ avatar_url: nowe || null }).eq('id', p.id);
+                        pobierzProwadzacy();
+                      }
+                    }}
+                    style={{ width: '100%', fontSize: '12px', padding: '6px 8px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif', color: 'var(--text)' }}
+                  />
+                </div>
+
+                {/* Zjazdy przypisane */}
                 {(() => {
                   const przypisane = zjazdy.filter(z => (z.prowadzacy || []).some(x => x.id === p.id));
                   return przypisane.length > 0 ? (
