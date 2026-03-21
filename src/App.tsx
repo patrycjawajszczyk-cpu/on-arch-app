@@ -2734,6 +2734,17 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
                     )}
                   </div>
 
+                  {/* Materiały do nauki — tylko dla grup PWO/POO */}
+                  {(() => {
+                    const grupa = grupy.find(g => g.id === edytowanyZjazd.grupa_id);
+                    if (!grupa || !czyOdwroconaKlasa(grupa.nazwa)) return null;
+                    return (
+                      <div style={{ marginBottom: '12px' }}>
+                        <SekcjaPrzygotowania zjazd={edytowanyZjazd} user={{ id: '' }} czyProwadzacy={true} />
+                      </div>
+                    );
+                  })()}
+
                   <button className="login-btn" type="submit">Zapisz zmiany</button>
                   <button className="btn-link" onClick={() => setEdytowanyZjazd(null)}>Anuluj</button>
                 </form>
