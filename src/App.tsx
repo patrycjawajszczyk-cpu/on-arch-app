@@ -4431,7 +4431,7 @@ function PostepKursu({ zjazdy }: { zjazdy: Zjazd[] }) {
 
 // ─── KALENDARZ ZJAZDÓW ───────────────────────────────────────────────────────
 
-function KalendarzZjazdow({ zjazdy, grupy }: { zjazdy: Zjazd[]; grupy?: { id: number; nazwa: string }[] }) {
+function KalendarzZjazdow({ zjazdy, grupy, zadania, odpowiedziZadan }: { zjazdy: Zjazd[]; grupy?: { id: number; nazwa: string }[]; zadania?: Zadanie[]; odpowiedziZadan?: ZadanieOdpowiedz[] }) {
   const [miesiac, setMiesiac] = useState(() => {
     const d = new Date();
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
@@ -4459,6 +4459,16 @@ function KalendarzZjazdow({ zjazdy, grupy }: { zjazdy: Zjazd[]; grupy?: { id: nu
       if (!mapa[d]) mapa[d] = [];
       mapa[d].push({ zjazd: z, dzien: (idx + 1) as 1 | 2 });
     });
+  });
+
+
+  // Mapa dzień → zadania z terminem
+  const mapaZadan: Record<string, Zadanie[]> = {};
+  (zadania || []).forEach(z => {
+    if (!z.termin) return;
+    const d = z.termin.substring(0, 10);
+    if (!mapaZadan[d]) mapaZadan[d] = [];
+    mapaZadan[d].push(z);
   });
 
   const komorki: (number | null)[] = [
@@ -4524,6 +4534,24 @@ function KalendarzZjazdow({ zjazdy, grupy }: { zjazdy: Zjazd[]; grupy?: { id: nu
                       </div>
                     );
                   })}
+                  {/* Terminy zadań */}
+                  {(mapaZadan[dataStr] || []).map((z, i) => {
+                    const przeslane = (odpowiedziZadan || []).some(o => o.zadanie_id === z.id);
+                    const kolor = z.typ === 'praca_zaliczeniowa' ? '#c8a84b' : '#1565c0';
+                    const ikona = z.typ === 'praca_zaliczeniowa' ? '⭐' : '📝';
+                    return (
+                      <div key={`z${i}`} title={`${ikona} Termin: ${z.tytul}${przeslane ? '\n✓ Praca przesłana' : '\n⚠ Nie przesłano'}`}
+                        style={{
+                          background: przeslane ? '#e8f5e920' : kolor + '18',
+                          borderLeft: `2px solid ${przeslane ? '#2e7d32' : kolor}`,
+                          borderRadius: '0 3px 3px 0', padding: '1px 4px', marginBottom: '1px',
+                          fontSize: '9px', color: przeslane ? '#2e7d32' : kolor, fontWeight: 700, lineHeight: 1.4,
+                          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                        }}>
+                        {ikona} {z.tytul}
+                      </div>
+                    );
+                  })}
                 </>
               )}
             </div>
@@ -4545,7 +4573,7 @@ function KalendarzZjazdow({ zjazdy, grupy }: { zjazdy: Zjazd[]; grupy?: { id: nu
   );
 }
 
-function EkranProfil({ user, kursant, zjazdy, onWyloguj, onAvatarZmieniony, grupaInfo, onOtworzAnkiete }: { user: User; kursant: Kursant | null; zjazdy: Zjazd[]; onWyloguj: () => void; onAvatarZmieniony: (url: string) => void; grupaInfo: Grupa | null; onOtworzAnkiete: () => void }) {
+function EkranProfil({ user, kursant, zjazdy, onWyloguj, onAvatarZmieniony, grupaInfo, onOtworzAnkiete, zadania, odpowiedziZadan }: { user: User; kursant: Kursant | null; zjazdy: Zjazd[]; onWyloguj: () => void; onAvatarZmieniony: (url: string) => void; grupaInfo: Grupa | null; onOtworzAnkiete: () => void; zadania?: Zadanie[]; odpowiedziZadan?: ZadanieOdpowiedz[] }) {
   const [uploadowanie, setUploadowanie] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const inicjal = kursant ? kursant.imie[0] : user.email[0].toUpperCase();
@@ -4673,7 +4701,7 @@ function EkranProfil({ user, kursant, zjazdy, onWyloguj, onAvatarZmieniony, grup
       {zjazdy.length > 0 && (
         <div style={{ marginBottom: '10px' }}>
           <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text)', marginBottom: '8px', padding: '0 2px' }}>📅 Mój harmonogram</div>
-          <KalendarzZjazdow zjazdy={zjazdy} />
+          <KalendarzZjazdow zjazdy={zjazdy} zadania={zadania} odpowiedziZadan={odpowiedziZadan} />
         </div>
       )}
 
@@ -4879,6 +4907,8 @@ export default function App() {
                 user={user} kursant={kursant} zjazdy={zjazdy}
                 onWyloguj={wyloguj} onAvatarZmieniony={onAvatarZmieniony}
                 grupaInfo={grupaInfo}
+                zadania={zadania}
+                odpowiedziZadan={odpowiedziZadan}
                 onOtworzAnkiete={() => setPokazAnkiete(true)}
               />
             )}
