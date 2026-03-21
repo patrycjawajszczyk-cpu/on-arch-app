@@ -4507,8 +4507,8 @@ function SekcjaPrzygotowania({ zjazd, user, kursant, czyProwadzacy = false }: {
     setLadowanie(false);
   }
 
-  async function dodajMaterial(e: React.FormEvent) {
-    e.preventDefault();
+  async function dodajMaterial(e?: any) {
+    if (e?.preventDefault) e.preventDefault();
     if (!nowyMat.tytul.trim()) return;
     const { error } = await supabase.from('materialy_zjazdu').insert([{
       zjazd_id: zjazd.id, tytul: nowyMat.tytul.trim(),
@@ -4590,18 +4590,20 @@ function SekcjaPrzygotowania({ zjazd, user, kursant, czyProwadzacy = false }: {
         ))}
         {/* Formularz dodawania materiałów (prowadzący/biuro) */}
         {czyProwadzacy && (
-          <form onSubmit={dodajMaterial} style={{ marginTop: '10px', display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+          <div style={{ marginTop: '10px', display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
             <input type="text" value={nowyMat.tytul} onChange={e => setNowyMat(v => ({ ...v, tytul: e.target.value }))}
-              placeholder="Tytuł materiału *" required
+              placeholder="Tytuł materiału *"
+              onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); dodajMaterial(e as any); } }}
               style={{ flex: 2, minWidth: '140px', fontSize: '12px', padding: '6px 8px', border: '0.5px solid #c5d8f7', borderRadius: '7px', fontFamily: 'Jost, sans-serif' }} />
             <input type="url" value={nowyMat.link} onChange={e => setNowyMat(v => ({ ...v, link: e.target.value }))}
               placeholder="Link (opcjonalnie)"
+              onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); dodajMaterial(e as any); } }}
               style={{ flex: 2, minWidth: '140px', fontSize: '12px', padding: '6px 8px', border: '0.5px solid #c5d8f7', borderRadius: '7px', fontFamily: 'Jost, sans-serif' }} />
-            <button type="submit"
-              style={{ padding: '6px 12px', background: '#1565c0', color: 'white', border: 'none', borderRadius: '7px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', fontFamily: 'Jost, sans-serif', whiteSpace: 'nowrap' }}>
+            <button type="button" onClick={dodajMaterial as any} disabled={!nowyMat.tytul.trim()}
+              style={{ padding: '6px 12px', background: nowyMat.tytul.trim() ? '#1565c0' : '#ccc', color: 'white', border: 'none', borderRadius: '7px', fontSize: '12px', fontWeight: 600, cursor: nowyMat.tytul.trim() ? 'pointer' : 'default', fontFamily: 'Jost, sans-serif', whiteSpace: 'nowrap' }}>
               + Dodaj
             </button>
-          </form>
+          </div>
         )}
       </div>
 
@@ -5097,9 +5099,12 @@ export default function App() {
 
   async function aktualizujStatusyZjazdow() {
     const dzisiaj = new Date().toISOString().split('T')[0];
-    const { data: przestarzale } = await supabase.from('zjazdy').select('*').eq('status', 'nadchodzacy').lt('data_zjazdu', dzisiaj);
+    const { data: przestarzale } = await supabase.from('zjazdy').select('*').eq('status', 'nadchodzacy');
     if (!przestarzale || przestarzale.length === 0) return;
     for (const zjazd of przestarzale) {
+      // Używaj ostatniego dnia zjazdu (dzien2 lub dzien1 lub data_zjazdu)
+      const ostatniDzien = zjazd.data_dzien2 || zjazd.data_dzien1 || zjazd.data_zjazdu;
+      if (!ostatniDzien || ostatniDzien >= dzisiaj) continue;
       await supabase.from('zjazdy').update({ status: 'zakonczony' }).eq('id', zjazd.id);
       const { data: wszystkieZjazdy } = await supabase.from('zjazdy').select('*').eq('grupa_id', zjazd.grupa_id).order('data_zjazdu', { ascending: true });
       const pozostaleNadchodzace = (wszystkieZjazdy || []).filter(z => z.id !== zjazd.id && z.status === 'nadchodzacy' && z.data_zjazdu >= dzisiaj);
