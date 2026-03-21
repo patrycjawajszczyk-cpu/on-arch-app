@@ -5079,7 +5079,6 @@ export default function App() {
           if (row.prowadzacy) prowadzacyMap[row.zjazd_id].push(row.prowadzacy);
         });
       }
-      const dzisiaj = new Date().toISOString().split('T')[0];
       setZjazdy((zj || []).map((z: any) => ({
         ...z,
         status: przeliczStatus(z),
