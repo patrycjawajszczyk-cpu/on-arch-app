@@ -37,6 +37,7 @@ type Prowadzacy = {
   email: string | null;
   telefon: string | null;
   notatki: string | null;
+  miasto: string | null;
 };
 
 type Notatka = {
@@ -2090,7 +2091,7 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
   }
   const [nowyKursant, setNowyKursant] = useState({ imie: '', nazwisko: '', email: '', grupa_id: '' });
   const [nowaGrupa, setNowaGrupa] = useState({ nazwa: '', miasto: '', edycja: '', drive_link: '', numer_uslugi: '', tryb: 'stacjonarny' });
-  const [nowyProwadzacy, setNowyProwadzacy] = useState({ imie: '', nazwisko: '', bio: '', avatar_url: '', email: '', telefon: '', notatki: '' });
+  const [nowyProwadzacy, setNowyProwadzacy] = useState({ imie: '', nazwisko: '', bio: '', avatar_url: '', email: '', telefon: '', notatki: '', miasto: '' });
   const [noweZadanie, setNoweZadanie] = useState({ tytul: '', opis: '', termin: '', link_materialow: '', grupa_id: '', typ: 'zadanie' });
   const [komunikat, setKomunikat] = useState('');
   const [importStatus, setImportStatus] = useState<{ imie: string; nazwisko: string; email: string; status: string }[]>([]);
@@ -2233,8 +2234,9 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
       email: nowyProwadzacy.email || null,
       telefon: nowyProwadzacy.telefon || null,
       notatki: nowyProwadzacy.notatki || null,
+      miasto: nowyProwadzacy.miasto || null,
     }]);
-    if (error) { setKomunikat('Blad: ' + error.message); } else { setKomunikat('Prowadzący dodany!'); setNowyProwadzacy({ imie: '', nazwisko: '', bio: '', avatar_url: '', email: '', telefon: '', notatki: '' }); pobierzProwadzacy(); }
+    if (error) { setKomunikat('Blad: ' + error.message); } else { setKomunikat('Prowadzący dodany!'); setNowyProwadzacy({ imie: '', nazwisko: '', bio: '', avatar_url: '', email: '', telefon: '', notatki: '', miasto: '' }); pobierzProwadzacy(); }
   }
 
   async function usunProwadzacego(id: number) {
@@ -3397,7 +3399,7 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
                               : <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#c8e6c9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 700, color: '#2e7d32', flexShrink: 0 }}>{p.imie[0]}{p.nazwisko[0]}</div>
                             }
                             <div style={{ flex: 1, minWidth: 0 }}>
-                              <div style={{ fontSize: '13px', fontWeight: 500, color: '#1b5e20' }}>{p.imie} {p.nazwisko}</div>
+                              <div style={{ fontSize: '13px', fontWeight: 500, color: '#1b5e20' }}>{p.imie} {p.nazwisko}{p.miasto && <span style={{ fontWeight: 400, fontSize: '11px', marginLeft: '6px' }}>📍 {p.miasto}</span>}</div>
                               {(p.email || p.telefon) && (
                                 <div style={{ display: 'flex', gap: '8px', marginTop: '2px', flexWrap: 'wrap' }}>
                                   {p.email && <a href={`mailto:${p.email}`} style={{ fontSize: '10px', color: '#2e7d32', textDecoration: 'none' }}>✉ {p.email}</a>}
@@ -3454,6 +3456,7 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
               <div style={{ display: 'flex', gap: '12px' }}>
                 <div className="login-field" style={{ flex: 1 }}><label>Email</label><input type="email" value={nowyProwadzacy.email} onChange={e => setNowyProwadzacy({ ...nowyProwadzacy, email: e.target.value })} placeholder="architekt@email.pl" /></div>
                 <div className="login-field" style={{ flex: 1 }}><label>Telefon</label><input type="text" value={nowyProwadzacy.telefon} onChange={e => setNowyProwadzacy({ ...nowyProwadzacy, telefon: e.target.value })} placeholder="+48 600 000 000" /></div>
+                <div className="login-field" style={{ flex: 1 }}><label>Miasto</label><input type="text" value={nowyProwadzacy.miasto} onChange={e => setNowyProwadzacy({ ...nowyProwadzacy, miasto: e.target.value })} placeholder="Warszawa" /></div>
               </div>
               <div className="login-field"><label>Link do zdjęcia (URL)</label><input type="url" value={nowyProwadzacy.avatar_url} onChange={e => setNowyProwadzacy({ ...nowyProwadzacy, avatar_url: e.target.value })} placeholder="https://..." /></div>
               <div className="login-field"><label>Opis / biogram</label><textarea value={nowyProwadzacy.bio} onChange={e => setNowyProwadzacy({ ...nowyProwadzacy, bio: e.target.value })} rows={2} placeholder="Krótki opis widoczny dla kursantów…" style={{ width: '100%', fontSize: '13px', padding: '8px 12px', border: '0.5px solid var(--border)', borderRadius: '10px', fontFamily: 'Jost, sans-serif', resize: 'vertical' }} /></div>
@@ -3477,6 +3480,7 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
                       </div>
                     )}
                     <span className="profil-lbl" style={{ fontWeight: 600 }}>{p.imie} {p.nazwisko}</span>
+                    {p.miasto && <span style={{ fontSize: '11px', color: 'var(--text-muted)', background: 'var(--bg)', padding: '1px 7px', borderRadius: '6px', border: '0.5px solid var(--border)' }}>📍 {p.miasto}</span>}
                   </div>
                   <button onClick={() => usunProwadzacego(p.id)} style={{ background: 'none', border: 'none', color: '#c62828', cursor: 'pointer', fontSize: '18px', padding: '0 4px' }}>×</button>
                 </div>
@@ -3500,6 +3504,17 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
                       onBlur={async e => {
                         if (e.target.value.trim() !== (p.telefon || '').trim()) {
                           await supabase.from('prowadzacy').update({ telefon: e.target.value.trim() || null }).eq('id', p.id);
+                          pobierzProwadzacy();
+                        }
+                      }}
+                      style={{ width: '100%', fontSize: '12px', padding: '6px 8px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif' }} />
+                  </div>
+                  <div style={{ flex: 1, minWidth: '120px' }}>
+                    <span className="profil-lbl" style={{ display: 'block', marginBottom: '4px' }}>Miasto</span>
+                    <input type="text" defaultValue={p.miasto || ''} placeholder="Warszawa"
+                      onBlur={async e => {
+                        if (e.target.value.trim() !== (p.miasto || '').trim()) {
+                          await supabase.from('prowadzacy').update({ miasto: e.target.value.trim() || null }).eq('id', p.id);
                           pobierzProwadzacy();
                         }
                       }}
