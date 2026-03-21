@@ -2038,6 +2038,10 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
   });
   const [tabelaZjazdow, setTabelaZjazdow] = useState<WierszZjazdu[]>([pustyWiersz(), pustyWiersz(), pustyWiersz()]);
   const [tabelaGrupa, setTabelaGrupa] = useState('');
+  const [widokZjazdow, setWidokZjazdow] = useState<'tabela' | 'kalendarz'>('tabela');
+  const [kalFiltrGrupa, setKalFiltrGrupa] = useState('');
+  const [kalFiltrProwadzacy, setKalFiltrProwadzacy] = useState('');
+  const [kalMiesiac, setKalMiesiac] = useState(() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`; });
   const [tabelaZapis, setTabelaZapis] = useState(false);
   const [tabelaWyniki, setTabelaWyniki] = useState<{ nr: string; status: string }[]>([]);
   const [pokazInstrukcjePaste, setPokazInstrukcjePaste] = useState(false);
@@ -2509,6 +2513,152 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
               </>
             ) : (
               <>
+                {/* ── PRZEŁĄCZNIK WIDOKU ── */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px', flexWrap: 'wrap', gap: '10px' }}>
+                  <div style={{ display: 'flex', background: 'white', border: '0.5px solid var(--border)', borderRadius: '10px', overflow: 'hidden' }}>
+                    {(['tabela', 'kalendarz'] as const).map(w => (
+                      <button key={w} onClick={() => setWidokZjazdow(w)}
+                        style={{ padding: '7px 18px', border: 'none', background: widokZjazdow === w ? 'var(--brand)' : 'white', color: widokZjazdow === w ? 'white' : 'var(--text-muted)', fontSize: '12px', fontWeight: 500, cursor: 'pointer', fontFamily: 'Jost, sans-serif', transition: 'all 0.15s' }}>
+                        {w === 'tabela' ? '☰ Tabela' : '📅 Kalendarz'}
+                      </button>
+                    ))}
+                  </div>
+                  {/* Filtry dla kalendarza */}
+                  {widokZjazdow === 'kalendarz' && (
+                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+                      <input type="month" value={kalMiesiac} onChange={e => setKalMiesiac(e.target.value)}
+                        style={{ fontSize: '12px', padding: '6px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif' }} />
+                      <select value={kalFiltrGrupa} onChange={e => setKalFiltrGrupa(e.target.value)}
+                        style={{ fontSize: '12px', padding: '6px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif', background: 'white' }}>
+                        <option value="">Wszystkie grupy</option>
+                        {grupy.map(g => <option key={g.id} value={g.id}>{g.nazwa}</option>)}
+                      </select>
+                      <select value={kalFiltrProwadzacy} onChange={e => setKalFiltrProwadzacy(e.target.value)}
+                        style={{ fontSize: '12px', padding: '6px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif', background: 'white' }}>
+                        <option value="">Wszyscy prowadzący</option>
+                        {prowadzacy.map(p => <option key={p.id} value={p.id}>{p.imie} {p.nazwisko}</option>)}
+                      </select>
+                    </div>
+                  )}
+                </div>
+
+                {/* ── WIDOK KALENDARZA ── */}
+                {widokZjazdow === 'kalendarz' && (() => {
+                  const [rok, miesiac] = kalMiesiac.split('-').map(Number);
+                  const pierwszyDzien = new Date(rok, miesiac - 1, 1);
+                  const ostatniDzien = new Date(rok, miesiac, 0);
+                  const startDow = (pierwszyDzien.getDay() + 6) % 7; // Pon=0
+                  const liczbaDni = ostatniDzien.getDate();
+
+                  // Filtruj zjazdy
+                  const zjazdyFiltr = zjazdy.filter(z => {
+                    if (kalFiltrGrupa && z.grupa_id !== parseInt(kalFiltrGrupa)) return false;
+                    if (kalFiltrProwadzacy && !(z.prowadzacy || []).some(p => p.id === parseInt(kalFiltrProwadzacy))) return false;
+                    return true;
+                  });
+
+                  // Mapa: data (YYYY-MM-DD) -> zjazdy w tym dniu
+                  const mapaZjazdow: Record<string, { zjazd: Zjazd; dzien: 1|2 }[]> = {};
+                  zjazdyFiltr.forEach(z => {
+                    [z.data_dzien1, z.data_dzien2].forEach((data, idx) => {
+                      if (!data) return;
+                      const d = data.substring(0, 10);
+                      if (!mapaZjazdow[d]) mapaZjazdow[d] = [];
+                      mapaZjazdow[d].push({ zjazd: z, dzien: (idx + 1) as 1|2 });
+                    });
+                  });
+
+                  const komorki: (number | null)[] = [
+                    ...Array(startDow).fill(null),
+                    ...Array.from({ length: liczbaDni }, (_, i) => i + 1)
+                  ];
+                  // Uzupełnij do pełnych tygodni
+                  while (komorki.length % 7 !== 0) komorki.push(null);
+
+                  const dzisiaj = new Date().toISOString().split('T')[0];
+                  const nazwyDni = ['Pon', 'Wt', 'Śr', 'Czw', 'Pt', 'Sob', 'Nd'];
+                  const nazwyMiesiecy = ['Styczeń','Luty','Marzec','Kwiecień','Maj','Czerwiec','Lipiec','Sierpień','Wrzesień','Październik','Listopad','Grudzień'];
+
+                  // Kolory per grupa (cykl)
+                  const kolorGrupy = ['#B35758','#1565c0','#2e7d32','#c8a84b','#6a1b9a','#d84315','#00838f','#4e342e'];
+                  const grupaKolor: Record<number, string> = {};
+                  grupy.forEach((g, i) => { grupaKolor[g.id] = kolorGrupy[i % kolorGrupy.length]; });
+
+                  return (
+                    <div style={{ background: 'white', borderRadius: '14px', border: '0.5px solid var(--border)', overflow: 'hidden', marginBottom: '24px' }}>
+                      {/* Nagłówek miesiąca */}
+                      <div style={{ padding: '14px 20px', borderBottom: '0.5px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <button onClick={() => { const d = new Date(rok, miesiac - 2, 1); setKalMiesiac(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`); }}
+                          style={{ background: 'none', border: '0.5px solid var(--border)', borderRadius: '8px', width: '28px', height: '28px', cursor: 'pointer', fontSize: '14px', color: 'var(--text-muted)' }}>‹</button>
+                        <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '20px', fontWeight: 400, color: 'var(--brand-dark)' }}>
+                          {nazwyMiesiecy[miesiac - 1]} {rok}
+                        </span>
+                        <button onClick={() => { const d = new Date(rok, miesiac, 1); setKalMiesiac(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`); }}
+                          style={{ background: 'none', border: '0.5px solid var(--border)', borderRadius: '8px', width: '28px', height: '28px', cursor: 'pointer', fontSize: '14px', color: 'var(--text-muted)' }}>›</button>
+                      </div>
+                      {/* Dni tygodnia */}
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', borderBottom: '0.5px solid var(--border)' }}>
+                        {nazwyDni.map(d => (
+                          <div key={d} style={{ padding: '8px 4px', textAlign: 'center', fontSize: '10px', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', background: 'var(--bg)' }}>{d}</div>
+                        ))}
+                      </div>
+                      {/* Siatka dni */}
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)' }}>
+                        {komorki.map((dzien, idx) => {
+                          const dataStr = dzien ? `${rok}-${String(miesiac).padStart(2,'0')}-${String(dzien).padStart(2,'0')}` : '';
+                          const wpisy = dataStr ? (mapaZjazdow[dataStr] || []) : [];
+                          const czyDzisiaj = dataStr === dzisiaj;
+                          const czyWeekend = idx % 7 >= 5;
+                          return (
+                            <div key={idx} style={{
+                              minHeight: '80px', padding: '6px', borderBottom: '0.5px solid var(--border-soft)',
+                              borderRight: idx % 7 < 6 ? '0.5px solid var(--border-soft)' : 'none',
+                              background: !dzien ? '#faf9f8' : czyWeekend ? '#fdf8f7' : 'white',
+                            }}>
+                              {dzien && (
+                                <>
+                                  <div style={{
+                                    width: '22px', height: '22px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    background: czyDzisiaj ? 'var(--brand)' : 'transparent',
+                                    color: czyDzisiaj ? 'white' : czyWeekend ? 'var(--brand)' : 'var(--text)',
+                                    fontSize: '11px', fontWeight: czyDzisiaj ? 700 : 400, marginBottom: '4px',
+                                  }}>{dzien}</div>
+                                  {wpisy.map((w, i) => {
+                                    const grupa = grupy.find(g => g.id === w.zjazd.grupa_id);
+                                    const kolor = grupaKolor[w.zjazd.grupa_id] || '#B35758';
+                                    return (
+                                      <div key={i} title={`Zjazd ${w.zjazd.nr} — ${grupa?.nazwa || ''}\nDzień ${w.dzien}: ${w.dzien === 1 ? w.zjazd.godzina_start_d1 || '' : w.zjazd.godzina_start_d2 || ''}–${w.dzien === 1 ? w.zjazd.godzina_end_d1 || '' : w.zjazd.godzina_end_d2 || ''}\n${w.zjazd.tematy || ''}\n${(w.zjazd.prowadzacy||[]).map(p=>`${p.imie} ${p.nazwisko}`).join(', ')}`}
+                                        style={{
+                                          background: kolor + '18', borderLeft: `3px solid ${kolor}`,
+                                          borderRadius: '0 4px 4px 0', padding: '2px 5px', marginBottom: '2px',
+                                          fontSize: '10px', color: kolor, fontWeight: 600, lineHeight: 1.4,
+                                          cursor: 'default', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                                        }}>
+                                        Z{w.zjazd.nr} D{w.dzien} · {(grupa?.nazwa || '').split(' ').slice(-2).join(' ')}
+                                      </div>
+                                    );
+                                  })}
+                                </>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                      {/* Legenda */}
+                      {grupy.filter(g => !kalFiltrGrupa || g.id === parseInt(kalFiltrGrupa)).length > 0 && (
+                        <div style={{ padding: '12px 16px', borderTop: '0.5px solid var(--border)', display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+                          {grupy.filter(g => !kalFiltrGrupa || g.id === parseInt(kalFiltrGrupa)).map(g => (
+                            <div key={g.id} style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '11px', color: 'var(--text-muted)' }}>
+                              <div style={{ width: '10px', height: '10px', borderRadius: '2px', background: grupaKolor[g.id] || '#B35758' }}></div>
+                              {g.nazwa}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
+
                 {/* ── TABELA DODAWANIA ZJAZDÓW ── */}
                 <div style={{ marginBottom: '8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
                   <h2 className="page-title" style={{ margin: 0 }}>Dodaj zjazdy</h2>
