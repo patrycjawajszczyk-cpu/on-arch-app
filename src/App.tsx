@@ -2120,7 +2120,7 @@ function WeryfikacjaObecnosci({ zjazdy, grupy, kursanci, prowadzacyUserId }: {
   );
 }
 
-function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
+function PanelBiura({ onWyloguj, user }: { onWyloguj: () => void; user: User | null }) {
   const [aktywnaZakladka, setAktywnaZakladka] = useState('home');
   const [grupy, setGrupy] = useState<Grupa[]>([]);
   const [kursanci, setKursanci] = useState<KursantAdmin[]>([]);
@@ -2740,7 +2740,7 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
                     if (!grupa || !czyOdwroconaKlasa(grupa.nazwa)) return null;
                     return (
                       <div style={{ marginBottom: '12px' }}>
-                        <SekcjaPrzygotowania zjazd={edytowanyZjazd} user={{ id: '' }} czyProwadzacy={true} />
+                        <SekcjaPrzygotowania zjazd={edytowanyZjazd} user={{ id: user?.id || '' }} czyProwadzacy={true} />
                       </div>
                     );
                   })()}
@@ -4510,10 +4510,11 @@ function SekcjaPrzygotowania({ zjazd, user, kursant, czyProwadzacy = false }: {
   async function dodajMaterial(e: React.FormEvent) {
     e.preventDefault();
     if (!nowyMat.tytul.trim()) return;
-    await supabase.from('materialy_zjazdu').insert([{
+    const { error } = await supabase.from('materialy_zjazdu').insert([{
       zjazd_id: zjazd.id, tytul: nowyMat.tytul.trim(),
       link: nowyMat.link.trim() || null, kolejnosc: materialy.length,
     }]);
+    if (error) { alert('Błąd zapisu: ' + error.message); return; }
     setNowyMat({ tytul: '', link: '' });
     pobierz();
   }
@@ -5152,7 +5153,7 @@ export default function App() {
   if (ladowanie) return <div className="ladowanie">Ładowanie...</div>;
   if (resetMode) return <EkranZmianaHasla />;
   if (!user) return <EkranLogowania onZalogowano={() => {}} />;
-  if (kursant?.rola === 'admin') return <PanelBiura onWyloguj={wyloguj} />;
+  if (kursant?.rola === 'admin') return <PanelBiura onWyloguj={wyloguj} user={user} />;
   if (kursant?.rola === 'prowadzacy') return <PanelProwadzacego user={user} kursant={kursant} onWyloguj={wyloguj} />;
   if (kursant && !kursant.onboarding_done) return <EkranPowitalny kursant={kursant} user={user} onDalej={() => setKursant(prev => prev ? { ...prev, onboarding_done: true } : prev)} />;
 
