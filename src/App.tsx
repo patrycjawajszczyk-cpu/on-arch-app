@@ -3124,43 +3124,47 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
               <button className="login-btn" type="submit">Dodaj grupe</button>
             </form>
             <h2 className="page-title" style={{ marginTop: '24px' }}>Lista grup</h2>
-            {grupy.map(g => (
-              <div key={g.id} className="profil-card" style={{ marginBottom: '8px' }}>
-                <div className="profil-row">
-                  <span className="profil-lbl" style={{ fontWeight: '700', color: 'var(--brand)' }}>ID: {g.id}</span>
-                  <span style={{ fontSize: '10px', fontWeight: 600, padding: '2px 8px', borderRadius: '10px',
-                    background: g.tryb === 'online' ? '#e8f0fe' : g.tryb === 'hybrydowy' ? '#fef9ec' : 'var(--brand-light)',
-                    color: g.tryb === 'online' ? '#1565c0' : g.tryb === 'hybrydowy' ? '#c8a84b' : 'var(--brand-dark)' }}>
-                    {g.tryb === 'online' ? '🌐 Online' : g.tryb === 'hybrydowy' ? '⚡ Hybrydowy' : '📍 Stacjonarny'}
-                  </span>
-                </div>
-                <div className="profil-row"><span className="profil-lbl">Nazwa</span><span className="profil-val">{g.nazwa}</span></div>
-                <div className="profil-row"><span className="profil-lbl">Miasto</span><span className="profil-val">{g.miasto}</span></div>
-                <div className="profil-row"><span className="profil-lbl">Edycja</span><span className="profil-val">{g.edycja}</span></div>
-                <div className="profil-row">
-                  <span className="profil-lbl">Tryb zajęć</span>
-                  <select defaultValue={g.tryb || 'stacjonarny'}
-                    onBlur={async e => { await supabase.from('grupy').update({ tryb: e.target.value }).eq('id', g.id); pobierzGrupy(); }}
-                    style={{ fontSize: '12px', padding: '4px 8px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif', background: 'white' }}>
-                    <option value="stacjonarny">Stacjonarny</option>
-                    <option value="online">Online</option>
-                    <option value="hybrydowy">Hybrydowy</option>
-                  </select>
-                </div>
-                <div style={{ padding: '4px 16px 12px' }}>
-                  <label style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.4px', fontWeight: 600 }}>Strefa Wiedzy (Drive)</label>
-                  <div style={{ display: 'flex', gap: '8px', marginTop: '6px' }}>
-                    <input
-                      type="url"
-                      defaultValue={g.drive_link || ''}
-                      placeholder="https://drive.google.com/..."
-                      onBlur={e => { if (e.target.value !== (g.drive_link || '')) zapiszDriveLink(g.id, e.target.value); }}
-                      style={{ flex: 1, fontSize: '12px', padding: '8px 10px', borderRadius: '8px', border: '0.5px solid var(--border)', fontFamily: 'Jost, sans-serif' }}
-                    />
-                  </div>
-                </div>
-              </div>
-            ))}
+            <div style={{ background: 'white', borderRadius: '12px', border: '0.5px solid var(--border)', overflow: 'hidden' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+                <thead>
+                  <tr style={{ background: 'var(--bg)', borderBottom: '0.5px solid var(--border)' }}>
+                    {['ID', 'Nazwa', 'Miasto', 'Edycja', 'Tryb', 'Strefa Wiedzy (Drive)', ''].map((h, i) => (
+                      <th key={i} style={{ padding: '8px 12px', textAlign: 'left', fontWeight: 600, color: 'var(--text-muted)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.3px', whiteSpace: 'nowrap' }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {grupy.map((g, idx) => (
+                    <tr key={g.id} style={{ borderBottom: idx < grupy.length - 1 ? '0.5px solid var(--border-soft)' : 'none', background: idx % 2 === 0 ? 'white' : '#fdf9f8' }}>
+                      <td style={{ padding: '9px 12px', fontWeight: 700, color: 'var(--brand)', width: '40px' }}>{g.id}</td>
+                      <td style={{ padding: '9px 12px', fontWeight: 500, color: 'var(--text)', whiteSpace: 'nowrap' }}>{g.nazwa}</td>
+                      <td style={{ padding: '9px 12px', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>{g.miasto}</td>
+                      <td style={{ padding: '9px 12px', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>{g.edycja}</td>
+                      <td style={{ padding: '7px 12px', whiteSpace: 'nowrap' }}>
+                        <select defaultValue={g.tryb || 'stacjonarny'}
+                          onChange={async e => { await supabase.from('grupy').update({ tryb: e.target.value }).eq('id', g.id); pobierzGrupy(); }}
+                          style={{ fontSize: '11px', padding: '3px 8px', border: '0.5px solid var(--border)', borderRadius: '6px', fontFamily: 'Jost, sans-serif', background: 'white',
+                            color: g.tryb === 'online' ? '#1565c0' : g.tryb === 'hybrydowy' ? '#c8a84b' : 'var(--text)' }}>
+                          <option value="stacjonarny">📍 Stacjonarny</option>
+                          <option value="online">🌐 Online</option>
+                          <option value="hybrydowy">⚡ Hybrydowy</option>
+                        </select>
+                      </td>
+                      <td style={{ padding: '6px 12px', minWidth: '220px' }}>
+                        <input type="url" defaultValue={g.drive_link || ''} placeholder="https://drive.google.com/..."
+                          onBlur={e => { if (e.target.value !== (g.drive_link || '')) zapiszDriveLink(g.id, e.target.value); }}
+                          style={{ width: '100%', fontSize: '11px', padding: '5px 8px', borderRadius: '6px', border: '0.5px solid var(--border)', fontFamily: 'Jost, sans-serif', background: g.drive_link ? '#f0faf4' : 'white' }} />
+                      </td>
+                      <td style={{ padding: '9px 12px', whiteSpace: 'nowrap' }}>
+                        <span style={{ fontSize: '11px', color: 'var(--text-muted)', background: 'var(--bg)', padding: '2px 8px', borderRadius: '6px', border: '0.5px solid var(--border)' }}>
+                          {kursanci.filter(k => k.grupa_id === g.id).length} os.
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </>
         )}
 
