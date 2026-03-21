@@ -1239,3 +1239,10 @@
    .tabela-zjazdow tr:hover td {
      background: #fdf6f5;
    }
+   
+   /* Ukryj bottom-nav prowadzącego na desktopie */
+   @media (min-width: 900px) {
+     .biuro-mobile-nav {
+       display: none !important;
+     }
+   }
