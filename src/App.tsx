@@ -2046,6 +2046,7 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
   const [zwinieteGrupy, setZwinieteGrupy] = useState<Set<number>>(new Set());
   const [edytowanyKursant, setEdytowanyKursant] = useState<{ id: number; imie: string; nazwisko: string; email: string; telefon: string } | null>(null);
   const [szukajKursant, setSzukajKursant] = useState('');
+  const [dostepnoscData, setDostepnoscData] = useState('');
   const [kalMiesiac, setKalMiesiac] = useState(() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`; });
   const [tabelaZapis, setTabelaZapis] = useState(false);
   const [tabelaWyniki, setTabelaWyniki] = useState<{ nr: string; status: string }[]>([]);
@@ -3349,6 +3350,86 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
         {/* ZAKŁADKA: Prowadzący */}
         {aktywnaZakladka === 'prowadzacy' && (
           <>
+            {/* ── NARZĘDZIE DOSTĘPNOŚCI ── */}
+            <div style={{ background: 'white', border: '0.5px solid var(--border)', borderRadius: '14px', padding: '18px 20px', marginBottom: '24px' }}>
+              <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '18px', color: 'var(--brand-dark)', marginBottom: '4px' }}>Kto ma wolne w danym dniu?</div>
+              <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '14px' }}>Wpisz datę — zobaczysz którzy prowadzący nie mają w tym dniu zajęć</div>
+              <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+                <input type="date" value={dostepnoscData} onChange={e => setDostepnoscData(e.target.value)}
+                  style={{ fontSize: '13px', padding: '8px 12px', border: '0.5px solid var(--border)', borderRadius: '10px', fontFamily: 'Jost, sans-serif' }} />
+                {dostepnoscData && <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                  {new Date(dostepnoscData + 'T12:00:00').toLocaleDateString('pl-PL', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+                </span>}
+              </div>
+
+              {dostepnoscData && (() => {
+                // Zbierz id prowadzących zajętych w tym dniu
+                const zajeciIds = new Set<number>();
+                zjazdy.forEach(z => {
+                  const dni = [z.data_dzien1, z.data_dzien2].filter(Boolean);
+                  if (dni.some(d => d && d.substring(0, 10) === dostepnoscData)) {
+                    (z.prowadzacy || []).forEach(p => zajeciIds.add(p.id));
+                  }
+                });
+
+                const wolni = prowadzacy.filter(p => !zajeciIds.has(p.id));
+                const zajeci = prowadzacy.filter(p => zajeciIds.has(p.id));
+
+                return (
+                  <div style={{ marginTop: '16px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                    {/* Wolni */}
+                    <div>
+                      <div style={{ fontSize: '11px', fontWeight: 700, color: '#2e7d32', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px' }}>
+                        ✓ Wolni ({wolni.length})
+                      </div>
+                      {wolni.length === 0
+                        ? <div style={{ fontSize: '12px', color: 'var(--text-muted)', fontStyle: 'italic' }}>Wszyscy zajęci</div>
+                        : wolni.map(p => (
+                          <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '7px 10px', background: '#f0faf4', borderRadius: '8px', marginBottom: '4px', border: '0.5px solid #c8e6c9' }}>
+                            {p.avatar_url
+                              ? <img src={p.avatar_url} style={{ width: '28px', height: '28px', borderRadius: '50%', objectFit: 'cover' }} alt="" />
+                              : <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#c8e6c9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 700, color: '#2e7d32', flexShrink: 0 }}>{p.imie[0]}{p.nazwisko[0]}</div>
+                            }
+                            <span style={{ fontSize: '13px', fontWeight: 500, color: '#1b5e20' }}>{p.imie} {p.nazwisko}</span>
+                          </div>
+                        ))
+                      }
+                    </div>
+                    {/* Zajęci */}
+                    <div>
+                      <div style={{ fontSize: '11px', fontWeight: 700, color: '#c62828', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px' }}>
+                        ✕ Zajęci ({zajeci.length})
+                      </div>
+                      {zajeci.length === 0
+                        ? <div style={{ fontSize: '12px', color: 'var(--text-muted)', fontStyle: 'italic' }}>Nikt nie ma zajęć</div>
+                        : zajeci.map(p => {
+                          // Pokaż w jakich grupach ma zajęcia tego dnia
+                          const grupeNazwy = zjazdy
+                            .filter(z => {
+                              const dni = [z.data_dzien1, z.data_dzien2].filter(Boolean);
+                              return dni.some(d => d && d.substring(0, 10) === dostepnoscData) && (z.prowadzacy || []).some(x => x.id === p.id);
+                            })
+                            .map(z => grupy.find(g => g.id === z.grupa_id)?.nazwa || '?');
+                          return (
+                            <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '7px 10px', background: '#fff5f5', borderRadius: '8px', marginBottom: '4px', border: '0.5px solid #ffcdd2' }}>
+                              {p.avatar_url
+                                ? <img src={p.avatar_url} style={{ width: '28px', height: '28px', borderRadius: '50%', objectFit: 'cover' }} alt="" />
+                                : <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#ffcdd2', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 700, color: '#c62828', flexShrink: 0 }}>{p.imie[0]}{p.nazwisko[0]}</div>
+                              }
+                              <div>
+                                <div style={{ fontSize: '13px', fontWeight: 500, color: '#b71c1c' }}>{p.imie} {p.nazwisko}</div>
+                                <div style={{ fontSize: '10px', color: '#e57373' }}>{grupeNazwy.join(', ')}</div>
+                              </div>
+                            </div>
+                          );
+                        })
+                      }
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
+
             <h2 className="page-title">Nowy prowadzący</h2>
             <form className="admin-form" onSubmit={dodajProwadzacego}>
               <div style={{ display: 'flex', gap: '12px' }}>
