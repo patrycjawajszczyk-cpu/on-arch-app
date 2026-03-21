@@ -626,6 +626,10 @@
    }
    
    .szczegoly-header {
+     background: var(--brand-dark);
+     border-radius: 16px;
+     padding: 24px 20px 20px;
+     text-align: center;
      margin-bottom: 20px;
    }
    
@@ -633,14 +637,14 @@
      font-family: 'Cormorant Garamond', serif;
      font-size: 26px;
      font-weight: 500;
-     color: var(--text);
+     color: #f5ece8;
      margin: 8px 0 6px;
      line-height: 1.25;
    }
    
    .szczegoly-meta {
      font-size: 11px;
-     color: var(--text-muted);
+     color: rgba(255,255,255,0.55);
      letter-spacing: 0.3px;
    }
    
@@ -649,6 +653,14 @@
      color: var(--text);
      line-height: 1.75;
      white-space: pre-line;
+   }
+   
+   .szczegoly-tresc a {
+     color: var(--brand);
+     text-decoration: underline;
+     text-decoration-style: dotted;
+     text-underline-offset: 3px;
+     word-break: break-all;
    }
    
    /* ─── Chat ──────────────────────────────────────────── */
