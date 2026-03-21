@@ -4572,7 +4572,7 @@ function SekcjaPrzygotowania({ zjazd, user, kursant, czyProwadzacy = false }: {
       {/* Materiały do przyswojenia */}
       <div style={{ background: '#eef4ff', border: '0.5px solid #c5d8f7', borderRadius: '12px', padding: '14px 16px', marginBottom: '12px', display: materialy.length === 0 && !czyProwadzacy ? 'none' : 'block' }}>
         <div style={{ fontWeight: 700, fontSize: '12px', color: '#1565c0', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-          📚 Materiały do przyswojenia przed zjazdem
+          📚 Materiały do przyswojenia przed spotkaniem „na żywo"
         </div>
         {materialy.length === 0 && !czyProwadzacy && (
           <div style={{ fontSize: '12px', color: '#5c85c8', fontStyle: 'italic' }}>Materiały zostaną dodane przez prowadzącego.</div>
