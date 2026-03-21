@@ -2048,6 +2048,7 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
   const [kalFiltrGrupa, setKalFiltrGrupa] = useState('');
   const [kalFiltrProwadzacy, setKalFiltrProwadzacy] = useState('');
   const [zwinieteGrupy, setZwinieteGrupy] = useState<Set<number>>(new Set());
+  const [zwinieteZjazdy, setZwinieteZjazdy] = useState<Set<number>>(new Set());
   const [edytowanyKursant, setEdytowanyKursant] = useState<{ id: number; imie: string; nazwisko: string; email: string; telefon: string } | null>(null);
   const [szukajKursant, setSzukajKursant] = useState('');
   const [dostepnoscData, setDostepnoscData] = useState('');
@@ -2865,15 +2866,24 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
 
                 {/* Filtr po grupie */}
                 {grupy.length > 1 && (
-                  <div className="login-field" style={{ marginBottom: '16px' }}>
-                    <label>Filtruj po grupie</label>
-                    <select
-                      value={(nowyZjazd as any)._filterGrupa || ''}
-                      onChange={e => setNowyZjazd({ ...nowyZjazd, ...(nowyZjazd as any), _filterGrupa: e.target.value })}
-                    >
-                      <option value="">Wszystkie grupy</option>
-                      {grupy.map(g => <option key={g.id} value={g.id}>{g.nazwa}</option>)}
-                    </select>
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap' }}>
+                    <div className="login-field" style={{ marginBottom: 0, flex: 1 }}>
+                      <select
+                        value={(nowyZjazd as any)._filterGrupa || ''}
+                        onChange={e => setNowyZjazd({ ...nowyZjazd, ...(nowyZjazd as any), _filterGrupa: e.target.value })}
+                        style={{ fontSize: '12px', padding: '6px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif', background: 'white', width: '100%' }}>
+                        <option value="">Wszystkie grupy</option>
+                        {grupy.map(g => <option key={g.id} value={g.id}>{g.nazwa}</option>)}
+                      </select>
+                    </div>
+                    <button onClick={() => setZwinieteZjazdy(new Set(grupy.map(g => g.id)))}
+                      style={{ fontSize: '11px', color: 'var(--text-muted)', background: 'none', border: '0.5px solid var(--border)', borderRadius: '6px', padding: '6px 10px', cursor: 'pointer', fontFamily: 'Jost, sans-serif', whiteSpace: 'nowrap' }}>
+                      Zwiń wszystkie
+                    </button>
+                    <button onClick={() => setZwinieteZjazdy(new Set())}
+                      style={{ fontSize: '11px', color: 'var(--text-muted)', background: 'none', border: '0.5px solid var(--border)', borderRadius: '6px', padding: '6px 10px', cursor: 'pointer', fontFamily: 'Jost, sans-serif', whiteSpace: 'nowrap' }}>
+                      Rozwiń wszystkie
+                    </button>
                   </div>
                 )}
 
@@ -2883,17 +2893,21 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
                   .map(g => {
                     const zjazdyGrupy = zjazdy.filter(z => z.grupa_id === g.id);
                     if (zjazdyGrupy.length === 0) return null;
+                    const zwinieta = zwinieteZjazdy.has(g.id);
                     return (
-                      <div key={g.id} style={{ marginBottom: '24px' }}>
-                        {/* Nagłówek grupy */}
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
-                          <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '18px', fontWeight: 400, color: 'var(--brand-dark)' }}>{g.nazwa}</span>
+                      <div key={g.id} style={{ marginBottom: '12px' }}>
+                        {/* Nagłówek grupy — klikalny */}
+                        <div onClick={() => setZwinieteZjazdy(prev => { const next = new Set(prev); next.has(g.id) ? next.delete(g.id) : next.add(g.id); return next; })}
+                          style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 14px', background: 'white', borderRadius: zwinieta ? '12px' : '12px 12px 0 0', border: '0.5px solid var(--border)', cursor: 'pointer', userSelect: 'none' as const }}>
+                          <span style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'inline-block', transform: zwinieta ? 'rotate(-90deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}>▾</span>
+                          <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '17px', fontWeight: 400, color: 'var(--brand-dark)', flex: 1 }}>{g.nazwa}</span>
                           <span style={{ fontSize: '11px', color: 'var(--text-muted)', background: 'var(--bg)', padding: '2px 8px', borderRadius: '10px', border: '0.5px solid var(--border)' }}>
                             {zjazdyGrupy.length} zjazdów
                           </span>
                         </div>
-                        {/* Tabela */}
-                        <div style={{ background: 'white', borderRadius: '12px', border: '0.5px solid var(--border)', overflow: 'hidden' }}>
+                        {/* Tabela + podsumowanie — zwijane */}
+                        {!zwinieta && (<>
+                        <div style={{ background: 'white', borderRadius: '0', border: '0.5px solid var(--border)', borderTop: 'none', overflow: 'hidden' }}>
                           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
                             <thead>
                               <tr style={{ background: 'var(--bg)', borderBottom: '0.5px solid var(--border)' }}>
@@ -2956,15 +2970,14 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
                           };
                           return (
                             <div style={{ display: 'flex', gap: '16px', padding: '8px 14px', background: 'var(--brand-light)', borderRadius: '0 0 12px 12px', flexWrap: 'wrap' }}>
-                              <span style={{ fontSize: '11px', color: 'var(--brand-dark)', fontWeight: 600 }}>
-                                Łącznie: {fmt(suma)}
-                              </span>
+                              <span style={{ fontSize: '11px', color: 'var(--brand-dark)', fontWeight: 600 }}>Łącznie: {fmt(suma)}</span>
                               {sumaD1 > 0 && <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Dzień 1: {fmt(sumaD1)}</span>}
                               {sumaD2 > 0 && <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Dzień 2: {fmt(sumaD2)}</span>}
                               <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>({zjazdyGrupy.length} zjazdów)</span>
                             </div>
                           );
                         })()}
+                        </>)}
                       </div>
                     );
                   })}
