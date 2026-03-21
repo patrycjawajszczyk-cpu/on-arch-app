@@ -2550,8 +2550,9 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
                   const startDow = (pierwszyDzien.getDay() + 6) % 7; // Pon=0
                   const liczbaDni = ostatniDzien.getDate();
 
-                  // Filtruj zjazdy
+                  // Filtruj zjazdy — tylko nadchodzące + tylko z filtrami
                   const zjazdyFiltr = zjazdy.filter(z => {
+                    if (z.status === 'zakonczony') return false;
                     if (kalFiltrGrupa && z.grupa_id !== parseInt(kalFiltrGrupa)) return false;
                     if (kalFiltrProwadzacy && !(z.prowadzacy || []).some(p => p.id === parseInt(kalFiltrProwadzacy))) return false;
                     return true;
