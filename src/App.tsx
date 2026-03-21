@@ -2049,6 +2049,7 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
   const [kalFiltrProwadzacy, setKalFiltrProwadzacy] = useState('');
   const [zwinieteGrupy, setZwinieteGrupy] = useState<Set<number>>(new Set());
   const [zwinieteZjazdy, setZwinieteZjazdy] = useState<Set<number>>(new Set());
+  const [zwinieteZadania, setZwinieteZadania] = useState<Set<number>>(new Set());
   const [edytowanyKursant, setEdytowanyKursant] = useState<{ id: number; imie: string; nazwisko: string; email: string; telefon: string } | null>(null);
   const [szukajKursant, setSzukajKursant] = useState('');
   const [dostepnoscData, setDostepnoscData] = useState('');
@@ -2459,40 +2460,105 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
           <>
             {edytowane ? (
               <>
-                <h2 className="page-title">Edytuj ogloszenie</h2>
+                <h2 className="page-title">Edytuj ogłoszenie</h2>
                 <form className="admin-form" onSubmit={zapiszEdycje}>
-                  <div className="login-field"><label>Typ</label><select value={edytowane.typ} onChange={e => setEdytowane({ ...edytowane, typ: e.target.value })}><option>Informacja</option><option>Pilne</option><option>Zmiana</option></select></div>
-                  <div className="login-field"><label>Dla kogo</label><select value={edytowane.grupa_id ?? ''} onChange={e => setEdytowane({ ...edytowane, grupa_id: e.target.value ? parseInt(e.target.value) : null })}><option value="">Wszystkie grupy</option>{grupy.map(g => <option key={g.id} value={g.id}>{g.nazwa}</option>)}</select></div>
-                  <div className="login-field"><label>Tytul</label><input type="text" value={edytowane.tytul} onChange={e => setEdytowane({ ...edytowane, tytul: e.target.value })} required /></div>
-                  <div className="login-field"><label>Krotki opis</label><input type="text" value={edytowane.tresc} onChange={e => setEdytowane({ ...edytowane, tresc: e.target.value })} required /></div>
-                  <div className="login-field"><label>Pelna tresc</label><textarea value={edytowane.szczegoly} onChange={e => setEdytowane({ ...edytowane, szczegoly: e.target.value })} rows={4} /></div>
-                  <button className="login-btn" type="submit">Zapisz zmiany</button>
-                  <button className="btn-link" onClick={() => setEdytowane(null)}>Anuluj</button>
+                  <div style={{ display: 'flex', gap: '10px' }}>
+                    <div className="login-field" style={{ flex: 1 }}><label>Typ</label><select value={edytowane.typ} onChange={e => setEdytowane({ ...edytowane, typ: e.target.value })}><option>Informacja</option><option>Pilne</option><option>Zmiana</option></select></div>
+                    <div className="login-field" style={{ flex: 2 }}><label>Dla kogo</label><select value={edytowane.grupa_id ?? ''} onChange={e => setEdytowane({ ...edytowane, grupa_id: e.target.value ? parseInt(e.target.value) : null })}><option value="">Wszystkie grupy</option>{grupy.map(g => <option key={g.id} value={g.id}>{g.nazwa}</option>)}</select></div>
+                  </div>
+                  <div className="login-field"><label>Tytuł</label><input type="text" value={edytowane.tytul} onChange={e => setEdytowane({ ...edytowane, tytul: e.target.value })} required /></div>
+                  <div className="login-field"><label>Krótki opis</label><input type="text" value={edytowane.tresc} onChange={e => setEdytowane({ ...edytowane, tresc: e.target.value })} required /></div>
+                  <div className="login-field"><label>Pełna treść</label><textarea value={edytowane.szczegoly} onChange={e => setEdytowane({ ...edytowane, szczegoly: e.target.value })} rows={4} /></div>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <button className="login-btn" type="submit" style={{ flex: 1 }}>Zapisz zmiany</button>
+                    <button className="btn-link" onClick={() => setEdytowane(null)}>Anuluj</button>
+                  </div>
                 </form>
               </>
             ) : (
               <>
-                <h2 className="page-title">Nowe ogloszenie</h2>
-                <form className="admin-form" onSubmit={dodajOgloszenie}>
-                  <div className="login-field"><label>Typ</label><select value={noweOgl.typ} onChange={e => setNoweOgl({ ...noweOgl, typ: e.target.value })}><option>Informacja</option><option>Pilne</option><option>Zmiana</option></select></div>
-                  <div className="login-field"><label>Dla kogo</label><select value={noweOgl.grupa_id} onChange={e => setNoweOgl({ ...noweOgl, grupa_id: e.target.value })}><option value="">Wszystkie grupy</option>{grupy.map(g => <option key={g.id} value={g.id}>{g.nazwa}</option>)}</select></div>
-                  <div className="login-field"><label>Tytul</label><input type="text" value={noweOgl.tytul} onChange={e => setNoweOgl({ ...noweOgl, tytul: e.target.value })} required /></div>
-                  <div className="login-field"><label>Krotki opis</label><input type="text" value={noweOgl.tresc} onChange={e => setNoweOgl({ ...noweOgl, tresc: e.target.value })} required /></div>
-                  <div className="login-field"><label>Pelna tresc</label><textarea value={noweOgl.szczegoly} onChange={e => setNoweOgl({ ...noweOgl, szczegoly: e.target.value })} rows={4} /></div>
-                  <button className="login-btn" type="submit">Dodaj ogloszenie</button>
-                </form>
-                <h2 className="page-title" style={{ marginTop: '24px' }}>Lista ogloszen</h2>
-                {ogloszenia.map(o => (
-                  <div key={o.id} className="profil-card" style={{ marginBottom: '8px' }}>
-                    <div className="profil-row"><span className="profil-lbl">Tytul</span><span className="profil-val">{o.tytul}</span></div>
-                    <div className="profil-row"><span className="profil-lbl">Typ</span><span className="profil-val">{o.typ}</span></div>
-                    <div className="profil-row"><span className="profil-lbl">Dla</span><span className="profil-val" style={{ color: o.grupa_id ? 'var(--brand)' : 'var(--text-muted)' }}>{o.grupa_id ? (grupy.find(g => g.id === o.grupa_id)?.nazwa || 'Grupa') : 'Wszystkie grupy'}</span></div>
-                    <div style={{ display: 'flex', gap: '8px', margin: '8px 16px 12px' }}>
-                      <button className="login-btn" style={{ flex: 1, padding: '8px' }} onClick={() => { setEdytowane(o); setKomunikat(''); }}>Edytuj</button>
-                      <button className="btn-wyloguj" style={{ flex: 1, padding: '8px', marginTop: 0 }} onClick={() => usunOgloszenie(o.id)}>Usun</button>
+                {/* Formularz + lista obok siebie na desktopie */}
+                <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'flex-start' }}>
+                  {/* Formularz nowego ogłoszenia */}
+                  <div style={{ background: 'white', border: '0.5px solid var(--border)', borderRadius: '14px', padding: '16px 20px', minWidth: '280px', flex: '1' }}>
+                    <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text)', marginBottom: '12px' }}>Nowe ogłoszenie</div>
+                    <form onSubmit={dodajOgloszenie}>
+                      <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
+                        <select value={noweOgl.typ} onChange={e => setNoweOgl({ ...noweOgl, typ: e.target.value })}
+                          style={{ flex: 1, fontSize: '12px', padding: '7px 8px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif', background: 'white' }}>
+                          <option>Informacja</option><option>Pilne</option><option>Zmiana</option>
+                        </select>
+                        <select value={noweOgl.grupa_id} onChange={e => setNoweOgl({ ...noweOgl, grupa_id: e.target.value })}
+                          style={{ flex: 2, fontSize: '12px', padding: '7px 8px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif', background: 'white' }}>
+                          <option value="">Wszystkie grupy</option>
+                          {grupy.map(g => <option key={g.id} value={g.id}>{g.nazwa}</option>)}
+                        </select>
+                      </div>
+                      <input type="text" value={noweOgl.tytul} onChange={e => setNoweOgl({ ...noweOgl, tytul: e.target.value })} placeholder="Tytuł *" required
+                        style={{ width: '100%', fontSize: '12px', padding: '7px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif', marginBottom: '8px' }} />
+                      <input type="text" value={noweOgl.tresc} onChange={e => setNoweOgl({ ...noweOgl, tresc: e.target.value })} placeholder="Krótki opis *" required
+                        style={{ width: '100%', fontSize: '12px', padding: '7px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif', marginBottom: '8px' }} />
+                      <textarea value={noweOgl.szczegoly} onChange={e => setNoweOgl({ ...noweOgl, szczegoly: e.target.value })} placeholder="Pełna treść (opcjonalnie)" rows={3}
+                        style={{ width: '100%', fontSize: '12px', padding: '7px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif', resize: 'vertical', marginBottom: '8px' }} />
+                      <button type="submit" style={{ width: '100%', padding: '8px', background: 'var(--brand)', color: 'white', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 600, cursor: 'pointer', fontFamily: 'Jost, sans-serif' }}>
+                        + Dodaj ogłoszenie
+                      </button>
+                    </form>
+                  </div>
+
+                  {/* Lista ogłoszeń */}
+                  <div style={{ flex: '2', minWidth: '300px' }}>
+                    <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text)', marginBottom: '10px' }}>
+                      Lista ogłoszeń ({ogloszenia.length})
+                    </div>
+                    <div style={{ background: 'white', borderRadius: '12px', border: '0.5px solid var(--border)', overflow: 'hidden' }}>
+                      {ogloszenia.length === 0 ? (
+                        <div style={{ padding: '20px', textAlign: 'center', fontSize: '13px', color: 'var(--text-muted)' }}>Brak ogłoszeń</div>
+                      ) : (
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+                          <thead>
+                            <tr style={{ background: 'var(--bg)', borderBottom: '0.5px solid var(--border)' }}>
+                              {['Tytuł', 'Typ', 'Dla', 'Data', ''].map((h, i) => (
+                                <th key={i} style={{ padding: '8px 12px', textAlign: 'left', fontWeight: 600, color: 'var(--text-muted)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.3px', whiteSpace: 'nowrap' }}>{h}</th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {ogloszenia.map((o, idx) => (
+                              <tr key={o.id} style={{ borderBottom: idx < ogloszenia.length - 1 ? '0.5px solid var(--border-soft)' : 'none', background: idx % 2 === 0 ? 'white' : '#fdf9f8' }}>
+                                <td style={{ padding: '9px 12px', maxWidth: '200px' }}>
+                                  <div style={{ fontWeight: 500, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{o.tytul}</div>
+                                  {o.nowe && <span style={{ fontSize: '9px', background: 'var(--brand)', color: 'white', padding: '1px 5px', borderRadius: '4px', fontWeight: 700 }}>NOWE</span>}
+                                </td>
+                                <td style={{ padding: '9px 12px', whiteSpace: 'nowrap' }}>
+                                  <span style={{ fontSize: '10px', fontWeight: 600, padding: '2px 7px', borderRadius: '8px',
+                                    background: o.typ === 'Pilne' ? '#ffeaea' : o.typ === 'Zmiana' ? '#fef9ec' : 'var(--brand-light)',
+                                    color: o.typ === 'Pilne' ? '#c62828' : o.typ === 'Zmiana' ? '#c8a84b' : 'var(--brand-dark)' }}>
+                                    {o.typ}
+                                  </span>
+                                </td>
+                                <td style={{ padding: '9px 12px', fontSize: '11px', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
+                                  {o.grupa_id ? grupy.find(g => g.id === o.grupa_id)?.nazwa || '—' : 'Wszystkie'}
+                                </td>
+                                <td style={{ padding: '9px 12px', fontSize: '11px', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
+                                  {new Date(o.data_utworzenia).toLocaleDateString('pl-PL', { day: 'numeric', month: 'short' })}
+                                </td>
+                                <td style={{ padding: '9px 12px', whiteSpace: 'nowrap' }}>
+                                  <button onClick={() => { setEdytowane(o); setKomunikat(''); }}
+                                    style={{ fontSize: '11px', padding: '3px 10px', border: '0.5px solid var(--border)', borderRadius: '6px', background: 'white', cursor: 'pointer', color: 'var(--brand)', fontFamily: 'Jost, sans-serif', marginRight: '4px' }}>
+                                    Edytuj
+                                  </button>
+                                  <button onClick={() => usunOgloszenie(o.id)}
+                                    style={{ fontSize: '11px', padding: '3px 6px', border: 'none', borderRadius: '6px', background: 'none', cursor: 'pointer', color: '#e57373' }}>×</button>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      )}
                     </div>
                   </div>
-                ))}
+                </div>
               </>
             )}
           </>
@@ -3292,77 +3358,124 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
         {/* ZAKŁADKA: Zadania */}
         {aktywnaZakladka === 'zadania' && (
           <>
-            <h2 className="page-title">Nowe zadanie</h2>
-            <form className="admin-form" onSubmit={dodajZadanie}>
-              <div className="login-field">
-                <label>Grupa</label>
-                <select value={noweZadanie.grupa_id} onChange={e => { setNoweZadanie({ ...noweZadanie, grupa_id: e.target.value }); setWybranaGrupaZadan(e.target.value); }} required>
-                  <option value="">Wybierz grupę</option>
-                  {grupy.map(g => <option key={g.id} value={g.id}>{g.nazwa}</option>)}
-                </select>
-              </div>
-              <div className="login-field"><label>Tytuł zadania</label><input type="text" value={noweZadanie.tytul} onChange={e => setNoweZadanie({ ...noweZadanie, tytul: e.target.value })} placeholder="np. Przygotuj rzut mieszkania" required /></div>
-              <div className="login-field"><label>Opis / instrukcja</label><textarea value={noweZadanie.opis} onChange={e => setNoweZadanie({ ...noweZadanie, opis: e.target.value })} rows={4} placeholder="Co dokładnie należy przygotować..." /></div>
-              <div className="login-field"><label>Termin (opcjonalnie)</label><input type="date" value={noweZadanie.termin} onChange={e => setNoweZadanie({ ...noweZadanie, termin: e.target.value })} /></div>
-              <div className="login-field"><label>Link do materiałów (opcjonalnie)</label><input type="url" value={noweZadanie.link_materialow} onChange={e => setNoweZadanie({ ...noweZadanie, link_materialow: e.target.value })} placeholder="https://drive.google.com/..." /></div>
-              <div className="login-field"><label>Typ</label><select value={noweZadanie.typ} onChange={e => setNoweZadanie({ ...noweZadanie, typ: e.target.value })}><option value="zadanie">Zadanie domowe</option><option value="praca_zaliczeniowa">Praca zaliczeniowa</option></select></div>
-              <button className="login-btn" type="submit">Dodaj zadanie</button>
-            </form>
-
-            <h2 className="page-title" style={{ marginTop: '24px' }}>Lista zadań</h2>
-            <div className="login-field" style={{ marginBottom: '12px' }}>
-              <label>Filtruj po grupie</label>
-              <select value={wybranaGrupaZadan} onChange={e => setWybranaGrupaZadan(e.target.value)}>
-                <option value="">Wszystkie grupy</option>
-                {grupy.map(g => <option key={g.id} value={g.id}>{g.nazwa}</option>)}
-              </select>
-            </div>
-
-            {zadania
-              .filter(z => !wybranaGrupaZadan || z.grupa_id === parseInt(wybranaGrupaZadan))
-              .map(z => {
-                const odp = odpowiedziZadan.filter(o => o.zadanie_id === z.id);
-                return (
-                  <div key={z.id} className="profil-card" style={{ marginBottom: '10px' }}>
-                    <div className="profil-row">
-                      <span className="profil-lbl" style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '16px', fontWeight: 500 }}>{z.tytul}</span>
-                      <button onClick={() => usunZadanie(z.id)} style={{ background: 'none', border: 'none', color: '#c62828', cursor: 'pointer', fontSize: '18px' }}>×</button>
-                    </div>
-                    <div className="profil-row"><span className="profil-lbl">Grupa</span><span className="profil-val">{grupy.find(g => g.id === z.grupa_id)?.nazwa || '-'}</span></div>
-                    {z.termin && <div className="profil-row"><span className="profil-lbl">Termin</span><span className="profil-val">{new Date(z.termin).toLocaleDateString('pl-PL')}</span></div>}
-                    {z.link_materialow && (
-                      <div className="profil-row">
-                        <span className="profil-lbl">Materiały</span>
-                        <a href={z.link_materialow} target="_blank" rel="noopener noreferrer" style={{ fontSize: '12px', color: 'var(--brand)' }}>Otwórz →</a>
-                      </div>
-                    )}
-                    {/* Odpowiedzi kursantów */}
-                    {odp.length > 0 && (
-                      <div style={{ margin: '8px 16px 12px', background: '#f8f8f8', borderRadius: '10px', padding: '10px 12px' }}>
-                        <p style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: '8px' }}>
-                          Przesłane prace ({odp.length})
-                        </p>
-                        {odp.map(o => (
-                          <div key={o.id} style={{ marginBottom: '8px', paddingBottom: '8px', borderBottom: '0.5px solid var(--border)' }}>
-                            <p style={{ fontSize: '13px', fontWeight: 500 }}>{o.imie} {o.nazwisko}</p>
-                            <a href={o.link_pracy} target="_blank" rel="noopener noreferrer"
-                              style={{ fontSize: '12px', color: 'var(--brand)', textDecoration: 'underline', wordBreak: 'break-all' }}>
-                              {o.link_pracy}
-                            </a>
-                            {o.komentarz && <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '2px' }}>{o.komentarz}</p>}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    {odp.length === 0 && (
-                      <div style={{ padding: '0 16px 12px' }}>
-                        <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Brak przesłanych prac</span>
-                      </div>
-                    )}
+            <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'flex-start' }}>
+              {/* Formularz */}
+              <div style={{ background: 'white', border: '0.5px solid var(--border)', borderRadius: '14px', padding: '16px 20px', minWidth: '280px', flex: '1' }}>
+                <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text)', marginBottom: '12px' }}>Nowe zadanie</div>
+                <form onSubmit={dodajZadanie}>
+                  <select value={noweZadanie.grupa_id} onChange={e => { setNoweZadanie({ ...noweZadanie, grupa_id: e.target.value }); setWybranaGrupaZadan(e.target.value); }} required
+                    style={{ width: '100%', fontSize: '12px', padding: '7px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif', background: 'white', marginBottom: '8px' }}>
+                    <option value="">Wybierz grupę *</option>
+                    {grupy.map(g => <option key={g.id} value={g.id}>{g.nazwa}</option>)}
+                  </select>
+                  <input type="text" value={noweZadanie.tytul} onChange={e => setNoweZadanie({ ...noweZadanie, tytul: e.target.value })} placeholder="Tytuł zadania *" required
+                    style={{ width: '100%', fontSize: '12px', padding: '7px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif', marginBottom: '8px' }} />
+                  <textarea value={noweZadanie.opis} onChange={e => setNoweZadanie({ ...noweZadanie, opis: e.target.value })} placeholder="Opis / instrukcja" rows={3}
+                    style={{ width: '100%', fontSize: '12px', padding: '7px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif', resize: 'vertical', marginBottom: '8px' }} />
+                  <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
+                    <input type="date" value={noweZadanie.termin} onChange={e => setNoweZadanie({ ...noweZadanie, termin: e.target.value })}
+                      style={{ flex: 1, fontSize: '12px', padding: '7px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif' }} />
+                    <select value={noweZadanie.typ} onChange={e => setNoweZadanie({ ...noweZadanie, typ: e.target.value })}
+                      style={{ flex: 1, fontSize: '12px', padding: '7px 8px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif', background: 'white' }}>
+                      <option value="zadanie">Zadanie domowe</option>
+                      <option value="praca_zaliczeniowa">Praca zaliczeniowa</option>
+                    </select>
                   </div>
-                );
-              })
-            }
+                  <input type="url" value={noweZadanie.link_materialow} onChange={e => setNoweZadanie({ ...noweZadanie, link_materialow: e.target.value })} placeholder="Link do materiałów (opcjonalnie)"
+                    style={{ width: '100%', fontSize: '12px', padding: '7px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif', marginBottom: '8px' }} />
+                  <button type="submit" style={{ width: '100%', padding: '8px', background: 'var(--brand)', color: 'white', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 600, cursor: 'pointer', fontFamily: 'Jost, sans-serif' }}>
+                    + Dodaj zadanie
+                  </button>
+                </form>
+              </div>
+
+              {/* Lista zadań */}
+              <div style={{ flex: '2', minWidth: '300px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px', flexWrap: 'wrap', gap: '8px' }}>
+                  <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text)' }}>Lista zadań ({zadania.length})</div>
+                  <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                    <select value={wybranaGrupaZadan} onChange={e => setWybranaGrupaZadan(e.target.value)}
+                      style={{ fontSize: '11px', padding: '5px 8px', border: '0.5px solid var(--border)', borderRadius: '7px', fontFamily: 'Jost, sans-serif', background: 'white' }}>
+                      <option value="">Wszystkie grupy</option>
+                      {grupy.map(g => <option key={g.id} value={g.id}>{g.nazwa}</option>)}
+                    </select>
+                    <button onClick={() => setZwinieteZadania(new Set(grupy.map(g => g.id)))}
+                      style={{ fontSize: '10px', color: 'var(--text-muted)', background: 'none', border: '0.5px solid var(--border)', borderRadius: '6px', padding: '4px 8px', cursor: 'pointer', fontFamily: 'Jost, sans-serif', whiteSpace: 'nowrap' }}>Zwiń</button>
+                    <button onClick={() => setZwinieteZadania(new Set())}
+                      style={{ fontSize: '10px', color: 'var(--text-muted)', background: 'none', border: '0.5px solid var(--border)', borderRadius: '6px', padding: '4px 8px', cursor: 'pointer', fontFamily: 'Jost, sans-serif', whiteSpace: 'nowrap' }}>Rozwiń</button>
+                  </div>
+                </div>
+
+                {grupy
+                  .filter(g => !wybranaGrupaZadan || g.id === parseInt(wybranaGrupaZadan))
+                  .map(g => {
+                    const zadaniaGrupy = zadania.filter(z => z.grupa_id === g.id);
+                    if (zadaniaGrupy.length === 0) return null;
+                    const zwinieta = zwinieteZadania.has(g.id);
+                    return (
+                      <div key={g.id} style={{ marginBottom: '10px' }}>
+                        {/* Nagłówek grupy */}
+                        <div onClick={() => setZwinieteZadania(prev => { const next = new Set(prev); next.has(g.id) ? next.delete(g.id) : next.add(g.id); return next; })}
+                          style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '9px 14px', background: 'white', borderRadius: zwinieta ? '12px' : '12px 12px 0 0', border: '0.5px solid var(--border)', cursor: 'pointer', userSelect: 'none' as const }}>
+                          <span style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'inline-block', transform: zwinieta ? 'rotate(-90deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}>▾</span>
+                          <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '16px', fontWeight: 400, color: 'var(--brand-dark)', flex: 1 }}>{g.nazwa}</span>
+                          <span style={{ fontSize: '11px', color: 'var(--text-muted)', background: 'var(--bg)', padding: '2px 8px', borderRadius: '10px', border: '0.5px solid var(--border)' }}>
+                            {zadaniaGrupy.length} {zadaniaGrupy.length === 1 ? 'zadanie' : 'zadań'}
+                          </span>
+                        </div>
+                        {!zwinieta && (
+                          <div style={{ background: 'white', borderRadius: '0 0 12px 12px', border: '0.5px solid var(--border)', borderTop: 'none', overflow: 'hidden' }}>
+                            {zadaniaGrupy.map((z, idx) => {
+                              const odp = odpowiedziZadan.filter(o => o.zadanie_id === z.id);
+                              return (
+                                <div key={z.id} style={{ borderBottom: idx < zadaniaGrupy.length - 1 ? '0.5px solid var(--border-soft)' : 'none', padding: '10px 14px' }}>
+                                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+                                    <div style={{ flex: 1, minWidth: 0 }}>
+                                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                                        <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text)' }}>{z.tytul}</span>
+                                        <span style={{ fontSize: '10px', fontWeight: 600, padding: '1px 7px', borderRadius: '8px',
+                                          background: z.typ === 'praca_zaliczeniowa' ? '#fef9ec' : 'var(--brand-light)',
+                                          color: z.typ === 'praca_zaliczeniowa' ? '#c8a84b' : 'var(--brand-dark)' }}>
+                                          {z.typ === 'praca_zaliczeniowa' ? 'Zaliczenie' : 'Zadanie'}
+                                        </span>
+                                        {z.termin && <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>📅 {new Date(z.termin).toLocaleDateString('pl-PL')}</span>}
+                                        {z.link_materialow && <a href={z.link_materialow} target="_blank" rel="noopener noreferrer" style={{ fontSize: '10px', color: 'var(--brand)', textDecoration: 'none' }}>📎 Materiały</a>}
+                                      </div>
+                                      {z.opis && <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '3px', lineHeight: 1.5 }}>{z.opis}</div>}
+                                      {/* Odpowiedzi */}
+                                      {odp.length > 0 && (
+                                        <div style={{ marginTop: '8px', background: 'var(--bg)', borderRadius: '8px', padding: '8px 10px' }}>
+                                          <div style={{ fontSize: '10px', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: '6px' }}>
+                                            Przesłane prace ({odp.length})
+                                          </div>
+                                          {odp.map(o => (
+                                            <div key={o.id} style={{ display: 'flex', alignItems: 'baseline', gap: '8px', marginBottom: '4px', flexWrap: 'wrap' }}>
+                                              <span style={{ fontSize: '12px', fontWeight: 500, color: 'var(--text)', whiteSpace: 'nowrap' }}>{o.imie} {o.nazwisko}</span>
+                                              <a href={o.link_pracy} target="_blank" rel="noopener noreferrer"
+                                                style={{ fontSize: '11px', color: 'var(--brand)', textDecoration: 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '200px' }}>
+                                                → Otwórz pracę
+                                              </a>
+                                              {o.komentarz && <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontStyle: 'italic' }}>{o.komentarz}</span>}
+                                            </div>
+                                          ))}
+                                        </div>
+                                      )}
+                                      {odp.length === 0 && <span style={{ fontSize: '11px', color: '#ccc', marginTop: '4px', display: 'block' }}>Brak przesłanych prac</span>}
+                                    </div>
+                                    <button onClick={() => usunZadanie(z.id)}
+                                      style={{ background: 'none', border: 'none', color: '#e57373', cursor: 'pointer', fontSize: '16px', padding: '0 2px', flexShrink: 0 }}>×</button>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })
+                }
+              </div>
+            </div>
           </>
         )}
 
