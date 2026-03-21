@@ -4583,8 +4583,8 @@ function SekcjaPrzygotowania({ zjazd, user, kursant, czyProwadzacy = false }: {
             <div style={{ flex: 1, fontSize: '13px', color: '#1a1a1a' }}>
               {m.link ? (
                 <a href={m.link} target="_blank" rel="noopener noreferrer"
-                  style={{ color: '#1565c0', textDecoration: 'none', fontWeight: 500 }}>
-                  {m.tytul} →
+                  style={{ color: 'white', textDecoration: 'none', fontWeight: 600, background: '#1565c0', padding: '3px 10px', borderRadius: '6px', fontSize: '12px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                  📖 {m.tytul} →
                 </a>
               ) : (
                 <span style={{ fontWeight: 500 }}>{m.tytul}</span>
