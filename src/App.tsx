@@ -1468,7 +1468,7 @@ function PanelProwadzacego({ user, kursant, onWyloguj }: { user: User; kursant: 
     // 4. Pobierz tylko swoje grupy, kursantów, zadania, ogłoszenia
     const [{ data: gr }, { data: ku }, { data: og }, { data: zad }, { data: odp }] = await Promise.all([
       supabase.from('grupy').select('*').in('id', grupyIds),
-      supabase.from('kursanci').select('id, imie, nazwisko, grupa_id, user_id, certyfikat_url, email').eq('rola', 'kursant').in('grupa_id', grupyIds),
+      supabase.from('kursanci').select('id, imie, nazwisko, grupa_id, user_id, certyfikat_url').eq('rola', 'kursant').in('grupa_id', grupyIds),
       supabase.from('ogloszenia').select('*').order('data_utworzenia', { ascending: false }),
       supabase.from('zadania').select('*').in('grupa_id', grupyIds).order('created_at', { ascending: false }),
       supabase.from('zadania_odpowiedzi').select('*').order('created_at', { ascending: false }),
@@ -2092,7 +2092,7 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
 
   useEffect(() => {
     pobierzGrupy(); pobierzOgloszenia(); pobierzZjazdy(); pobierzProwadzacy(); pobierzZadania();
-    supabase.from('kursanci').select('id, imie, nazwisko, grupa_id, user_id, certyfikat_url, email').then(({ data }) => setKursanci((data || []) as unknown as KursantAdmin[]));
+    supabase.from('kursanci').select('id, imie, nazwisko, grupa_id, user_id, certyfikat_url').then(({ data }) => setKursanci((data || []) as unknown as KursantAdmin[]));
     supabase.from('ankiety').select('*').order('created_at', { ascending: false }).then(({ data }) => setAnkiety((data || []) as unknown as OdpowiedziAnkiety[]));
     supabase.from('zadania_odpowiedzi').select('*').order('created_at', { ascending: false }).then(({ data }) => setOdpowiedziZadan(data || []));
   }, []);
@@ -2238,7 +2238,7 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
     const { data: authData, error: authError } = await supabase.auth.signUp({ email: nowyKursant.email, password: Math.random().toString(36).slice(-10) });
     if (authError) { setKomunikat('Blad: ' + authError.message); return; }
     const { error } = await supabase.from('kursanci').insert([{ imie: nowyKursant.imie, nazwisko: nowyKursant.nazwisko, grupa_id: parseInt(nowyKursant.grupa_id), user_id: authData.user!.id, rola: 'kursant' }]);
-    if (error) { setKomunikat('Blad: ' + error.message); } else { setKomunikat('Kursant dodany!'); setNowyKursant({ imie: '', nazwisko: '', email: '', grupa_id: '' }); const { data } = await supabase.from('kursanci').select('id, imie, nazwisko, grupa_id, user_id, certyfikat_url, email'); setKursanci((data || []) as unknown as KursantAdmin[]); }
+    if (error) { setKomunikat('Blad: ' + error.message); } else { setKomunikat('Kursant dodany!'); setNowyKursant({ imie: '', nazwisko: '', email: '', grupa_id: '' }); const { data } = await supabase.from('kursanci').select('id, imie, nazwisko, grupa_id, user_id, certyfikat_url'); setKursanci((data || []) as unknown as KursantAdmin[]); }
   }
 
   async function dodajGrupe(e: React.FormEvent) {
@@ -2314,7 +2314,7 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
     }
     setImportStatus([...wyniki]);
     setImportowanie(false);
-    const { data } = await supabase.from('kursanci').select('id, imie, nazwisko, grupa_id, user_id, certyfikat_url, email'); setKursanci((data || []) as unknown as KursantAdmin[]);
+    const { data } = await supabase.from('kursanci').select('id, imie, nazwisko, grupa_id, user_id, certyfikat_url'); setKursanci((data || []) as unknown as KursantAdmin[]);
     if (fileRef.current) fileRef.current.value = '';
   }
 
@@ -2973,7 +2973,7 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
                               {k.imie} {k.nazwisko}
                             </td>
                             <td style={{ padding: '9px 12px', color: 'var(--text-muted)', fontSize: '11px' }}>
-                              {k.email || '—'}
+                              {k.email || <span style={{ color: '#ccc' }}>—</span>}
                             </td>
                             <td style={{ padding: '6px 12px', minWidth: '240px' }}>
                               <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
@@ -3001,7 +3001,7 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
                               <button onClick={async () => {
                                 if (window.confirm(`Usunąć kursanta ${k.imie} ${k.nazwisko}?`)) {
                                   await supabase.from('kursanci').delete().eq('id', k.id);
-                                  const { data } = await supabase.from('kursanci').select('id, imie, nazwisko, grupa_id, user_id, certyfikat_url, email');
+                                  const { data } = await supabase.from('kursanci').select('id, imie, nazwisko, grupa_id, user_id, certyfikat_url');
                                   setKursanci((data || []) as unknown as KursantAdmin[]);
                                   setKomunikat('Kursant usunięty.');
                                 }
