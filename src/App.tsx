@@ -1926,13 +1926,13 @@ function WeryfikacjaObecnosci({ zjazdy, grupy, kursanci, prowadzacyUserId }: {
                                   Zweryfikuj
                                 </button>
                               )}
-                              {wpis.status === 'potwierdzono' && moznaEdytowac && (
+                              {wpis.status === 'potwierdzono' && (
                                 <button onClick={() => {
                                   setAktywneGodziny(godzinaAktywna ? null : kluczGodzin);
                                   setGodz({ przybycie: wpis.godzina_przybycia || '', wyjscie: wpis.godzina_wyjscia || '' });
                                 }}
                                   style={{ fontSize: '11px', padding: '3px 8px', borderRadius: '8px', background: '#fef9ec', color: '#c8a84b', border: '0.5px solid #f0d080', cursor: 'pointer', fontFamily: 'Jost, sans-serif' }}>
-                                  🕐
+                                  🕐 Spóźnienie
                                 </button>
                               )}
                               {moznaEdytowac && (
