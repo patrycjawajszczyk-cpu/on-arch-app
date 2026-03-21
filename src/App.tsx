@@ -1722,9 +1722,11 @@ function PanelProwadzacego({ user, kursant, onWyloguj }: { user: User; kursant: 
                                       {o.komentarz && <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontStyle: 'italic' }}>{o.komentarz}</span>}
                                       {/* Status sprawdzenia */}
                                       <button onClick={async () => {
-                                        await supabase.from('zadania_odpowiedzi').update({ sprawdzona: !o.sprawdzona }).eq('id', o.id);
-                                        const { data } = await supabase.from('zadania_odpowiedzi').select('*').in('zadanie_id', zadania.map(z => z.id));
+                                        const { error } = await supabase.from('zadania_odpowiedzi').update({ sprawdzona: !o.sprawdzona }).eq('id', o.id);
+                                        if (error) { setKomunikat('Błąd: ' + error.message); return; }
+                                        const { data } = await supabase.from('zadania_odpowiedzi').select('*').in('zadanie_id', zadania.map(zz => zz.id));
                                         setOdpowiedziZadan(data || []);
+                                        setKomunikat(o.sprawdzona ? 'Oznaczono jako: do sprawdzenia' : 'Oznaczono jako: sprawdzona ✓');
                                       }} style={{ fontSize: '10px', fontWeight: 700, padding: '2px 8px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontFamily: 'Jost, sans-serif',
                                         background: o.sprawdzona ? '#e8f5e9' : '#fff8e1',
                                         color: o.sprawdzona ? '#2e7d32' : '#c8a84b' }}>
@@ -1739,9 +1741,11 @@ function PanelProwadzacego({ user, kursant, onWyloguj }: { user: User; kursant: 
                                         onBlur={async e => {
                                           const val = e.target.value.trim();
                                           if (val !== (o.uwagi_prowadzacego || '').trim()) {
-                                            await supabase.from('zadania_odpowiedzi').update({ uwagi_prowadzacego: val || null }).eq('id', o.id);
-                                            const { data } = await supabase.from('zadania_odpowiedzi').select('*').in('zadanie_id', zadania.map(z => z.id));
+                                            const { error } = await supabase.from('zadania_odpowiedzi').update({ uwagi_prowadzacego: val || null }).eq('id', o.id);
+                                            if (error) { setKomunikat('Błąd: ' + error.message); return; }
+                                            const { data } = await supabase.from('zadania_odpowiedzi').select('*').in('zadanie_id', zadania.map(zz => zz.id));
                                             setOdpowiedziZadan(data || []);
+                                            setKomunikat('Uwagi zapisane');
                                           }
                                         }}
                                         style={{ flex: 1, fontSize: '11px', padding: '5px 8px', border: '0.5px solid var(--border)', borderRadius: '7px', fontFamily: 'Jost, sans-serif', background: 'white' }} />
