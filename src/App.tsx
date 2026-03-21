@@ -1490,6 +1490,7 @@ function PanelProwadzacego({ user, kursant, onWyloguj }: { user: User; kursant: 
   const [trescNotatki, setTrescNotatki] = useState('');
   const [komunikat, setKomunikat] = useState('');
   const [ladowanie, setLadowanie] = useState(true);
+  const [noweOglProw, setNoweOglProw] = useState({ typ: 'Informacja', tytul: '', tresc: '', szczegoly: '', grupa_id: '' });
 
   useEffect(() => {
     pobierz();
@@ -1603,6 +1604,25 @@ function PanelProwadzacego({ user, kursant, onWyloguj }: { user: User; kursant: 
     if (!window.confirm('Usunąć zadanie?')) return;
     await supabase.from('zadania').delete().eq('id', id);
     setZadania(prev => prev.filter(z => z.id !== id));
+  }
+
+  async function dodajOgloszenieProw(e: React.FormEvent) {
+    e.preventDefault();
+    if (!noweOglProw.tytul.trim() || !noweOglProw.grupa_id) return;
+    const { error } = await supabase.from('ogloszenia').insert([{
+      typ: noweOglProw.typ,
+      tytul: noweOglProw.tytul.trim(),
+      tresc: noweOglProw.tresc.trim(),
+      szczegoly: noweOglProw.szczegoly.trim() || null,
+      grupa_id: parseInt(noweOglProw.grupa_id),
+      nowe: true,
+      data_utworzenia: new Date().toISOString(),
+    }]);
+    if (error) { setKomunikat('Błąd: ' + error.message); return; }
+    setKomunikat('Ogłoszenie dodane!');
+    setNoweOglProw({ typ: 'Informacja', tytul: '', tresc: '', szczegoly: '', grupa_id: noweOglProw.grupa_id });
+    const { data } = await supabase.from('ogloszenia').select('*').in('grupa_id', mojeGrupyIds).order('data_utworzenia', { ascending: false });
+    setOgloszenia(data || []);
   }
 
   return (
@@ -1873,7 +1893,41 @@ function PanelProwadzacego({ user, kursant, onWyloguj }: { user: User; kursant: 
                   {aktywneOgloszenie ? (
                     <EkranSzczegoly o={aktywneOgloszenie} onWroc={() => setAktywneOgloszenie(null)} />
                   ) : (
-                    <div>{ogloszenia.map(o => <KartaOgloszenia key={o.id} o={o} onClick={() => setAktywneOgloszenie(o)} />)}</div>
+                    <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'flex-start' }}>
+                      {/* Formularz nowego ogłoszenia */}
+                      <div style={{ background: 'white', border: '0.5px solid var(--border)', borderRadius: '14px', padding: '16px 20px', minWidth: '260px', flex: '1' }}>
+                        <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text)', marginBottom: '12px' }}>Nowe ogłoszenie</div>
+                        <form onSubmit={dodajOgloszenieProw}>
+                          <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
+                            <select value={noweOglProw.typ} onChange={e => setNoweOglProw(v => ({ ...v, typ: e.target.value }))}
+                              style={{ flex: 1, fontSize: '12px', padding: '7px 8px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif', background: 'white' }}>
+                              <option>Informacja</option><option>Pilne</option><option>Zmiana</option>
+                            </select>
+                            <select value={noweOglProw.grupa_id} onChange={e => setNoweOglProw(v => ({ ...v, grupa_id: e.target.value }))} required
+                              style={{ flex: 2, fontSize: '12px', padding: '7px 8px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif', background: 'white' }}>
+                              <option value="">Wybierz grupę *</option>
+                              {mojeGrupy.map(g => <option key={g.id} value={g.id}>{g.nazwa}</option>)}
+                            </select>
+                          </div>
+                          <input type="text" value={noweOglProw.tytul} onChange={e => setNoweOglProw(v => ({ ...v, tytul: e.target.value }))} placeholder="Tytuł *" required
+                            style={{ width: '100%', fontSize: '12px', padding: '7px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif', marginBottom: '8px' }} />
+                          <input type="text" value={noweOglProw.tresc} onChange={e => setNoweOglProw(v => ({ ...v, tresc: e.target.value }))} placeholder="Krótki opis *" required
+                            style={{ width: '100%', fontSize: '12px', padding: '7px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif', marginBottom: '8px' }} />
+                          <textarea value={noweOglProw.szczegoly} onChange={e => setNoweOglProw(v => ({ ...v, szczegoly: e.target.value }))} placeholder="Pełna treść (opcjonalnie)" rows={3}
+                            style={{ width: '100%', fontSize: '12px', padding: '7px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif', resize: 'vertical', marginBottom: '8px' }} />
+                          <button type="submit" style={{ width: '100%', padding: '8px', background: 'var(--brand)', color: 'white', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 600, cursor: 'pointer', fontFamily: 'Jost, sans-serif' }}>
+                            + Dodaj ogłoszenie
+                          </button>
+                        </form>
+                      </div>
+                      {/* Lista ogłoszeń */}
+                      <div style={{ flex: '2', minWidth: '260px' }}>
+                        {ogloszenia.length === 0
+                          ? <div style={{ textAlign: 'center', padding: '32px', color: 'var(--text-muted)', fontSize: '13px' }}>Brak ogłoszeń</div>
+                          : ogloszenia.map(o => <KartaOgloszenia key={o.id} o={o} onClick={() => setAktywneOgloszenie(o)} />)
+                        }
+                      </div>
+                    </div>
                   )}
                 </>
               )}
