@@ -2634,7 +2634,7 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
                                           fontSize: '10px', color: kolor, fontWeight: 600, lineHeight: 1.4,
                                           cursor: 'default', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                                         }}>
-                                        Z{w.zjazd.nr} D{w.dzien} · {(grupa?.nazwa || '').split(' ').slice(-2).join(' ')}
+                                        {(grupa?.nazwa || '').split(' ').slice(0, 3).join(' ')}{w.zjazd.tematy ? ` · ${w.zjazd.tematy}` : ''}
                                       </div>
                                     );
                                   })}
