@@ -2051,6 +2051,9 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
   const [edytowanyKursant, setEdytowanyKursant] = useState<{ id: number; imie: string; nazwisko: string; email: string; telefon: string } | null>(null);
   const [szukajKursant, setSzukajKursant] = useState('');
   const [dostepnoscData, setDostepnoscData] = useState('');
+  const [filtrMiastoProw, setFiltrMiastoProw] = useState('');
+  const [filtrDostepnoscProw, setFiltrDostepnoscProw] = useState('');
+  const [rozwinietaProwadzacy, setRozwinietaProwadzacy] = useState<Set<number>>(new Set());
   const [kalMiesiac, setKalMiesiac] = useState(() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`; });
   const [tabelaZapis, setTabelaZapis] = useState(false);
   const [tabelaWyniki, setTabelaWyniki] = useState<{ nr: string; status: string }[]>([]);
@@ -3464,132 +3467,156 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
               <button className="login-btn" type="submit">Dodaj prowadzącego</button>
             </form>
 
-            <h2 className="page-title" style={{ marginTop: '24px' }}>Lista prowadzących</h2>
+            {/* ── FILTRY + LISTA PROWADZĄCYCH ── */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px', flexWrap: 'wrap', gap: '10px' }}>
+              <h2 className="page-title" style={{ margin: 0 }}>Lista prowadzących ({prowadzacy.length})</h2>
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                {/* Filtr miasto */}
+                <select value={filtrMiastoProw} onChange={e => setFiltrMiastoProw(e.target.value)}
+                  style={{ fontSize: '12px', padding: '6px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif', background: 'white' }}>
+                  <option value="">Wszystkie miasta</option>
+                  {[...new Set(prowadzacy.map(p => p.miasto).filter(Boolean))].sort().map(m => (
+                    <option key={m} value={m as string}>{m}</option>
+                  ))}
+                </select>
+                {/* Filtr dostępność */}
+                <select value={filtrDostepnoscProw} onChange={e => setFiltrDostepnoscProw(e.target.value)}
+                  style={{ fontSize: '12px', padding: '6px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif', background: 'white' }}>
+                  <option value="">Wszyscy</option>
+                  <option value="wolni">Wolni dziś</option>
+                  <option value="zajeci">Zajęci dziś</option>
+                </select>
+              </div>
+            </div>
+
             {prowadzacy.length === 0 && (
-              <div className="profil-card"><div className="profil-row"><span style={{ color: 'var(--text-muted)', fontSize: '13px' }}>Brak prowadzących. Dodaj pierwszego powyżej.</span></div></div>
+              <div className="profil-card"><div className="profil-row"><span style={{ color: 'var(--text-muted)', fontSize: '13px' }}>Brak prowadzących.</span></div></div>
             )}
-            {prowadzacy.map(p => (
-              <div key={p.id} className="profil-card" style={{ marginBottom: '8px' }}>
-                <div className="profil-row">
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    {p.avatar_url ? (
-                      <img src={p.avatar_url} alt={p.imie} style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover', border: '0.5px solid var(--border)' }} />
-                    ) : (
-                      <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'var(--brand-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: 600, color: 'var(--brand-dark)', flexShrink: 0 }}>
-                        {p.imie[0]}{p.nazwisko[0]}
+
+            {prowadzacy
+              .filter(p => {
+                if (filtrMiastoProw && p.miasto !== filtrMiastoProw) return false;
+                if (filtrDostepnoscProw) {
+                  const dzisiaj = new Date().toISOString().split('T')[0];
+                  const maZajecia = zjazdy.some(z => {
+                    const dni = [z.data_dzien1, z.data_dzien2].filter(Boolean);
+                    return dni.some(d => d && d.substring(0, 10) === dzisiaj) && (z.prowadzacy || []).some(x => x.id === p.id);
+                  });
+                  if (filtrDostepnoscProw === 'wolni' && maZajecia) return false;
+                  if (filtrDostepnoscProw === 'zajeci' && !maZajecia) return false;
+                }
+                return true;
+              })
+              .map(p => {
+                const rozwiniety = rozwinietaProwadzacy.has(p.id);
+                const przypisaneZjazdy = zjazdy.filter(z => (z.prowadzacy || []).some(x => x.id === p.id));
+                const dzisiaj = new Date().toISOString().split('T')[0];
+                const maZajeciaToday = zjazdy.some(z => {
+                  const dni = [z.data_dzien1, z.data_dzien2].filter(Boolean);
+                  return dni.some(d => d && d.substring(0, 10) === dzisiaj) && (z.prowadzacy || []).some(x => x.id === p.id);
+                });
+                return (
+                  <div key={p.id} style={{ marginBottom: '8px', background: 'white', borderRadius: rozwiniety ? '14px 14px 14px 14px' : '14px', border: '0.5px solid var(--border)', overflow: 'hidden' }}>
+                    {/* Nagłówek — zawsze widoczny */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', cursor: 'pointer' }}
+                      onClick={() => setRozwinietaProwadzacy(prev => {
+                        const next = new Set(prev);
+                        next.has(p.id) ? next.delete(p.id) : next.add(p.id);
+                        return next;
+                      })}>
+                      {/* Avatar */}
+                      {p.avatar_url
+                        ? <img src={p.avatar_url} alt="" style={{ width: '36px', height: '36px', borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
+                        : <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'var(--brand-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '13px', fontWeight: 600, color: 'var(--brand-dark)', flexShrink: 0 }}>{p.imie[0]}{p.nazwisko[0]}</div>
+                      }
+                      {/* Imię + miasto */}
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontWeight: 600, fontSize: '13px', color: 'var(--text)' }}>
+                          {p.imie} {p.nazwisko}
+                          {maZajeciaToday && <span style={{ marginLeft: '8px', fontSize: '10px', background: '#ffeaea', color: '#c62828', padding: '1px 6px', borderRadius: '6px', fontWeight: 600 }}>zajęty dziś</span>}
+                        </div>
+                        <div style={{ display: 'flex', gap: '10px', marginTop: '2px', flexWrap: 'wrap' }}>
+                          {p.miasto && <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>📍 {p.miasto}</span>}
+                          {p.email && <a href={`mailto:${p.email}`} onClick={e => e.stopPropagation()} style={{ fontSize: '11px', color: 'var(--brand)', textDecoration: 'none' }}>✉ {p.email}</a>}
+                          {p.telefon && <a href={`tel:${p.telefon}`} onClick={e => e.stopPropagation()} style={{ fontSize: '11px', color: '#2e7d32', textDecoration: 'none' }}>📞 {p.telefon}</a>}
+                        </div>
+                        {p.notatki && <div style={{ fontSize: '10px', color: '#c8a84b', marginTop: '2px', fontStyle: 'italic' }}>⚠ {p.notatki}</div>}
+                        {przypisaneZjazdy.length > 0 && (
+                          <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '2px' }}>
+                            {przypisaneZjazdy.length} {przypisaneZjazdy.length === 1 ? 'zjazd' : 'zjazdów'} · {[...new Set(przypisaneZjazdy.map(z => grupy.find(g => g.id === z.grupa_id)?.nazwa).filter(Boolean))].join(', ')}
+                          </div>
+                        )}
+                      </div>
+                      {/* Akcje + strzałka */}
+                      <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexShrink: 0 }}>
+                        <span style={{ fontSize: '11px', color: 'var(--text-muted)', transform: rozwiniety ? 'rotate(0deg)' : 'rotate(-90deg)', transition: 'transform 0.2s', display: 'inline-block' }}>▾</span>
+                        <button onClick={e => { e.stopPropagation(); usunProwadzacego(p.id); }}
+                          style={{ background: 'none', border: 'none', color: '#e57373', cursor: 'pointer', fontSize: '16px', padding: '0 4px', lineHeight: 1 }}>×</button>
+                      </div>
+                    </div>
+
+                    {/* Szczegóły — zwijane */}
+                    {rozwiniety && (
+                      <div style={{ padding: '0 16px 16px', borderTop: '0.5px solid var(--border-soft)' }}>
+                        {/* Kontakt */}
+                        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: '12px' }}>
+                          <div style={{ flex: 1, minWidth: '160px' }}>
+                            <label style={{ fontSize: '10px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.4px', display: 'block', marginBottom: '4px' }}>Email</label>
+                            <input type="email" defaultValue={p.email || ''} placeholder="architekt@email.pl"
+                              onBlur={async e => { if (e.target.value.trim() !== (p.email || '').trim()) { await supabase.from('prowadzacy').update({ email: e.target.value.trim() || null }).eq('id', p.id); pobierzProwadzacy(); }}}
+                              style={{ width: '100%', fontSize: '12px', padding: '5px 8px', border: '0.5px solid var(--border)', borderRadius: '7px', fontFamily: 'Jost, sans-serif' }} />
+                          </div>
+                          <div style={{ flex: 1, minWidth: '130px' }}>
+                            <label style={{ fontSize: '10px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.4px', display: 'block', marginBottom: '4px' }}>Telefon</label>
+                            <input type="text" defaultValue={p.telefon || ''} placeholder="+48 600 000 000"
+                              onBlur={async e => { if (e.target.value.trim() !== (p.telefon || '').trim()) { await supabase.from('prowadzacy').update({ telefon: e.target.value.trim() || null }).eq('id', p.id); pobierzProwadzacy(); }}}
+                              style={{ width: '100%', fontSize: '12px', padding: '5px 8px', border: '0.5px solid var(--border)', borderRadius: '7px', fontFamily: 'Jost, sans-serif' }} />
+                          </div>
+                          <div style={{ flex: 1, minWidth: '110px' }}>
+                            <label style={{ fontSize: '10px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.4px', display: 'block', marginBottom: '4px' }}>Miasto</label>
+                            <input type="text" defaultValue={p.miasto || ''} placeholder="Warszawa"
+                              onBlur={async e => { if (e.target.value.trim() !== (p.miasto || '').trim()) { await supabase.from('prowadzacy').update({ miasto: e.target.value.trim() || null }).eq('id', p.id); pobierzProwadzacy(); }}}
+                              style={{ width: '100%', fontSize: '12px', padding: '5px 8px', border: '0.5px solid var(--border)', borderRadius: '7px', fontFamily: 'Jost, sans-serif' }} />
+                          </div>
+                        </div>
+                        {/* Opis */}
+                        <div style={{ marginTop: '10px' }}>
+                          <label style={{ fontSize: '10px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.4px', display: 'block', marginBottom: '4px' }}>Opis (widoczny dla kursantów)</label>
+                          <textarea defaultValue={p.bio || ''} rows={2} placeholder="Krótki opis…"
+                            onBlur={async e => { const nowe = e.target.value.trim(); if (nowe !== (p.bio || '').trim()) { await supabase.from('prowadzacy').update({ bio: nowe || null }).eq('id', p.id); pobierzProwadzacy(); }}}
+                            style={{ width: '100%', fontSize: '12px', padding: '6px 8px', border: '0.5px solid var(--border)', borderRadius: '7px', fontFamily: 'Jost, sans-serif', resize: 'vertical' }} />
+                        </div>
+                        {/* Notatki */}
+                        <div style={{ marginTop: '10px' }}>
+                          <label style={{ fontSize: '10px', fontWeight: 600, color: '#c8a84b', textTransform: 'uppercase', letterSpacing: '0.4px', display: 'block', marginBottom: '4px' }}>🔒 Notatki wewnętrzne</label>
+                          <textarea defaultValue={p.notatki || ''} rows={2} placeholder="Np. nie może weekendowo, dostępny od września…"
+                            onBlur={async e => { const nowe = e.target.value.trim(); if (nowe !== (p.notatki || '').trim()) { await supabase.from('prowadzacy').update({ notatki: nowe || null }).eq('id', p.id); pobierzProwadzacy(); }}}
+                            style={{ width: '100%', fontSize: '12px', padding: '6px 8px', border: '0.5px solid #fef3c7', borderRadius: '7px', fontFamily: 'Jost, sans-serif', resize: 'vertical', background: '#fffbeb' }} />
+                        </div>
+                        {/* Link do zdjęcia */}
+                        <div style={{ marginTop: '10px' }}>
+                          <label style={{ fontSize: '10px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.4px', display: 'block', marginBottom: '4px' }}>Link do zdjęcia</label>
+                          <input type="url" defaultValue={p.avatar_url || ''} placeholder="https://..."
+                            onBlur={async e => { const nowe = e.target.value.trim(); if (nowe !== (p.avatar_url || '').trim()) { await supabase.from('prowadzacy').update({ avatar_url: nowe || null }).eq('id', p.id); pobierzProwadzacy(); }}}
+                            style={{ width: '100%', fontSize: '12px', padding: '5px 8px', border: '0.5px solid var(--border)', borderRadius: '7px', fontFamily: 'Jost, sans-serif' }} />
+                        </div>
+                        {/* Zjazdy */}
+                        {przypisaneZjazdy.length > 0 && (
+                          <div style={{ marginTop: '10px' }}>
+                            <label style={{ fontSize: '10px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.4px', display: 'block', marginBottom: '6px' }}>Przypisane zjazdy</label>
+                            {przypisaneZjazdy.map(z => (
+                              <div key={z.id} style={{ fontSize: '12px', color: 'var(--text-muted)', padding: '3px 0', borderBottom: '0.5px solid var(--border-soft)' }}>
+                                Zjazd {z.nr} · {z.daty} · <span style={{ color: 'var(--brand)' }}>{grupy.find(g => g.id === z.grupa_id)?.nazwa || '?'}</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     )}
-                    <span className="profil-lbl" style={{ fontWeight: 600 }}>{p.imie} {p.nazwisko}</span>
-                    {p.miasto && <span style={{ fontSize: '11px', color: 'var(--text-muted)', background: 'var(--bg)', padding: '1px 7px', borderRadius: '6px', border: '0.5px solid var(--border)' }}>📍 {p.miasto}</span>}
                   </div>
-                  <button onClick={() => usunProwadzacego(p.id)} style={{ background: 'none', border: 'none', color: '#c62828', cursor: 'pointer', fontSize: '18px', padding: '0 4px' }}>×</button>
-                </div>
-
-                {/* Kontakt */}
-                <div className="profil-row" style={{ gap: '12px', flexWrap: 'wrap' }}>
-                  <div style={{ flex: 1, minWidth: '180px' }}>
-                    <span className="profil-lbl" style={{ display: 'block', marginBottom: '4px' }}>Email</span>
-                    <input type="email" defaultValue={p.email || ''} placeholder="architekt@email.pl"
-                      onBlur={async e => {
-                        if (e.target.value.trim() !== (p.email || '').trim()) {
-                          await supabase.from('prowadzacy').update({ email: e.target.value.trim() || null }).eq('id', p.id);
-                          pobierzProwadzacy();
-                        }
-                      }}
-                      style={{ width: '100%', fontSize: '12px', padding: '6px 8px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif' }} />
-                  </div>
-                  <div style={{ flex: 1, minWidth: '140px' }}>
-                    <span className="profil-lbl" style={{ display: 'block', marginBottom: '4px' }}>Telefon</span>
-                    <input type="text" defaultValue={p.telefon || ''} placeholder="+48 600 000 000"
-                      onBlur={async e => {
-                        if (e.target.value.trim() !== (p.telefon || '').trim()) {
-                          await supabase.from('prowadzacy').update({ telefon: e.target.value.trim() || null }).eq('id', p.id);
-                          pobierzProwadzacy();
-                        }
-                      }}
-                      style={{ width: '100%', fontSize: '12px', padding: '6px 8px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif' }} />
-                  </div>
-                  <div style={{ flex: 1, minWidth: '120px' }}>
-                    <span className="profil-lbl" style={{ display: 'block', marginBottom: '4px' }}>Miasto</span>
-                    <input type="text" defaultValue={p.miasto || ''} placeholder="Warszawa"
-                      onBlur={async e => {
-                        if (e.target.value.trim() !== (p.miasto || '').trim()) {
-                          await supabase.from('prowadzacy').update({ miasto: e.target.value.trim() || null }).eq('id', p.id);
-                          pobierzProwadzacy();
-                        }
-                      }}
-                      style={{ width: '100%', fontSize: '12px', padding: '6px 8px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif' }} />
-                  </div>
-                </div>
-                {/* Szybki kontakt — przyciski gdy dane są */}
-                {(p.email || p.telefon) && (
-                  <div className="profil-row" style={{ gap: '8px' }}>
-                    {p.email && <a href={`mailto:${p.email}`} style={{ fontSize: '11px', padding: '4px 10px', background: 'var(--brand-light)', color: 'var(--brand-dark)', borderRadius: '6px', textDecoration: 'none', border: '0.5px solid var(--brand-mid)' }}>✉ Napisz</a>}
-                    {p.telefon && <a href={`tel:${p.telefon}`} style={{ fontSize: '11px', padding: '4px 10px', background: '#e8f5e9', color: '#2e7d32', borderRadius: '6px', textDecoration: 'none', border: '0.5px solid #c8e6c9' }}>📞 Zadzwoń</a>}
-                  </div>
-                )}
-
-                {/* Bio */}
-                <div className="profil-row" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '4px' }}>
-                  <span className="profil-lbl">Opis (widoczny dla kursantów)</span>
-                  <textarea defaultValue={p.bio || ''} rows={2} placeholder="Krótki opis…"
-                    onBlur={async e => {
-                      const nowe = e.target.value.trim();
-                      if (nowe !== (p.bio || '').trim()) {
-                        await supabase.from('prowadzacy').update({ bio: nowe || null }).eq('id', p.id);
-                        pobierzProwadzacy();
-                      }
-                    }}
-                    style={{ width: '100%', fontSize: '12px', padding: '6px 8px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif', resize: 'vertical', color: 'var(--text)' }} />
-                </div>
-
-                {/* Notatki wewnętrzne */}
-                <div className="profil-row" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '4px' }}>
-                  <span className="profil-lbl">Notatki wewnętrzne 🔒</span>
-                  <textarea defaultValue={p.notatki || ''} rows={2} placeholder="Np. nie może weekendowo, dostępny od września…"
-                    onBlur={async e => {
-                      const nowe = e.target.value.trim();
-                      if (nowe !== (p.notatki || '').trim()) {
-                        await supabase.from('prowadzacy').update({ notatki: nowe || null }).eq('id', p.id);
-                        pobierzProwadzacy();
-                      }
-                    }}
-                    style={{ width: '100%', fontSize: '12px', padding: '6px 8px', border: '0.5px solid #fef3c7', borderRadius: '8px', fontFamily: 'Jost, sans-serif', resize: 'vertical', color: 'var(--text)', background: p.notatki ? '#fffbeb' : 'white' }} />
-                  {p.notatki && <div style={{ fontSize: '10px', color: '#c8a84b', fontStyle: 'italic' }}>Notatka widoczna tylko w panelu biura</div>}
-                </div>
-
-                {/* Avatar URL */}
-                <div className="profil-row" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '4px' }}>
-                  <span className="profil-lbl">Link do zdjęcia</span>
-                  <input type="url" defaultValue={p.avatar_url || ''} placeholder="https://..."
-                    onBlur={async e => {
-                      const nowe = e.target.value.trim();
-                      if (nowe !== (p.avatar_url || '').trim()) {
-                        await supabase.from('prowadzacy').update({ avatar_url: nowe || null }).eq('id', p.id);
-                        pobierzProwadzacy();
-                      }
-                    }}
-                    style={{ width: '100%', fontSize: '12px', padding: '6px 8px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif', color: 'var(--text)' }} />
-                </div>
-
-                {/* Zjazdy przypisane */}
-                {(() => {
-                  const przypisane = zjazdy.filter(z => (z.prowadzacy || []).some(x => x.id === p.id));
-                  return przypisane.length > 0 ? (
-                    <div className="profil-row" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '2px' }}>
-                      <span className="profil-lbl" style={{ marginBottom: '4px' }}>Przypisany do zjazdów:</span>
-                      {przypisane.map(z => (
-                        <span key={z.id} style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
-                          Zjazd {z.nr} — {z.daty} ({grupy.find(g => g.id === z.grupa_id)?.nazwa || '?'})
-                        </span>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="profil-row"><span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Brak przypisanych zjazdów</span></div>
-                  );
-                })()}
-              </div>
-            ))}
+                );
+              })
+            }
           </>
         )}
       </main>
