@@ -1730,7 +1730,7 @@ function PanelProwadzacego({ user, kursant, onWyloguj }: { user: User; kursant: 
                                   style={{ width: '100%', fontSize: '13px', padding: '8px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif', resize: 'vertical' }} />
                                 <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
                                   <button onClick={() => zapiszNotatke(k.user_id)} className="login-btn" style={{ flex: 1, padding: '8px' }}>Zapisz notatkę</button>
-                                  {notatka && <button onClick={() => usunNotatke(notatka.id)} className="btn-wyloguj" style={{ flex: 1, padding: '8px', marginTop: 0 }}>Usuń notatkę</button>}
+                                  {notatka && <button onClick={() => usunNotatke(k.user_id)} className="btn-wyloguj" style={{ flex: 1, padding: '8px', marginTop: 0 }}>Usuń notatkę</button>}
                                 </div>
                               </div>
                             )}
