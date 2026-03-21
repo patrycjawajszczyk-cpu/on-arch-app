@@ -34,6 +34,7 @@ type Ogloszenie = {
   nowe: boolean;
   data_utworzenia: string;
   grupa_id: number | null;
+  autor_user_id: string | null;
 };
 
 type Prowadzacy = {
@@ -1616,6 +1617,7 @@ function PanelProwadzacego({ user, kursant, onWyloguj }: { user: User; kursant: 
       tresc: noweOglProw.tresc.trim(),
       szczegoly: noweOglProw.szczegoly.trim() || null,
       grupa_id: parseInt(noweOglProw.grupa_id),
+      autor_user_id: user.id,
       nowe: true,
       data_utworzenia: new Date().toISOString(),
     }]);
@@ -1640,6 +1642,13 @@ function PanelProwadzacego({ user, kursant, onWyloguj }: { user: User; kursant: 
     setEdytowaneOglProw(null);
     const { data } = await supabase.from('ogloszenia').select('*').in('grupa_id', mojeGrupyIds).order('data_utworzenia', { ascending: false });
     setOgloszenia(data || []);
+  }
+
+  async function usunOgloszenieProw(id: string) {
+    if (!window.confirm('Usunąć ogłoszenie?')) return;
+    await supabase.from('ogloszenia').delete().eq('id', id);
+    setOgloszenia(prev => prev.filter(o => o.id !== id));
+    setKomunikat('Ogłoszenie usunięte.');
   }
 
   return (
@@ -1967,10 +1976,18 @@ function PanelProwadzacego({ user, kursant, onWyloguj }: { user: User; kursant: 
                           : ogloszenia.map(o => (
                             <div key={o.id} style={{ position: 'relative' }}>
                               <KartaOgloszenia o={o} onClick={() => { setAktywneOgloszenie(o); setEdytowaneOglProw(null); }} />
-                              <button onClick={e => { e.stopPropagation(); setEdytowaneOglProw(o); setAktywneOgloszenie(null); }}
-                                style={{ position: 'absolute', top: '10px', right: '32px', fontSize: '11px', padding: '2px 10px', border: '0.5px solid var(--border)', borderRadius: '6px', background: 'white', cursor: 'pointer', color: 'var(--brand)', fontFamily: 'Jost, sans-serif' }}>
-                                Edytuj
-                              </button>
+                              {o.autor_user_id === user.id && (
+                                <div style={{ position: 'absolute', top: '10px', right: '10px', display: 'flex', gap: '4px' }}>
+                                  <button onClick={e => { e.stopPropagation(); setEdytowaneOglProw(o); setAktywneOgloszenie(null); }}
+                                    style={{ fontSize: '11px', padding: '2px 10px', border: '0.5px solid var(--border)', borderRadius: '6px', background: 'white', cursor: 'pointer', color: 'var(--brand)', fontFamily: 'Jost, sans-serif' }}>
+                                    Edytuj
+                                  </button>
+                                  <button onClick={e => { e.stopPropagation(); usunOgloszenieProw(o.id); }}
+                                    style={{ fontSize: '11px', padding: '2px 8px', border: 'none', borderRadius: '6px', background: 'none', cursor: 'pointer', color: '#e57373' }}>
+                                    ×
+                                  </button>
+                                </div>
+                              )}
                             </div>
                           ))
                         }
