@@ -4522,13 +4522,17 @@ function KalendarzZjazdow({ zjazdy, grupy, zadania, odpowiedziZadan }: { zjazdy:
                   {wpisy.map((w, i) => {
                     const kolor = grupy ? (grupaKolor[w.zjazd.grupa_id] || 'var(--brand)') : 'var(--brand)';
                     const nazwa = grupy ? grupy.find(g => g.id === w.zjazd.grupa_id)?.nazwa : null;
+                    const tooltipTekst = `Zjazd ${w.zjazd.nr} — Dzień ${w.dzien}${nazwa ? '\n' + nazwa : ''}${w.zjazd.tematy ? '\n' + w.zjazd.tematy : ''}`;
                     return (
-                      <div key={i} title={`Zjazd ${w.zjazd.nr} — D${w.dzien}${nazwa ? '\n' + nazwa : ''}\n${w.zjazd.tematy || ''}`}
+                      <div key={i}
+                        title={tooltipTekst}
+                        onClick={e => { e.stopPropagation(); alert(tooltipTekst); }}
                         style={{
                           background: kolor + '20', borderLeft: `2px solid ${kolor}`,
                           borderRadius: '0 3px 3px 0', padding: '1px 4px', marginBottom: '1px',
                           fontSize: '9px', color: kolor, fontWeight: 700, lineHeight: 1.4,
                           overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                          cursor: 'pointer',
                         }}>
                         {nazwa ? (nazwa.split(' ').slice(0, 2).join(' ')) : `Zjazd ${w.zjazd.nr}`} D{w.dzien}
                       </div>
@@ -4539,16 +4543,21 @@ function KalendarzZjazdow({ zjazdy, grupy, zadania, odpowiedziZadan }: { zjazdy:
                     const przeslane = (odpowiedziZadan || []).some(o => o.zadanie_id === z.id);
                     const kolor = z.typ === 'praca_zaliczeniowa' ? '#c8a84b' : '#1565c0';
                     const ikona = z.typ === 'praca_zaliczeniowa' ? '⭐' : '📝';
+                    const tytulKrotki = z.tytul.length > 10 ? z.tytul.substring(0, 9) + '…' : z.tytul;
+                    const tooltipTekst = `${ikona} Termin: ${z.tytul}${przeslane ? '\n✓ Praca przesłana' : '\n⚠ Nie przesłano'}`;
                     return (
-                      <div key={`z${i}`} title={`${ikona} Termin: ${z.tytul}${przeslane ? '\n✓ Praca przesłana' : '\n⚠ Nie przesłano'}`}
+                      <div key={`z${i}`}
+                        title={tooltipTekst}
+                        onClick={e => { e.stopPropagation(); alert(tooltipTekst); }}
                         style={{
                           background: przeslane ? '#e8f5e920' : kolor + '18',
                           borderLeft: `2px solid ${przeslane ? '#2e7d32' : kolor}`,
                           borderRadius: '0 3px 3px 0', padding: '1px 4px', marginBottom: '1px',
                           fontSize: '9px', color: przeslane ? '#2e7d32' : kolor, fontWeight: 700, lineHeight: 1.4,
                           overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                          cursor: 'pointer',
                         }}>
-                        {ikona} {z.tytul}
+                        {ikona} {tytulKrotki}
                       </div>
                     );
                   })}
