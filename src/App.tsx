@@ -2129,30 +2129,6 @@ function PanelBiura({ onWyloguj }: { onWyloguj: () => void }) {
     if (error) { setKomunikat('Blad: ' + error.message); } else { setKomunikat('Usuniete!'); pobierzOgloszenia(); }
   }
 
-  async function dodajZjazd(e: React.FormEvent) {
-    e.preventDefault();
-    const { data: nowyZjazdData, error } = await supabase.from('zjazdy').insert([{
-      nr: parseInt(nowyZjazd.nr),
-      daty: nowyZjazd.daty,
-      sala: nowyZjazd.sala,
-      adres: nowyZjazd.adres,
-      tematy: nowyZjazd.tematy,
-      status: nowyZjazd.status,
-      typ: (nowyZjazd as any).typ || 'stacjonarny',
-      link_online: (nowyZjazd as any).link_online || null,
-      data_zjazdu: nowyZjazd.data_zjazdu,
-      data_dzien1: nowyZjazd.data_dzien1 || nowyZjazd.data_zjazdu,
-      data_dzien2: nowyZjazd.data_dzien2 || null,
-      grupa_id: parseInt(nowyZjazd.grupa_id),
-    }]).select().single();
-    if (error) { setKomunikat('Blad: ' + error.message); return; }
-    if (nowyZjazd.prowadzacy_id && nowyZjazdData) {
-      await supabase.from('zjazdy_prowadzacy').insert([{ zjazd_id: nowyZjazdData.id, prowadzacy_id: parseInt(nowyZjazd.prowadzacy_id) }]);
-    }
-    setKomunikat('Zjazd dodany!');
-    setNowyZjazd({ nr: '', daty: '', sala: '', adres: '', tematy: '', status: 'nadchodzacy', typ: 'stacjonarny', link_online: '', data_zjazdu: '', data_dzien1: '', data_dzien2: '', grupa_id: '', prowadzacy_id: '' });
-    pobierzZjazdy();
-  }
 
   async function zapiszTabelaZjazdow() {
     if (!tabelaGrupa) { setKomunikat('Wybierz grupę przed zapisem.'); return; }
