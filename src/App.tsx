@@ -2309,20 +2309,23 @@ function EkranBackup() {
       setPostep(Math.round(done / TABLES.length * 100));
     }
 
-    // Generuj ZIP bez biblioteki — tworzymy jeden plik tekstowy ze wszystkimi CSV
+    // Pobierz każdą tabelę jako osobny plik CSV
     const date = new Date().toISOString().split('T')[0];
-    let combined = `BACKUP ON-ARCH — ${date}\n${'='.repeat(50)}\n\n`;
     for (const [table, csv] of Object.entries(csvFiles)) {
-      combined += `\n### TABELA: ${table} ###\n${csv}\n\n`;
+      const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `onarch-${date}-${table}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+      await new Promise(r => setTimeout(r, 300)); // krótka przerwa między plikami
     }
-    const blob = new Blob([combined], { type: 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = `onarch-backup-${date}.txt`; a.click();
-    URL.revokeObjectURL(url);
 
-    const errors = Object.values(statusy).filter(s => s === 'error').length;
-    setInfo(errors === 0 ? `✓ Backup gotowy! Pobrano ${TABLES.length} tabel.` : `⚠ Backup z błędami — ${errors} tabel niedostępnych.`);
+    const errCount = Object.values(statusy).filter(s => s === 'error').length;
+    setInfo(errCount === 0
+      ? `✓ Backup gotowy! Pobrano ${Object.keys(csvFiles).length} plików CSV.`
+      : `⚠ Backup częściowy — ${errCount} tabel z błędem.`);
     setLaduje(false);
   }
 
