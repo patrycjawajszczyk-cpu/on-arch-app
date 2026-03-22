@@ -2256,7 +2256,7 @@ function WeryfikacjaObecnosci({ zjazdy, grupy, kursanci, prowadzacyUserId }: {
 
 // ─── BACKUP ──────────────────────────────────────────────────────────────────
 
-function EkranBackup() {
+function EkranBackup({ onBackupDone }: { onBackupDone?: () => void }) {
   const SUPABASE_URL = 'https://bksebyxrknubyokwuaby.supabase.co';
   const TABLES = [
     'kursanci', 'grupy', 'zjazdy', 'ogloszenia', 'obecnosci',
@@ -2340,6 +2340,10 @@ function EkranBackup() {
     URL.revokeObjectURL(url);
 
     const bledow = TABLES.length - pobranych;
+    if (bledow === 0 || pobranych > 0) {
+      localStorage.setItem('onarch_backup_date', new Date().toISOString());
+      if (onBackupDone) onBackupDone();
+    }
     setInfo(bledow === 0
       ? `✓ Backup gotowy! Pobrano ${pobranych} tabel → onarch-backup-${date}.zip`
       : pobranych === 0
@@ -2415,6 +2419,23 @@ function PanelBiura({ onWyloguj, user }: { onWyloguj: () => void; user: User | n
   const [edytowanyZjazd, setEdytowanyZjazd] = useState<Zjazd | null>(null);
   const [noweOgl, setNoweOgl] = useState({ typ: 'Informacja', tytul: '', tresc: '', szczegoly: '', nowe: true, grupa_id: '' });
   const [nowyZjazd, setNowyZjazd] = useState({ nr: '', daty: '', sala: '', adres: '', tematy: '', status: 'nadchodzacy', typ: 'stacjonarny', link_online: '', data_zjazdu: '', data_dzien1: '', data_dzien2: '', grupa_id: '', prowadzacy_id: '' });
+
+  // Czy backup jest wymagany (piątek >= 14:00 i nie zrobiony w tym tygodniu)
+  function czyBackupWymagany(): boolean {
+    const ostatni = localStorage.getItem('onarch_backup_date');
+    const teraz = new Date();
+    const dzienTygodnia = teraz.getDay(); // 5 = piątek
+    const godzina = teraz.getHours();
+    if (dzienTygodnia !== 5 || godzina < 14) return false;
+    if (!ostatni) return true;
+    // Sprawdź czy ostatni backup był w tym tygodniu (od poniedziałku)
+    const poniedzialek = new Date(teraz);
+    poniedzialek.setDate(teraz.getDate() - ((dzienTygodnia as number) === 0 ? 6 : (dzienTygodnia as number) - 1));
+    poniedzialek.setHours(0, 0, 0, 0);
+    return new Date(ostatni) < poniedzialek;
+  }
+
+  const [pokazBackupAlert, setPokazBackupAlert] = useState(czyBackupWymagany);
 
   type WierszZjazdu = {
     _id: string;
@@ -2770,9 +2791,13 @@ function PanelBiura({ onWyloguj, user }: { onWyloguj: () => void; user: User | n
           ].map(item => (
             <button key={item.id}
               className={`biuro-sidebar-item ${aktywnaZakladka === item.id ? 'active' : ''}`}
+              style={item.id === 'backup' && pokazBackupAlert ? { color: '#c62828', background: '#ffeaea' } : {}}
               onClick={() => { setKomunikat(''); setEdytowane(null); setEdytowanyZjazd(null); setAktywnaZakladka(item.id); }}>
               {item.icon}
               <span>{item.label}</span>
+              {item.id === 'backup' && pokazBackupAlert && (
+                <span style={{ marginLeft: 'auto', width: '8px', height: '8px', borderRadius: '50%', background: '#c62828', flexShrink: 0 }} />
+              )}
             </button>
           ))}
         </nav>
@@ -2811,6 +2836,14 @@ function PanelBiura({ onWyloguj, user }: { onWyloguj: () => void; user: User | n
             {aktywnaZakladka === 'ankiety' && 'Ankiety'}
             {aktywnaZakladka === 'backup' && 'Backup'}
           </div>
+          {pokazBackupAlert && (
+            <div onClick={() => setAktywnaZakladka('backup')}
+              style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#ffeaea', border: '0.5px solid #ffcdd2', borderRadius: '10px', padding: '8px 14px', cursor: 'pointer', animation: 'pulse-red 2s infinite' }}>
+              <span style={{ fontSize: '16px' }}>💾</span>
+              <span style={{ fontSize: '12px', fontWeight: 600, color: '#c62828' }}>Pobierz backup bazy danych</span>
+              <span style={{ fontSize: '11px', color: '#e57373' }}>→</span>
+            </div>
+          )}
         </div>
 
         <main className="biuro-main">
@@ -2835,8 +2868,10 @@ function PanelBiura({ onWyloguj, user }: { onWyloguj: () => void; user: User | n
                   { id: 'ankiety',    label: 'Ankiety',    opis: `${ankiety.length} wypełnień`,         icon: <Star size={22}/> },
                   { id: 'backup',     label: 'Backup',     opis: 'Pobierz kopię bazy',                  icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> },
                 ].map(k => (
-                  <div key={k.id} onClick={() => setAktywnaZakladka(k.id)} className="biuro-kafelek">
-                    <div className="biuro-kafelek-icon">{k.icon}</div>
+                  <div key={k.id} onClick={() => setAktywnaZakladka(k.id)}
+                    className="biuro-kafelek"
+                    style={k.id === 'backup' && pokazBackupAlert ? { borderColor: '#ffcdd2', background: '#fff5f5' } : {}}>
+                    <div className="biuro-kafelek-icon" style={k.id === 'backup' && pokazBackupAlert ? { color: '#c62828' } : {}}>{k.icon}</div>
                     <div>
                       <div className="biuro-kafelek-label">{k.label}</div>
                       <div className="biuro-kafelek-opis">{k.opis}</div>
@@ -3761,7 +3796,7 @@ function PanelBiura({ onWyloguj, user }: { onWyloguj: () => void; user: User | n
 
         {/* ZAKŁADKA: Backup */}
         {aktywnaZakladka === 'backup' && (
-          <EkranBackup />
+          <EkranBackup onBackupDone={() => setPokazBackupAlert(false)} />
         )}
 
         {/* ZAKŁADKA: Zadania */}
