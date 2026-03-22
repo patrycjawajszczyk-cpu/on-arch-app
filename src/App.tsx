@@ -2,6 +2,13 @@ import { useState, useEffect, useRef } from 'react';
 import './App.css';
 import { supabase } from './supabase';
 import { Home, Calendar, Bell, MessageCircle, User, CheckSquare, BookOpen, Star } from 'lucide-react';
+import * as Sentry from '@sentry/react';
+
+Sentry.init({
+  dsn: 'https://17a9858837be5d5176d95b789e13fb9f@o4511088619094016.ingest.de.sentry.io/4511088625647696',
+  environment: import.meta.env.MODE,
+  tracesSampleRate: 0.2,
+});
 
 // Przelicza status zjazdu na podstawie dat — nie z bazy danych
 function przeliczStatus(z: { data_dzien1?: string | null; data_dzien2?: string | null; status: string }): string {
