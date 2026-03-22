@@ -1071,7 +1071,7 @@ function EkranPowitalny({ kursant, user, onDalej }: { kursant: Kursant; user: { 
       {/* Logo */}
       <OnArchLogo height={40} color="white" />
       <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.6)', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '40px' }}>
-        Akademia
+        Student App
       </div>
 
       {/* Powitanie */}
@@ -5408,7 +5408,9 @@ export default function App() {
       const grupaId = kursantData?.grupa_id;
       const [{ data: og }, { data: zj }] = await Promise.all([
         supabase.from('ogloszenia').select('*').order('data_utworzenia', { ascending: false }),
-        grupaId ? supabase.from('zjazdy').select('*').eq('grupa_id', grupaId).order('data_zjazdu', { ascending: true }) : supabase.from('zjazdy').select('*').order('data_zjazdu', { ascending: true }),
+        grupaId
+          ? supabase.from('zjazdy').select('*').eq('grupa_id', grupaId).order('data_zjazdu', { ascending: true })
+          : Promise.resolve({ data: [] }),  // brak grupy = brak zjazdów, nigdy nie pobieraj wszystkich
       ]);
       setOgloszenia((og || []).filter((o: any) => o.grupa_id === null || o.grupa_id === grupaId));
 
