@@ -1264,7 +1264,11 @@ function EkranLogowania({ onZalogowano }: { onZalogowano: () => void }) {
   async function resetHasla(e: React.FormEvent) {
     e.preventDefault();
     setLadowanie(true); setBlad('');
-    const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: 'https://on-arch-akademia.vercel.app' });
+    if (TURNSTILE_SITE_KEY && !turnstileTokenRef.current) { setBlad('Potwierdź że nie jesteś robotem.'); setLadowanie(false); return; }
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: 'https://on-arch-akademia.vercel.app',
+      captchaToken: turnstileTokenRef.current || undefined,
+    });
     if (error) {
       setBlad('Blad: ' + error.message);
       if (TURNSTILE_SITE_KEY && (window as any).turnstile) {
