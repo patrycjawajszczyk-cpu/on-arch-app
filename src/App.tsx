@@ -2714,39 +2714,69 @@ function PanelBiura({ onWyloguj, user }: { onWyloguj: () => void; user: User | n
     const buffer = await file.arrayBuffer();
     const bytes = new Uint8Array(buffer);
 
-    // Sprawdź BOM UTF-8 (EF BB BF) lub spróbuj UTF-8, fallback na Windows-1250
     let text: string;
     const hasBOM = bytes[0] === 0xEF && bytes[1] === 0xBB && bytes[2] === 0xBF;
     try {
       const decoder = new TextDecoder(hasBOM ? 'utf-8' : 'utf-8', { fatal: true });
       text = decoder.decode(buffer);
-      // Jeśli UTF-8 zadziałało ale nie ma polskich znaków a są dziwne — spróbuj Windows-1250
       if (!hasBOM && /[\x80-\x9F]/.test(text)) throw new Error('likely wrong encoding');
     } catch {
-      // Fallback: Windows-1250 (Excel Polska)
       const decoder = new TextDecoder('windows-1250');
       text = decoder.decode(buffer);
     }
 
+    // Pobierz service_role key — potrzebny do tworzenia kont bez captcha
+    const serviceKey = prompt('Wklej klucz service_role (Supabase → Settings → API):\n\nPotrzebny tylko do importu — nie jest zapisywany.');
+    if (!serviceKey?.trim()) { alert('Anulowano — klucz jest wymagany do importu.'); return; }
+
     setImportowanie(true); setImportStatus([]);
-    // Obsługa separatorów: przecinek lub średnik (Excel PL używa średnika)
     const firstLine = text.trim().split('\n')[0];
     const separator = firstLine.includes(';') ? ';' : ',';
     const rows = text.trim().split('\n').slice(1);
     const wyniki: { imie: string; nazwisko: string; email: string; status: string }[] = [];
+
     for (const row of rows) {
       if (!row.trim()) continue;
-      const [imie, nazwisko, email, grupa_id] = row.split(separator).map(s => s.trim().replace(/^"|"$/g, ''));
+      const [imie, nazwisko, email, grupa_id] = row.split(separator).map(s => s.trim().replace(/^"|"$/g, '').replace(/\r/g, ''));
       if (!imie || !nazwisko || !email || !grupa_id) continue;
-      const { data: authData, error: authError } = await supabase.auth.signUp({ email, password: Math.random().toString(36).slice(-10) });
-      if (authError) { wyniki.push({ imie, nazwisko, email, status: 'Blad: ' + authError.message }); continue; }
-      const { error } = await supabase.from('kursanci').insert([{ imie, nazwisko, grupa_id: parseInt(grupa_id), user_id: authData.user!.id, rola: 'kursant' }]);
-      wyniki.push({ imie, nazwisko, email, status: error ? 'Blad: ' + error.message : 'Dodano!' });
-      await new Promise(r => setTimeout(r, 1000));
+
+      // Użyj Admin API — omija captcha
+      const SUPABASE_URL = 'https://bksebyxrknubyokwuaby.supabase.co';
+      try {
+        const res = await fetch(`${SUPABASE_URL}/auth/v1/admin/users`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': serviceKey.trim(),
+            'Authorization': `Bearer ${serviceKey.trim()}`,
+          },
+          body: JSON.stringify({
+            email,
+            password: Math.random().toString(36).slice(-10) + Math.random().toString(36).slice(-4).toUpperCase() + '!',
+            email_confirm: true,  // od razu potwierdzone, nie wymaga kliknięcia w maila
+          }),
+        });
+        const authData = await res.json();
+        if (!res.ok || !authData.id) {
+          wyniki.push({ imie, nazwisko, email, status: 'Błąd: ' + (authData.msg || authData.message || res.status) });
+          continue;
+        }
+        const { error } = await supabase.from('kursanci').insert([{
+          imie, nazwisko, grupa_id: parseInt(grupa_id),
+          user_id: authData.id, rola: 'kursant',
+          email,
+        }]);
+        wyniki.push({ imie, nazwisko, email, status: error ? 'Błąd: ' + error.message : '✓ Dodano' });
+      } catch (err: any) {
+        wyniki.push({ imie, nazwisko, email, status: 'Błąd sieci: ' + err.message });
+      }
+      await new Promise(r => setTimeout(r, 500));
     }
+
     setImportStatus([...wyniki]);
     setImportowanie(false);
-    const { data } = await supabase.from('kursanci').select('id, imie, nazwisko, email, telefon, grupa_id, user_id, certyfikat_url'); setKursanci((data || []) as unknown as KursantAdmin[]);
+    const { data } = await supabase.from('kursanci').select('id, imie, nazwisko, email, telefon, grupa_id, user_id, certyfikat_url');
+    setKursanci((data || []) as unknown as KursantAdmin[]);
     if (fileRef.current) fileRef.current.value = '';
   }
 
