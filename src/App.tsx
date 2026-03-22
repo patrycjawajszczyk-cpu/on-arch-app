@@ -2309,23 +2309,42 @@ function EkranBackup() {
       setPostep(Math.round(done / TABLES.length * 100));
     }
 
-    // Pobierz każdą tabelę jako osobny plik CSV
+    // Załaduj JSZip dynamicznie
+    setInfo('Pakowanie plików...');
+    await new Promise<void>((resolve, reject) => {
+      if ((window as any).JSZip) { resolve(); return; }
+      const script = document.createElement('script');
+      script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
+      script.onload = () => resolve();
+      script.onerror = () => reject(new Error('Nie udało się załadować JSZip'));
+      document.head.appendChild(script);
+    });
+
+    const JSZip = (window as any).JSZip;
+    const zip = new JSZip();
     const date = new Date().toISOString().split('T')[0];
+    const folder = zip.folder(`onarch-backup-${date}`);
+
+    let pobranych = 0;
     for (const [table, csv] of Object.entries(csvFiles)) {
-      const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `onarch-${date}-${table}.csv`;
-      a.click();
-      URL.revokeObjectURL(url);
-      await new Promise(r => setTimeout(r, 300)); // krótka przerwa między plikami
+      folder.file(`${table}.csv`, '\uFEFF' + csv);
+      pobranych++;
     }
 
-    const errCount = Object.values(statusy).filter(s => s === 'error').length;
-    setInfo(errCount === 0
-      ? `✓ Backup gotowy! Pobrano ${Object.keys(csvFiles).length} plików CSV.`
-      : `⚠ Backup częściowy — ${errCount} tabel z błędem.`);
+    const blob = await zip.generateAsync({ type: 'blob' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `onarch-backup-${date}.zip`;
+    a.click();
+    URL.revokeObjectURL(url);
+
+    const bledow = TABLES.length - pobranych;
+    setInfo(bledow === 0
+      ? `✓ Backup gotowy! Pobrano ${pobranych} tabel → onarch-backup-${date}.zip`
+      : pobranych === 0
+        ? `✕ Błąd — nie pobrano żadnych danych. Sprawdź czy wpisałaś klucz service_role.`
+        : `⚠ Backup częściowy — pobrano ${pobranych}, błędy: ${bledow} tabel.`);
     setLaduje(false);
   }
 
