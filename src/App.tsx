@@ -6,7 +6,7 @@ import * as Sentry from '@sentry/react';
 
 Sentry.init({
   dsn: 'https://17a9858837be5d5176d95b789e13fb9f@o4511088619094016.ingest.de.sentry.io/4511088625647696',
-  environment: import.meta.env.MODE,
+  environment: 'production',
   tracesSampleRate: 0.2,
 });
 
@@ -2254,6 +2254,131 @@ function WeryfikacjaObecnosci({ zjazdy, grupy, kursanci, prowadzacyUserId }: {
   );
 }
 
+// ─── BACKUP ──────────────────────────────────────────────────────────────────
+
+function EkranBackup() {
+  const SUPABASE_URL = 'https://bksebyxrknubyokwuaby.supabase.co';
+  const TABLES = [
+    'kursanci', 'grupy', 'zjazdy', 'ogloszenia', 'obecnosci',
+    'zadania', 'zadania_odpowiedzi', 'wiadomosci', 'ankiety',
+    'prowadzacy', 'zjazdy_prowadzacy', 'notatki_kursantow',
+    'materialy_zjazdu', 'pytania_przed_zjazdem'
+  ];
+  const [serviceKey, setServiceKey] = useState('');
+  const [statusy, setStatusy] = useState<Record<string, 'idle'|'loading'|'ok'|'error'>>({});
+  const [postep, setPostep] = useState(0);
+  const [info, setInfo] = useState('');
+  const [laduje, setLaduje] = useState(false);
+
+  function toCSV(rows: any[]) {
+    if (!rows || rows.length === 0) return '';
+    const headers = Object.keys(rows[0]);
+    const escape = (v: any) => {
+      if (v === null || v === undefined) return '';
+      const s = String(v);
+      return (s.includes(',') || s.includes('"') || s.includes('\n'))
+        ? '"' + s.replace(/"/g, '""') + '"' : s;
+    };
+    return [headers.join(','), ...rows.map(row => headers.map(h => escape(row[h])).join(','))].join('\n');
+  }
+
+  async function startBackup() {
+    if (!serviceKey.trim()) { setInfo('⚠ Wklej klucz service_role z Supabase → Settings → API'); return; }
+    setLaduje(true);
+    setPostep(0);
+    setInfo('Pobieranie danych...');
+    setStatusy({});
+
+    const csvFiles: Record<string, string> = {};
+    let done = 0;
+
+    for (const table of TABLES) {
+      setStatusy(prev => ({ ...prev, [table]: 'loading' }));
+      try {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}?select=*`, {
+          headers: { 'apikey': serviceKey, 'Authorization': 'Bearer ' + serviceKey }
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const rows = await res.json();
+        csvFiles[table] = toCSV(rows);
+        setStatusy(prev => ({ ...prev, [table]: 'ok' }));
+      } catch(e: any) {
+        setStatusy(prev => ({ ...prev, [table]: 'error' }));
+      }
+      done++;
+      setPostep(Math.round(done / TABLES.length * 100));
+    }
+
+    // Generuj ZIP bez biblioteki — tworzymy jeden plik tekstowy ze wszystkimi CSV
+    const date = new Date().toISOString().split('T')[0];
+    let combined = `BACKUP ON-ARCH — ${date}\n${'='.repeat(50)}\n\n`;
+    for (const [table, csv] of Object.entries(csvFiles)) {
+      combined += `\n### TABELA: ${table} ###\n${csv}\n\n`;
+    }
+    const blob = new Blob([combined], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `onarch-backup-${date}.txt`; a.click();
+    URL.revokeObjectURL(url);
+
+    const errors = Object.values(statusy).filter(s => s === 'error').length;
+    setInfo(errors === 0 ? `✓ Backup gotowy! Pobrano ${TABLES.length} tabel.` : `⚠ Backup z błędami — ${errors} tabel niedostępnych.`);
+    setLaduje(false);
+  }
+
+  const kolorStatusu = (s: string) => s === 'ok' ? '#4caf50' : s === 'error' ? '#f44336' : s === 'loading' ? '#ff9800' : '#ddd';
+
+  return (
+    <div style={{ maxWidth: '600px' }}>
+      <div style={{ background: '#fffbeb', border: '0.5px solid #fde68a', borderRadius: '12px', padding: '12px 16px', marginBottom: '20px', fontSize: '12px', color: '#92400e', lineHeight: 1.6 }}>
+        💡 Użyj klucza <strong>service_role</strong> (Supabase → Settings → API → service_role → Reveal). Klucz nie jest zapisywany — wklejasz go tylko na czas backupu.
+      </div>
+
+      <div style={{ marginBottom: '16px' }}>
+        <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '6px' }}>
+          Klucz service_role
+        </label>
+        <input type="password" value={serviceKey} onChange={e => setServiceKey(e.target.value)}
+          placeholder="eyJ..."
+          style={{ width: '100%', padding: '10px 14px', border: '0.5px solid var(--border)', borderRadius: '10px', fontSize: '12px', fontFamily: 'monospace' }} />
+      </div>
+
+      {/* Grid tabel */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', marginBottom: '20px' }}>
+        {TABLES.map(t => (
+          <div key={t} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '7px 12px', background: 'white', border: '0.5px solid var(--border)', borderRadius: '8px', fontSize: '12px', color: 'var(--text-muted)' }}>
+            <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: kolorStatusu(statusy[t] || 'idle'), flexShrink: 0, transition: 'background 0.3s' }} />
+            {t}
+          </div>
+        ))}
+      </div>
+
+      {/* Pasek postępu */}
+      {laduje && (
+        <div style={{ marginBottom: '16px' }}>
+          <div style={{ background: '#f0ebe8', borderRadius: '20px', height: '6px', overflow: 'hidden', marginBottom: '6px' }}>
+            <div style={{ height: '100%', background: 'var(--brand)', borderRadius: '20px', width: postep + '%', transition: 'width 0.3s' }} />
+          </div>
+          <div style={{ fontSize: '11px', color: 'var(--text-muted)', textAlign: 'center' }}>{postep}%</div>
+        </div>
+      )}
+
+      <button onClick={startBackup} disabled={laduje}
+        style={{ width: '100%', padding: '12px', background: laduje ? '#ccc' : 'var(--brand)', color: 'white', border: 'none', borderRadius: '10px', fontSize: '14px', fontWeight: 600, cursor: laduje ? 'default' : 'pointer', fontFamily: 'Jost, sans-serif' }}>
+        {laduje ? 'Pobieranie...' : '⬇ Pobierz backup wszystkich tabel'}
+      </button>
+
+      {info && (
+        <div style={{ marginTop: '12px', padding: '10px 14px', borderRadius: '10px', fontSize: '13px',
+          background: info.startsWith('✓') ? '#e8f5e9' : '#fffbeb',
+          color: info.startsWith('✓') ? '#2e7d32' : '#92400e' }}>
+          {info}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function PanelBiura({ onWyloguj, user }: { onWyloguj: () => void; user: User | null }) {
   const [aktywnaZakladka, setAktywnaZakladka] = useState('home');
   const [grupy, setGrupy] = useState<Grupa[]>([]);
@@ -2619,6 +2744,7 @@ function PanelBiura({ onWyloguj, user }: { onWyloguj: () => void; user: User | n
             { id: 'grupy',     icon: <Home size={18}/>,        label: 'Grupy' },
             { id: 'prowadzacy',icon: <User size={18}/>,        label: 'Prowadzący' },
             { id: 'ankiety',   icon: <Star size={18}/>,        label: 'Ankiety' },
+            { id: 'backup',    icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>, label: 'Backup' },
           ].map(item => (
             <button key={item.id}
               className={`biuro-sidebar-item ${aktywnaZakladka === item.id ? 'active' : ''}`}
@@ -2661,6 +2787,7 @@ function PanelBiura({ onWyloguj, user }: { onWyloguj: () => void; user: User | n
             {aktywnaZakladka === 'grupy' && 'Grupy'}
             {aktywnaZakladka === 'prowadzacy' && 'Prowadzący'}
             {aktywnaZakladka === 'ankiety' && 'Ankiety'}
+            {aktywnaZakladka === 'backup' && 'Backup'}
           </div>
         </div>
 
@@ -2684,6 +2811,7 @@ function PanelBiura({ onWyloguj, user }: { onWyloguj: () => void; user: User | n
                   { id: 'grupy',      label: 'Grupy',      opis: `${grupy.length} grup`,                icon: <Home size={22}/> },
                   { id: 'prowadzacy', label: 'Prowadzący', opis: `${prowadzacy.length} osób`,           icon: <User size={22}/> },
                   { id: 'ankiety',    label: 'Ankiety',    opis: `${ankiety.length} wypełnień`,         icon: <Star size={22}/> },
+                  { id: 'backup',     label: 'Backup',     opis: 'Pobierz kopię bazy',                  icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> },
                 ].map(k => (
                   <div key={k.id} onClick={() => setAktywnaZakladka(k.id)} className="biuro-kafelek">
                     <div className="biuro-kafelek-icon">{k.icon}</div>
@@ -3609,12 +3737,15 @@ function PanelBiura({ onWyloguj, user }: { onWyloguj: () => void; user: User | n
           </>
         )}
 
+        {/* ZAKŁADKA: Backup */}
+        {aktywnaZakladka === 'backup' && (
+          <EkranBackup />
+        )}
+
         {/* ZAKŁADKA: Zadania */}
         {aktywnaZakladka === 'zadania' && (
-          <>
-            <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'flex-start' }}>
-              {/* Formularz */}
-              <div style={{ background: 'white', border: '0.5px solid var(--border)', borderRadius: '14px', padding: '16px 20px', minWidth: '280px', flex: '1' }}>
+          <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'flex-start' }}>
+            <div style={{ background: 'white', border: '0.5px solid var(--border)', borderRadius: '14px', padding: '16px 20px', minWidth: '280px', flex: '1' }}>
                 <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text)', marginBottom: '12px' }}>Nowe zadanie</div>
                 <form onSubmit={dodajZadanie}>
                   <select value={noweZadanie.grupa_id} onChange={e => { setNoweZadanie({ ...noweZadanie, grupa_id: e.target.value }); setWybranaGrupaZadan(e.target.value); }} required
@@ -3736,7 +3867,6 @@ function PanelBiura({ onWyloguj, user }: { onWyloguj: () => void; user: User | n
                 }
               </div>
             </div>
-          </>
         )}
 
         {/* ZAKŁADKA: Obecności w panelu biura */}
