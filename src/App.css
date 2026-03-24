@@ -684,24 +684,23 @@
    
    .czat-wiadomosci {
      flex: 1;
-     overflow-y: auto;
+     overflow-y: scroll;
      display: flex;
      flex-direction: column;
      gap: 8px;
      padding-bottom: 8px;
+     /* ukryj scrollbar na wszystkich przeglądarkach */
      scrollbar-width: none;
+     -ms-overflow-style: none;
+     /* sztuczka Android: przesuń scrollbar poza widoczny obszar */
+     padding-right: 20px;
+     margin-right: -20px;
+     overflow-x: hidden;
    }
    
    .czat-wiadomosci::-webkit-scrollbar {
      display: none;
-   }
-   
-   .czat-wiadomosci::-webkit-scrollbar-track {
-     background: transparent;
-   }
-   
-   .czat-wiadomosci::-webkit-scrollbar-thumb {
-     background: transparent;
+     width: 0;
    }
    
    .czat-nazwa {
