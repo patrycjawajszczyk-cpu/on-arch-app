@@ -675,7 +675,9 @@
      flex-direction: column;
      height: calc(100vh - 130px);
      width: 100%;
+     box-sizing: border-box;
      padding: 18px 16px 0;
+     overflow: hidden;
    }
    
    .czat-wiadomosci {
