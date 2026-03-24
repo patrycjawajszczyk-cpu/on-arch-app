@@ -1359,7 +1359,8 @@ function EkranCzat({ user, kursant }: { user: User; kursant: Kursant | null }) {
     <div className="czat-container">
       <h2 className="page-title">Czat grupy</h2>
       <div className="czat-nazwa">{kursant.grupy?.nazwa || 'Twoja grupa'}</div>
-      <div className="czat-wiadomosci">
+      <div style={{ flex: 1, overflow: 'hidden', position: 'relative' }}>
+        <div className="czat-wiadomosci">
         {wiadomosci.length === 0 && <div className="czat-puste">Brak wiadomosci. Napisz pierwsza!</div>}
         {wiadomosci.map((w, idx) => {
           const moja = w.user_id === user.id;
@@ -1409,6 +1410,7 @@ function EkranCzat({ user, kursant }: { user: User; kursant: Kursant | null }) {
           );
         })}
         <div ref={doRef} />
+        </div>
       </div>
       <div style={{ position: 'relative' }}>
         {pokazEmoji && (
