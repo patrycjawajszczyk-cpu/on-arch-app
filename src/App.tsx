@@ -1084,18 +1084,15 @@ function EkranPowitalny({ kursant, user, onDalej }: { kursant: Kursant; user: { 
         </div>
       </div>
 
-      {/* Placeholder na filmik */}
-      <div style={{
-        width: '100%', maxWidth: '320px', aspectRatio: '16/9',
-        background: 'rgba(255,255,255,0.08)', borderRadius: '16px',
-        border: '1px dashed rgba(255,255,255,0.2)',
-        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-        marginBottom: '32px', gap: '8px',
-      }}>
-        <div style={{ fontSize: '36px' }}>▶️</div>
-        <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', textAlign: 'center', padding: '0 16px' }}>
-          Tutaj pojawi się filmik z omówieniem funkcji aplikacji
-        </div>
+      {/* Film reklamowy */}
+      <div style={{ width: '100%', maxWidth: '320px', aspectRatio: '16/9', borderRadius: '16px', overflow: 'hidden', marginBottom: '32px' }}>
+        <iframe
+          width="100%" height="100%"
+          src="https://www.youtube.com/embed/uFIqFFa0qrI"
+          frameBorder="0"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen
+        />
       </div>
 
       {/* Co znajdziesz w aplikacji */}
@@ -1129,7 +1126,7 @@ function EkranPowitalny({ kursant, user, onDalej }: { kursant: Kursant; user: { 
 }
 
 // Stała — wstaw Site Key z Cloudflare Turnstile gdy będzie gotowy
-const TURNSTILE_SITE_KEY = '0x4AAAAAACty6p1M9mvVALXM';
+// const TURNSTILE_SITE_KEY = '0x4AAAAAACty6p1M9mvVALXM'; // wyłączone
 
 const MAX_PROB = 5;
 const BLOKADA_MINUT = 15;
@@ -1178,33 +1175,6 @@ function EkranLogowania({ onZalogowano }: { onZalogowano: () => void }) {
   const [pozostaloCzas, setPozostaloCzas] = useState(0);
   const turnstileRef = useRef<HTMLDivElement>(null);
   const turnstileResetRef = useRef<HTMLDivElement>(null);
-  const turnstileTokenRef = useRef<string>('');
-
-  useEffect(() => {
-    if (!TURNSTILE_SITE_KEY) return;
-    const script = document.createElement('script');
-    script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js';
-    script.async = true;
-    document.head.appendChild(script);
-    return () => { try { document.head.removeChild(script); } catch {} };
-  }, []);
-
-  // Renderuj widget na właściwym ekranie
-  useEffect(() => {
-    if (!TURNSTILE_SITE_KEY) return;
-    const ref = resetMode ? turnstileResetRef : turnstileRef;
-    const init = () => {
-      if ((window as any).turnstile && ref.current && !ref.current.hasChildNodes()) {
-        (window as any).turnstile.render(ref.current, {
-          sitekey: TURNSTILE_SITE_KEY,
-          callback: (token: string) => { turnstileTokenRef.current = token; },
-          'expired-callback': () => { turnstileTokenRef.current = ''; },
-        });
-      }
-    };
-    const timer = setTimeout(init, 300);
-    return () => clearTimeout(timer);
-  }, [resetMode]);
 
   // Odświeżaj timer blokady
   useEffect(() => {
@@ -1233,9 +1203,8 @@ function EkranLogowania({ onZalogowano }: { onZalogowano: () => void }) {
     e.preventDefault();
     const { zablokowany: z, pozostalo } = sprawdzBlokade(email);
     if (z) { setBlad(`Zbyt wiele prób. Spróbuj ponownie za ${pozostalo} min.`); return; }
-    if (TURNSTILE_SITE_KEY && !turnstileTokenRef.current) { setBlad('Potwierdź że nie jesteś robotem.'); return; }
     setLadowanie(true); setBlad('');
-    const { error } = await supabase.auth.signInWithPassword({ email, password: haslo, options: { captchaToken: turnstileTokenRef.current || undefined } });
+    const { error } = await supabase.auth.signInWithPassword({ email, password: haslo });
     if (error) {
       zapiszProbe(email);
       const { zablokowany: zNowy, pozostalo: pNowy } = sprawdzBlokade(email);
@@ -1250,10 +1219,6 @@ function EkranLogowania({ onZalogowano }: { onZalogowano: () => void }) {
         setPozostalePróby(pozostale);
         setBlad(`Nieprawidłowy email lub hasło.${pozostale <= 2 ? ` Pozostało prób: ${pozostale}.` : ''}`);
       }
-      if (TURNSTILE_SITE_KEY && (window as any).turnstile) {
-        (window as any).turnstile.reset();
-        turnstileTokenRef.current = '';
-      }
     } else {
       zapiszProbe(email, true);
       onZalogowano();
@@ -1264,17 +1229,11 @@ function EkranLogowania({ onZalogowano }: { onZalogowano: () => void }) {
   async function resetHasla(e: React.FormEvent) {
     e.preventDefault();
     setLadowanie(true); setBlad('');
-    if (TURNSTILE_SITE_KEY && !turnstileTokenRef.current) { setBlad('Potwierdź że nie jesteś robotem.'); setLadowanie(false); return; }
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: 'https://on-arch-akademia.vercel.app',
-      captchaToken: turnstileTokenRef.current || undefined,
     });
     if (error) {
       setBlad('Blad: ' + error.message);
-      if (TURNSTILE_SITE_KEY && (window as any).turnstile) {
-        (window as any).turnstile.reset();
-        turnstileTokenRef.current = '';
-      }
     } else { setResetWyslany(true); }
     setLadowanie(false);
   }
@@ -1297,7 +1256,6 @@ function EkranLogowania({ onZalogowano }: { onZalogowano: () => void }) {
       <form className="login-form" onSubmit={resetHasla}>
         <div className="login-field"><label>Email</label><input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="twoj@email.pl" required /></div>
         {blad && <div className="login-error">{blad}</div>}
-        {TURNSTILE_SITE_KEY && <div ref={turnstileResetRef} style={{ margin: '10px 0' }} />}
         <button className="login-btn" type="submit" disabled={ladowanie}>{ladowanie ? 'Wysylanie...' : 'Wyslij link resetujacy'}</button>
       </form>
       <button className="btn-link" onClick={() => setResetMode(false)}>Wroce do logowania</button>
@@ -1322,7 +1280,7 @@ function EkranLogowania({ onZalogowano }: { onZalogowano: () => void }) {
             Pozostało prób: {pozostalePróby} z {MAX_PROB}
           </div>
         )}
-        {TURNSTILE_SITE_KEY && <div ref={turnstileRef} style={{ margin: '10px 0' }} />}
+
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', margin: '12px 0' }}>
           <input type="checkbox" id="zgoda" checked={zgodaRodo} onChange={e => setZgodaRodo(e.target.checked)} style={{ marginTop: '3px', accentColor: 'var(--brand)' }} />
           <label htmlFor="zgoda" style={{ fontSize: '12px', color: 'var(--text-muted)', lineHeight: '1.6' }}>
