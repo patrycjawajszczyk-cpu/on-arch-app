@@ -5365,6 +5365,15 @@ export default function App() {
     });
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'PASSWORD_RECOVERY') setResetMode(true);
+      // Nowy kursant aktywujący konto przez link — pokaż ekran ustawienia hasła
+      if (event === 'SIGNED_IN' && session?.user?.app_metadata?.provider === 'email') {
+        const lastSignIn = session.user.last_sign_in_at;
+        const created = session.user.created_at;
+        // Jeśli to pierwsze logowanie (created = last_sign_in), pokaż ekran ustawienia hasła
+        if (lastSignIn && created && Math.abs(new Date(lastSignIn).getTime() - new Date(created).getTime()) < 5000) {
+          setResetMode(true);
+        }
+      }
       setUser(session?.user ? { id: session.user.id, email: session.user.email! } : null);
     });
     return () => subscription.unsubscribe();
@@ -5403,7 +5412,12 @@ export default function App() {
           ? supabase.from('zjazdy').select('*').eq('grupa_id', grupaId).order('data_zjazdu', { ascending: true })
           : Promise.resolve({ data: [] }),  // brak grupy = brak zjazdów, nigdy nie pobieraj wszystkich
       ]);
-      setOgloszenia((og || []).filter((o: any) => o.grupa_id === null || o.grupa_id === grupaId));
+      setOgloszenia((og || []).filter((o: any) => o.grupa_id === null || o.grupa_id === grupaId).map((o: any) => {
+        // Sprawdź lokalnie czy kursant już czytał to ogłoszenie
+        const klucz = `ogl_read_${user!.id}`;
+        const przeczytane: string[] = JSON.parse(localStorage.getItem(klucz) || '[]');
+        return przeczytane.includes(String(o.id)) ? { ...o, nowe: false } : o;
+      }));
 
       // Pobierz prowadzących dla każdego zjazdu
       const zjezdzeIds = (zj || []).map((z: any) => z.id);
@@ -5463,7 +5477,12 @@ export default function App() {
   async function otworzOgloszenie(o: Ogloszenie) {
     setAktywneOgloszenie(o);
     if (o.nowe) {
-      await supabase.from('ogloszenia').update({ nowe: false }).eq('id', o.id);
+      const klucz = `ogl_read_${user?.id}`;
+      const przeczytane: string[] = JSON.parse(localStorage.getItem(klucz) || '[]');
+      if (!przeczytane.includes(String(o.id))) {
+        przeczytane.push(String(o.id));
+        localStorage.setItem(klucz, JSON.stringify(przeczytane));
+      }
       setOgloszenia(prev => prev.map(og => og.id === o.id ? { ...og, nowe: false } : og));
     }
   }
