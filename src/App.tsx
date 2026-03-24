@@ -1173,8 +1173,7 @@ function EkranLogowania({ onZalogowano }: { onZalogowano: () => void }) {
   const [pozostalePróby, setPozostalePróby] = useState(MAX_PROB);
   const [zablokowany, setZablokowany] = useState(false);
   const [pozostaloCzas, setPozostaloCzas] = useState(0);
-  const turnstileRef = useRef<HTMLDivElement>(null);
-  const turnstileResetRef = useRef<HTMLDivElement>(null);
+
 
   // Odświeżaj timer blokady
   useEffect(() => {
