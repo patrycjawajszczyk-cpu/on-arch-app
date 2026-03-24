@@ -675,13 +675,9 @@
      flex-direction: column;
      height: calc(100vh - 130px);
      width: 100%;
-   }
-   
-   .czat-nazwa {
-     font-size: 11px;
-     color: var(--text-muted);
-     margin-bottom: 12px;
-     letter-spacing: 0.3px;
+     margin: -18px -16px 0;
+     padding: 0 16px;
+     width: calc(100% + 32px);
    }
    
    .czat-wiadomosci {
@@ -691,6 +687,28 @@
      flex-direction: column;
      gap: 8px;
      padding-bottom: 8px;
+     scrollbar-width: thin;
+     scrollbar-color: var(--border) transparent;
+   }
+   
+   .czat-wiadomosci::-webkit-scrollbar {
+     width: 4px;
+   }
+   
+   .czat-wiadomosci::-webkit-scrollbar-track {
+     background: transparent;
+   }
+   
+   .czat-wiadomosci::-webkit-scrollbar-thumb {
+     background: var(--border);
+     border-radius: 4px;
+   }
+   
+   .czat-nazwa {
+     font-size: 11px;
+     color: var(--text-muted);
+     margin-bottom: 12px;
+     letter-spacing: 0.3px;
    }
    
    .czat-puste {
