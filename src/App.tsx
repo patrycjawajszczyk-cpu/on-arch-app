@@ -737,6 +737,7 @@ function EkranAnkieta({ kursant, zjazdy, user }: { kursant: Kursant | null; zjaz
   const [wypelniona, setWypelniona] = useState<boolean | null>(null);
   const [wysylanie, setWysylanie] = useState(false);
   const [sukces, setSukces] = useState(false);
+  const [bladWysylania, setBladWysylania] = useState('');
   const [krok, setKrok] = useState(1);
   const [odpowiedzi, setOdpowiedzi] = useState<OdpowiedziAnkiety>({
     zadowolenie: 0, wiedza_wzrosla: '',
@@ -772,12 +773,18 @@ function EkranAnkieta({ kursant, zjazdy, user }: { kursant: Kursant | null; zjaz
 
   async function wyslij() {
     setWysylanie(true);
+    setBladWysylania('');
     const { error } = await supabase.from('ankiety').insert([{
       ...odpowiedzi,
       grupa_id: kursant?.grupa_id,
       user_id: user.id,
     }]);
-    if (!error) setSukces(true);
+    if (!error) {
+      setSukces(true);
+    } else {
+      setBladWysylania('Błąd: ' + error.message);
+      console.error('Ankieta błąd:', error);
+    }
     setWysylanie(false);
   }
 
@@ -964,6 +971,11 @@ function EkranAnkieta({ kursant, zjazdy, user }: { kursant: Kursant | null; zjaz
           ) : (
             <button onClick={wyslij} className="login-btn" style={{ flex: 1 }} disabled={wysylanie}>{wysylanie ? 'Wysyłanie...' : 'Wyślij ankietę ✓'}</button>
           )}
+          {bladWysylania && (
+  <div style={{ marginTop: '10px', padding: '10px 14px', background: '#ffebee', borderRadius: '10px', fontSize: '12px', color: '#c62828' }}>
+    ⚠ {bladWysylania}
+  </div>
+)}
         </div>
       </div>
     </div>
