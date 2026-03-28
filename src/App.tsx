@@ -4203,18 +4203,22 @@ function PanelBiura({ onWyloguj, user }: { onWyloguj: () => void; user: User | n
 }
 
 function KartaOgloszenia({ o, onClick }: { o: Ogloszenie; onClick: () => void; key?: string | number }) {
+  const ikona = o.typ === 'Pilne' ? '⚠️' : o.typ === 'Zmiana' ? '🔄' : 'ℹ️';
+  const tloIkony = o.typ === 'Pilne' ? '#fff3cd' : o.typ === 'Zmiana' ? '#f0faf4' : '#e8f4fd';
   return (
-    <div className="ann-card" onClick={onClick}>
-      <div className="ann-top">
-        <div className="ann-left">
-          {o.nowe && <div className="unread-dot" />}
-          <span className={`badge badge-${o.typ.toLowerCase()}`}>{o.typ}</span>
+    <div style={{ background: o.typ === 'Pilne' ? '#7d3f3f' : 'white', borderRadius: '16px', padding: '14px 16px', marginBottom: '10px', display: 'flex', gap: '12px', alignItems: 'flex-start', cursor: 'pointer', border: o.typ === 'Pilne' ? 'none' : '0.5px solid var(--border)' }} onClick={onClick}>
+      <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: o.typ === 'Pilne' ? 'rgba(255,255,255,0.15)' : tloIkony, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px' }}>{ikona}</div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+          <span style={{ fontSize: '9px', background: o.typ === 'Pilne' ? 'rgba(255,255,255,0.2)' : o.typ === 'Zmiana' ? '#f0faf4' : '#e8f4fd', color: o.typ === 'Pilne' ? 'white' : o.typ === 'Zmiana' ? '#2e7d32' : '#1565c0', padding: '2px 8px', borderRadius: '8px', fontWeight: 600, textTransform: 'uppercase' as const }}>{o.typ}</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            {o.nowe && <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: o.typ === 'Pilne' ? 'white' : '#7d3f3f' }} />}
+            <span style={{ fontSize: '9px', color: o.typ === 'Pilne' ? 'rgba(255,255,255,0.5)' : '#9a8a80' }}>{new Date(o.data_utworzenia).toLocaleDateString('pl-PL', { day: 'numeric', month: 'short' })}</span>
+          </div>
         </div>
-        <span className="arr">›</span>
+        <div style={{ fontSize: '13px', fontWeight: 600, color: o.typ === 'Pilne' ? 'white' : '#2a1f1f', marginBottom: '3px' }}>{o.tytul}</div>
+        <div style={{ fontSize: '11px', color: o.typ === 'Pilne' ? 'rgba(255,255,255,0.7)' : '#7a6a6a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }}>{o.tresc}</div>
       </div>
-      <div className="ann-title">{o.tytul}</div>
-      <div className="ann-preview">{o.tresc}</div>
-      <div className="ann-date">{new Date(o.data_utworzenia).toLocaleDateString('pl-PL')}</div>
     </div>
   );
 }
@@ -4295,7 +4299,17 @@ function EkranGlowny({ ogloszenia, zjazdy, onOtworzOgloszenie, user, kursant, on
 
   return (
     <>
-      <p className="greeting">Dzień dobry, {imie}</p>
+      {/* Nowy ciemny nagłówek powitalny */}
+      <div style={{ margin: '-18px -16px 20px', background: 'linear-gradient(160deg,#2a1f1f 0%,#5c3030 100%)', padding: '20px 20px 28px', position: 'relative', overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', top: '-20px', right: '-20px', width: '120px', height: '120px', borderRadius: '50%', background: 'rgba(255,255,255,0.04)' }} />
+        <div style={{ position: 'absolute', bottom: '-40px', left: '-10px', width: '140px', height: '140px', borderRadius: '50%', background: 'rgba(255,255,255,0.03)' }} />
+        <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '2px' }}>Dzień dobry</div>
+        <div style={{ fontSize: '22px', fontWeight: 300, color: 'white', fontFamily: 'Cormorant Garamond, serif', letterSpacing: '0.5px' }}>{imie}</div>
+        <div style={{ marginTop: '10px', display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(255,255,255,0.12)', border: '0.5px solid rgba(255,255,255,0.2)', borderRadius: '20px', padding: '5px 12px' }}>
+          <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#7aab8a' }} />
+          <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.85)' }}>Kurs aktywny</span>
+        </div>
+      </div>
 
       {/* Baner nowych ogłoszeń */}
       {noweOgloszenia.length > 0 && (
@@ -4356,41 +4370,51 @@ function EkranGlowny({ ogloszenia, zjazdy, onOtworzOgloszenie, user, kursant, on
         )}
       </div>
 
-      <section className="section">
+      <section className="section" style={{ marginBottom: '8px' }}>
         <div className="section-header"><span className="section-title">Najbliższy zjazd</span></div>
         {najblizszy ? (
-          <div className="hero-card">
-            <div className="hero-label">Zjazd {najblizszy.nr}</div>
-            {odliczanie && <div style={{ display: 'inline-block', background: 'rgba(255,255,255,0.18)', color: 'white', fontSize: '11px', fontWeight: 600, padding: '4px 12px', borderRadius: '20px', marginBottom: '8px', letterSpacing: '0.5px' }}>{odliczanie}</div>}
-            <div className="hero-date">{najblizszy.daty}</div>
+          <div style={{ background: 'white', borderRadius: '16px', padding: '16px', border: '0.5px solid var(--border)', boxShadow: '0 2px 12px rgba(0,0,0,0.06)', marginBottom: '0' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <div>
+                <div style={{ fontSize: '10px', color: '#9a8a80', textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: '4px' }}>Najbliższy zjazd</div>
+                <div style={{ fontSize: '18px', fontWeight: 600, color: '#2a1f1f', fontFamily: 'Cormorant Garamond, serif' }}>Zjazd {najblizszy.nr}</div>
+                <div style={{ fontSize: '12px', color: '#7a6a6a', marginTop: '2px' }}>{najblizszy.daty}</div>
+              </div>
+              {odliczanie && (
+                <div style={{ background: '#7d3f3f', color: 'white', borderRadius: '12px', padding: '6px 10px', textAlign: 'center', minWidth: '44px' }}>
+                  <div style={{ fontSize: '18px', fontWeight: 700, lineHeight: 1 }}>{odliczanie.replace(/\D/g, '') || '!'}</div>
+                  <div style={{ fontSize: '9px', opacity: 0.8 }}>{/\d/.test(odliczanie) ? 'dni' : odliczanie}</div>
+                </div>
+              )}
+            </div>
             {najblizszy.typ === 'online' ? (
-              <div className="hero-pills">
-                <span className="pill">🌐 Zajęcia online</span>
+              <div style={{ marginTop: '10px', display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                <span style={{ background: '#e8f0fe', color: '#1565c0', borderRadius: '20px', padding: '4px 10px', fontSize: '11px', fontWeight: 600 }}>🌐 Online</span>
                 {najblizszy.link_online && (
                   <a href={najblizszy.link_online} target="_blank" rel="noopener noreferrer"
-                    style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', background: 'rgba(255,255,255,0.2)', color: 'white', padding: '4px 12px', borderRadius: '20px', fontSize: '11px', fontWeight: 600, textDecoration: 'none', border: '0.5px solid rgba(255,255,255,0.3)' }}>
-                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
-                    Dołącz
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', background: '#1565c0', color: 'white', padding: '4px 12px', borderRadius: '20px', fontSize: '11px', fontWeight: 600, textDecoration: 'none' }}>
+                    Dołącz →
                   </a>
                 )}
               </div>
             ) : (
-              <>
-                <div className="hero-sub">{kursant?.grupy?.miasto || 'Warszawa'}</div>
-                <div className="hero-pills">
-                  <span className="pill">{najblizszy.sala}</span>
-                  <span className="pill">{najblizszy.adres}</span>
-                </div>
-              </>
+              <div style={{ marginTop: '10px', display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                {najblizszy.sala && <span style={{ background: '#f4f0ed', borderRadius: '20px', padding: '4px 10px', fontSize: '11px', color: '#5a4a4a' }}>📍 {najblizszy.sala}</span>}
+                {najblizszy.adres && <span style={{ background: '#f4f0ed', borderRadius: '20px', padding: '4px 10px', fontSize: '11px', color: '#5a4a4a' }}>{najblizszy.adres}</span>}
+              </div>
+            )}
+            {najblizszy.prowadzacy && najblizszy.prowadzacy.length > 0 && (
+              <div style={{ marginTop: '10px', background: '#f9f5f2', borderRadius: '10px', padding: '8px 10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                {najblizszy.prowadzacy[0].avatar_url
+                  ? <img src={najblizszy.prowadzacy[0].avatar_url} style={{ width: '24px', height: '24px', borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} alt="" />
+                  : <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: '#d4b8a8', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 600, color: '#7d3f3f' }}>{najblizszy.prowadzacy[0].imie[0]}</div>}
+                <div style={{ fontSize: '11px', color: '#7a6a6a' }}>Prowadzi: <strong style={{ color: '#2a1f1f' }}>{najblizszy.prowadzacy.map(p => `${p.imie} ${p.nazwisko}`).join(', ')}</strong></div>
+              </div>
             )}
           </div>
         ) : (
           <div className="hero-card"><div className="hero-date">Brak nadchodzących zjazdów</div></div>
         )}
-      </section>
-      <section className="section">
-        <div className="section-header"><span className="section-title">Ogłoszenia biura</span></div>
-        {ogloszenia.slice(0, 3).map((o) => <KartaOgloszenia key={o.id} o={o} onClick={() => onOtworzOgloszenie(o)} />)}
       </section>
 
       {/* Kontakt z biurem */}
@@ -4734,7 +4758,10 @@ function EkranZjazdy({ zjazdy, user, kursant, grupaInfo }: { zjazdy: Zjazd[]; us
 
   return (
     <>
-      <h2 className="page-title">Plan zjazdów</h2>
+      <div style={{ margin: '-18px -16px 20px', background: '#2a1f1f', padding: '16px 18px 20px' }}>
+        <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '4px' }}>Plan</div>
+        <div style={{ fontSize: '20px', color: 'white', fontFamily: 'Cormorant Garamond, serif', fontWeight: 300 }}>Twoje zjazdy</div>
+      </div>
       {zjazdy.map((z) => (
         <div key={z.id} className={`sess-card ${z.status}`}>
           <div className="sess-top">
