@@ -17,11 +17,6 @@
      background: #f4f0ed;
      color: #1c1c1c;
      -webkit-font-smoothing: antialiased;
-     overscroll-behavior: none;
-   }
-   
-   html {
-     overscroll-behavior: none;
    }
    
    :root {
