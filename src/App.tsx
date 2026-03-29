@@ -1,7 +1,7 @@
   import { useState, useEffect, useRef } from 'react';
   import './App.css';
   import { supabase } from './supabase';
-  import { Home, Calendar, Bell, MessageCircle, User, CheckSquare, BookOpen, Star } from 'lucide-react';
+  import { Home, Calendar, Bell, MessageCircle, User, CheckSquare, BookOpen, Star, MapPin, GraduationCap, Lock, HelpCircle, Folder, Download, Globe, ClipboardList, Megaphone } from 'lucide-react';
   import * as Sentry from '@sentry/react';
 
   Sentry.init({
@@ -4794,20 +4794,25 @@
               )}
               {z.tematy && <div className="sess-row"><span className="sess-lbl">Temat:</span> {z.tematy}</div>}
               {z.prowadzacy && z.prowadzacy.length > 0 && (
-                <div className="sess-row" style={{ marginTop: '4px', paddingTop: '6px', borderTop: '0.5px solid var(--border-soft)' }}>
-                  <span className="sess-lbl">Prowadzący:</span>{' '}
-                  {z.prowadzacy.map((p, i) => (
-                    <span key={p.id}>
-                      <button onClick={() => setModalProwadzacy(p)} style={{
-                        background: 'none', border: 'none', padding: 0, color: 'var(--brand)', fontWeight: 600,
-                        fontSize: '12px', cursor: 'pointer', fontFamily: 'Jost, sans-serif',
-                        textDecoration: 'underline', textDecorationStyle: 'dotted', textUnderlineOffset: '3px',
-                      }}>{p.imie} {p.nazwisko}</button>
-                      {i < z.prowadzacy!.length - 1 ? ', ' : ''}
-                    </span>
-                  ))}
-                </div>
-              )}
+  <div style={{ marginTop: '8px', paddingTop: '8px', borderTop: '0.5px solid var(--border-soft)', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+    {z.prowadzacy.map((p) => (
+      <button key={p.id} onClick={() => setModalProwadzacy(p)}
+        style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#f9f5f2', borderRadius: '10px', padding: '7px 10px', border: 'none', cursor: 'pointer', width: '100%', textAlign: 'left' }}>
+        {p.avatar_url
+          ? <img src={p.avatar_url} alt={p.imie} style={{ width: '28px', height: '28px', borderRadius: '50%', objectFit: 'cover', flexShrink: 0, border: '1.5px solid var(--brand-mid)' }} />
+          : <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'var(--brand-light)', border: '1.5px solid var(--brand-mid)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 700, color: 'var(--brand-dark)', flexShrink: 0 }}>
+              {p.imie[0]}{p.nazwisko[0]}
+            </div>
+        }
+        <div>
+          <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '1px' }}>Prowadzący</div>
+          <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--brand-dark)' }}>{p.imie} {p.nazwisko}</div>
+        </div>
+        <span style={{ marginLeft: 'auto', fontSize: '11px', color: 'var(--brand)', textDecoration: 'underline', textDecorationStyle: 'dotted' }}>info</span>
+      </button>
+    ))}
+  </div>
+)}
             </div>
 
             {/* Kafelki per dzień */}
