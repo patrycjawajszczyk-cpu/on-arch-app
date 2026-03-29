@@ -4322,8 +4322,7 @@
               background: 'rgba(255,255,255,0.15)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontSize: '18px', flexShrink: 0,
-            }}>📢</div>
-            <div style={{ flex: 1 }}>
+            }}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M22 4s-2.5 5-11 5H4a2 2 0 0 0-2 2v2a2 2 0 0 0 2 2h1l1 5h3l-1-5h1c8.5 0 11 5 11 5V4z"/></svg></div>            <div style={{ flex: 1 }}>
               <div style={{ fontSize: '13px', fontWeight: 600, color: 'white', marginBottom: '2px' }}>
                 {noweOgloszenia.length === 1 ? 'Nowe ogłoszenie' : `${noweOgloszenia.length} nowe ogłoszenia`}
               </div>
@@ -4340,8 +4339,8 @@
               background: 'var(--brand-dark)', borderRadius: '16px', padding: '16px',
               cursor: 'pointer', color: 'white',
             }}>
-              <div style={{ fontSize: '22px', marginBottom: '6px' }}>📋</div>
-              <div style={{ fontSize: '13px', fontWeight: 600 }}>{nieprzeslaneZadania} {nieprzeslaneZadania === 1 ? 'zadanie' : 'zadania'}</div>
+              <div style={{ marginBottom: '6px' }}><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="2" width="6" height="4" rx="1"/><path d="M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/></svg></div>
+<div style={{ fontSize: '13px', fontWeight: 600 }}>{nieprzeslaneZadania} {nieprzeslaneZadania === 1 ? 'zadanie' : 'zadania'}</div>
               <div style={{ fontSize: '11px', opacity: 0.75, marginTop: '2px' }}>do przesłania</div>
             </div>
           )}
@@ -4350,8 +4349,7 @@
               background: 'white', borderRadius: '16px', padding: '16px',
               cursor: 'pointer', border: '0.5px solid var(--border)',
             }}>
-              <div style={{ fontSize: '22px', marginBottom: '6px' }}>📌</div>
-              <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text)', lineHeight: 1.3 }}>{najblizszZadanie.tytul}</div>
+              <div style={{ marginBottom: '6px' }}><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--brand)" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V17z"/></svg></div>              <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text)', lineHeight: 1.3 }}>{najblizszZadanie.tytul}</div>
               <div style={{ fontSize: '11px', color: 'var(--brand)', marginTop: '4px', fontWeight: 500 }}>
                 do {new Date(najblizszZadanie.termin!).toLocaleDateString('pl-PL')}
               </div>
@@ -4362,8 +4360,7 @@
               background: '#e8f4fd', borderRadius: '16px', padding: '16px',
               cursor: 'pointer', border: '0.5px solid #b3d9f7',
             }}>
-              <div style={{ fontSize: '22px', marginBottom: '6px' }}>💬</div>
-              <div style={{ fontSize: '13px', fontWeight: 600, color: '#1565c0' }}>Nowe wiadomości</div>
+              <div style={{ marginBottom: '6px' }}><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1565c0" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>              <div style={{ fontSize: '13px', fontWeight: 600, color: '#1565c0' }}>Nowe wiadomości</div>
               <div style={{ fontSize: '11px', color: '#1976d2', marginTop: '2px' }}>w czacie grupy</div>
             </div>
           )}
@@ -4398,8 +4395,8 @@
               </div>
             ) : (
               <div style={{ marginTop: '10px', display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                {najblizszy.sala && <span style={{ background: '#f4f0ed', borderRadius: '20px', padding: '4px 10px', fontSize: '11px', color: '#5a4a4a' }}>📍 {najblizszy.sala}</span>}
-                {najblizszy.adres && <span style={{ background: '#f4f0ed', borderRadius: '20px', padding: '4px 10px', fontSize: '11px', color: '#5a4a4a' }}>{najblizszy.adres}</span>}
+                {najblizszy.sala && <span style={{ background: '#f4f0ed', borderRadius: '20px', padding: '4px 10px', fontSize: '11px', color: '#5a4a4a', display: 'inline-flex', alignItems: 'center', gap: '4px' }}><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>{najblizszy.sala}</span>}
+{najblizszy.adres && <span style={{ background: '#f4f0ed', borderRadius: '20px', padding: '4px 10px', fontSize: '11px', color: '#5a4a4a' }}>{najblizszy.adres}</span>}
               </div>
             )}
             {najblizszy.prowadzacy && najblizszy.prowadzacy.length > 0 && (
