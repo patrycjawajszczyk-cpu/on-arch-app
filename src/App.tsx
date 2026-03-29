@@ -1367,7 +1367,7 @@
     };
 
     return (
-      <div className="czat-container" style={{ width: '100%', maxWidth: '100%', boxSizing: 'border-box' }}>
+      <div className="czat-container">
         <h2 className="page-title">Czat grupy</h2>
         <div className="czat-nazwa">{kursant.grupy?.nazwa || 'Twoja grupa'}</div>
         <div style={{ flex: 1, overflow: 'hidden', position: 'relative' }}>

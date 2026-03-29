@@ -11,17 +11,12 @@
      padding: 0;
      box-sizing: border-box;
    }
-   
-   html {
-    overflow-x: hidden;
-  }
   
   body {
     font-family: 'Jost', sans-serif;
     background: #f4f0ed;
     color: #1c1c1c;
     -webkit-font-smoothing: antialiased;
-    overflow-x: hidden;
   }
    
    :root {
@@ -678,28 +673,25 @@
     flex-direction: column;
     height: calc(100vh - 130px);
     width: 100%;
-    max-width: 100%;
     box-sizing: border-box;
     padding: 18px 16px 0;
-    overflow: hidden;
-    position: relative;
   }
-   
+  
   .czat-wiadomosci {
-    height: 100%;
-    overflow-y: scroll;
+    flex: 1;
+    overflow-y: auto;
     display: flex;
     flex-direction: column;
     gap: 8px;
     padding-bottom: 8px;
+    -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
     -ms-overflow-style: none;
   }
-   
-   .czat-wiadomosci::-webkit-scrollbar {
-     display: none;
-     width: 0;
-   }
+  
+  .czat-wiadomosci::-webkit-scrollbar {
+    display: none;
+  }
    
    .czat-nazwa {
      font-size: 11px;
