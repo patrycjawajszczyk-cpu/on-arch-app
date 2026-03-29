@@ -40,7 +40,6 @@
     margin: 0 auto;
     min-height: 100vh;
     background: var(--bg);
-    overflow-x: hidden;
   }
    
    /* ─── Header ────────────────────────────────────────── */
