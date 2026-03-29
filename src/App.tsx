@@ -308,9 +308,10 @@
               borderWidth: '1.5px',
             }}>
               <div className="sess-top" style={{ background: wyslano ? '#f0faf4' : 'var(--brand-dark)' }}>
-                <span className="sess-nr" style={{ fontSize: '13px', color: wyslano ? 'var(--text)' : 'white' }}>
-                  🎓 {z.tytul}
-                </span>
+              <span className="sess-nr" style={{ fontSize: '13px', color: wyslano ? 'var(--text)' : 'white', display: 'flex', alignItems: 'center', gap: '6px' }}>
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+  {z.tytul}
+</span>
                 {wyslano
                   ? <span style={{ fontSize: '10px', fontWeight: 600, color: '#2e7d32', background: '#e8f5e9', padding: '3px 8px', borderRadius: '20px', textTransform: 'uppercase' }}>✓ Przesłano</span>
                   : <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.8)', background: 'rgba(255,255,255,0.15)', padding: '3px 8px', borderRadius: '20px', fontWeight: 500 }}>Praca zaliczeniowa</span>
@@ -341,7 +342,7 @@
                       <span style={{ fontSize: '10px', fontWeight: 700, padding: '2px 7px', borderRadius: '8px',
                         background: odp!.sprawdzona ? '#e8f5e9' : '#fff8e1',
                         color: odp!.sprawdzona ? '#2e7d32' : '#c8a84b' }}>
-                        {odp!.sprawdzona ? '✓ Sprawdzona' : '⏳ Do sprawdzenia'}
+                        {odp!.sprawdzona ? '✓ Sprawdzona' : '· Do sprawdzenia'}
                       </span>
                     </div>
                     <a href={odp!.link_pracy} target="_blank" rel="noopener noreferrer"
@@ -440,7 +441,7 @@
                       <span style={{ fontSize: '10px', fontWeight: 700, padding: '2px 7px', borderRadius: '8px',
                         background: odp!.sprawdzona ? '#e8f5e9' : '#fff8e1',
                         color: odp!.sprawdzona ? '#2e7d32' : '#c8a84b' }}>
-                        {odp!.sprawdzona ? '✓ Sprawdzona' : '⏳ Do sprawdzenia'}
+                        {odp!.sprawdzona ? '✓ Sprawdzona' : '· Do sprawdzenia'}
                       </span>
                     </div>
                     <a href={odp!.link_pracy} target="_blank" rel="noopener noreferrer"
@@ -1795,7 +1796,7 @@
                                         }} style={{ fontSize: '10px', fontWeight: 700, padding: '2px 8px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontFamily: 'Jost, sans-serif',
                                           background: o.sprawdzona ? '#e8f5e9' : '#fff8e1',
                                           color: o.sprawdzona ? '#2e7d32' : '#c8a84b' }}>
-                                          {o.sprawdzona ? '✓ Sprawdzona' : '⏳ Do sprawdzenia'}
+                                          {odp!.sprawdzona ? '✓ Sprawdzona' : '· Do sprawdzenia'}
                                         </button>
                                       </div>
                                       {/* Uwagi prowadzącego */}
@@ -3904,7 +3905,7 @@
                                                   <span style={{ fontSize: '10px', fontWeight: 700, padding: '1px 7px', borderRadius: '8px',
                                                     background: o.sprawdzona ? '#e8f5e9' : '#fff8e1',
                                                     color: o.sprawdzona ? '#2e7d32' : '#c8a84b' }}>
-                                                    {o.sprawdzona ? '✓ Sprawdzona' : '⏳ Do sprawdzenia'}
+                                                    {odp!.sprawdzona ? '✓ Sprawdzona' : '· Do sprawdzenia'}
                                                   </span>
                                                 </div>
                                                 {o.uwagi_prowadzacego && <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '3px', fontStyle: 'italic' }}>💬 {o.uwagi_prowadzacego}</div>}
@@ -4424,7 +4425,7 @@
         <a href="https://on-arch.pl/faq-odpowiedzi-na-najczesciej-zadawane-pytania/" target="_blank" rel="noopener noreferrer"
           style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '13px 16px', borderRadius: '12px', background: 'white', border: '0.5px solid var(--border)', textDecoration: 'none', marginTop: '10px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <span style={{ fontSize: '18px' }}>❓</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--brand)" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
             <div>
               <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--brand-dark)' }}>Najczęściej zadawane pytania</div>
               <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>on-arch.pl/faq</div>
