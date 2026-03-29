@@ -1,7 +1,7 @@
   import { useState, useEffect, useRef } from 'react';
   import './App.css';
   import { supabase } from './supabase';
-  import { Home, Calendar, Bell, MessageCircle, User, CheckSquare, BookOpen, Star, MapPin, GraduationCap, Lock, HelpCircle, Folder, Download, Globe, ClipboardList, Megaphone } from 'lucide-react';
+  import { Home, Calendar, Bell, MessageCircle, User, CheckSquare, BookOpen, Star } from 'lucide-react';
   import * as Sentry from '@sentry/react';
 
   Sentry.init({
