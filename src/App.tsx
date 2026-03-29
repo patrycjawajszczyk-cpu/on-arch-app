@@ -5297,7 +5297,9 @@
               border: '0.5px solid var(--border)', marginBottom: '10px',
               display: 'flex', alignItems: 'center', gap: '14px',
             }}>
-              <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: '#e8f0fe', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px', flexShrink: 0 }}>📁</div>
+              <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: '#e8f0fe', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1565c0" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+</div>
               <div>
                 <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text)', marginBottom: '2px' }}>Strefa Wiedzy</div>
                 <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Materiały szkoleniowe grupy · Google Drive</div>
@@ -5315,7 +5317,9 @@
               border: '0.5px solid #d4af7a', marginBottom: '10px',
               display: 'flex', alignItems: 'center', gap: '14px',
             }}>
-              <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: '#fef9ec', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px', flexShrink: 0 }}>🎓</div>
+              <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: '#fef9ec', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#c8a84b" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+</div>
               <div>
                 <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text)', marginBottom: '2px' }}>Certyfikat ukończenia</div>
                 <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Kliknij aby pobrać</div>
@@ -5330,7 +5334,9 @@
             display: 'flex', alignItems: 'center', gap: '14px',
             opacity: 0.65,
           }}>
-            <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: '#efefef', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px', flexShrink: 0 }}>🎓</div>
+            <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: '#efefef', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+</div>
             <div>
               <div style={{ fontSize: '14px', fontWeight: 600, color: '#aaa', marginBottom: '2px' }}>Certyfikat ukończenia</div>
               <div style={{ fontSize: '12px', color: '#bbb', lineHeight: 1.5 }}>
@@ -5348,7 +5354,9 @@
             marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '14px',
             cursor: 'pointer',
           }}>
-            <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: 'rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px', flexShrink: 0 }}>⭐</div>
+            <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: 'rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+</div>
             <div>
               <div style={{ fontSize: '14px', fontWeight: 600, color: 'white', marginBottom: '2px' }}>Ankieta oceny kursu</div>
               <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.7)' }}>Twoja opinia jest dla nas ważna — wypełnij!</div>
@@ -5362,12 +5370,14 @@
             display: 'flex', alignItems: 'center', gap: '14px',
             opacity: 0.65,
           }}>
-            <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: '#efefef', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '22px', flexShrink: 0 }}>⭐</div>
+            <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: '#efefef', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+</div>
             <div>
               <div style={{ fontSize: '14px', fontWeight: 600, color: '#aaa', marginBottom: '2px' }}>Ankieta oceny kursu</div>
               <div style={{ fontSize: '12px', color: '#bbb', lineHeight: 1.5 }}>Odblokuje się po zakończeniu ostatniego zjazdu</div>
             </div>
-            <span style={{ marginLeft: 'auto', color: '#ccc', fontSize: '18px' }}>🔒</span>
+            <span style={{ marginLeft: 'auto' }}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ccc" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
           </div>
         )}
 
