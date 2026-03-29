@@ -342,7 +342,7 @@
                       <span style={{ fontSize: '10px', fontWeight: 700, padding: '2px 7px', borderRadius: '8px',
                         background: odp!.sprawdzona ? '#e8f5e9' : '#fff8e1',
                         color: odp!.sprawdzona ? '#2e7d32' : '#c8a84b' }}>
-                        {o.sprawdzona ? '✓ Sprawdzona' : '⏳ Do sprawdzenia'}
+                        {odp!.sprawdzona ? '✓ Sprawdzona' : '· Do sprawdzenia'}
                       </span>
                     </div>
                     <a href={odp!.link_pracy} target="_blank" rel="noopener noreferrer"
@@ -1796,7 +1796,7 @@
                                         }} style={{ fontSize: '10px', fontWeight: 700, padding: '2px 8px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontFamily: 'Jost, sans-serif',
                                           background: o.sprawdzona ? '#e8f5e9' : '#fff8e1',
                                           color: o.sprawdzona ? '#2e7d32' : '#c8a84b' }}>
-                                          {odp!.sprawdzona ? '✓ Sprawdzona' : '· Do sprawdzenia'}
+                                          {o.sprawdzona ? '✓ Sprawdzona' : '· Do sprawdzenia'}
                                         </button>
                                       </div>
                                       {/* Uwagi prowadzącego */}
@@ -3905,7 +3905,7 @@
                                                   <span style={{ fontSize: '10px', fontWeight: 700, padding: '1px 7px', borderRadius: '8px',
                                                     background: o.sprawdzona ? '#e8f5e9' : '#fff8e1',
                                                     color: o.sprawdzona ? '#2e7d32' : '#c8a84b' }}>
-                                                    {odp!.sprawdzona ? '✓ Sprawdzona' : '· Do sprawdzenia'}
+                                                   {o.sprawdzona ? '✓ Sprawdzona' : '· Do sprawdzenia'}
                                                   </span>
                                                 </div>
                                                 {o.uwagi_prowadzacego && <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '3px', fontStyle: 'italic' }}>💬 {o.uwagi_prowadzacego}</div>}
