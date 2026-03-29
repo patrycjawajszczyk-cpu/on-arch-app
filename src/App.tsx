@@ -4277,10 +4277,9 @@
     return `Za ${diff} dni`;
   }
 
-  function EkranGlowny({ ogloszenia, zjazdy, onOtworzOgloszenie, user, kursant, onNavigate, zadania, nieprzeslaneZadania, noweCzat }: {
+  function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, nieprzeslaneZadania, noweCzat }: {
     ogloszenia: Ogloszenie[];
     zjazdy: Zjazd[];
-    onOtworzOgloszenie: (o: Ogloszenie) => void;
     user: User;
     kursant: Kursant | null;
     onNavigate: (zakl: string) => void;
@@ -5578,7 +5577,6 @@
               {aktywnaZakladka === 'home' && (
                 <EkranGlowny
                   ogloszenia={ogloszenia} zjazdy={zjazdy}
-                  onOtworzOgloszenie={otworzOgloszenie}
                   user={user} kursant={kursant}
                   onNavigate={nawiguj}
                   zadania={zadania}
