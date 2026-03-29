@@ -12,12 +12,17 @@
      box-sizing: border-box;
    }
    
-   body {
-     font-family: 'Jost', sans-serif;
-     background: #f4f0ed;
-     color: #1c1c1c;
-     -webkit-font-smoothing: antialiased;
-   }
+   html {
+    overflow-x: hidden;
+  }
+  
+  body {
+    font-family: 'Jost', sans-serif;
+    background: #f4f0ed;
+    color: #1c1c1c;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
    
    :root {
      --brand:       #a05c5c;
