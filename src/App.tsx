@@ -4204,11 +4204,16 @@
   }
 
   function KartaOgloszenia({ o, onClick }: { o: Ogloszenie; onClick: () => void; key?: string | number }) {
-    const ikona = o.typ === 'Pilne' ? '⚠️' : o.typ === 'Zmiana' ? '🔄' : 'ℹ️';
     const tloIkony = o.typ === 'Pilne' ? '#fff3cd' : o.typ === 'Zmiana' ? '#f0faf4' : '#e8f4fd';
+const ikonaKolor = o.typ === 'Pilne' ? '#c8a84b' : o.typ === 'Zmiana' ? '#2e7d32' : '#1565c0';
+const ikonaSVG = o.typ === 'Pilne'
+  ? <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={o.typ === 'Pilne' ? 'white' : ikonaKolor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+  : o.typ === 'Zmiana'
+  ? <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={ikonaKolor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+  : <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={ikonaKolor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>;
     return (
       <div style={{ background: o.typ === 'Pilne' ? '#7d3f3f' : 'white', borderRadius: '16px', padding: '14px 16px', marginBottom: '10px', display: 'flex', gap: '12px', alignItems: 'flex-start', cursor: 'pointer', border: o.typ === 'Pilne' ? 'none' : '0.5px solid var(--border)' }} onClick={onClick}>
-        <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: o.typ === 'Pilne' ? 'rgba(255,255,255,0.15)' : tloIkony, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px' }}>{ikona}</div>
+       <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: o.typ === 'Pilne' ? 'rgba(255,255,255,0.15)' : tloIkony, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{ikonaSVG}</div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
             <span style={{ fontSize: '9px', background: o.typ === 'Pilne' ? 'rgba(255,255,255,0.2)' : o.typ === 'Zmiana' ? '#f0faf4' : '#e8f4fd', color: o.typ === 'Pilne' ? 'white' : o.typ === 'Zmiana' ? '#2e7d32' : '#1565c0', padding: '2px 8px', borderRadius: '8px', fontWeight: 600, textTransform: 'uppercase' as const }}>{o.typ}</span>
@@ -5344,7 +5349,7 @@
                 Pojawi się po zakończeniu kursu,{'\n'}wypełnieniu ankiety i przesłaniu pracy zaliczeniowej
               </div>
             </div>
-            <span style={{ marginLeft: 'auto', color: '#ccc', fontSize: '18px' }}>🔒</span>
+            <span style={{ marginLeft: 'auto' }}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ccc" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
           </div>
         )}
 
