@@ -36,11 +36,12 @@
    /* ─── App shell ─────────────────────────────────────── */
    
    .app {
-     max-width: 420px;
-     margin: 0 auto;
-     min-height: 100vh;
-     background: var(--bg);
-   }
+    max-width: 420px;
+    margin: 0 auto;
+    min-height: 100vh;
+    background: var(--bg);
+    overflow-x: hidden;
+  }
    
    /* ─── Header ────────────────────────────────────────── */
    
@@ -668,27 +669,27 @@
    /* ─── Chat ──────────────────────────────────────────── */
    
    .czat-container {
-     display: flex;
-     flex-direction: column;
-     height: calc(100vh - 130px);
-     width: 100%;
-     box-sizing: border-box;
-     padding: 18px 16px 0;
-     overflow: hidden;
-   }
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 130px);
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    padding: 18px 16px 0;
+    overflow: hidden;
+    position: relative;
+  }
    
-   .czat-wiadomosci {
-     height: 100%;
-     overflow-y: scroll;
-     display: flex;
-     flex-direction: column;
-     gap: 8px;
-     padding-bottom: 8px;
-     padding-right: 20px;
-     margin-right: -20px;
-     scrollbar-width: none;
-     -ms-overflow-style: none;
-   }
+  .czat-wiadomosci {
+    height: 100%;
+    overflow-y: scroll;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-bottom: 8px;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
    
    .czat-wiadomosci::-webkit-scrollbar {
      display: none;
