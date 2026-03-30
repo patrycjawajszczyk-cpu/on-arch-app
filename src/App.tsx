@@ -5605,7 +5605,48 @@ const ikonaSVG = o.typ === 'Pilne'
     const [zjazdy, setZjazdy] = useState<Zjazd[]>([]);
     const [zadania, setZadania] = useState<Zadanie[]>([]);
     const [odpowiedziZadan, setOdpowiedziZadan] = useState<ZadanieOdpowiedz[]>([]);
-    const [noweCzat, setNoweCzat] = useState(false);
+    const [pushAktywny, setPushAktywny] = useState(false);
+
+useEffect(() => {
+  if (!user || !('serviceWorker' in navigator) || !('PushManager' in window)) return;
+  navigator.serviceWorker.register('/sw.js').then(async reg => {
+    const sub = await reg.pushManager.getSubscription();
+    if (sub) setPushAktywny(true);
+  });
+}, [user]);
+
+async function wlaczPush() {
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+    alert('Twoja przeglądarka nie obsługuje powiadomień push.');
+    return;
+  }
+  const permission = await Notification.requestPermission();
+  if (permission !== 'granted') return;
+  const reg = await navigator.serviceWorker.ready;
+  const sub = await reg.pushManager.subscribe({
+    userVisibleOnly: true,
+    applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+  });
+  const subJson = sub.toJSON();
+  await supabase.from('push_subscriptions').upsert([{
+    user_id: user!.id,
+    endpoint: subJson.endpoint!,
+    p256dh: subJson.keys!.p256dh,
+    auth: subJson.keys!.auth,
+  }], { onConflict: 'user_id,endpoint' });
+  setPushAktywny(true);
+}
+
+async function wylaczPush() {
+  const reg = await navigator.serviceWorker.ready;
+  const sub = await reg.pushManager.getSubscription();
+  if (sub) {
+    await sub.unsubscribe();
+    await supabase.from('push_subscriptions').delete()
+      .eq('user_id', user!.id).eq('endpoint', sub.endpoint);
+  }
+  setPushAktywny(false);
+}
     const [ladowanie, setLadowanie] = useState(true);
     const [resetMode, setResetMode] = useState(false);
 
