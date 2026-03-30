@@ -2571,13 +2571,11 @@ function urlBase64ToUint8Array(base64String: string) {
       e.preventDefault();
       const tytul = noweOgl.tytul;
       const grupaId = noweOgl.grupa_id;
-      console.log('dodajOgloszenie wywołane', tytul, grupaId);
       const { error } = await supabase.from('ogloszenia').insert([{ typ: noweOgl.typ, tytul: noweOgl.tytul, tresc: noweOgl.tresc, szczegoly: noweOgl.szczegoly, nowe: true, data_utworzenia: new Date().toISOString(), grupa_id: noweOgl.grupa_id ? parseInt(noweOgl.grupa_id) : null }]);
       if (error) { setKomunikat('Blad: ' + error.message); } else {
         setKomunikat('Ogloszenie dodane!');
         setNoweOgl({ typ: 'Informacja', tytul: '', tresc: '', szczegoly: '', nowe: true, grupa_id: '' });
         pobierzOgloszenia();
-        console.log('wywołuję wyslijPush', tytul, grupaId);
         await wyslijPush(supabase, {
           grupa_id: grupaId ? parseInt(grupaId) : undefined,
           title: 'Nowe ogłoszenie',
@@ -5600,7 +5598,6 @@ const ikonaSVG = o.typ === 'Pilne'
     );
   }
   async function wyslijPush(supabase: any, params: { user_id?: string; grupa_id?: number; title: string; body: string; url?: string }) {
-    console.log('wyslijPush wywołane', params);
     try {
       const { data: { session } } = await supabase.auth.getSession();
       const result = await fetch('https://bksebyxrknubyokwuaby.supabase.co/functions/v1/rapid-responder', {
@@ -5613,7 +5610,6 @@ const ikonaSVG = o.typ === 'Pilne'
         body: JSON.stringify(params),
       });
       const json = await result.json();
-      console.log('Push result:', json);
     } catch (e) {
       console.error('Push error:', e);
     }
