@@ -2569,15 +2569,19 @@ function urlBase64ToUint8Array(base64String: string) {
 
     async function dodajOgloszenie(e: React.FormEvent) {
       e.preventDefault();
+      const tytul = noweOgl.tytul;
+      const grupaId = noweOgl.grupa_id;
+      console.log('dodajOgloszenie wywołane', tytul, grupaId);
       const { error } = await supabase.from('ogloszenia').insert([{ typ: noweOgl.typ, tytul: noweOgl.tytul, tresc: noweOgl.tresc, szczegoly: noweOgl.szczegoly, nowe: true, data_utworzenia: new Date().toISOString(), grupa_id: noweOgl.grupa_id ? parseInt(noweOgl.grupa_id) : null }]);
       if (error) { setKomunikat('Blad: ' + error.message); } else {
         setKomunikat('Ogloszenie dodane!');
         setNoweOgl({ typ: 'Informacja', tytul: '', tresc: '', szczegoly: '', nowe: true, grupa_id: '' });
         pobierzOgloszenia();
+        console.log('wywołuję wyslijPush', tytul, grupaId);
         await wyslijPush(supabase, {
-          grupa_id: noweOgl.grupa_id ? parseInt(noweOgl.grupa_id) : undefined,
+          grupa_id: grupaId ? parseInt(grupaId) : undefined,
           title: 'Nowe ogłoszenie',
-          body: noweOgl.tytul,
+          body: tytul,
           url: '/',
         });
       }
