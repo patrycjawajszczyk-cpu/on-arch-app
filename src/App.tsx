@@ -5434,7 +5434,7 @@ const ikonaSVG = o.typ === 'Pilne'
     );
   }
 
-  function EkranProfil({ user, kursant, zjazdy, onWyloguj, onAvatarZmieniony, grupaInfo, onOtworzAnkiete, zadania, odpowiedziZadan }: { user: User; kursant: Kursant | null; zjazdy: Zjazd[]; onWyloguj: () => void; onAvatarZmieniony: (url: string) => void; grupaInfo: Grupa | null; onOtworzAnkiete: () => void; zadania?: Zadanie[]; odpowiedziZadan?: ZadanieOdpowiedz[] }) {
+  function EkranProfil({ user, kursant, zjazdy, onWyloguj, onAvatarZmieniony, grupaInfo, onOtworzAnkiete, zadania, odpowiedziZadan, pushAktywny, onWlaczPush, onWylaczPush }: { user: User; kursant: Kursant | null; zjazdy: Zjazd[]; onWyloguj: () => void; onAvatarZmieniony: (url: string) => void; grupaInfo: Grupa | null; onOtworzAnkiete: () => void; zadania?: Zadanie[]; odpowiedziZadan?: ZadanieOdpowiedz[]; pushAktywny: boolean; onWlaczPush: () => void; onWylaczPush: () => void }) {
     const [uploadowanie, setUploadowanie] = useState(false);
     const fileRef = useRef<HTMLInputElement>(null);
     const inicjal = kursant ? kursant.imie[0] : user.email[0].toUpperCase();
