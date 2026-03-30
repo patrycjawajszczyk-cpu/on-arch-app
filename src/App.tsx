@@ -5576,6 +5576,13 @@ const ikonaSVG = o.typ === 'Pilne'
           </div>
         )}
 
+<div style={{ marginBottom: '10px' }}>
+          <button onClick={pushAktywny ? onWylaczPush : onWlaczPush}
+            style={{ width: '100%', padding: '13px', borderRadius: '14px', border: '0.5px solid var(--border)', background: pushAktywny ? '#e8f5e9' : 'white', color: pushAktywny ? '#2e7d32' : 'var(--text)', fontSize: '14px', fontWeight: 600, cursor: 'pointer', fontFamily: 'Jost, sans-serif', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            {pushAktywny ? 'Powiadomienia włączone' : 'Włącz powiadomienia'}
+          </button>
+        </div>
         <button className="btn-wyloguj" onClick={onWyloguj}>Wyloguj się</button>
       </>
     );
