@@ -5808,6 +5808,9 @@ const ikonaSVG = o.typ === 'Pilne'
                   zadania={zadania}
                   odpowiedziZadan={odpowiedziZadan}
                   onOtworzAnkiete={() => setPokazAnkiete(true)}
+                  pushAktywny={pushAktywny}
+                  onWlaczPush={wlaczPush}
+                  onWylaczPush={wylaczPush}
                 />
               )}
             </>
