@@ -4821,13 +4821,14 @@ const ikonaSVG = o.typ === 'Pilne'
     
       linie.push('END:VCALENDAR');
     
-      const blob = new Blob([linie.join('\r\n')], { type: 'text/calendar;charset=utf-8' });
-      const url = URL.createObjectURL(blob);
+      const zawartość = linie.join('\r\n');
+      const dataUri = 'data:text/calendar;charset=utf-8,' + encodeURIComponent(zawartość);
       const a = document.createElement('a');
-      a.href = url;
+      a.href = dataUri;
       a.download = `onarch-zjazd-${z.nr}.ics`;
+      document.body.appendChild(a);
       a.click();
-      URL.revokeObjectURL(url);
+      document.body.removeChild(a);
     }
 
     useEffect(() => {
