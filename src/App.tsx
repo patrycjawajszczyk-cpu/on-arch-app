@@ -4427,44 +4427,66 @@ const ikonaSVG = o.typ === 'Pilne'
         <section className="section" style={{ marginBottom: '8px' }}>
         <div className="section-header"><span className="section-title">Najbliższy zjazd</span></div>
         {najblizszy ? (
-          <div style={{ background: 'white', borderRadius: '16px', padding: '14px 16px', marginBottom: '10px', border: '0.5px solid var(--border)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-              <div>
-                <div style={{ fontSize: '10px', color: '#9a8a80', textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: '4px' }}>Najbliższy zjazd</div>
-                <div style={{ fontSize: '18px', fontWeight: 600, color: '#2a1f1f', fontFamily: 'Cormorant Garamond, serif' }}>Zjazd {najblizszy.nr}</div>
-                <div style={{ fontSize: '12px', color: '#7a6a6a', marginTop: '2px' }}>{najblizszy.daty}</div>
+          <div onClick={() => onNavigate('zjazdy')} style={{ background: 'white', borderRadius: '16px', padding: '16px 18px', marginBottom: '10px', border: '0.5px solid #e0d8d4', cursor: 'pointer' }}>
+          {/* Tytuł + odliczanie */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+            <div style={{ fontSize: '19px', fontWeight: 600, color: '#7d3f3f', fontFamily: 'Cormorant Garamond, serif' }}>Zjazd {najblizszy.nr}</div>
+            {odliczanie && (
+              <span style={{ fontSize: '11px', fontWeight: 600, color: '#7d3f3f', background: '#f9efef', padding: '4px 12px', borderRadius: '20px', flexShrink: 0 }}>
+                {odliczanie === 'Dzisiaj!' || odliczanie === 'Jutro!' ? odliczanie : `Pozostało ${odliczanie.replace('Za ', '')}`}
+              </span>
+            )}
+          </div>
+          {/* Szczegóły z etykietami */}
+          {najblizszy.typ === 'online' ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '12px' }}>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <span style={{ fontSize: '10px', fontWeight: 700, color: '#9a8a80', minWidth: '48px', paddingTop: '1px' }}>DATA:</span>
+                <span style={{ fontSize: '12px', color: '#2a1f1f' }}>{najblizszy.daty}</span>
               </div>
-              {odliczanie && (
-                <div style={{ background: '#7d3f3f', color: 'white', borderRadius: '12px', padding: '6px 10px', textAlign: 'center', minWidth: '44px' }}>
-                  <div style={{ fontSize: '18px', fontWeight: 700, lineHeight: 1 }}>{odliczanie.replace(/\D/g, '') || '!'}</div>
-                  <div style={{ fontSize: '9px', opacity: 0.8 }}>{/\d/.test(odliczanie) ? 'dni' : odliczanie}</div>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <span style={{ fontSize: '10px', fontWeight: 700, color: '#9a8a80', minWidth: '48px', paddingTop: '1px' }}>TRYB:</span>
+                <span style={{ fontSize: '12px', color: '#1565c0', fontWeight: 600 }}>Online</span>
+              </div>
+              {najblizszy.link_online && (
+                <a href={najblizszy.link_online} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}
+                  style={{ marginTop: '4px', display: 'inline-flex', alignItems: 'center', gap: '6px', background: '#1565c0', color: 'white', padding: '7px 14px', borderRadius: '10px', fontSize: '12px', fontWeight: 600, textDecoration: 'none', alignSelf: 'flex-start' }}>
+                  Dołącz do zajęć →
+                </a>
+              )}
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '12px' }}>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <span style={{ fontSize: '10px', fontWeight: 700, color: '#9a8a80', minWidth: '48px', paddingTop: '1px' }}>DATA:</span>
+                <span style={{ fontSize: '12px', color: '#2a1f1f' }}>{najblizszy.daty}</span>
+              </div>
+              {najblizszy.sala && najblizszy.sala !== 'Do uzupełnienia' && (
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <span style={{ fontSize: '10px', fontWeight: 700, color: '#9a8a80', minWidth: '48px', paddingTop: '1px' }}>SALA:</span>
+                  <span style={{ fontSize: '12px', color: '#2a1f1f' }}>{najblizszy.sala}</span>
+                </div>
+              )}
+              {najblizszy.adres && (
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <span style={{ fontSize: '10px', fontWeight: 700, color: '#9a8a80', minWidth: '48px', paddingTop: '1px' }}>ADRES:</span>
+                  <span style={{ fontSize: '12px', color: '#2a1f1f' }}>{najblizszy.adres}</span>
                 </div>
               )}
             </div>
-            {najblizszy.typ === 'online' ? (
-              <div style={{ marginTop: '10px', display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                <span style={{ background: '#e8f0fe', color: '#1565c0', borderRadius: '20px', padding: '4px 10px', fontSize: '11px', fontWeight: 600 }}>🌐 Online</span>
-                {najblizszy.link_online && (
-                  <a href={najblizszy.link_online} target="_blank" rel="noopener noreferrer"
-                    style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', background: '#1565c0', color: 'white', padding: '4px 12px', borderRadius: '20px', fontSize: '11px', fontWeight: 600, textDecoration: 'none' }}>
-                    Dołącz →
-                  </a>
-                )}
+          )}
+          {/* Prowadzący */}
+          {najblizszy.prowadzacy && najblizszy.prowadzacy.length > 0 && (
+            <div style={{ background: '#f9f5f2', borderRadius: '10px', padding: '8px 10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              {najblizszy.prowadzacy[0].avatar_url
+                ? <img src={najblizszy.prowadzacy[0].avatar_url} style={{ width: '24px', height: '24px', borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} alt="" />
+                : <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: '#d4b8a8', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 600, color: '#7d3f3f' }}>{najblizszy.prowadzacy[0].imie[0]}</div>
+              }
+              <div style={{ fontSize: '11px', color: '#7a6a6a' }}>
+                Prowadzi: <strong style={{ color: '#2a1f1f' }}>{najblizszy.prowadzacy.map(p => `${p.imie} ${p.nazwisko}`).join(', ')}</strong>
               </div>
-            ) : (
-              <div style={{ marginTop: '10px', display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                {najblizszy.sala && <span style={{ background: '#f4f0ed', borderRadius: '20px', padding: '4px 10px', fontSize: '11px', color: '#5a4a4a', display: 'inline-flex', alignItems: 'center', gap: '4px' }}><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>{najblizszy.sala}</span>}
-{najblizszy.adres && <span style={{ background: '#f4f0ed', borderRadius: '20px', padding: '4px 10px', fontSize: '11px', color: '#5a4a4a' }}>{najblizszy.adres}</span>}
-              </div>
-            )}
-            {najblizszy.prowadzacy && najblizszy.prowadzacy.length > 0 && (
-              <div style={{ marginTop: '10px', background: '#f9f5f2', borderRadius: '10px', padding: '8px 10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                {najblizszy.prowadzacy[0].avatar_url
-                  ? <img src={najblizszy.prowadzacy[0].avatar_url} style={{ width: '24px', height: '24px', borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} alt="" />
-                  : <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: '#d4b8a8', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 600, color: '#7d3f3f' }}>{najblizszy.prowadzacy[0].imie[0]}</div>}
-                <div style={{ fontSize: '11px', color: '#7a6a6a' }}>Prowadzi: <strong style={{ color: '#2a1f1f' }}>{najblizszy.prowadzacy.map(p => `${p.imie} ${p.nazwisko}`).join(', ')}</strong></div>
-              </div>
-            )}
+            </div>
+          )}
           </div>
         ) : (
           <div className="hero-card"><div className="hero-date">Brak nadchodzących zjazdów</div></div>
@@ -4760,6 +4782,7 @@ const ikonaSVG = o.typ === 'Pilne'
     const [modalProwadzacy, setModalProwadzacy] = useState<Prowadzacy | null>(null);
     const [aktywnyFormularz, setAktywnyFormularz] = useState<{ zjazdId: number; dzien: 1 | 2; typ: 'obecnosc' | 'nieobecnosc' | 'godziny'; powod?: string; godzPrzyb?: string; godzWyj?: string } | null>(null);
     const [wysylanie, setWysylanie] = useState(false);
+    const [zwinieteZakonczone, setZwinieteZakonczone] = useState(true);
 
     useEffect(() => {
       if (!user) return;
@@ -4827,7 +4850,16 @@ const ikonaSVG = o.typ === 'Pilne'
   <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '4px' }}>Plan</div>
           <div style={{ fontSize: '20px', color: 'white', fontFamily: 'Cormorant Garamond, serif', fontWeight: 300 }}>Twoje zjazdy</div>
         </div>
-        {zjazdy.map((z) => (
+        {zjazdy.some(z => z.status === 'zakonczony') && (
+          <div onClick={() => setZwinieteZakonczone(v => !v)}
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 2px', cursor: 'pointer', marginBottom: '6px', borderBottom: '0.5px solid var(--border)' }}>
+            <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              Zakończone ({zjazdy.filter(z => z.status === 'zakonczony').length})
+            </span>
+            <span style={{ fontSize: '12px', color: 'var(--text-muted)', display: 'inline-block', transform: zwinieteZakonczone ? 'rotate(-90deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}>▾</span>
+          </div>
+        )}
+        {zjazdy.filter(z => zwinieteZakonczone ? z.status !== 'zakonczony' : true).map((z) => (
           <div key={z.id} className={`sess-card ${z.status} fade-in`}>
             <div className="sess-top">
               <span className="sess-nr">Zjazd {z.nr}</span>
