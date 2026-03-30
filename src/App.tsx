@@ -1397,6 +1397,12 @@
       await supabase.from('wiadomosci').insert([{ grupa_id: kursant.grupa_id, user_id: user.id, imie: kursant.imie, tekst: nowa.trim() }]);
       setNowa(''); setWysylanie(false);
     }
+    await wyslijPush(supabase, {
+      grupa_id: kursant.grupa_id,
+      title: `${kursant.imie} na czacie`,
+      body: nowa.trim(),
+      url: '/',
+    });
 
     if (!kursant?.grupa_id) return <div style={{ padding: '24px', textAlign: 'center', color: 'var(--text-muted)' }}>Nie jestes przypisany do zadnej grupy.</div>;
 
@@ -2557,6 +2563,14 @@
       e.preventDefault();
       const { error } = await supabase.from('ogloszenia').insert([{ typ: noweOgl.typ, tytul: noweOgl.tytul, tresc: noweOgl.tresc, szczegoly: noweOgl.szczegoly, nowe: true, data_utworzenia: new Date().toISOString(), grupa_id: noweOgl.grupa_id ? parseInt(noweOgl.grupa_id) : null }]);
       if (error) { setKomunikat('Blad: ' + error.message); } else { setKomunikat('Ogloszenie dodane!'); setNoweOgl({ typ: 'Informacja', tytul: '', tresc: '', szczegoly: '', nowe: true, grupa_id: '' }); pobierzOgloszenia(); }
+    }
+    if (!error) {
+      await wyslijPush(supabase, {
+        grupa_id: noweOgl.grupa_id ? parseInt(noweOgl.grupa_id) : undefined,
+        title: 'Nowe ogłoszenie',
+        body: noweOgl.tytul,
+        url: '/',
+      });
     }
 
     async function zapiszEdycje(e: React.FormEvent) {
@@ -5564,7 +5578,13 @@ const ikonaSVG = o.typ === 'Pilne'
       </>
     );
   }
-
+  async function wyslijPush(supabase: any, params: { user_id?: string; grupa_id?: number; title: string; body: string; url?: string }) {
+    try {
+      await supabase.functions.invoke('send-push', { body: params });
+    } catch (e) {
+      console.error('Push error:', e);
+    }
+  }
   export default function App() {
     const [user, setUser] = useState<User | null>(null);
     const [kursant, setKursant] = useState<Kursant | null>(null);
