@@ -5613,6 +5613,7 @@ const ikonaSVG = o.typ === 'Pilne'
     const [zjazdy, setZjazdy] = useState<Zjazd[]>([]);
     const [zadania, setZadania] = useState<Zadanie[]>([]);
     const [odpowiedziZadan, setOdpowiedziZadan] = useState<ZadanieOdpowiedz[]>([]);
+    const [noweCzat, setNoweCzat] = useState(false);
     const [pushAktywny, setPushAktywny] = useState(false);
 
 useEffect(() => {
