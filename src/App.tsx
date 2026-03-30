@@ -4306,8 +4306,18 @@ const ikonaSVG = o.typ === 'Pilne'
       <>
         {/* Nowy ciemny nagłówek powitalny */}
         <div style={{ margin: '-18px -16px 20px', background: 'linear-gradient(160deg,#2a1f1f 0%,#5c3030 100%)', padding: '20px 20px 28px', position: 'relative', overflow: 'hidden' }}>
-          <div style={{ position: 'absolute', top: '-20px', right: '-20px', width: '120px', height: '120px', borderRadius: '50%', background: 'rgba(255,255,255,0.04)' }} />
-          <div style={{ position: 'absolute', bottom: '-40px', left: '-10px', width: '140px', height: '140px', borderRadius: '50%', background: 'rgba(255,255,255,0.03)' }} />
+  <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', opacity: 0.12, pointerEvents: 'none' }} viewBox="0 0 420 120" preserveAspectRatio="xMidYMid slice">
+    <line x1="0" y1="30" x2="420" y2="30" stroke="white" strokeWidth="0.5"/>
+    <line x1="0" y1="60" x2="420" y2="60" stroke="white" strokeWidth="0.5"/>
+    <line x1="0" y1="90" x2="420" y2="90" stroke="white" strokeWidth="0.5"/>
+    <line x1="70" y1="0" x2="70" y2="120" stroke="white" strokeWidth="0.5"/>
+    <line x1="210" y1="0" x2="210" y2="120" stroke="white" strokeWidth="0.5"/>
+    <line x1="350" y1="0" x2="350" y2="120" stroke="white" strokeWidth="0.5"/>
+    <line x1="0" y1="0" x2="140" y2="120" stroke="white" strokeWidth="0.5"/>
+    <line x1="280" y1="0" x2="420" y2="120" stroke="white" strokeWidth="0.5"/>
+    <circle cx="390" cy="15" r="45" fill="none" stroke="white" strokeWidth="0.5"/>
+    <circle cx="30" cy="105" r="35" fill="none" stroke="white" strokeWidth="0.5"/>
+  </svg>
           <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '2px' }}>Dzień dobry</div>
           <div style={{ fontSize: '22px', fontWeight: 300, color: 'white', fontFamily: 'Cormorant Garamond, serif', letterSpacing: '0.5px' }}>{imie}</div>
           <div style={{ marginTop: '10px', display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(255,255,255,0.12)', border: '0.5px solid rgba(255,255,255,0.2)', borderRadius: '20px', padding: '5px 12px' }}>
@@ -4760,8 +4770,19 @@ const ikonaSVG = o.typ === 'Pilne'
 
     return (
       <>
-        <div style={{ margin: '-18px -16px 20px', background: '#2a1f1f', padding: '16px 18px 20px' }}>
-          <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '4px' }}>Plan</div>
+        <div style={{ margin: '-18px -16px 20px', background: '#2a1f1f', padding: '16px 18px 20px', position: 'relative', overflow: 'hidden' }}>
+  <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', opacity: 0.07, pointerEvents: 'none' }} viewBox="0 0 420 80" preserveAspectRatio="xMidYMid slice">
+    <line x1="0" y1="20" x2="420" y2="20" stroke="white" strokeWidth="0.5"/>
+    <line x1="0" y1="40" x2="420" y2="40" stroke="white" strokeWidth="0.5"/>
+    <line x1="0" y1="60" x2="420" y2="60" stroke="white" strokeWidth="0.5"/>
+    <line x1="70" y1="0" x2="70" y2="80" stroke="white" strokeWidth="0.5"/>
+    <line x1="210" y1="0" x2="210" y2="80" stroke="white" strokeWidth="0.5"/>
+    <line x1="350" y1="0" x2="350" y2="80" stroke="white" strokeWidth="0.5"/>
+    <line x1="0" y1="0" x2="100" y2="80" stroke="white" strokeWidth="0.5"/>
+    <line x1="320" y1="0" x2="420" y2="80" stroke="white" strokeWidth="0.5"/>
+    <circle cx="390" cy="10" r="35" fill="none" stroke="white" strokeWidth="0.5"/>
+  </svg>
+  <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '4px' }}>Plan</div>
           <div style={{ fontSize: '20px', color: 'white', fontFamily: 'Cormorant Garamond, serif', fontWeight: 300 }}>Twoje zjazdy</div>
         </div>
         {zjazdy.map((z) => (
