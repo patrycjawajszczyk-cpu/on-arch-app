@@ -5602,8 +5602,18 @@ const ikonaSVG = o.typ === 'Pilne'
   async function wyslijPush(supabase: any, params: { user_id?: string; grupa_id?: number; title: string; body: string; url?: string }) {
     console.log('wyslijPush wywołane', params);
     try {
-      const result = await supabase.functions.invoke('rapid-responder', { body: params });
-      console.log('Push result:', result);
+      const { data: { session } } = await supabase.auth.getSession();
+      const result = await fetch('https://bksebyxrknubyokwuaby.supabase.co/functions/v1/rapid-responder', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token}`,
+          'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJrc2VieXhya251Ynlva3d1YWJ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDI4MjkxMzMsImV4cCI6MjA1ODQwNTEzM30.PzMGHJC8Fo0FqfUPXnAUy7-FYSbqQrjGBpvFLKkwb0s',
+        },
+        body: JSON.stringify(params),
+      });
+      const json = await result.json();
+      console.log('Push result:', json);
     } catch (e) {
       console.error('Push error:', e);
     }
