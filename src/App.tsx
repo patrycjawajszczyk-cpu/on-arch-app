@@ -5597,7 +5597,7 @@ const ikonaSVG = o.typ === 'Pilne'
   }
   async function wyslijPush(supabase: any, params: { user_id?: string; grupa_id?: number; title: string; body: string; url?: string }) {
     try {
-      await supabase.functions.invoke('send-push', { body: params });
+      await supabase.functions.invoke('rapid-responder', { body: params });
     } catch (e) {
       console.error('Push error:', e);
     }
