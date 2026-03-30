@@ -4427,7 +4427,7 @@ const ikonaSVG = o.typ === 'Pilne'
         <section className="section" style={{ marginBottom: '8px' }}>
         <div className="section-header"><span className="section-title">Najbliższy zjazd</span></div>
         {najblizszy ? (
-          <div className="fade-in" style={{ background: o.typ === 'Pilne' ? '#7d3f3f' : 'white', borderRadius: '16px', padding: '14px 16px', marginBottom: '10px', display: 'flex', gap: '12px', alignItems: 'flex-start', cursor: 'pointer', border: o.typ === 'Pilne' ? 'none' : '0.5px solid var(--border)' }} onClick={onClick}>
+          <div style={{ background: 'white', borderRadius: '16px', padding: '14px 16px', marginBottom: '10px', border: '0.5px solid var(--border)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <div>
                 <div style={{ fontSize: '10px', color: '#9a8a80', textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: '4px' }}>Najbliższy zjazd</div>
