@@ -4792,27 +4792,42 @@ const ikonaSVG = o.typ === 'Pilne'
         return `${d}T${h}${m}00`;
       };
     
+      const nastepnyDzien = (data: string) => {
+        const d = new Date(data);
+        d.setDate(d.getDate() + 1);
+        return d.toISOString().split('T')[0].replace(/-/g, '');
+      };
+    
+      const teraz = new Date().toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+    
       const linie: string[] = [
         'BEGIN:VCALENDAR',
         'VERSION:2.0',
         'PRODID:-//ON-ARCH//PL',
         'CALSCALE:GREGORIAN',
+        'METHOD:PUBLISH',
       ];
     
       const dodajDzien = (data: string, gStart?: string | null, gEnd?: string | null, nr: number = 1) => {
         const prowadzacy = (z.prowadzacy || []).map(p => `${p.imie} ${p.nazwisko}`).join(', ');
         const lokalizacja = z.typ === 'online' ? 'Online' : [z.sala, z.adres].filter(Boolean).join(', ');
-        const start = gStart ? formatData(data, gStart) : formatData(data);
-        const end = gEnd ? formatData(data, gEnd) : formatData(data);
         const allDay = !gStart;
+        const start = allDay ? formatData(data) : formatData(data, gStart);
+        const end = allDay ? nastepnyDzien(data) : formatData(data, gEnd);
+        const tytul = `ON-ARCH Zjazd ${z.nr} Dzien ${nr}`;
+        const opis = [
+          z.tematy ? `Temat: ${z.tematy}` : '',
+          prowadzacy ? `Prowadzacy: ${prowadzacy}` : '',
+        ].filter(Boolean).join('\\n');
     
         linie.push('BEGIN:VEVENT');
-        linie.push(`SUMMARY:ON-ARCH Zjazd ${z.nr} — Dzień ${nr}`);
+        linie.push(`UID:onarch-${z.id}-${nr}@on-arch.pl`);
+        linie.push(`DTSTAMP:${teraz}`);
         linie.push(`DTSTART${allDay ? ';VALUE=DATE' : ''}:${start}`);
         linie.push(`DTEND${allDay ? ';VALUE=DATE' : ''}:${end}`);
+        linie.push(`SUMMARY:${tytul}`);
         if (lokalizacja) linie.push(`LOCATION:${lokalizacja}`);
-        if (z.tematy) linie.push(`DESCRIPTION:Temat: ${z.tematy}${prowadzacy ? `\\nProwadzący: ${prowadzacy}` : ''}`);
-        linie.push(`UID:onarch-zjazd-${z.id}-dzien${nr}@on-arch.pl`);
+        if (opis) linie.push(`DESCRIPTION:${opis}`);
         linie.push('END:VEVENT');
       };
     
@@ -4830,7 +4845,6 @@ const ikonaSVG = o.typ === 'Pilne'
       a.click();
       document.body.removeChild(a);
     }
-
     useEffect(() => {
       if (!user) return;
       supabase.from('obecnosci').select('*').eq('user_id', user.id)
