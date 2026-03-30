@@ -1,6 +1,14 @@
   import { useState, useEffect, useRef } from 'react';
   import './App.css';
   import { supabase } from './supabase';
+  const VAPID_PUBLIC_KEY = 'BFAbFXIqcGQtsjB0EWALrzt14OOGbPsEZtK2RHuz2R5REYhBtiUOg_H1vjq6XiwdnyJnyftcY0dM8bLuWcqba7o';
+
+function urlBase64ToUint8Array(base64String: string) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const rawData = window.atob(base64);
+  return Uint8Array.from([...rawData].map(c => c.charCodeAt(0)));
+}
   import { Home, Calendar, Bell, MessageCircle, User, CheckSquare, BookOpen, Star } from 'lucide-react';
   import * as Sentry from '@sentry/react';
 
