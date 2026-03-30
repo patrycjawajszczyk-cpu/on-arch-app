@@ -2562,15 +2562,17 @@
     async function dodajOgloszenie(e: React.FormEvent) {
       e.preventDefault();
       const { error } = await supabase.from('ogloszenia').insert([{ typ: noweOgl.typ, tytul: noweOgl.tytul, tresc: noweOgl.tresc, szczegoly: noweOgl.szczegoly, nowe: true, data_utworzenia: new Date().toISOString(), grupa_id: noweOgl.grupa_id ? parseInt(noweOgl.grupa_id) : null }]);
-      if (error) { setKomunikat('Blad: ' + error.message); } else { setKomunikat('Ogloszenie dodane!'); setNoweOgl({ typ: 'Informacja', tytul: '', tresc: '', szczegoly: '', nowe: true, grupa_id: '' }); pobierzOgloszenia(); }
-    }
-    if (!error) {
-      await wyslijPush(supabase, {
-        grupa_id: noweOgl.grupa_id ? parseInt(noweOgl.grupa_id) : undefined,
-        title: 'Nowe ogłoszenie',
-        body: noweOgl.tytul,
-        url: '/',
-      });
+      if (error) { setKomunikat('Blad: ' + error.message); } else {
+        setKomunikat('Ogloszenie dodane!');
+        setNoweOgl({ typ: 'Informacja', tytul: '', tresc: '', szczegoly: '', nowe: true, grupa_id: '' });
+        pobierzOgloszenia();
+        await wyslijPush(supabase, {
+          grupa_id: noweOgl.grupa_id ? parseInt(noweOgl.grupa_id) : undefined,
+          title: 'Nowe ogłoszenie',
+          body: noweOgl.tytul,
+          url: '/',
+        });
+      }
     }
 
     async function zapiszEdycje(e: React.FormEvent) {
