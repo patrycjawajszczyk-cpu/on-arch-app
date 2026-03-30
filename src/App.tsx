@@ -4784,6 +4784,52 @@ const ikonaSVG = o.typ === 'Pilne'
     const [wysylanie, setWysylanie] = useState(false);
     const [zwinieteZakonczone, setZwinieteZakonczone] = useState(true);
 
+    function pobierzICS(z: Zjazd) {
+      const formatData = (data: string, godzina?: string | null) => {
+        const d = data.replace(/-/g, '');
+        if (!godzina) return d;
+        const [h, m] = godzina.split(':');
+        return `${d}T${h}${m}00`;
+      };
+    
+      const linie: string[] = [
+        'BEGIN:VCALENDAR',
+        'VERSION:2.0',
+        'PRODID:-//ON-ARCH//PL',
+        'CALSCALE:GREGORIAN',
+      ];
+    
+      const dodajDzien = (data: string, gStart?: string | null, gEnd?: string | null, nr: number = 1) => {
+        const prowadzacy = (z.prowadzacy || []).map(p => `${p.imie} ${p.nazwisko}`).join(', ');
+        const lokalizacja = z.typ === 'online' ? 'Online' : [z.sala, z.adres].filter(Boolean).join(', ');
+        const start = gStart ? formatData(data, gStart) : formatData(data);
+        const end = gEnd ? formatData(data, gEnd) : formatData(data);
+        const allDay = !gStart;
+    
+        linie.push('BEGIN:VEVENT');
+        linie.push(`SUMMARY:ON-ARCH Zjazd ${z.nr} — Dzień ${nr}`);
+        linie.push(`DTSTART${allDay ? ';VALUE=DATE' : ''}:${start}`);
+        linie.push(`DTEND${allDay ? ';VALUE=DATE' : ''}:${end}`);
+        if (lokalizacja) linie.push(`LOCATION:${lokalizacja}`);
+        if (z.tematy) linie.push(`DESCRIPTION:Temat: ${z.tematy}${prowadzacy ? `\\nProwadzący: ${prowadzacy}` : ''}`);
+        linie.push(`UID:onarch-zjazd-${z.id}-dzien${nr}@on-arch.pl`);
+        linie.push('END:VEVENT');
+      };
+    
+      if (z.data_dzien1) dodajDzien(z.data_dzien1, z.godzina_start_d1, z.godzina_end_d1, 1);
+      if (z.data_dzien2) dodajDzien(z.data_dzien2, z.godzina_start_d2, z.godzina_end_d2, 2);
+    
+      linie.push('END:VCALENDAR');
+    
+      const blob = new Blob([linie.join('\r\n')], { type: 'text/calendar;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `onarch-zjazd-${z.nr}.ics`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
     useEffect(() => {
       if (!user) return;
       supabase.from('obecnosci').select('*').eq('user_id', user.id)
@@ -4891,6 +4937,15 @@ const ikonaSVG = o.typ === 'Pilne'
                 </>
               )}
               {z.tematy && <div className="sess-row"><span className="sess-lbl">Temat:</span> {z.tematy}</div>}
+              {z.status === 'nadchodzacy' && (
+                <div style={{ marginTop: '8px' }}>
+                  <button onClick={() => pobierzICS(z)}
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'none', border: '0.5px solid var(--brand-mid)', borderRadius: '8px', padding: '6px 12px', fontSize: '11px', fontWeight: 600, color: 'var(--brand-dark)', cursor: 'pointer', fontFamily: 'Jost, sans-serif' }}>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                    Dodaj do kalendarza
+                  </button>
+                </div>
+              )}
               {z.prowadzacy && z.prowadzacy.length > 0 && (
   <div style={{ marginTop: '8px', paddingTop: '8px', borderTop: '0.5px solid var(--border-soft)', display: 'flex', flexDirection: 'column', gap: '6px' }}>
     {z.prowadzacy.map((p) => (
