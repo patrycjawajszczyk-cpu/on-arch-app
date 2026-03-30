@@ -287,7 +287,27 @@
       <>
         <h2 className="page-title">Zadania</h2>
 
-        {ladowanie && <div style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '24px' }}>Ładowanie...</div>}
+        {ladowanie && (
+  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+    {[1,2,3].map(i => (
+      <div key={i} style={{ background: 'white', borderRadius: '14px', border: '0.5px solid var(--border)', overflow: 'hidden' }}>
+        <div style={{ padding: '10px 14px', borderBottom: '0.5px solid var(--border-soft)', display: 'flex', justifyContent: 'space-between' }}>
+          <div className="skeleton" style={{ width: '80px', height: '14px' }} />
+          <div className="skeleton" style={{ width: '60px', height: '14px' }} />
+        </div>
+        <div style={{ padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <div className="skeleton" style={{ width: '140px', height: '18px' }} />
+          <div className="skeleton" style={{ width: '200px', height: '12px' }} />
+          <div className="skeleton" style={{ width: '160px', height: '12px' }} />
+        </div>
+        <div style={{ display: 'flex', gap: '8px', padding: '8px 14px 14px' }}>
+          <div className="skeleton" style={{ flex: 1, height: '70px', borderRadius: '12px' }} />
+          <div className="skeleton" style={{ flex: 1, height: '70px', borderRadius: '12px' }} />
+        </div>
+      </div>
+    ))}
+  </div>
+)}
 
         {!ladowanie && zadania.length === 0 && (
           <div style={{ textAlign: 'center', padding: '40px 24px', color: 'var(--text-muted)' }}>
@@ -661,7 +681,27 @@
               )}
             </div>
 
-            {ladowanie && <div style={{ textAlign: 'center', padding: '20px', color: 'var(--text-muted)' }}>Ładowanie...</div>}
+            {ladowanie && (
+  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+    {[1,2,3].map(i => (
+      <div key={i} style={{ background: 'white', borderRadius: '14px', border: '0.5px solid var(--border)', overflow: 'hidden' }}>
+        <div style={{ padding: '10px 14px', borderBottom: '0.5px solid var(--border-soft)', display: 'flex', justifyContent: 'space-between' }}>
+          <div className="skeleton" style={{ width: '80px', height: '14px' }} />
+          <div className="skeleton" style={{ width: '60px', height: '14px' }} />
+        </div>
+        <div style={{ padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <div className="skeleton" style={{ width: '140px', height: '18px' }} />
+          <div className="skeleton" style={{ width: '200px', height: '12px' }} />
+          <div className="skeleton" style={{ width: '160px', height: '12px' }} />
+        </div>
+        <div style={{ display: 'flex', gap: '8px', padding: '8px 14px 14px' }}>
+          <div className="skeleton" style={{ flex: 1, height: '70px', borderRadius: '12px' }} />
+          <div className="skeleton" style={{ flex: 1, height: '70px', borderRadius: '12px' }} />
+        </div>
+      </div>
+    ))}
+  </div>
+)}
             {!ladowanie && lista.length === 0 && (
               <div className="profil-card"><div className="profil-row"><span style={{ color: 'var(--text-muted)', fontSize: '13px' }}>Brak wpisów dla tego zjazdu.</span></div></div>
             )}
@@ -4222,9 +4262,11 @@ const ikonaSVG = o.typ === 'Pilne'
               <span style={{ fontSize: '9px', color: o.typ === 'Pilne' ? 'rgba(255,255,255,0.5)' : '#9a8a80' }}>{new Date(o.data_utworzenia).toLocaleDateString('pl-PL', { day: 'numeric', month: 'short' })}</span>
             </div>
           </div>
+          
           <div style={{ fontSize: '13px', fontWeight: 600, color: o.typ === 'Pilne' ? 'white' : '#2a1f1f', marginBottom: '3px' }}>{o.tytul}</div>
           <div style={{ fontSize: '11px', color: o.typ === 'Pilne' ? 'rgba(255,255,255,0.7)' : '#7a6a6a', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' as const }}>{o.tresc}</div>
         </div>
+        
       </div>
     );
   }
@@ -4385,7 +4427,7 @@ const ikonaSVG = o.typ === 'Pilne'
         <section className="section" style={{ marginBottom: '8px' }}>
         <div className="section-header"><span className="section-title">Najbliższy zjazd</span></div>
         {najblizszy ? (
-          <div style={{ background: 'white', borderRadius: '16px', padding: '16px', border: '0.5px solid var(--border)', boxShadow: '0 2px 12px rgba(0,0,0,0.06)' }}>
+          <div className="fade-in" style={{ background: o.typ === 'Pilne' ? '#7d3f3f' : 'white', borderRadius: '16px', padding: '14px 16px', marginBottom: '10px', display: 'flex', gap: '12px', alignItems: 'flex-start', cursor: 'pointer', border: o.typ === 'Pilne' ? 'none' : '0.5px solid var(--border)' }} onClick={onClick}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <div>
                 <div style={{ fontSize: '10px', color: '#9a8a80', textTransform: 'uppercase', letterSpacing: '0.6px', marginBottom: '4px' }}>Najbliższy zjazd</div>
@@ -4786,7 +4828,7 @@ const ikonaSVG = o.typ === 'Pilne'
           <div style={{ fontSize: '20px', color: 'white', fontFamily: 'Cormorant Garamond, serif', fontWeight: 300 }}>Twoje zjazdy</div>
         </div>
         {zjazdy.map((z) => (
-          <div key={z.id} className={`sess-card ${z.status}`}>
+          <div key={z.id} className={`sess-card ${z.status} fade-in`}>
             <div className="sess-top">
               <span className="sess-nr">Zjazd {z.nr}</span>
               <span className={`s-badge s-${z.status}`}>{z.status === 'nadchodzacy' ? 'Nadchodzący' : 'Zakończony'}</span>
