@@ -1395,14 +1395,14 @@
       if (!nowa.trim() || !kursant) return;
       setWysylanie(true);
       await supabase.from('wiadomosci').insert([{ grupa_id: kursant.grupa_id, user_id: user.id, imie: kursant.imie, tekst: nowa.trim() }]);
+      await wyslijPush(supabase, {
+        grupa_id: kursant.grupa_id,
+        title: `${kursant.imie} na czacie`,
+        body: nowa.trim(),
+        url: '/',
+      });
       setNowa(''); setWysylanie(false);
     }
-    await wyslijPush(supabase, {
-      grupa_id: kursant.grupa_id,
-      title: `${kursant.imie} na czacie`,
-      body: nowa.trim(),
-      url: '/',
-    });
 
     if (!kursant?.grupa_id) return <div style={{ padding: '24px', textAlign: 'center', color: 'var(--text-muted)' }}>Nie jestes przypisany do zadnej grupy.</div>;
 
