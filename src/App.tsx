@@ -4683,12 +4683,7 @@ const ikonaSVG = o.typ === 'Pilne'
         )}
       </section>
 
-        {/* Kontakt z biurem */}
-        <div style={{ marginTop: '24px', padding: '16px 18px', borderRadius: '16px', background: 'var(--brand-light)', border: '0.5px solid var(--border-soft)', textAlign: 'center' }}>
-          <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--brand-dark)', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Kontakt z biurem</div>
-          <a href="tel:+48533718412" style={{ display: 'block', fontSize: '18px', fontWeight: 600, color: 'var(--brand-dark)', textDecoration: 'none', marginBottom: '4px' }}>+48 533 718 412</a>
-          <a href="mailto:info@on-arch.pl" style={{ fontSize: '12px', color: 'var(--text-muted)', textDecoration: 'none' }}>info@on-arch.pl</a>
-        </div>
+        
         <div onClick={() => onNavigate('materialy')} style={{ display: 'flex', alignItems: 'center', gap: '12px', background: '#fef9ec', border: '1.5px solid #c8a84b', borderRadius: '14px', padding: '14px 16px', marginTop: '10px', cursor: 'pointer' }}>
           <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: '#c8a84b', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
@@ -4714,6 +4709,12 @@ const ikonaSVG = o.typ === 'Pilne'
           </div>
           <span style={{ fontSize: '16px', color: 'var(--brand)' }}>→</span>
         </a>
+        {/* Kontakt z biurem */}
+        <div style={{ marginTop: '24px', padding: '16px 18px', borderRadius: '16px', background: 'var(--brand-light)', border: '0.5px solid var(--border-soft)', textAlign: 'center' }}>
+          <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--brand-dark)', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Kontakt z biurem</div>
+          <a href="tel:+48533718412" style={{ display: 'block', fontSize: '18px', fontWeight: 600, color: 'var(--brand-dark)', textDecoration: 'none', marginBottom: '4px' }}>+48 533 718 412</a>
+          <a href="mailto:info@on-arch.pl" style={{ fontSize: '12px', color: 'var(--text-muted)', textDecoration: 'none' }}>info@on-arch.pl</a>
+        </div>
 
         {/* Social media */}
         <div style={{ background: 'white', border: '0.5px solid var(--border)', borderRadius: '12px', padding: '12px 16px', marginTop: '10px' }}>
