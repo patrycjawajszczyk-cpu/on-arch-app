@@ -3138,7 +3138,7 @@ function urlBase64ToUint8Array(base64String: string) {
               ) : (
                 <>
                   {/* Formularz + lista obok siebie na desktopie */}
-                  <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'flex-start' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                     {/* Formularz nowego ogłoszenia */}
                     <div style={{ background: 'white', border: '0.5px solid var(--border)', borderRadius: '14px', padding: '16px 20px', minWidth: '280px', flex: '1' }}>
                       <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text)', marginBottom: '12px' }}>Nowe ogłoszenie</div>
