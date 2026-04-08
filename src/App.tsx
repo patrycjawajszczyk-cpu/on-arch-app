@@ -3204,7 +3204,7 @@ function urlBase64ToUint8Array(base64String: string) {
                                   <td style={{ padding: '9px 12px', fontSize: '11px', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
                                     {new Date(o.data_utworzenia).toLocaleDateString('pl-PL', { day: 'numeric', month: 'short' })}
                                   </td>
-                                  <td style={{ padding: '9px 12px', whiteSpace: 'nowrap' }}>
+                                  <td style={{ padding: '9px 12px', whiteSpace: 'nowrap', width: '90px' }}>
                                     <button onClick={() => { setEdytowane(o); setKomunikat(''); }}
                                       style={{ fontSize: '11px', padding: '3px 10px', border: '0.5px solid var(--border)', borderRadius: '6px', background: 'white', cursor: 'pointer', color: 'var(--brand)', fontFamily: 'Jost, sans-serif', marginRight: '4px' }}>
                                       Edytuj
@@ -3646,7 +3646,7 @@ function urlBase64ToUint8Array(base64String: string) {
                           {/* Tabela + podsumowanie — zwijane */}
                           {!zwinieta && (<>
                           <div style={{ background: 'white', borderRadius: '0', border: '0.5px solid var(--border)', borderTop: 'none', overflow: 'hidden' }}>
-                            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+                          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', tableLayout: 'fixed' }}>
                               <thead>
                                 <tr style={{ background: 'var(--bg)', borderBottom: '0.5px solid var(--border)' }}>
                                   {['#', 'Daty', 'Temat', 'Prowadzący', 'Status', ''].map((h, i) => (
@@ -4705,8 +4705,8 @@ const ikonaSVG = o.typ === 'Pilne'
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--brand)" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
             <div>
-              <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--brand-dark)' }}>Najczęściej zadawane pytania</div>
-              <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>on-arch.pl/faq</div>
+            <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--brand-dark)' }}>Materiały dodatkowe</div>
+              <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Do nadrobienia zaległości i nauki własnej</div>
             </div>
           </div>
           <span style={{ fontSize: '16px', color: 'var(--brand)' }}>→</span>
