@@ -188,6 +188,15 @@ function urlBase64ToUint8Array(base64String: string) {
     tekst: string;
     created_at: string;
   };
+  type MaterialZakupu = {
+    id: string;
+    nazwa: string;
+    opis: string | null;
+    cena: string | null;
+    zdjecie_url: string | null;
+    link_sklepu: string | null;
+    kolejnosc: number;
+  };
 
   type Obecnosc = {
     id: string;
@@ -1366,7 +1375,64 @@ function urlBase64ToUint8Array(base64String: string) {
       </div></div>
     );
   }
-
+  function EkranMaterialy() {
+    const [materialy, setMaterialy] = useState<MaterialZakupu[]>([]);
+    const [ladowanie, setLadowanie] = useState(true);
+  
+    useEffect(() => {
+      supabase.from('materialy_zakupu').select('*').order('kolejnosc').then(({ data }) => {
+        setMaterialy(data || []);
+        setLadowanie(false);
+      });
+    }, []);
+  
+    return (
+      <>
+        <h2 className="page-title">Materiały do zakupu</h2>
+        <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '16px', lineHeight: 1.6 }}>
+          Lista materiałów potrzebnych na kurs. Kliknij "Kup online" aby przejść do sklepu.
+        </p>
+        {ladowanie && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {[1,2,3,4].map(i => (
+              <div key={i} style={{ background: 'white', borderRadius: '14px', border: '0.5px solid var(--border)', height: '120px' }}>
+                <div className="skeleton" style={{ width: '100%', height: '100%', borderRadius: '14px' }} />
+              </div>
+            ))}
+          </div>
+        )}
+        {!ladowanie && materialy.length === 0 && (
+          <div style={{ textAlign: 'center', padding: '40px 24px', color: 'var(--text-muted)', fontSize: '14px' }}>
+            Brak materiałów. Biuro wkrótce doda listę.
+          </div>
+        )}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+          {materialy.map(m => (
+            <div key={m.id} className="fade-in" style={{ background: 'white', borderRadius: '14px', border: '0.5px solid var(--border)', overflow: 'hidden' }}>
+              {m.zdjecie_url
+                ? <img src={m.zdjecie_url} alt={m.nazwa} style={{ width: '100%', height: '100px', objectFit: 'cover' }} />
+                : <div style={{ width: '100%', height: '100px', background: '#f0ece7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#c8b8a8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+                  </div>
+              }
+              <div style={{ padding: '10px' }}>
+                <div style={{ fontSize: '12px', fontWeight: 600, color: '#2a1f1f', marginBottom: '2px', lineHeight: 1.3 }}>{m.nazwa}</div>
+                {m.opis && <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginBottom: '5px' }}>{m.opis}</div>}
+                {m.cena && <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--brand)', marginBottom: '8px' }}>{m.cena}</div>}
+                {m.link_sklepu
+                  ? <a href={m.link_sklepu} target="_blank" rel="noopener noreferrer"
+                      style={{ display: 'block', textAlign: 'center', background: 'var(--brand)', color: 'white', borderRadius: '8px', padding: '6px', fontSize: '10px', fontWeight: 600, textDecoration: 'none' }}>
+                      Kup online →
+                    </a>
+                  : <div style={{ fontSize: '10px', color: 'var(--text-muted)', textAlign: 'center', padding: '6px' }}>Brak linku</div>
+                }
+              </div>
+            </div>
+          ))}
+        </div>
+      </>
+    );
+  }
   function EkranCzat({ user, kursant }: { user: User; kursant: Kursant | null }) {
     const [wiadomosci, setWiadomosci] = useState<Wiadomosc[]>([]);
     const [avatary, setAvatary] = useState<Record<string, { avatar_url: string | null; imie: string }>>({});
@@ -2433,7 +2499,101 @@ function urlBase64ToUint8Array(base64String: string) {
       </div>
     );
   }
-
+  function AdminMaterialy() {
+    const [materialy, setMaterialy] = useState<MaterialZakupu[]>([]);
+    const [nowy, setNowy] = useState({ nazwa: '', opis: '', cena: '', zdjecie_url: '', link_sklepu: '' });
+    const [komunikat, setKomunikat] = useState('');
+  
+    useEffect(() => { pobierz(); }, []);
+  
+    async function pobierz() {
+      const { data } = await supabase.from('materialy_zakupu').select('*').order('kolejnosc');
+      setMaterialy(data || []);
+    }
+  
+    async function dodaj(e: React.FormEvent) {
+      e.preventDefault();
+      const { error } = await supabase.from('materialy_zakupu').insert([{
+        nazwa: nowy.nazwa,
+        opis: nowy.opis || null,
+        cena: nowy.cena || null,
+        zdjecie_url: nowy.zdjecie_url || null,
+        link_sklepu: nowy.link_sklepu || null,
+        kolejnosc: materialy.length,
+      }]);
+      if (error) { setKomunikat('Błąd: ' + error.message); return; }
+      setKomunikat('Dodano!');
+      setNowy({ nazwa: '', opis: '', cena: '', zdjecie_url: '', link_sklepu: '' });
+      pobierz();
+    }
+  
+    async function usun(id: string) {
+      if (!window.confirm('Usunąć produkt?')) return;
+      await supabase.from('materialy_zakupu').delete().eq('id', id);
+      pobierz();
+    }
+  
+    return (
+      <>
+        <h2 className="page-title">Materiały do zakupu</h2>
+        {komunikat && <div className="login-error" style={{ background: '#e8f5e9', color: '#2e7d32', marginBottom: '12px' }}>{komunikat}</div>}
+        <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'flex-start' }}>
+          <div style={{ background: 'white', border: '0.5px solid var(--border)', borderRadius: '14px', padding: '16px 20px', minWidth: '280px', flex: '1' }}>
+            <div style={{ fontSize: '13px', fontWeight: 600, marginBottom: '12px' }}>Dodaj produkt</div>
+            <form onSubmit={dodaj}>
+              <input type="text" value={nowy.nazwa} onChange={e => setNowy({ ...nowy, nazwa: e.target.value })} placeholder="Nazwa produktu *" required
+                style={{ width: '100%', fontSize: '12px', padding: '7px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif', marginBottom: '8px' }} />
+              <input type="text" value={nowy.opis} onChange={e => setNowy({ ...nowy, opis: e.target.value })} placeholder="Opis (opcjonalnie)"
+                style={{ width: '100%', fontSize: '12px', padding: '7px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif', marginBottom: '8px' }} />
+              <input type="text" value={nowy.cena} onChange={e => setNowy({ ...nowy, cena: e.target.value })} placeholder="Cena np. ok. 25 zł"
+                style={{ width: '100%', fontSize: '12px', padding: '7px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif', marginBottom: '8px' }} />
+              <input type="url" value={nowy.zdjecie_url} onChange={e => setNowy({ ...nowy, zdjecie_url: e.target.value })} placeholder="Link do zdjęcia (opcjonalnie)"
+                style={{ width: '100%', fontSize: '12px', padding: '7px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif', marginBottom: '8px' }} />
+              <input type="url" value={nowy.link_sklepu} onChange={e => setNowy({ ...nowy, link_sklepu: e.target.value })} placeholder="Link do sklepu (opcjonalnie)"
+                style={{ width: '100%', fontSize: '12px', padding: '7px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif', marginBottom: '8px' }} />
+              <button type="submit" style={{ width: '100%', padding: '8px', background: 'var(--brand)', color: 'white', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 600, cursor: 'pointer', fontFamily: 'Jost, sans-serif' }}>
+                + Dodaj produkt
+              </button>
+            </form>
+          </div>
+          <div style={{ flex: '2', minWidth: '300px' }}>
+            <div style={{ fontSize: '13px', fontWeight: 600, marginBottom: '10px' }}>Lista produktów ({materialy.length})</div>
+            {materialy.map((m, idx) => (
+              <div key={m.id} style={{ background: 'white', borderRadius: '12px', border: '0.5px solid var(--border)', padding: '12px 14px', marginBottom: '8px', display: 'flex', gap: '12px', alignItems: 'center' }}>
+                {m.zdjecie_url
+                  ? <img src={m.zdjecie_url} alt={m.nazwa} style={{ width: '48px', height: '48px', borderRadius: '8px', objectFit: 'cover', flexShrink: 0 }} />
+                  : <div style={{ width: '48px', height: '48px', borderRadius: '8px', background: '#f0ece7', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#c8b8a8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+                    </div>
+                }
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text)' }}>{m.nazwa}</div>
+                  {m.opis && <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{m.opis}</div>}
+                  {m.cena && <div style={{ fontSize: '12px', color: 'var(--brand)', fontWeight: 600 }}>{m.cena}</div>}
+                </div>
+                <div style={{ display: 'flex', gap: '4px', alignItems: 'center', flexShrink: 0 }}>
+                  <button onClick={async () => {
+                    if (idx === 0) return;
+                    await supabase.from('materialy_zakupu').update({ kolejnosc: idx - 1 }).eq('id', m.id);
+                    await supabase.from('materialy_zakupu').update({ kolejnosc: idx }).eq('id', materialy[idx - 1].id);
+                    pobierz();
+                  }} style={{ background: 'none', border: '0.5px solid var(--border)', borderRadius: '6px', padding: '3px 7px', cursor: 'pointer', color: 'var(--text-muted)', fontSize: '12px' }}>↑</button>
+                  <button onClick={async () => {
+                    if (idx === materialy.length - 1) return;
+                    await supabase.from('materialy_zakupu').update({ kolejnosc: idx + 1 }).eq('id', m.id);
+                    await supabase.from('materialy_zakupu').update({ kolejnosc: idx }).eq('id', materialy[idx + 1].id);
+                    pobierz();
+                  }} style={{ background: 'none', border: '0.5px solid var(--border)', borderRadius: '6px', padding: '3px 7px', cursor: 'pointer', color: 'var(--text-muted)', fontSize: '12px' }}>↓</button>
+                  <button onClick={() => usun(m.id)} style={{ background: 'none', border: 'none', color: '#e57373', cursor: 'pointer', fontSize: '16px', padding: '0 4px' }}>×</button>
+                </div>
+              </div>
+            ))}
+            {materialy.length === 0 && <div style={{ textAlign: 'center', padding: '32px', color: 'var(--text-muted)', fontSize: '13px' }}>Brak produktów</div>}
+          </div>
+        </div>
+      </>
+    );
+  }
   function PanelBiura({ onWyloguj, user }: { onWyloguj: () => void; user: User | null }) {
     const [aktywnaZakladka, setAktywnaZakladka] = useState('home');
     const [grupy, setGrupy] = useState<Grupa[]>([]);
@@ -2858,6 +3018,7 @@ function urlBase64ToUint8Array(base64String: string) {
               { id: 'grupy',     icon: <Home size={18}/>,        label: 'Grupy' },
               { id: 'prowadzacy',icon: <User size={18}/>,        label: 'Prowadzący' },
               { id: 'ankiety',   icon: <Star size={18}/>,        label: 'Ankiety' },
+              { id: 'materialy', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>, label: 'Materiały' },
               { id: 'backup',    icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>, label: 'Backup' },
             ].map(item => (
               <button key={item.id}
@@ -2937,6 +3098,7 @@ function urlBase64ToUint8Array(base64String: string) {
                     { id: 'grupy',      label: 'Grupy',      opis: `${grupy.length} grup`,                icon: <Home size={22}/> },
                     { id: 'prowadzacy', label: 'Prowadzący', opis: `${prowadzacy.length} osób`,           icon: <User size={22}/> },
                     { id: 'ankiety',    label: 'Ankiety',    opis: `${ankiety.length} wypełnień`,         icon: <Star size={22}/> },
+                    { id: 'materialy',  label: 'Materiały', opis: 'Lista produktów',  icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg> },
                     { id: 'backup',     label: 'Backup',     opis: 'Pobierz kopię bazy',                  icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> },
                   ].map(k => (
                     <div key={k.id} onClick={() => setAktywnaZakladka(k.id)}
@@ -3864,7 +4026,9 @@ function urlBase64ToUint8Array(base64String: string) {
               )}
             </>
           )}
-
+{aktywnaZakladka === 'materialy' && (
+            <AdminMaterialy />
+          )}
           {/* ZAKŁADKA: Backup */}
           {aktywnaZakladka === 'backup' && (
             <EkranBackup onBackupDone={() => setPokazBackupAlert(false)} />
@@ -4525,7 +4689,16 @@ const ikonaSVG = o.typ === 'Pilne'
           <a href="tel:+48533718412" style={{ display: 'block', fontSize: '18px', fontWeight: 600, color: 'var(--brand-dark)', textDecoration: 'none', marginBottom: '4px' }}>+48 533 718 412</a>
           <a href="mailto:info@on-arch.pl" style={{ fontSize: '12px', color: 'var(--text-muted)', textDecoration: 'none' }}>info@on-arch.pl</a>
         </div>
-
+        <div onClick={() => onNavigate('materialy')} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '13px 16px', borderRadius: '12px', background: 'white', border: '0.5px solid var(--border)', textDecoration: 'none', marginTop: '10px', cursor: 'pointer' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--brand)" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+            <div>
+              <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--brand-dark)' }}>Materiały do zakupu</div>
+              <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Lista materiałów na kurs</div>
+            </div>
+          </div>
+          <span style={{ fontSize: '16px', color: 'var(--brand)' }}>→</span>
+        </div>
         {/* FAQ */}
         <a href="https://on-arch.pl/faq-odpowiedzi-na-najczesciej-zadawane-pytania/" target="_blank" rel="noopener noreferrer"
           style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '13px 16px', borderRadius: '12px', background: 'white', border: '0.5px solid var(--border)', textDecoration: 'none', marginTop: '10px' }}>
@@ -5862,6 +6035,7 @@ async function wylaczPush() {
               {aktywnaZakladka === 'ogloszenia' && <EkranOgloszenia ogloszenia={ogloszenia} onOtworzOgloszenie={otworzOgloszenie} />}
               {aktywnaZakladka === 'zadania' && <EkranZadania user={user} kursant={kursant} />}
               {aktywnaZakladka === 'czat' && <EkranCzat user={user} kursant={kursant} />}
+              {aktywnaZakladka === 'materialy' && <EkranMaterialy />}
               {aktywnaZakladka === 'profil' && (
                 <EkranProfil
                   user={user} kursant={kursant} zjazdy={zjazdy}
