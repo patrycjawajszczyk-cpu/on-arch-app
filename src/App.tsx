@@ -4683,7 +4683,11 @@ const ikonaSVG = o.typ === 'Pilne'
         )}
       </section>
 
-        
+      <div style={{ marginTop: '28px', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div style={{ flex: 1, height: '0.5px', background: 'var(--border)' }} />
+          <span style={{ fontSize: '10px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.6px', whiteSpace: 'nowrap' }}>Dodatkowe informacje i produkty</span>
+          <div style={{ flex: 1, height: '0.5px', background: 'var(--border)' }} />
+        </div>
         <div onClick={() => onNavigate('materialy')} style={{ display: 'flex', alignItems: 'center', gap: '12px', background: '#fef9ec', border: '1.5px solid #c8a84b', borderRadius: '14px', padding: '14px 16px', marginTop: '10px', cursor: 'pointer' }}>
           <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: '#c8a84b', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
