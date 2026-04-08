@@ -3206,7 +3206,7 @@ function urlBase64ToUint8Array(base64String: string) {
                                   <td style={{ padding: '9px 12px', fontSize: '11px', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
                                     {new Date(o.data_utworzenia).toLocaleDateString('pl-PL', { day: 'numeric', month: 'short' })}
                                   </td>
-                                  <td style={{ padding: '9px 12px', whiteSpace: 'nowrap', width: '90px' }}>
+                                  <td style={{ padding: '9px 12px', whiteSpace: 'nowrap', width: '120px', minWidth: '120px' }}>
                                     <button onClick={() => { setEdytowane(o); setKomunikat(''); }}
                                       style={{ fontSize: '11px', padding: '3px 10px', border: '0.5px solid var(--border)', borderRadius: '6px', background: 'white', cursor: 'pointer', color: 'var(--brand)', fontFamily: 'Jost, sans-serif', marginRight: '4px' }}>
                                       Edytuj
