@@ -3212,7 +3212,7 @@ function urlBase64ToUint8Array(base64String: string) {
                                       Edytuj
                                     </button>
                                     <button onClick={() => usunOgloszenie(o.id)}
-                                      style={{ fontSize: '11px', padding: '3px 6px', border: 'none', borderRadius: '6px', background: 'none', cursor: 'pointer', color: '#e57373' }}>×</button>
+                                      style={{ fontSize: '11px', padding: '3px 8px', border: '0.5px solid #ffcdd2', borderRadius: '6px', background: '#fff5f5', cursor: 'pointer', color: '#e57373' }}>Usuń</button>
                                   </td>
                                 </tr>
                               ))}
