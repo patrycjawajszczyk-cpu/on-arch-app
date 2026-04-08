@@ -3179,9 +3179,11 @@ function urlBase64ToUint8Array(base64String: string) {
                           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
                             <thead>
                               <tr style={{ background: 'var(--bg)', borderBottom: '0.5px solid var(--border)' }}>
-                                {['Tytuł', 'Typ', 'Dla', 'Data', ''].map((h, i) => (
-                                  <th key={i} style={{ padding: '8px 12px', textAlign: 'left', fontWeight: 600, color: 'var(--text-muted)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.3px', whiteSpace: 'nowrap' }}>{h}</th>
-                                ))}
+                              {['Tytuł', 'Typ', 'Dla', 'Data', ''].map((h, i) => (
+                                <th key={i} style={{ padding: '8px 12px', textAlign: 'left', fontWeight: 600, color: 'var(--text-muted)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.3px', whiteSpace: 'nowrap',
+                                  width: i === 0 ? '35%' : i === 1 ? '10%' : i === 2 ? '20%' : i === 3 ? '10%' : '90px'
+                                }}>{h}</th>
+                              ))}
                               </tr>
                             </thead>
                             <tbody>
