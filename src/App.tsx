@@ -1390,7 +1390,7 @@ function urlBase64ToUint8Array(base64String: string) {
       <>
         <h2 className="page-title">Materiały do zakupu</h2>
         <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '16px', lineHeight: 1.6 }}>
-          Lista materiałów potrzebnych na kurs. Kliknij "Kup online" aby przejść do sklepu.
+          Tutaj znajdziesz dodatkowe materiały do nadrobienia zajęć w On-Arch. Kliknij "Kup online" aby przejść do sklepu.
         </p>
         {ladowanie && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
