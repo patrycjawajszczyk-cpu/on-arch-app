@@ -5782,7 +5782,7 @@ const ikonaSVG = o.typ === 'Pilne'
         },
         body: JSON.stringify(params),
       });
-      const json = await result.json();
+      await result.json();
     } catch (e) {
       console.error('Push error:', e);
     }
