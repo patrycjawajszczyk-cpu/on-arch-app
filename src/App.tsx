@@ -3956,7 +3956,7 @@ function urlBase64ToUint8Array(base64String: string) {
                 <button className="login-btn" type="submit">Dodaj grupe</button>
               </form>
               <h2 className="page-title" style={{ marginTop: '24px' }}>Lista grup</h2>
-              <div style={{ background: 'white', borderRadius: '12px', border: '0.5px solid var(--border)', overflow: 'hidden' }}>
+              <div style={{ background: 'white', borderRadius: '12px', border: '0.5px solid var(--border)', overflow: 'auto' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
                   <thead>
                     <tr style={{ background: 'var(--bg)', borderBottom: '0.5px solid var(--border)' }}>
