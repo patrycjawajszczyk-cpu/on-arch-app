@@ -4689,24 +4689,27 @@ const ikonaSVG = o.typ === 'Pilne'
           <a href="tel:+48533718412" style={{ display: 'block', fontSize: '18px', fontWeight: 600, color: 'var(--brand-dark)', textDecoration: 'none', marginBottom: '4px' }}>+48 533 718 412</a>
           <a href="mailto:info@on-arch.pl" style={{ fontSize: '12px', color: 'var(--text-muted)', textDecoration: 'none' }}>info@on-arch.pl</a>
         </div>
-        <div onClick={() => onNavigate('materialy')} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '13px 16px', borderRadius: '12px', background: 'white', border: '0.5px solid var(--border)', textDecoration: 'none', marginTop: '10px', cursor: 'pointer' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--brand)" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
-            <div>
-              <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--brand-dark)' }}>Materiały do zakupu</div>
-              <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Lista materiałów na kurs</div>
-            </div>
+        <div onClick={() => onNavigate('materialy')} style={{ display: 'flex', alignItems: 'center', gap: '12px', background: '#fef9ec', border: '1.5px solid #c8a84b', borderRadius: '14px', padding: '14px 16px', marginTop: '10px', cursor: 'pointer' }}>
+          <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: '#c8a84b', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
           </div>
-          <span style={{ fontSize: '16px', color: 'var(--brand)' }}>→</span>
+          <div style={{ flex: 1 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '2px' }}>
+              <div style={{ fontSize: '13px', fontWeight: 600, color: '#7a5a00' }}>Materiały do zakupu</div>
+              <span style={{ fontSize: '9px', fontWeight: 700, background: '#c8a84b', color: 'white', padding: '2px 6px', borderRadius: '6px', textTransform: 'uppercase' as const }}>Nowość</span>
+            </div>
+            <div style={{ fontSize: '11px', color: '#a08040' }}>Dodatkowe materiały do nadrobienia zaległości</div>
+          </div>
+          <span style={{ fontSize: '16px', color: '#c8a84b' }}>→</span>
         </div>
         {/* FAQ */}
         <a href="https://on-arch.pl/faq-odpowiedzi-na-najczesciej-zadawane-pytania/" target="_blank" rel="noopener noreferrer"
           style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '13px 16px', borderRadius: '12px', background: 'white', border: '0.5px solid var(--border)', textDecoration: 'none', marginTop: '10px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--brand)" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--brand)" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
             <div>
-            <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--brand-dark)' }}>Materiały dodatkowe</div>
-              <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Do nadrobienia zaległości i nauki własnej</div>
+              <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--brand-dark)' }}>Najczęściej zadawane pytania</div>
+              <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>on-arch.pl/faq</div>
             </div>
           </div>
           <span style={{ fontSize: '16px', color: 'var(--brand)' }}>→</span>
