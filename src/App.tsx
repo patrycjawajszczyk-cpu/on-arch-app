@@ -4457,7 +4457,7 @@ function urlBase64ToUint8Array(base64String: string) {
         </div>
       </div>
     );
-  }
+  
 
   function KartaOgloszenia({ o, onClick }: { o: Ogloszenie; onClick: () => void; key?: string | number }) {
     const tloIkony = o.typ === 'Pilne' ? '#fff3cd' : o.typ === 'Zmiana' ? '#f0faf4' : '#e8f4fd';
