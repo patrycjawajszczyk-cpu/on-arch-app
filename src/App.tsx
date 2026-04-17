@@ -2849,18 +2849,19 @@ function urlBase64ToUint8Array(base64String: string) {
           setKomunikat('Zjazd zakończony! Kursanci zobaczą powiadomienie o ankiecie.');
         } else { setKomunikat('Zjazd zaktualizowany!'); }
       } else { setKomunikat('Zjazd zaktualizowany!'); }
-      const { data: zjazdyGrupy } = await supabase
+      
+      setEdytowanyZjazd(null);
+      const { data: zjazdyGrupy2 } = await supabase
         .from('zjazdy')
         .select('id, data_zjazdu')
         .eq('grupa_id', edytowanyZjazd.grupa_id)
         .order('data_zjazdu', { ascending: true });
-      
-      if (zjazdyGrupy) {
-        for (let i = 0; i < zjazdyGrupy.length; i++) {
-          await supabase.from('zjazdy').update({ nr: i + 1 }).eq('id', zjazdyGrupy[i].id);
+      if (zjazdyGrupy2) {
+        for (let i = 0; i < zjazdyGrupy2.length; i++) {
+          await supabase.from('zjazdy').update({ nr: i + 1 }).eq('id', zjazdyGrupy2[i].id);
         }
       }
-      setEdytowanyZjazd(null); pobierzZjazdy();
+      pobierzZjazdy();
     }
 
     async function dodajProwadzacego(e: React.FormEvent) {
