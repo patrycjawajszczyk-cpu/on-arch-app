@@ -2761,7 +2761,7 @@ function urlBase64ToUint8Array(base64String: string) {
 
     async function zapiszTabelaZjazdow() {
       if (!tabelaGrupa) { setKomunikat('Wybierz grupę przed zapisem.'); return; }
-      const wiersze = tabelaZjazdow.filter(w => w.nr && w.data_dzien1);
+      const wiersze = tabelaZjazdow.filter(w => w.data_dzien1);
       if (wiersze.length === 0) { setKomunikat('Wypełnij co najmniej jeden wiersz (Nr + Data D1).'); return; }
       setTabelaZapis(true); setTabelaWyniki([]);
       const wyniki: { nr: string; status: string }[] = [];
@@ -2770,7 +2770,7 @@ function urlBase64ToUint8Array(base64String: string) {
           ? `${new Date(w.data_dzien1).toLocaleDateString('pl-PL', { day: 'numeric', month: 'numeric' })}–${new Date(w.data_dzien2).toLocaleDateString('pl-PL', { day: 'numeric', month: 'numeric', year: 'numeric' })}`
           : new Date(w.data_dzien1).toLocaleDateString('pl-PL', { day: 'numeric', month: 'numeric', year: 'numeric' });
         const { data: nowy, error } = await supabase.from('zjazdy').insert([{
-          nr: parseInt(w.nr),
+          nr: 0,
           daty,
           sala: w.typ === 'online' ? '' : w.sala,
           adres: w.typ === 'online' ? '' : w.adres,
@@ -2783,8 +2783,8 @@ function urlBase64ToUint8Array(base64String: string) {
           data_dzien2: w.data_dzien2 || null,
           godzina_start_d1: w.godzina_start_d1 || null,
           godzina_end_d1: w.godzina_end_d1 || null,
-          godzina_start_d2: w.godzina_start_d1 || null,
-          godzina_end_d2: w.godzina_end_d1 || null,
+          godzina_start_d2: w.data_dzien2 ? (w.godzina_start_d1 || null) : null,
+          godzina_end_d2: w.data_dzien2 ? (w.godzina_end_d1 || null) : null,
           grupa_id: parseInt(tabelaGrupa),
         }]).select().single();
         if (error) {
@@ -2803,6 +2803,19 @@ function urlBase64ToUint8Array(base64String: string) {
       setTabelaZjazdow([pustyWiersz(), pustyWiersz(), pustyWiersz()]);
       setKomunikat(`Zapisano ${wyniki.filter(w => w.status.startsWith('✓')).length} z ${wyniki.length} zjazdów.`);
     }
+    // Przelicz numerację zjazdów dla tej grupy po dacie
+    const { data: zjazdyGrupy } = await supabase
+    .from('zjazdy')
+    .select('id, data_zjazdu')
+    .eq('grupa_id', parseInt(tabelaGrupa))
+    .order('data_zjazdu', { ascending: true });
+  
+  if (zjazdyGrupy) {
+    for (let i = 0; i < zjazdyGrupy.length; i++) {
+      await supabase.from('zjazdy').update({ nr: i + 1 }).eq('id', zjazdyGrupy[i].id);
+    }
+  }
+  await pobierzZjazdy();
 
     async function zapiszEdycjeZjazdu(e: React.FormEvent) {
       e.preventDefault();
@@ -2836,6 +2849,17 @@ function urlBase64ToUint8Array(base64String: string) {
           setKomunikat('Zjazd zakończony! Kursanci zobaczą powiadomienie o ankiecie.');
         } else { setKomunikat('Zjazd zaktualizowany!'); }
       } else { setKomunikat('Zjazd zaktualizowany!'); }
+      const { data: zjazdyGrupy } = await supabase
+        .from('zjazdy')
+        .select('id, data_zjazdu')
+        .eq('grupa_id', edytowanyZjazd.grupa_id)
+        .order('data_zjazdu', { ascending: true });
+      
+      if (zjazdyGrupy) {
+        for (let i = 0; i < zjazdyGrupy.length; i++) {
+          await supabase.from('zjazdy').update({ nr: i + 1 }).eq('id', zjazdyGrupy[i].id);
+        }
+      }
       setEdytowanyZjazd(null); pobierzZjazdy();
     }
 
@@ -3531,7 +3555,7 @@ function urlBase64ToUint8Array(base64String: string) {
                     <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', minWidth: '900px' }}>
                       <thead>
                         <tr style={{ background: 'var(--bg)', borderBottom: '0.5px solid var(--border)' }}>
-                          {['Nr', 'Data D1', 'Data D2', 'Godz. start', 'Godz. koniec', 'Typ', 'Sala / Link', 'Adres', 'Temat', 'Prowadzący', ''].map(h => (
+                        {['Data D1', 'Data D2', 'Godz. start', 'Godz. koniec', 'Typ', 'Sala / Link', 'Adres', 'Temat', 'Prowadzący', ''].map(h => (
                             <th key={h} style={{ padding: '9px 10px', textAlign: 'left', fontWeight: 600, color: 'var(--text-muted)', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.3px', whiteSpace: 'nowrap' }}>{h}</th>
                           ))}
                         </tr>
@@ -3548,9 +3572,7 @@ function urlBase64ToUint8Array(base64String: string) {
                           const tdStyle = { padding: '6px 10px', borderBottom: '0.5px solid var(--border-soft)', verticalAlign: 'middle' as const };
                           return (
                             <tr key={w._id} style={{ background: idx % 2 === 0 ? 'white' : '#fdf9f8' }}>
-                              <td style={{ ...tdStyle, width: '48px' }}>
-                                <input style={{ ...inputStyle, width: '40px', textAlign: 'center', fontWeight: 600 }} type="number" min="1" value={w.nr} onChange={e => update('nr', e.target.value)} placeholder="1" />
-                              </td>
+                        
                               <td style={{ ...tdStyle, width: '130px' }}>
                                 <input style={inputStyle} type="date" value={w.data_dzien1} onChange={e => update('data_dzien1', e.target.value)} />
                               </td>
