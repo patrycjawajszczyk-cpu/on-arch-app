@@ -2802,17 +2802,18 @@ function urlBase64ToUint8Array(base64String: string) {
       // Reset wypełnionych wierszy
       setTabelaZjazdow([pustyWiersz(), pustyWiersz(), pustyWiersz()]);
       setKomunikat(`Zapisano ${wyniki.filter(w => w.status.startsWith('✓')).length} z ${wyniki.length} zjazdów.`);
-    }
-    // Przelicz numerację zjazdów dla tej grupy po dacie
-    const { data: zjazdyGrupy } = await supabase
-    .from('zjazdy')
-    .select('id, data_zjazdu')
-    .eq('grupa_id', parseInt(tabelaGrupa))
-    .order('data_zjazdu', { ascending: true });
-  
-  if (zjazdyGrupy) {
-    for (let i = 0; i < zjazdyGrupy.length; i++) {
-      await supabase.from('zjazdy').update({ nr: i + 1 }).eq('id', zjazdyGrupy[i].id);
+      
+      const { data: zjazdyGrupy } = await supabase
+        .from('zjazdy')
+        .select('id, data_zjazdu')
+        .eq('grupa_id', parseInt(tabelaGrupa))
+        .order('data_zjazdu', { ascending: true });
+      if (zjazdyGrupy) {
+        for (let i = 0; i < zjazdyGrupy.length; i++) {
+          await supabase.from('zjazdy').update({ nr: i + 1 }).eq('id', zjazdyGrupy[i].id);
+        }
+      }
+      await pobierzZjazdy();
     }
   }
   await pobierzZjazdy();
