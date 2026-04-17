@@ -2813,8 +2813,8 @@ function urlBase64ToUint8Array(base64String: string) {
           await supabase.from('zjazdy').update({ nr: i + 1 }).eq('id', zjazdyGrupy[i].id);
         }
       }
-  }
-  await pobierzZjazdy();
+      await pobierzZjazdy();
+    }
 
     async function zapiszEdycjeZjazdu(e: React.FormEvent) {
       e.preventDefault();
