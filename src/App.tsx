@@ -4555,222 +4555,379 @@ const ikonaSVG = o.typ === 'Pilne'
     const najblizszZadanie = zadania
       .filter(z => z.typ !== 'praca_zaliczeniowa' && z.termin)
       .sort((a, b) => new Date(a.termin!).getTime() - new Date(b.termin!).getTime())[0];
-
     const noweOgloszenia = ogloszenia.filter(o => o.nowe);
+
+    // wyciągamy liczbę dni z odliczania (np. "Za 7 dni" → "7", "Dzisiaj!" → "0")
+    const dniLiczba = odliczanie === 'Dzisiaj!' ? '0' : odliczanie === 'Jutro!' ? '1' : (odliczanie.match(/\d+/)?.[0] || '');
+    const dniLabel = odliczanie === 'Dzisiaj!' ? 'dziś' : odliczanie === 'Jutro!' ? 'jutro' : odliczanie ? 'dni' : '';
+
+    const SERIF = "'Cormorant Garamond', Georgia, serif";
 
     return (
       <>
-        {/* Nowy ciemny nagłówek powitalny */}
-        <div style={{ margin: '-18px -16px 20px', background: 'linear-gradient(160deg,#2a1f1f 0%,#5c3030 100%)', padding: '20px 20px 28px', position: 'relative', overflow: 'hidden' }}>
-  <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', opacity: 0.12, pointerEvents: 'none' }} viewBox="0 0 420 120" preserveAspectRatio="xMidYMid slice">
-    <line x1="0" y1="30" x2="420" y2="30" stroke="white" strokeWidth="0.5"/>
-    <line x1="0" y1="60" x2="420" y2="60" stroke="white" strokeWidth="0.5"/>
-    <line x1="0" y1="90" x2="420" y2="90" stroke="white" strokeWidth="0.5"/>
-    <line x1="70" y1="0" x2="70" y2="120" stroke="white" strokeWidth="0.5"/>
-    <line x1="210" y1="0" x2="210" y2="120" stroke="white" strokeWidth="0.5"/>
-    <line x1="350" y1="0" x2="350" y2="120" stroke="white" strokeWidth="0.5"/>
-    <line x1="0" y1="0" x2="140" y2="120" stroke="white" strokeWidth="0.5"/>
-    <line x1="280" y1="0" x2="420" y2="120" stroke="white" strokeWidth="0.5"/>
-    <circle cx="390" cy="15" r="45" fill="none" stroke="white" strokeWidth="0.5"/>
-    <circle cx="30" cy="105" r="35" fill="none" stroke="white" strokeWidth="0.5"/>
-  </svg>
-          <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '2px' }}>Dzień dobry</div>
-          <div style={{ fontSize: '22px', fontWeight: 300, color: 'white', fontFamily: 'Cormorant Garamond, serif', letterSpacing: '0.5px' }}>{imie}</div>
-          <div style={{ marginTop: '10px', display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(255,255,255,0.12)', border: '0.5px solid rgba(255,255,255,0.2)', borderRadius: '20px', padding: '5px 12px' }}>
-            <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#7aab8a' }} />
-            <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.85)' }}>Kurs aktywny</span>
+        {/* ── POWITANIE — spokojne, typograficzne ──────────────────────────── */}
+        <div style={{
+          margin: '-18px -16px 24px',
+          padding: '32px 24px 28px',
+          background: '#FBF8F3',
+          borderBottom: '0.5px solid rgba(0,0,0,0.06)',
+        }}>
+          <div style={{
+            fontSize: '10px', letterSpacing: '0.32em', textTransform: 'uppercase',
+            color: 'var(--text-muted)', marginBottom: '12px', fontWeight: 500,
+          }}>
+            On-Arch Akademia · {new Date().getFullYear()}
+          </div>
+          <div style={{
+            fontFamily: SERIF, fontStyle: 'italic', fontWeight: 400,
+            fontSize: '38px', lineHeight: 1.05, color: 'var(--text)',
+            letterSpacing: '-0.01em',
+          }}>
+            Dzień&nbsp;dobry,<br/>
+            <span style={{ color: 'var(--brand)' }}>{imie}.</span>
+          </div>
+          <div style={{
+            marginTop: '16px', display: 'inline-flex', alignItems: 'center', gap: '8px',
+            fontSize: '11px', color: 'var(--text-muted)', letterSpacing: '0.15em',
+            textTransform: 'uppercase', fontWeight: 500,
+          }}>
+            <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#7aab8a' }} />
+            Kurs aktywny
           </div>
         </div>
 
-        {/* Baner nowych ogłoszeń */}
+        {/* ── BANER NOWYCH OGŁOSZEŃ ────────────────────────────────────────── */}
         {noweOgloszenia.length > 0 && (
           <div onClick={() => onNavigate('ogloszenia')} style={{
-            background: 'var(--brand-dark)', borderRadius: '14px', padding: '14px 16px',
-            marginBottom: '16px', cursor: 'pointer',
-            display: 'flex', alignItems: 'center', gap: '12px',
+            display: 'flex', alignItems: 'center', gap: '14px',
+            padding: '14px 16px', marginBottom: '16px',
+            background: 'var(--surface)', border: '0.5px solid var(--border)',
+            borderLeft: '2px solid var(--brand)', borderRadius: '4px',
+            cursor: 'pointer',
           }}>
             <div style={{
-              width: '36px', height: '36px', borderRadius: '10px',
-              background: 'rgba(255,255,255,0.15)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: '18px', flexShrink: 0,
-            }}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M22 4s-2.5 5-11 5H4a2 2 0 0 0-2 2v2a2 2 0 0 0 2 2h1l1 5h3l-1-5h1c8.5 0 11 5 11 5V4z"/></svg></div>            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: '13px', fontWeight: 600, color: 'white', marginBottom: '2px' }}>
-                {noweOgloszenia.length === 1 ? 'Nowe ogłoszenie' : `${noweOgloszenia.length} nowe ogłoszenia`}
+              fontFamily: SERIF, fontStyle: 'italic', fontSize: '24px',
+              color: 'var(--brand)', lineHeight: 1, flexShrink: 0,
+            }}>
+              {noweOgloszenia.length}
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{
+                fontSize: '9px', letterSpacing: '0.28em', textTransform: 'uppercase',
+                color: 'var(--brand)', fontWeight: 600, marginBottom: '3px',
+              }}>
+                {noweOgloszenia.length === 1 ? 'Nowe ogłoszenie' : 'Nowe ogłoszenia'}
               </div>
-              <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.7)' }}>
+              <div style={{
+                fontSize: '13px', color: 'var(--text)', fontWeight: 500,
+                whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+              }}>
                 {noweOgloszenia[0].tytul}
               </div>
             </div>
-            <span style={{ color: 'rgba(255,255,255,0.8)', fontSize: '16px' }}>→</span>
+            <span style={{ fontSize: '14px', color: 'var(--text-muted)' }}>→</span>
           </div>
         )}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '20px' }}>
-          {nieprzeslaneZadania > 0 && (
-            <div onClick={() => onNavigate('zadania')} style={{
-              background: 'var(--brand-dark)', borderRadius: '16px', padding: '16px',
-              cursor: 'pointer', color: 'white',
-            }}>
-              <div style={{ marginBottom: '6px' }}><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="2" width="6" height="4" rx="1"/><path d="M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/></svg></div>
-<div style={{ fontSize: '13px', fontWeight: 600 }}>{nieprzeslaneZadania} {nieprzeslaneZadania === 1 ? 'zadanie' : 'zadania'}</div>
-              <div style={{ fontSize: '11px', opacity: 0.75, marginTop: '2px' }}>do przesłania</div>
-            </div>
-          )}
-          {najblizszZadanie && (
-            <div onClick={() => onNavigate('zadania')} style={{
-              background: 'white', borderRadius: '16px', padding: '16px',
-              cursor: 'pointer', border: '0.5px solid var(--border)',
-            }}>
-              <div style={{ marginBottom: '6px' }}><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--brand)" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="17" x2="12" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V6h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1v4.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V17z"/></svg></div>              <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text)', lineHeight: 1.3 }}>{najblizszZadanie.tytul}</div>
-              <div style={{ fontSize: '11px', color: 'var(--brand)', marginTop: '4px', fontWeight: 500 }}>
-                do {new Date(najblizszZadanie.termin!).toLocaleDateString('pl-PL')}
-              </div>
-            </div>
-          )}
-          {noweCzat && (
-            <div onClick={() => onNavigate('czat')} style={{
-              background: '#e8f4fd', borderRadius: '16px', padding: '16px',
-              cursor: 'pointer', border: '0.5px solid #b3d9f7',
-            }}>
-              <div style={{ marginBottom: '6px' }}><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1565c0" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div>              <div style={{ fontSize: '13px', fontWeight: 600, color: '#1565c0' }}>Nowe wiadomości</div>
-              <div style={{ fontSize: '11px', color: '#1976d2', marginTop: '2px' }}>w czacie grupy</div>
-            </div>
-          )}
-        </div>
 
-        <section className="section" style={{ marginBottom: '8px' }}>
-        <div className="section-header"><span className="section-title">Najbliższy zjazd</span></div>
-        {najblizszy ? (
-          <div onClick={() => onNavigate('zjazdy')} style={{ background: 'white', borderRadius: '16px', padding: '16px 18px', marginBottom: '10px', border: '0.5px solid #e0d8d4', cursor: 'pointer' }}>
-          {/* Tytuł + odliczanie */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-            <div style={{ fontSize: '19px', fontWeight: 600, color: '#7d3f3f', fontFamily: 'Cormorant Garamond, serif' }}>Zjazd {najblizszy.nr}</div>
-            {odliczanie && (
-              <span style={{ fontSize: '11px', fontWeight: 600, color: '#7d3f3f', background: '#f9efef', padding: '4px 12px', borderRadius: '20px', flexShrink: 0 }}>
-                {odliczanie === 'Dzisiaj!' || odliczanie === 'Jutro!' ? odliczanie : `Pozostało ${odliczanie.replace('Za ', '')}`}
-              </span>
-            )}
+        {/* ── HERO: NAJBLIŻSZY ZJAZD ───────────────────────────────────────── */}
+        <div style={{ marginBottom: '32px' }}>
+          <div style={{
+            display: 'flex', alignItems: 'baseline', gap: '8px', marginBottom: '12px',
+            fontSize: '10px', letterSpacing: '0.32em', textTransform: 'uppercase',
+            color: 'var(--text-muted)', fontWeight: 600,
+          }}>
+            <span style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: '16px', color: 'var(--brand)', textTransform: 'none', letterSpacing: 0 }}>§01</span>
+            <span>Najbliższy zjazd</span>
           </div>
-          {/* Szczegóły z etykietami */}
-          {najblizszy.typ === 'online' ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '12px' }}>
-              <div style={{ display: 'flex', gap: '8px' }}>
-                <span style={{ fontSize: '10px', fontWeight: 700, color: '#9a8a80', minWidth: '48px', paddingTop: '1px' }}>DATA:</span>
-                <span style={{ fontSize: '12px', color: '#2a1f1f' }}>{najblizszy.daty}</span>
+
+          {najblizszy ? (
+            <div onClick={() => onNavigate('zjazdy')} style={{
+              background: 'var(--surface)', border: '0.5px solid var(--border)',
+              borderRadius: '6px', padding: '24px 22px', cursor: 'pointer',
+            }}>
+              {/* Górna linia: numer zjazdu + odliczanie */}
+              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '16px', marginBottom: '20px' }}>
+                <div>
+                  <div style={{ fontSize: '10px', letterSpacing: '0.28em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '4px' }}>
+                    Zjazd nr {najblizszy.nr}
+                  </div>
+                  <div style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: '28px', lineHeight: 1.1, color: 'var(--text)' }}>
+                    {najblizszy.daty}
+                  </div>
+                </div>
+                {dniLiczba !== '' && (
+                  <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                    <div style={{
+                      fontFamily: SERIF, fontStyle: 'italic', fontWeight: 400,
+                      fontSize: '52px', lineHeight: 0.9, color: 'var(--brand)',
+                      letterSpacing: '-0.02em',
+                    }}>
+                      {dniLiczba}
+                    </div>
+                    <div style={{ fontSize: '10px', letterSpacing: '0.28em', textTransform: 'uppercase', color: 'var(--text-muted)', marginTop: '4px' }}>
+                      {dniLabel}
+                    </div>
+                  </div>
+                )}
               </div>
-              <div style={{ display: 'flex', gap: '8px' }}>
-                <span style={{ fontSize: '10px', fontWeight: 700, color: '#9a8a80', minWidth: '48px', paddingTop: '1px' }}>TRYB:</span>
-                <span style={{ fontSize: '12px', color: '#1565c0', fontWeight: 600 }}>Online</span>
+
+              {/* Detale: tryb, sala/adres, prowadzący */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', paddingTop: '16px', borderTop: '0.5px solid rgba(0,0,0,0.06)' }}>
+                <DetailRow label="Tryb" value={najblizszy.typ === 'online' ? 'Online' : 'Stacjonarnie'} accent={najblizszy.typ === 'online'}/>
+                {najblizszy.typ === 'stacjonarny' && najblizszy.sala && najblizszy.sala !== 'Do uzupełnienia' && (
+                  <DetailRow label="Sala" value={najblizszy.sala}/>
+                )}
+                {najblizszy.typ === 'stacjonarny' && najblizszy.adres && (
+                  <DetailRow label="Adres" value={najblizszy.adres}/>
+                )}
+                {najblizszy.prowadzacy && najblizszy.prowadzacy.length > 0 && (
+                  <DetailRow label="Prowadzi" value={najblizszy.prowadzacy.map(p => `${p.imie} ${p.nazwisko}`).join(', ')}/>
+                )}
               </div>
-              {najblizszy.link_online && (
+
+              {/* CTA dla online */}
+              {najblizszy.typ === 'online' && najblizszy.link_online && (
                 <a href={najblizszy.link_online} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}
-                  style={{ marginTop: '4px', display: 'inline-flex', alignItems: 'center', gap: '6px', background: '#1565c0', color: 'white', padding: '7px 14px', borderRadius: '10px', fontSize: '12px', fontWeight: 600, textDecoration: 'none', alignSelf: 'flex-start' }}>
+                  style={{
+                    marginTop: '20px', display: 'inline-flex', alignItems: 'center', gap: '10px',
+                    background: 'var(--brand-dark)', color: 'white',
+                    padding: '12px 18px', borderRadius: '4px',
+                    fontSize: '11px', letterSpacing: '0.22em', textTransform: 'uppercase',
+                    fontWeight: 600, textDecoration: 'none',
+                  }}>
                   Dołącz do zajęć →
                 </a>
               )}
             </div>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginBottom: '12px' }}>
-              <div style={{ display: 'flex', gap: '8px' }}>
-                <span style={{ fontSize: '10px', fontWeight: 700, color: '#9a8a80', minWidth: '48px', paddingTop: '1px' }}>DATA:</span>
-                <span style={{ fontSize: '12px', color: '#2a1f1f' }}>{najblizszy.daty}</span>
-              </div>
-              {najblizszy.sala && najblizszy.sala !== 'Do uzupełnienia' && (
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  <span style={{ fontSize: '10px', fontWeight: 700, color: '#9a8a80', minWidth: '48px', paddingTop: '1px' }}>SALA:</span>
-                  <span style={{ fontSize: '12px', color: '#2a1f1f' }}>{najblizszy.sala}</span>
-                </div>
-              )}
-              {najblizszy.adres && (
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  <span style={{ fontSize: '10px', fontWeight: 700, color: '#9a8a80', minWidth: '48px', paddingTop: '1px' }}>ADRES:</span>
-                  <span style={{ fontSize: '12px', color: '#2a1f1f' }}>{najblizszy.adres}</span>
-                </div>
-              )}
+            <div style={{
+              background: 'var(--surface)', border: '0.5px dashed var(--border)',
+              borderRadius: '6px', padding: '32px 22px', textAlign: 'center',
+              color: 'var(--text-muted)', fontFamily: SERIF, fontStyle: 'italic', fontSize: '18px',
+            }}>
+              Brak nadchodzących zjazdów
             </div>
           )}
-          {/* Prowadzący */}
-          {najblizszy.prowadzacy && najblizszy.prowadzacy.length > 0 && (
-            <div style={{ background: '#f9f5f2', borderRadius: '10px', padding: '8px 10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              {najblizszy.prowadzacy[0].avatar_url
-                ? <img src={najblizszy.prowadzacy[0].avatar_url} style={{ width: '24px', height: '24px', borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} alt="" />
-                : <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: '#d4b8a8', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 600, color: '#7d3f3f' }}>{najblizszy.prowadzacy[0].imie[0]}</div>
-              }
-              <div style={{ fontSize: '11px', color: '#7a6a6a' }}>
-                Prowadzi: <strong style={{ color: '#2a1f1f' }}>{najblizszy.prowadzacy.map(p => `${p.imie} ${p.nazwisko}`).join(', ')}</strong>
-              </div>
-            </div>
-          )}
-          </div>
-        ) : (
-          <div className="hero-card"><div className="hero-date">Brak nadchodzących zjazdów</div></div>
-        )}
-      </section>
+        </div>
 
-      <div style={{ marginTop: '28px', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <div style={{ flex: 1, height: '0.5px', background: 'var(--border)' }} />
-          <span style={{ fontSize: '10px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.6px', whiteSpace: 'nowrap' }}>Dodatkowe informacje i produkty</span>
-          <div style={{ flex: 1, height: '0.5px', background: 'var(--border)' }} />
-        </div>
-        <div onClick={() => onNavigate('materialy')} style={{ display: 'flex', alignItems: 'center', gap: '12px', background: '#fef9ec', border: '1.5px solid #c8a84b', borderRadius: '14px', padding: '14px 16px', marginTop: '10px', cursor: 'pointer' }}>
-          <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: '#c8a84b', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
-          </div>
-          <div style={{ flex: 1 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '2px' }}>
-              <div style={{ fontSize: '13px', fontWeight: 600, color: '#7a5a00' }}>Materiały do zakupu</div>
-              <span style={{ fontSize: '9px', fontWeight: 700, background: '#c8a84b', color: 'white', padding: '2px 6px', borderRadius: '6px', textTransform: 'uppercase' as const }}>Nowość</span>
+        {/* ── KAFELKI AKCJI ────────────────────────────────────────────────── */}
+        {(nieprzeslaneZadania > 0 || najblizszZadanie || noweCzat) && (
+          <div style={{ marginBottom: '32px' }}>
+            <div style={{
+              display: 'flex', alignItems: 'baseline', gap: '8px', marginBottom: '12px',
+              fontSize: '10px', letterSpacing: '0.32em', textTransform: 'uppercase',
+              color: 'var(--text-muted)', fontWeight: 600,
+            }}>
+              <span style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: '16px', color: 'var(--brand)', textTransform: 'none', letterSpacing: 0 }}>§02</span>
+              <span>Do zrobienia</span>
             </div>
-            <div style={{ fontSize: '11px', color: '#a08040' }}>Dodatkowe materiały do nadrobienia zaległości</div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+              {nieprzeslaneZadania > 0 && (
+                <ActionTile onClick={() => onNavigate('zadania')}
+                  number={String(nieprzeslaneZadania)}
+                  caption={nieprzeslaneZadania === 1 ? 'zadanie do przesłania' : 'zadania do przesłania'}
+                  emphasis
+                />
+              )}
+              {najblizszZadanie && (
+                <ActionTile onClick={() => onNavigate('zadania')}
+                  caption="Najbliższy termin"
+                  title={najblizszZadanie.tytul}
+                  meta={`do ${new Date(najblizszZadanie.termin!).toLocaleDateString('pl-PL')}`}
+                />
+              )}
+              {noweCzat && (
+                <ActionTile onClick={() => onNavigate('czat')}
+                  caption="Czat grupy"
+                  title="Nowe wiadomości"
+                  meta="Otwórz wątek →"
+                />
+              )}
+            </div>
           </div>
-          <span style={{ fontSize: '16px', color: '#c8a84b' }}>→</span>
+        )}
+
+        {/* ── DZIAŁ "DODATKOWE" ────────────────────────────────────────────── */}
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: '12px', margin: '32px 0 16px',
+        }}>
+          <div style={{ flex: 1, height: '0.5px', background: 'var(--border)' }} />
+          <span style={{
+            fontFamily: SERIF, fontStyle: 'italic', fontSize: '14px',
+            color: 'var(--text-muted)', whiteSpace: 'nowrap',
+          }}>
+            dodatkowo
+          </span>
+          <div style={{ flex: 1, height: '0.5px', background: 'var(--border)' }} />
         </div>
+
+        {/* Materiały do zakupu */}
+        <div onClick={() => onNavigate('materialy')} style={{
+          display: 'flex', alignItems: 'center', gap: '14px',
+          background: 'var(--surface)', border: '0.5px solid var(--border)',
+          borderLeft: '2px solid #c8a84b',
+          borderRadius: '4px', padding: '14px 16px', marginBottom: '8px', cursor: 'pointer',
+        }}>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: '9px', letterSpacing: '0.28em', textTransform: 'uppercase', color: '#c8a84b', fontWeight: 600, marginBottom: '3px' }}>
+              Materiały do zakupu
+            </div>
+            <div style={{ fontSize: '13px', color: 'var(--text)' }}>
+              Dodatkowe materiały do nadrobienia zaległości
+            </div>
+          </div>
+          <span style={{ fontSize: '14px', color: 'var(--text-muted)' }}>→</span>
+        </div>
+
         {/* FAQ */}
         <a href="https://on-arch.pl/faq-odpowiedzi-na-najczesciej-zadawane-pytania/" target="_blank" rel="noopener noreferrer"
-          style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '13px 16px', borderRadius: '12px', background: 'white', border: '0.5px solid var(--border)', textDecoration: 'none', marginTop: '10px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--brand)" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-            <div>
-              <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--brand-dark)' }}>Najczęściej zadawane pytania</div>
-              <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>on-arch.pl/faq</div>
+          style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            padding: '14px 16px', background: 'var(--surface)',
+            border: '0.5px solid var(--border)', borderRadius: '4px',
+            textDecoration: 'none', marginBottom: '8px',
+          }}>
+          <div>
+            <div style={{ fontSize: '9px', letterSpacing: '0.28em', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '3px' }}>
+              FAQ
             </div>
+            <div style={{ fontSize: '13px', color: 'var(--text)' }}>Najczęściej zadawane pytania</div>
           </div>
-          <span style={{ fontSize: '16px', color: 'var(--brand)' }}>→</span>
+          <span style={{ fontSize: '14px', color: 'var(--text-muted)' }}>→</span>
         </a>
+
         {/* Kontakt z biurem */}
-        <div style={{ marginTop: '24px', padding: '16px 18px', borderRadius: '16px', background: 'var(--brand-light)', border: '0.5px solid var(--border-soft)', textAlign: 'center' }}>
-          <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--brand-dark)', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Kontakt z biurem</div>
-          <a href="tel:+48533718412" style={{ display: 'block', fontSize: '18px', fontWeight: 600, color: 'var(--brand-dark)', textDecoration: 'none', marginBottom: '4px' }}>+48 533 718 412</a>
-          <a href="mailto:info@on-arch.pl" style={{ fontSize: '12px', color: 'var(--text-muted)', textDecoration: 'none' }}>info@on-arch.pl</a>
+        <div style={{
+          marginTop: '24px', padding: '24px 20px',
+          background: '#FBF8F3', border: '0.5px solid rgba(0,0,0,0.06)',
+          borderRadius: '6px', textAlign: 'center',
+        }}>
+          <div style={{ fontSize: '9px', letterSpacing: '0.32em', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '8px' }}>
+            Kontakt z biurem
+          </div>
+          <a href="tel:+48533718412" style={{
+            display: 'block', fontFamily: SERIF, fontStyle: 'italic',
+            fontSize: '24px', color: 'var(--brand-dark)',
+            textDecoration: 'none', marginBottom: '4px',
+          }}>
+            +48 533 718 412
+          </a>
+          <a href="mailto:info@on-arch.pl" style={{ fontSize: '12px', color: 'var(--text-muted)', textDecoration: 'none' }}>
+            info@on-arch.pl
+          </a>
         </div>
 
-        {/* Social media */}
-        <div style={{ background: 'white', border: '0.5px solid var(--border)', borderRadius: '12px', padding: '12px 16px', marginTop: '10px' }}>
-          <div style={{ fontSize: '10px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.6px', textAlign: 'center', marginBottom: '10px' }}>Obserwuj nas</div>
-          <div style={{ display: 'flex', justifyContent: 'center', gap: '8px' }}>
+        {/* Social */}
+        <div style={{
+          marginTop: '12px', padding: '14px 16px',
+          background: 'var(--surface)', border: '0.5px solid var(--border)', borderRadius: '4px',
+        }}>
+          <div style={{ fontSize: '9px', letterSpacing: '0.28em', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600, textAlign: 'center', marginBottom: '12px' }}>
+            Obserwuj nas
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '20px' }}>
             {([
-              { href: 'https://www.facebook.com/OnArchKursy/', label: 'Facebook', svg: <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047V9.41c0-3.025 1.792-4.697 4.533-4.697 1.312 0 2.686.236 2.686.236v2.97h-1.514c-1.491 0-1.956.93-1.956 1.874v2.25h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073z"/></svg> },
-              { href: 'https://www.instagram.com/on_arch_/', label: 'Instagram', svg: <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg> },
-              { href: 'https://www.youtube.com/@on-arch', label: 'YouTube', svg: <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 00-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 00.502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 002.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 002.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg> },
-              { href: 'https://www.tiktok.com/@onarchpl', label: 'TikTok', svg: <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.69a8.18 8.18 0 004.78 1.52V6.77a4.85 4.85 0 01-1.01-.08z"/></svg> },
-            ] as { href: string; label: string; svg: React.ReactNode }[]).map(({ href, label, svg }) => (
-              <a key={label} href={href} target="_blank" rel="noopener noreferrer" aria-label={label}
-                style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', textDecoration: 'none', color: 'var(--brand)' }}>
-                <div style={{ width: '34px', height: '34px', borderRadius: '10px', background: 'var(--brand-light)', border: '0.5px solid var(--border-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--brand)' }}>
-                  {svg}
-                </div>
-                <span style={{ fontSize: '9px', color: 'var(--text-muted)', fontWeight: 500 }}>{label}</span>
+              { href: 'https://www.facebook.com/OnArchKursy/', label: 'Facebook' },
+              { href: 'https://www.instagram.com/on_arch_/', label: 'Instagram' },
+              { href: 'https://www.youtube.com/@on-arch', label: 'YouTube' },
+              { href: 'https://www.tiktok.com/@onarchpl', label: 'TikTok' },
+            ]).map(({ href, label }) => (
+              <a key={label} href={href} target="_blank" rel="noopener noreferrer"
+                style={{
+                  fontSize: '11px', letterSpacing: '0.15em', textTransform: 'uppercase',
+                  color: 'var(--brand)', textDecoration: 'none', fontWeight: 500,
+                }}>
+                {label}
               </a>
             ))}
           </div>
         </div>
 
-        <div style={{ textAlign: 'center', marginTop: '16px', paddingBottom: '8px' }}>
-          <div style={{ fontSize: '10px', color: '#ccc' }}>© {new Date().getFullYear()} ON-ARCH</div>
+        {/* Footer */}
+        <div style={{
+          textAlign: 'center', marginTop: '24px', paddingBottom: '8px',
+          fontSize: '9px', letterSpacing: '0.32em', textTransform: 'uppercase',
+          color: 'var(--text-muted)',
+        }}>
+          © {new Date().getFullYear()} On-Arch
         </div>
       </>
     );
   }
+   // ── helpery wewnętrzne — wklej je RAZEM z EkranGlowny, tuż przed lub po ─────
+
+   function DetailRow({ label, value, accent }: { label: string; value: string; accent?: boolean }) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: '12px' }}>
+        <span style={{
+          fontSize: '9px', letterSpacing: '0.28em', textTransform: 'uppercase',
+          color: 'var(--text-muted)', fontWeight: 600, minWidth: '56px', flexShrink: 0,
+        }}>{label}</span>
+        <span style={{
+          fontSize: '13px', color: accent ? 'var(--brand)' : 'var(--text)',
+          fontWeight: accent ? 600 : 400,
+        }}>{value}</span>
+      </div>
+    );
+  }
+
+  function ActionTile({ onClick, number, caption, title, meta, emphasis }: {
+    onClick: () => void;
+    number?: string;
+    caption: string;
+    title?: string;
+    meta?: string;
+    emphasis?: boolean;
+  }) {
+    const SERIF = "'Cormorant Garamond', Georgia, serif";
+    return (
+      <div onClick={onClick} style={{
+        background: emphasis ? 'var(--brand-dark)' : 'var(--surface)',
+        color: emphasis ? 'white' : 'var(--text)',
+        border: emphasis ? 'none' : '0.5px solid var(--border)',
+        borderRadius: '6px', padding: '16px 14px', cursor: 'pointer',
+        display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
+        minHeight: '110px',
+      }}>
+        {number ? (
+          <div style={{
+            fontFamily: SERIF, fontStyle: 'italic', fontSize: '40px',
+            lineHeight: 1, letterSpacing: '-0.02em', marginBottom: '8px',
+            color: emphasis ? 'white' : 'var(--brand)',
+          }}>
+            {number}
+          </div>
+        ) : (
+          <div style={{
+            fontSize: '9px', letterSpacing: '0.28em', textTransform: 'uppercase',
+            color: emphasis ? 'rgba(255,255,255,0.7)' : 'var(--text-muted)',
+            fontWeight: 600, marginBottom: '8px',
+          }}>{caption}</div>
+        )}
+        <div>
+          {title && (
+            <div style={{ fontSize: '12px', fontWeight: 600, lineHeight: 1.3, marginBottom: '3px' }}>
+              {title}
+            </div>
+          )}
+          {number && (
+            <div style={{
+              fontSize: '11px', lineHeight: 1.3,
+              color: emphasis ? 'rgba(255,255,255,0.75)' : 'var(--text-muted)',
+            }}>{caption}</div>
+          )}
+          {meta && (
+            <div style={{
+              fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase',
+              color: emphasis ? 'rgba(255,255,255,0.85)' : 'var(--brand)',
+              fontWeight: 600, marginTop: '4px',
+            }}>{meta}</div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
 
   function ModalProwadzacy({ p, onZamknij }: { p: Prowadzacy; onZamknij: () => void }) {
     return (
