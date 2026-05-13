@@ -4549,325 +4549,303 @@ const ikonaSVG = o.typ === 'Pilne'
     nieprzeslaneZadania: number;
     noweCzat: boolean;
   }) {
-    const imie = kursant ? kursant.imie : user.email.split('@')[0];
+    const [countdown, setCountdown] = useState({ dni: 0, godz: 0, min: 0 });
+    const [obecnosciNajblizszy, setObecnosciNajblizszy] = useState<Obecnosc[]>([]);
+    const [frekwencja, setFrekwencja] = useState(0);
+
     const najblizszy = zjazdy.find(z => z.status === 'nadchodzacy');
-    const odliczanie = najblizszy ? liczDni(najblizszy.data_zjazdu) : '';
-    const najblizszZadanie = zadania
-      .filter(z => z.typ !== 'praca_zaliczeniowa' && z.termin)
-      .sort((a, b) => new Date(a.termin!).getTime() - new Date(b.termin!).getTime())[0];
-    const noweOgloszenia = ogloszenia.filter(o => o.nowe);
+    const imie = kursant?.imie || user.email.split('@')[0];
+    const edycja = kursant?.grupy?.edycja || '';
+    const wszystkieZjazdy = zjazdy.length;
+    const zakonczone = zjazdy.filter(z => z.status === 'zakonczony').length;
+    const procent = wszystkieZjazdy > 0 ? Math.round((zakonczone / wszystkieZjazdy) * 100) : 0;
+    const r = 36;
+    const circ = 2 * Math.PI * r;
+    const dash = circ * (1 - procent / 100);
+    const noweOgl = ogloszenia.filter(o => o.nowe);
 
-    // wyciągamy liczbę dni z odliczania (np. "Za 7 dni" → "7", "Dzisiaj!" → "0")
-    const dniLiczba = odliczanie === 'Dzisiaj!' ? '0' : odliczanie === 'Jutro!' ? '1' : (odliczanie.match(/\d+/)?.[0] || '');
-    const dniLabel = odliczanie === 'Dzisiaj!' ? 'dziś' : odliczanie === 'Jutro!' ? 'jutro' : odliczanie ? 'dni' : '';
+    useEffect(() => {
+      if (!najblizszy?.data_dzien1) return;
+      const update = () => {
+        const target = new Date(najblizszy.data_dzien1 + 'T09:00:00');
+        const diff = target.getTime() - Date.now();
+        if (diff <= 0) { setCountdown({ dni: 0, godz: 0, min: 0 }); return; }
+        setCountdown({
+          dni: Math.floor(diff / 86400000),
+          godz: Math.floor((diff % 86400000) / 3600000),
+          min: Math.floor((diff % 3600000) / 60000),
+        });
+      };
+      update();
+      const id = setInterval(update, 30000);
+      return () => clearInterval(id);
+    }, [najblizszy?.data_dzien1]);
 
+    useEffect(() => {
+      if (!najblizszy?.id || !user?.id) return;
+      supabase.from('obecnosci').select('*')
+        .eq('zjazd_id', najblizszy.id).eq('user_id', user.id)
+        .then(({ data }) => setObecnosciNajblizszy(data || []));
+    }, [najblizszy?.id, user?.id]);
+
+    useEffect(() => {
+      if (!user?.id || zakonczone === 0) return;
+      const zakonczone_ids = zjazdy.filter(z => z.status === 'zakonczony').map(z => z.id);
+      supabase.from('obecnosci').select('*')
+        .in('zjazd_id', zakonczone_ids).eq('user_id', user.id)
+        .then(({ data }) => {
+          const obecne = (data || []).filter(o => o.status === 'potwierdzono').length;
+          const wszystkie = (data || []).length;
+          setFrekwencja(wszystkie > 0 ? Math.round(obecne / wszystkie * 100) : 0);
+        });
+    }, [zakonczone, user?.id]);
+
+    const wpis_d1 = obecnosciNajblizszy.find(o => o.dzien === 1);
+    const wpis_d2 = obecnosciNajblizszy.find(o => o.dzien === 2);
+
+    const teraz = new Date();
+    const dniTygodnia = ['ND','PN','WT','ŚR','CZW','PT','SOB'];
+    const miesiace = ['STY','LUT','MAR','KWI','MAJ','CZE','LIP','SIE','WRZ','PAŹ','LIS','GRU'];
+    const dataHeader = `${dniTygodnia[teraz.getDay()]} · ${teraz.getDate()} ${miesiace[teraz.getMonth()]}`;
     const SERIF = "'Cormorant Garamond', Georgia, serif";
+    const frekwencjaBars = Array.from({ length: 10 }, (_, i) => i < Math.round(frekwencja / 10));
 
     return (
       <>
-        {/* ── POWITANIE — spokojne, typograficzne ──────────────────────────── */}
+        {/* ── NOWY NAGŁÓWEK ── */}
         <div style={{
-          margin: '-18px -16px 24px',
-          padding: '32px 24px 28px',
-          background: '#FBF8F3',
-          borderBottom: '0.5px solid rgba(0,0,0,0.06)',
+          margin: '-18px -16px 0', padding: '10px 16px',
+          background: '#f8f5f0', borderBottom: '0.5px solid rgba(0,0,0,0.06)',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          position: 'sticky', top: 0, zIndex: 10,
         }}>
-          <div style={{
-            fontSize: '10px', letterSpacing: '0.32em', textTransform: 'uppercase',
-            color: 'var(--text-muted)', marginBottom: '12px', fontWeight: 500,
-          }}>
-            On-Arch Akademia · {new Date().getFullYear()}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <OnArchLogo height={20} color="#2a1f1f" />
+            {(edycja || wszystkieZjazdy > 0) && (
+              <span style={{ fontSize: '10px', color: 'var(--text-muted)', letterSpacing: '0.3px', paddingLeft: '8px', borderLeft: '1px solid rgba(0,0,0,0.1)' }}>
+                {edycja}{wszystkieZjazdy > 0 ? ` · ${zakonczone}/${wszystkieZjazdy}` : ''}
+              </span>
+            )}
           </div>
-          <div style={{
-            fontFamily: SERIF, fontStyle: 'italic', fontWeight: 400,
-            fontSize: '38px', lineHeight: 1.05, color: 'var(--text)',
-            letterSpacing: '-0.01em',
-          }}>
-            Dzień&nbsp;dobry,<br/>
-            <span style={{ color: 'var(--brand)' }}>{imie}.</span>
-          </div>
-          <div style={{
-            marginTop: '16px', display: 'inline-flex', alignItems: 'center', gap: '8px',
-            fontSize: '11px', color: 'var(--text-muted)', letterSpacing: '0.15em',
-            textTransform: 'uppercase', fontWeight: 500,
-          }}>
-            <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#7aab8a' }} />
-            Kurs aktywny
+          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+            <div style={{ position: 'relative', cursor: 'pointer' }} onClick={() => onNavigate('ogloszenia')}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2a1f1f" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+              {noweOgl.length > 0 && <div style={{ position: 'absolute', top: '-2px', right: '-2px', width: '8px', height: '8px', borderRadius: '50%', background: 'var(--brand)' }} />}
+            </div>
+            <div onClick={() => onNavigate('profil')} style={{ cursor: 'pointer' }}>
+              {kursant?.avatar_url
+                ? <img src={kursant.avatar_url} style={{ width: '28px', height: '28px', borderRadius: '50%', objectFit: 'cover', border: '1.5px solid var(--border)' }} alt="" />
+                : <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'var(--brand)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 600, color: 'white' }}>{imie[0]?.toUpperCase()}</div>
+              }
+            </div>
           </div>
         </div>
 
-        {/* ── BANER NOWYCH OGŁOSZEŃ ────────────────────────────────────────── */}
-        {noweOgloszenia.length > 0 && (
-          <div onClick={() => onNavigate('ogloszenia')} style={{
-            display: 'flex', alignItems: 'center', gap: '14px',
-            padding: '14px 16px', marginBottom: '16px',
-            background: 'var(--surface)', border: '0.5px solid var(--border)',
-            borderLeft: '2px solid var(--brand)', borderRadius: '4px',
-            cursor: 'pointer',
-          }}>
-            <div style={{
-              fontFamily: SERIF, fontStyle: 'italic', fontSize: '24px',
-              color: 'var(--brand)', lineHeight: 1, flexShrink: 0,
-            }}>
-              {noweOgloszenia.length}
-            </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{
-                fontSize: '9px', letterSpacing: '0.28em', textTransform: 'uppercase',
-                color: 'var(--brand)', fontWeight: 600, marginBottom: '3px',
-              }}>
-                {noweOgloszenia.length === 1 ? 'Nowe ogłoszenie' : 'Nowe ogłoszenia'}
-              </div>
-              <div style={{
-                fontSize: '13px', color: 'var(--text)', fontWeight: 500,
-                whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-              }}>
-                {noweOgloszenia[0].tytul}
-              </div>
-            </div>
-            <span style={{ fontSize: '14px', color: 'var(--text-muted)' }}>→</span>
+        {/* ── POWITANIE ── */}
+        <div style={{ padding: '20px 0 16px' }}>
+          <div style={{ fontSize: '10px', letterSpacing: '0.3em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '8px', fontWeight: 500 }}>
+            {dataHeader}
           </div>
-        )}
-
-        {/* ── HERO: NAJBLIŻSZY ZJAZD ───────────────────────────────────────── */}
-        <div style={{ marginBottom: '32px' }}>
-          <div style={{
-            display: 'flex', alignItems: 'baseline', gap: '8px', marginBottom: '12px',
-            fontSize: '10px', letterSpacing: '0.32em', textTransform: 'uppercase',
-            color: 'var(--text-muted)', fontWeight: 600,
-          }}>
-            <span style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: '16px', color: 'var(--brand)', textTransform: 'none', letterSpacing: 0 }}>§01</span>
-            <span>Najbliższy zjazd</span>
+          <div style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: '36px', lineHeight: 1.05, color: 'var(--text)', marginBottom: '6px' }}>
+            Cześć, {imie}.
           </div>
-
-          {najblizszy ? (
-            <div onClick={() => onNavigate('zjazdy')} style={{
-              background: 'var(--surface)', border: '0.5px solid var(--border)',
-              borderRadius: '6px', padding: '24px 22px', cursor: 'pointer',
-            }}>
-              {/* Górna linia: numer zjazdu + odliczanie */}
-              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '16px', marginBottom: '20px' }}>
-                <div>
-                  <div style={{ fontSize: '10px', letterSpacing: '0.28em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '4px' }}>
-                    Zjazd nr {najblizszy.nr}
-                  </div>
-                  <div style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: '28px', lineHeight: 1.1, color: 'var(--text)' }}>
-                    {najblizszy.daty}
-                  </div>
-                </div>
-                {dniLiczba !== '' && (
-                  <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                    <div style={{
-                      fontFamily: SERIF, fontStyle: 'italic', fontWeight: 400,
-                      fontSize: '52px', lineHeight: 0.9, color: 'var(--brand)',
-                      letterSpacing: '-0.02em',
-                    }}>
-                      {dniLiczba}
-                    </div>
-                    <div style={{ fontSize: '10px', letterSpacing: '0.28em', textTransform: 'uppercase', color: 'var(--text-muted)', marginTop: '4px' }}>
-                      {dniLabel}
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Detale: tryb, sala/adres, prowadzący */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', paddingTop: '16px', borderTop: '0.5px solid rgba(0,0,0,0.06)' }}>
-                <DetailRow label="Tryb" value={najblizszy.typ === 'online' ? 'Online' : 'Stacjonarnie'} accent={najblizszy.typ === 'online'}/>
-                {najblizszy.typ === 'stacjonarny' && najblizszy.sala && najblizszy.sala !== 'Do uzupełnienia' && (
-                  <DetailRow label="Sala" value={najblizszy.sala}/>
-                )}
-                {najblizszy.typ === 'stacjonarny' && najblizszy.adres && (
-                  <DetailRow label="Adres" value={najblizszy.adres}/>
-                )}
-                {najblizszy.prowadzacy && najblizszy.prowadzacy.length > 0 && (
-                  <DetailRow label="Prowadzi" value={najblizszy.prowadzacy.map(p => `${p.imie} ${p.nazwisko}`).join(', ')}/>
-                )}
-              </div>
-
-              {/* CTA dla online */}
-              {najblizszy.typ === 'online' && najblizszy.link_online && (
-                <a href={najblizszy.link_online} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}
-                  style={{
-                    marginTop: '20px', display: 'inline-flex', alignItems: 'center', gap: '10px',
-                    background: 'var(--brand-dark)', color: 'white',
-                    padding: '12px 18px', borderRadius: '4px',
-                    fontSize: '11px', letterSpacing: '0.22em', textTransform: 'uppercase',
-                    fontWeight: 600, textDecoration: 'none',
-                  }}>
-                  Dołącz do zajęć →
-                </a>
-              )}
-            </div>
-          ) : (
-            <div style={{
-              background: 'var(--surface)', border: '0.5px dashed var(--border)',
-              borderRadius: '6px', padding: '32px 22px', textAlign: 'center',
-              color: 'var(--text-muted)', fontFamily: SERIF, fontStyle: 'italic', fontSize: '18px',
-            }}>
-              Brak nadchodzących zjazdów
+          {najblizszy && (
+            <div style={{ fontSize: '13px', color: 'var(--text-muted)', lineHeight: 1.5 }}>
+              Twój <strong style={{ color: 'var(--text)' }}>{najblizszy.nr}. zjazd</strong>{' '}
+              {countdown.dni === 0 ? 'zaczyna się dziś!' : countdown.dni === 1 ? 'zaczyna się jutro.' : `zaczyna się za ${countdown.dni} dni.`}
             </div>
           )}
         </div>
 
-        {/* ── KAFELKI AKCJI ────────────────────────────────────────────────── */}
-        {(nieprzeslaneZadania > 0 || najblizszZadanie || noweCzat) && (
-          <div style={{ marginBottom: '32px' }}>
-            <div style={{
-              display: 'flex', alignItems: 'baseline', gap: '8px', marginBottom: '12px',
-              fontSize: '10px', letterSpacing: '0.32em', textTransform: 'uppercase',
-              color: 'var(--text-muted)', fontWeight: 600,
+        {/* ── ZJAZD + POSTĘP ── */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: '10px', marginBottom: '12px' }}>
+          {/* Karta zjazdu */}
+          {najblizszy ? (
+            <div onClick={() => onNavigate('zjazdy')} style={{
+              background: '#1C2B3A', borderRadius: '14px', padding: '16px',
+              cursor: 'pointer', display: 'flex', flexDirection: 'column', minHeight: '190px',
             }}>
-              <span style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: '16px', color: 'var(--brand)', textTransform: 'none', letterSpacing: 0 }}>§02</span>
-              <span>Do zrobienia</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '10px' }}>
+                <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#e57373' }} />
+                <span style={{ fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.5)' }}>Wkrótce</span>
+              </div>
+              <div style={{ fontSize: '9px', color: 'rgba(255,255,255,0.4)', letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: '4px' }}>
+                Zjazd {najblizszy.nr} · {najblizszy.daty}
+              </div>
+              <div style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: '17px', color: 'white', lineHeight: 1.3, flex: 1, marginBottom: '14px' }}>
+                {najblizszy.tematy || 'Szczegóły wkrótce'}
+              </div>
+              <div style={{ display: 'flex', gap: '5px', marginBottom: '14px' }}>
+                {[{ val: countdown.dni, label: 'DNI' }, { val: countdown.godz, label: 'GODZ' }, { val: countdown.min, label: 'MIN' }].map(({ val, label }) => (
+                  <div key={label} style={{ background: 'rgba(255,255,255,0.1)', borderRadius: '6px', padding: '6px 0', textAlign: 'center', flex: 1 }}>
+                    <div style={{ fontFamily: SERIF, fontSize: '20px', color: 'white', lineHeight: 1, fontWeight: 300 }}>{String(val).padStart(2, '0')}</div>
+                    <div style={{ fontSize: '7px', color: 'rgba(255,255,255,0.4)', letterSpacing: '0.1em', marginTop: '2px' }}>{label}</div>
+                  </div>
+                ))}
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: 'rgba(255,255,255,0.6)', fontWeight: 500 }}>
+                <span>Zobacz szczegóły</span>
+                <span>→</span>
+              </div>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-              {nieprzeslaneZadania > 0 && (
-                <ActionTile onClick={() => onNavigate('zadania')}
-                  number={String(nieprzeslaneZadania)}
-                  caption={nieprzeslaneZadania === 1 ? 'zadanie do przesłania' : 'zadania do przesłania'}
-                  emphasis
-                />
-              )}
-              {najblizszZadanie && (
-                <ActionTile onClick={() => onNavigate('zadania')}
-                  caption="Najbliższy termin"
-                  title={najblizszZadanie.tytul}
-                  meta={`do ${new Date(najblizszZadanie.termin!).toLocaleDateString('pl-PL')}`}
-                />
-              )}
-              {noweCzat && (
-                <ActionTile onClick={() => onNavigate('czat')}
-                  caption="Czat grupy"
-                  title="Nowe wiadomości"
-                  meta="Otwórz wątek →"
-                />
-              )}
+          ) : (
+            <div style={{ background: '#1C2B3A', borderRadius: '14px', padding: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '190px' }}>
+              <span style={{ fontFamily: SERIF, fontStyle: 'italic', color: 'rgba(255,255,255,0.4)', fontSize: '15px' }}>Brak zjazdu</span>
+            </div>
+          )}
+
+          {/* Postęp + frekwencja */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <div style={{ background: 'white', borderRadius: '14px', border: '0.5px solid var(--border)', padding: '14px', display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1 }}>
+              <div style={{ fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '8px', fontWeight: 600 }}>Postęp</div>
+              <div style={{ position: 'relative', width: '80px', height: '80px' }}>
+                <svg width="80" height="80" viewBox="0 0 80 80">
+                  <circle cx="40" cy="40" r={r} fill="none" stroke="#f0ece7" strokeWidth="6" />
+                  <circle cx="40" cy="40" r={r} fill="none" stroke="var(--brand)" strokeWidth="6"
+                    strokeDasharray={circ} strokeDashoffset={dash} strokeLinecap="round" transform="rotate(-90 40 40)" />
+                </svg>
+                <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                  <div style={{ fontFamily: SERIF, fontSize: '20px', color: 'var(--brand)', lineHeight: 1 }}>{procent}</div>
+                  <div style={{ fontSize: '9px', color: 'var(--text-muted)' }}>%</div>
+                </div>
+              </div>
+              <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '6px', textAlign: 'center' }}>{zakonczone} z {wszystkieZjazdy} zjazdów</div>
+            </div>
+            <div style={{ background: 'white', borderRadius: '14px', border: '0.5px solid var(--border)', padding: '14px', flex: 1 }}>
+              <div style={{ fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '6px', fontWeight: 600 }}>Frekwencja</div>
+              <div style={{ fontFamily: SERIF, fontSize: '26px', fontWeight: 300, color: 'var(--text)', lineHeight: 1, marginBottom: '8px' }}>
+                {frekwencja}<span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>%</span>
+              </div>
+              <div style={{ display: 'flex', gap: '2px', alignItems: 'flex-end' }}>
+                {frekwencjaBars.map((active, i) => (
+                  <div key={i} style={{ width: '8px', height: active ? '14px' : '7px', background: active ? '#1C2B3A' : '#e0dbd6', borderRadius: '2px' }} />
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ── POTWIERDZENIE OBECNOŚCI ── */}
+        {najblizszy && najblizszy.data_dzien1 && (
+          <div style={{ background: 'white', borderRadius: '14px', border: '0.5px solid var(--border)', padding: '14px 16px', marginBottom: '12px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+              <span style={{ fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600 }}>Potwierdź obecność</span>
+              <span style={{ fontSize: '9px', color: 'var(--brand)', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase' }}>{najblizszy.daty}</span>
+            </div>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              {[
+                { dzien: 1, data: najblizszy.data_dzien1, wpis: wpis_d1 },
+                ...(najblizszy.data_dzien2 ? [{ dzien: 2, data: najblizszy.data_dzien2, wpis: wpis_d2 }] : []),
+              ].map(({ dzien, data, wpis }) => (
+                <div key={dzien} onClick={() => onNavigate('zjazdy')} style={{
+                  flex: 1, borderRadius: '10px', padding: '10px 12px', cursor: 'pointer',
+                  background: wpis?.status === 'potwierdzono' ? '#1C2B3A' : 'white',
+                  border: `1.5px solid ${wpis?.status === 'potwierdzono' ? '#1C2B3A' : 'var(--border)'}`,
+                  display: 'flex', alignItems: 'center', gap: '8px',
+                }}>
+                  <div style={{ width: '18px', height: '18px', borderRadius: '50%', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: wpis?.status === 'potwierdzono' ? 'rgba(255,255,255,0.15)' : '#f0ece7' }}>
+                    {wpis?.status === 'potwierdzono'
+                      ? <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                      : <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    }
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '8px', color: wpis?.status === 'potwierdzono' ? 'rgba(255,255,255,0.5)' : 'var(--text-muted)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+                      D{dzien} · {new Date(data).toLocaleDateString('pl-PL', { day: 'numeric', month: 'numeric' })}
+                    </div>
+                    <div style={{ fontSize: '11px', fontWeight: 600, color: wpis?.status === 'potwierdzono' ? 'white' : 'var(--text)' }}>
+                      {wpis?.status === 'potwierdzono' ? 'Będę' : 'Potwierdź'}
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         )}
 
-        {/* ── DZIAŁ "DODATKOWE" ────────────────────────────────────────────── */}
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: '12px', margin: '32px 0 16px',
-        }}>
+        {/* ── ZADANIA ── */}
+        <div style={{ background: 'white', borderRadius: '14px', border: '0.5px solid var(--border)', padding: '14px 16px', marginBottom: '12px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '10px' }}>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
+              <span style={{ fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600 }}>Zadania</span>
+              {zadania.length > 0 && <span style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: '20px', color: 'var(--text)' }}>{zadania.length} aktywne</span>}
+            </div>
+            <button onClick={() => onNavigate('zadania')} style={{ background: 'none', border: '0.5px solid var(--border)', borderRadius: '20px', padding: '4px 12px', fontSize: '11px', cursor: 'pointer', color: 'var(--text-muted)', fontFamily: 'Jost, sans-serif' }}>
+              Wszystkie →
+            </button>
+          </div>
+          {zadania.length === 0 ? (
+            <div style={{ fontSize: '12px', color: 'var(--text-muted)', fontStyle: 'italic', textAlign: 'center', padding: '10px 0' }}>Brak aktywnych zadań</div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              {zadania.slice(0, 3).map((z, idx) => (
+                <div key={z.id} onClick={() => onNavigate('zadania')} style={{
+                  display: 'flex', alignItems: 'center', gap: '10px', padding: '9px 0', cursor: 'pointer',
+                  borderBottom: idx < Math.min(zadania.length, 3) - 1 ? '0.5px solid var(--border-soft)' : 'none',
+                }}>
+                  <div style={{ width: '3px', height: '36px', background: z.typ === 'praca_zaliczeniowa' ? '#c8a84b' : 'var(--brand)', borderRadius: '2px', flexShrink: 0 }} />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{z.tytul}</div>
+                    {z.termin && <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '1px' }}>do {new Date(z.termin).toLocaleDateString('pl-PL', { day: 'numeric', month: 'numeric' })}</div>}
+                  </div>
+                  <div style={{ fontSize: '9px', fontWeight: 700, padding: '2px 8px', borderRadius: '20px', whiteSpace: 'nowrap', letterSpacing: '0.05em', textTransform: 'uppercase', background: z.typ === 'praca_zaliczeniowa' ? '#fef9ec' : '#f0ece7', color: z.typ === 'praca_zaliczeniowa' ? '#c8a84b' : 'var(--brand-dark)' }}>
+                    {z.typ === 'praca_zaliczeniowa' ? 'Zaliczenie' : 'Do zrobienia'}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* ── OGŁOSZENIA ── */}
+        {noweOgl.length > 0 && (
+          <div style={{ marginBottom: '12px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+              <span style={{ fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600 }}>Ogłoszenia</span>
+              <button onClick={() => onNavigate('ogloszenia')} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '11px', color: 'var(--brand)', fontFamily: 'Jost, sans-serif' }}>{noweOgl.length} {noweOgl.length === 1 ? 'nowe' : 'nowe'} →</button>
+            </div>
+            {noweOgl.slice(0, 2).map(o => <KartaOgloszenia key={o.id} o={o} onClick={() => onNavigate('ogloszenia')} />)}
+          </div>
+        )}
+
+        {/* ── SEPARATOR + DODATKOWE ── */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', margin: '20px 0 14px' }}>
           <div style={{ flex: 1, height: '0.5px', background: 'var(--border)' }} />
-          <span style={{
-            fontFamily: SERIF, fontStyle: 'italic', fontSize: '14px',
-            color: 'var(--text-muted)', whiteSpace: 'nowrap',
-          }}>
-            dodatkowo
-          </span>
+          <span style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: '13px', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>dodatkowo</span>
           <div style={{ flex: 1, height: '0.5px', background: 'var(--border)' }} />
         </div>
 
-        {/* Materiały do zakupu */}
-        <div onClick={() => onNavigate('materialy')} style={{
-          display: 'flex', alignItems: 'center', gap: '14px',
-          background: 'var(--surface)', border: '0.5px solid var(--border)',
-          borderLeft: '2px solid #c8a84b',
-          borderRadius: '4px', padding: '14px 16px', marginBottom: '8px', cursor: 'pointer',
-        }}>
+        <div onClick={() => onNavigate('materialy')} style={{ display: 'flex', alignItems: 'center', gap: '14px', background: 'white', border: '0.5px solid var(--border)', borderLeft: '2px solid #c8a84b', borderRadius: '4px', padding: '14px 16px', marginBottom: '8px', cursor: 'pointer' }}>
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize: '9px', letterSpacing: '0.28em', textTransform: 'uppercase', color: '#c8a84b', fontWeight: 600, marginBottom: '3px' }}>
-              Materiały do zakupu
-            </div>
-            <div style={{ fontSize: '13px', color: 'var(--text)' }}>
-              Dodatkowe materiały do nadrobienia zaległości
-            </div>
+            <div style={{ fontSize: '9px', letterSpacing: '0.28em', textTransform: 'uppercase', color: '#c8a84b', fontWeight: 600, marginBottom: '3px' }}>Materiały do zakupu</div>
+            <div style={{ fontSize: '13px', color: 'var(--text)' }}>Dodatkowe materiały do nadrobienia zaległości</div>
           </div>
           <span style={{ fontSize: '14px', color: 'var(--text-muted)' }}>→</span>
         </div>
 
-        {/* FAQ */}
-        <a href="https://on-arch.pl/faq-odpowiedzi-na-najczesciej-zadawane-pytania/" target="_blank" rel="noopener noreferrer"
-          style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            padding: '14px 16px', background: 'var(--surface)',
-            border: '0.5px solid var(--border)', borderRadius: '4px',
-            textDecoration: 'none', marginBottom: '8px',
-          }}>
+        <a href="https://on-arch.pl/faq-odpowiedzi-na-najczesciej-zadawane-pytania/" target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', background: 'white', border: '0.5px solid var(--border)', borderRadius: '4px', textDecoration: 'none', marginBottom: '8px' }}>
           <div>
-            <div style={{ fontSize: '9px', letterSpacing: '0.28em', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '3px' }}>
-              FAQ
-            </div>
+            <div style={{ fontSize: '9px', letterSpacing: '0.28em', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '3px' }}>FAQ</div>
             <div style={{ fontSize: '13px', color: 'var(--text)' }}>Najczęściej zadawane pytania</div>
           </div>
           <span style={{ fontSize: '14px', color: 'var(--text-muted)' }}>→</span>
         </a>
 
-        {/* Kontakt z biurem */}
-        <div style={{
-          marginTop: '24px', padding: '24px 20px',
-          background: '#FBF8F3', border: '0.5px solid rgba(0,0,0,0.06)',
-          borderRadius: '6px', textAlign: 'center',
-        }}>
-          <div style={{ fontSize: '9px', letterSpacing: '0.32em', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '8px' }}>
-            Kontakt z biurem
-          </div>
-          <a href="tel:+48533718412" style={{
-            display: 'block', fontFamily: SERIF, fontStyle: 'italic',
-            fontSize: '24px', color: 'var(--brand-dark)',
-            textDecoration: 'none', marginBottom: '4px',
-          }}>
-            +48 533 718 412
-          </a>
-          <a href="mailto:info@on-arch.pl" style={{ fontSize: '12px', color: 'var(--text-muted)', textDecoration: 'none' }}>
-            info@on-arch.pl
-          </a>
+        <div style={{ marginTop: '16px', padding: '20px', background: '#FBF8F3', border: '0.5px solid rgba(0,0,0,0.06)', borderRadius: '6px', textAlign: 'center' }}>
+          <div style={{ fontSize: '9px', letterSpacing: '0.32em', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '8px' }}>Kontakt z biurem</div>
+          <a href="tel:+48533718412" style={{ display: 'block', fontFamily: SERIF, fontStyle: 'italic', fontSize: '22px', color: 'var(--brand-dark)', textDecoration: 'none', marginBottom: '4px' }}>+48 533 718 412</a>
+          <a href="mailto:info@on-arch.pl" style={{ fontSize: '12px', color: 'var(--text-muted)', textDecoration: 'none' }}>info@on-arch.pl</a>
         </div>
 
-        {/* Social */}
-        <div style={{
-          marginTop: '12px', padding: '14px 16px',
-          background: 'var(--surface)', border: '0.5px solid var(--border)', borderRadius: '4px',
-        }}>
-          <div style={{ fontSize: '9px', letterSpacing: '0.28em', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600, textAlign: 'center', marginBottom: '12px' }}>
-            Obserwuj nas
-          </div>
-          <div style={{ display: 'flex', justifyContent: 'center', gap: '20px' }}>
-            {([
-              { href: 'https://www.facebook.com/OnArchKursy/', label: 'Facebook' },
-              { href: 'https://www.instagram.com/on_arch_/', label: 'Instagram' },
-              { href: 'https://www.youtube.com/@on-arch', label: 'YouTube' },
-              { href: 'https://www.tiktok.com/@onarchpl', label: 'TikTok' },
-            ]).map(({ href, label }) => (
-              <a key={label} href={href} target="_blank" rel="noopener noreferrer"
-                style={{
-                  fontSize: '11px', letterSpacing: '0.15em', textTransform: 'uppercase',
-                  color: 'var(--brand)', textDecoration: 'none', fontWeight: 500,
-                }}>
-                {label}
-              </a>
+        <div style={{ marginTop: '10px', padding: '14px 16px', background: 'white', border: '0.5px solid var(--border)', borderRadius: '4px', marginBottom: '16px' }}>
+          <div style={{ fontSize: '9px', letterSpacing: '0.28em', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600, textAlign: 'center', marginBottom: '10px' }}>Obserwuj nas</div>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '16px' }}>
+            {[{ href: 'https://www.facebook.com/OnArchKursy/', label: 'Facebook' }, { href: 'https://www.instagram.com/on_arch_/', label: 'Instagram' }, { href: 'https://www.youtube.com/@on-arch', label: 'YouTube' }, { href: 'https://www.tiktok.com/@onarchpl', label: 'TikTok' }].map(({ href, label }) => (
+              <a key={label} href={href} target="_blank" rel="noopener noreferrer" style={{ fontSize: '10px', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--brand)', textDecoration: 'none', fontWeight: 500 }}>{label}</a>
             ))}
           </div>
         </div>
-
-        {/* Footer */}
-        <div style={{
-          textAlign: 'center', marginTop: '24px', paddingBottom: '8px',
-          fontSize: '9px', letterSpacing: '0.32em', textTransform: 'uppercase',
-          color: 'var(--text-muted)',
-        }}>
-          © {new Date().getFullYear()} On-Arch
-        </div>
       </>
-    );
-  }
-   // ── helpery wewnętrzne — wklej je RAZEM z EkranGlowny, tuż przed lub po ─────
-
-   function DetailRow({ label, value, accent }: { label: string; value: string; accent?: boolean }) {
-    return (
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: '12px' }}>
-        <span style={{
-          fontSize: '9px', letterSpacing: '0.28em', textTransform: 'uppercase',
-          color: 'var(--text-muted)', fontWeight: 600, minWidth: '56px', flexShrink: 0,
-        }}>{label}</span>
-        <span style={{
-          fontSize: '13px', color: accent ? 'var(--brand)' : 'var(--text)',
-          fontWeight: accent ? 600 : 400,
-        }}>{value}</span>
-      </div>
     );
   }
 
@@ -6196,7 +6174,7 @@ async function wylaczPush() {
 
     return (
       <div className="app">
-        <header className="header">
+        <header className="header" style={aktywnaZakladka === 'home' && !aktywneOgloszenie && !pokazAnkiete ? { display: 'none' } : {}}>
           <OnArchLogo height={22} color="var(--brand-dark)" />
           {avatarUrl ? <img src={avatarUrl} alt="avatar" className="avatar-img" /> : <div className="avatar">{inicjal.toUpperCase()}</div>}
         </header>
