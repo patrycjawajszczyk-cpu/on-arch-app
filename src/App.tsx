@@ -4874,30 +4874,44 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
           </div>
         )}
 
-        {/* ──{/* ── BIBLIOTEKA / STREFA WIEDZY ── */}
-        {najblizszy && (
-          <div style={{ marginBottom: '16px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-              <span style={{ fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600 }}>Strefa Wiedzy · PWO</span>
-            </div>
-            <div style={{ display: 'flex', gap: '10px', overflowX: 'auto', paddingBottom: '8px', scrollbarWidth: 'none' as any }}>
-              {[
-                { kind: 'PDF', title: 'Materiały zjazdu', sub: 'prezentacje i notatki', img: 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=400&q=70', href: null },
-                { kind: 'WIDEO', title: 'Nagrania z zajęć', sub: 'dostępne po zjeździe', img: 'https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&w=400&q=70', href: null },
-                { kind: 'DRIVE', title: 'Folder grupy', sub: 'Google Drive', img: 'https://images.unsplash.com/photo-1567016376408-0226e4d0c1ea?auto=format&fit=crop&w=400&q=70', href: null },
-              ].map((item, i) => (
-                <div key={i} style={{ width: '160px', flexShrink: 0 }} onClick={() => item.href && window.open(item.href, '_blank')}>
-                  <div style={{ width: '160px', height: '120px', borderRadius: '14px', background: `url(${item.img}) center/cover`, position: 'relative', marginBottom: '8px', overflow: 'hidden' }}>
-                    <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(0,0,0,0) 40%, rgba(0,0,0,0.4) 100%)' }} />
-                    <div style={{ position: 'absolute', top: 8, left: 8, padding: '3px 8px', background: 'rgba(255,255,255,0.92)', fontSize: '8px', letterSpacing: '0.2em', textTransform: 'uppercase', fontWeight: 700, borderRadius: '999px', color: '#1a1614' }}>{item.kind}</div>
-                  </div>
-                  <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text)', marginBottom: '2px' }}>{item.title}</div>
-                  <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>{item.sub}</div>
-                </div>
-              ))}
-            </div>
+        {/* ──{/* ── STREFA WIEDZY ── */}
+        <div style={{ marginBottom: '16px' }}>
+          <div style={{ marginBottom: '10px' }}>
+            <span style={{ fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600 }}>Strefa Wiedzy</span>
           </div>
-        )}
+          <div style={{ display: 'flex', gap: '10px', overflowX: 'auto', paddingBottom: '4px', scrollbarWidth: 'none' as any }}>
+            {[
+              {
+                kind: 'Online', title: 'Materiały dodatkowe', sub: 'kursy i artykuły',
+                img: 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=400&q=70',
+                href: 'https://on-arch.pl', dot: '#B35758',
+              },
+              {
+                kind: 'Drive', title: 'Folder grupy', sub: 'Google Drive',
+                img: 'https://images.unsplash.com/photo-1567016376408-0226e4d0c1ea?auto=format&fit=crop&w=400&q=70',
+                href: null, dot: '#4a7a47',
+              },
+              {
+                kind: 'Wideo', title: 'Nagrania z zajęć', sub: 'dotyczy grup online',
+                img: 'https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&w=400&q=70',
+                href: null, dot: '#1565c0',
+              },
+            ].map((item, i) => (
+              <div key={i} style={{ width: '155px', flexShrink: 0, cursor: item.href ? 'pointer' : 'default' }}
+                onClick={() => item.href && window.open(item.href, '_blank')}>
+                <div style={{ width: '155px', height: '110px', borderRadius: '14px', background: `url(${item.img}) center/cover`, position: 'relative', marginBottom: '8px', overflow: 'hidden' }}>
+                  <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(160deg, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.45) 100%)' }} />
+                  <div style={{ position: 'absolute', top: 8, left: 8, display: 'flex', alignItems: 'center', gap: '5px' }}>
+                    <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: item.dot }} />
+                    <span style={{ padding: '2px 7px', background: 'rgba(255,255,255,0.9)', fontSize: '8px', letterSpacing: '0.18em', textTransform: 'uppercase', fontWeight: 700, borderRadius: '999px', color: '#1a1614' }}>{item.kind}</span>
+                  </div>
+                </div>
+                <div style={{ fontSize: '12.5px', fontWeight: 600, color: 'var(--text)', marginBottom: '2px' }}>{item.title}</div>
+                <div style={{ fontSize: '10px', color: 'var(--text-muted)', fontStyle: 'italic' }}>{item.sub}</div>
+              </div>
+            ))}
+          </div>
+        </div>
 
         {/* ── SEPARATOR + DODATKOWE ── */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', margin: '20px 0 14px' }}>
@@ -4906,20 +4920,23 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
           <div style={{ flex: 1, height: '0.5px', background: 'var(--border)' }} />
         </div>
 
-        <div onClick={() => onNavigate('materialy')} style={{ display: 'flex', alignItems: 'center', gap: '14px', background: 'white', border: '0.5px solid var(--border)', borderLeft: '2px solid #c8a84b', borderRadius: '4px', padding: '14px 16px', marginBottom: '8px', cursor: 'pointer' }}>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontSize: '9px', letterSpacing: '0.28em', textTransform: 'uppercase', color: '#c8a84b', fontWeight: 600, marginBottom: '3px' }}>Materiały do zakupu</div>
-            <div style={{ fontSize: '13px', color: 'var(--text)' }}>Dodatkowe materiały do nadrobienia zaległości</div>
+        <div onClick={() => onNavigate('materialy')} style={{ cursor: 'pointer', marginBottom: '8px', borderRadius: '14px', overflow: 'hidden', background: 'linear-gradient(135deg, #fdf6e8 0%, #fef9f0 100%)', border: '0.5px solid #e8d4a0' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: '16px' }}>
+            <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: '#c8a84b', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+            </div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: '9px', letterSpacing: '0.24em', textTransform: 'uppercase', color: '#a07830', fontWeight: 700, marginBottom: '3px' }}>Nowość</div>
+              <div style={{ fontSize: '13.5px', fontWeight: 600, color: '#2a1f1f', marginBottom: '2px' }}>Materiały do zakupu</div>
+              <div style={{ fontSize: '11px', color: '#a07830' }}>Polecane przez prowadzących →</div>
+            </div>
           </div>
-          <span style={{ fontSize: '14px', color: 'var(--text-muted)' }}>→</span>
         </div>
 
-        <a href="https://on-arch.pl/faq-odpowiedzi-na-najczesciej-zadawane-pytania/" target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', background: 'white', border: '0.5px solid var(--border)', borderRadius: '4px', textDecoration: 'none', marginBottom: '8px' }}>
-          <div>
-            <div style={{ fontSize: '9px', letterSpacing: '0.28em', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '3px' }}>FAQ</div>
-            <div style={{ fontSize: '13px', color: 'var(--text)' }}>Najczęściej zadawane pytania</div>
-          </div>
-          <span style={{ fontSize: '14px', color: 'var(--text-muted)' }}>→</span>
+        <a href="https://on-arch.pl/faq-odpowiedzi-na-najczesciej-zadawane-pytania/" target="_blank" rel="noopener noreferrer" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '16px', background: 'white', border: '0.5px solid var(--border)', borderRadius: '14px', textDecoration: 'none', marginBottom: '8px', gap: '4px' }}>
+          <div style={{ fontSize: '9px', letterSpacing: '0.28em', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600 }}>FAQ</div>
+          <div style={{ fontSize: '13px', color: 'var(--text)', fontWeight: 500 }}>Najczęściej zadawane pytania</div>
+          <div style={{ fontSize: '11px', color: 'var(--brand)', marginTop: '2px' }}>Czytaj więcej →</div>
         </a>
 
         <div style={{ marginTop: '16px', padding: '20px', background: '#FBF8F3', border: '0.5px solid rgba(0,0,0,0.06)', borderRadius: '6px', textAlign: 'center' }}>
