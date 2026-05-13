@@ -4538,7 +4538,6 @@ const ikonaSVG = o.typ === 'Pilne'
     if (diff < 0) return '';
     return `Za ${diff} dni`;
   }
-
   function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, nieprzeslaneZadania, noweCzat }: {
     ogloszenia: Ogloszenie[];
     zjazdy: Zjazd[];
@@ -4546,8 +4545,6 @@ const ikonaSVG = o.typ === 'Pilne'
     kursant: Kursant | null;
     onNavigate: (zakl: string) => void;
     zadania: Zadanie[];
-    nieprzeslaneZadania: number;
-    noweCzat: boolean;
   }) {
     const [countdown, setCountdown] = useState({ dni: 0, godz: 0, min: 0 });
     const [obecnosciNajblizszy, setObecnosciNajblizszy] = useState<Obecnosc[]>([]);
@@ -4848,64 +4845,6 @@ const ikonaSVG = o.typ === 'Pilne'
       </>
     );
   }
-
-  function ActionTile({ onClick, number, caption, title, meta, emphasis }: {
-    onClick: () => void;
-    number?: string;
-    caption: string;
-    title?: string;
-    meta?: string;
-    emphasis?: boolean;
-  }) {
-    const SERIF = "'Cormorant Garamond', Georgia, serif";
-    return (
-      <div onClick={onClick} style={{
-        background: emphasis ? 'var(--brand-dark)' : 'var(--surface)',
-        color: emphasis ? 'white' : 'var(--text)',
-        border: emphasis ? 'none' : '0.5px solid var(--border)',
-        borderRadius: '6px', padding: '16px 14px', cursor: 'pointer',
-        display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
-        minHeight: '110px',
-      }}>
-        {number ? (
-          <div style={{
-            fontFamily: SERIF, fontStyle: 'italic', fontSize: '40px',
-            lineHeight: 1, letterSpacing: '-0.02em', marginBottom: '8px',
-            color: emphasis ? 'white' : 'var(--brand)',
-          }}>
-            {number}
-          </div>
-        ) : (
-          <div style={{
-            fontSize: '9px', letterSpacing: '0.28em', textTransform: 'uppercase',
-            color: emphasis ? 'rgba(255,255,255,0.7)' : 'var(--text-muted)',
-            fontWeight: 600, marginBottom: '8px',
-          }}>{caption}</div>
-        )}
-        <div>
-          {title && (
-            <div style={{ fontSize: '12px', fontWeight: 600, lineHeight: 1.3, marginBottom: '3px' }}>
-              {title}
-            </div>
-          )}
-          {number && (
-            <div style={{
-              fontSize: '11px', lineHeight: 1.3,
-              color: emphasis ? 'rgba(255,255,255,0.75)' : 'var(--text-muted)',
-            }}>{caption}</div>
-          )}
-          {meta && (
-            <div style={{
-              fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase',
-              color: emphasis ? 'rgba(255,255,255,0.85)' : 'var(--brand)',
-              fontWeight: 600, marginTop: '4px',
-            }}>{meta}</div>
-          )}
-        </div>
-      </div>
-    );
-  }
-
 
   function ModalProwadzacy({ p, onZamknij }: { p: Prowadzacy; onZamknij: () => void }) {
     return (
@@ -6194,8 +6133,6 @@ async function wylaczPush() {
                   user={user} kursant={kursant}
                   onNavigate={nawiguj}
                   zadania={zadania}
-                  nieprzeslaneZadania={nieprzeslaneZadania}
-                  noweCzat={noweCzat}
                 />
               )}
               {aktywnaZakladka === 'zjazdy' && <EkranZjazdy zjazdy={zjazdy} user={user} kursant={kursant} grupaInfo={grupaInfo} />}
