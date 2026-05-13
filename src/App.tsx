@@ -4605,20 +4605,20 @@ const ikonaSVG = o.typ === 'Pilne'
 
     function DetailRowDark({ label, value, accent }: { label: string; value: string; accent?: boolean }) {
       return (
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: '12px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <span style={{
-            fontSize: '9px', letterSpacing: '0.28em', textTransform: 'uppercase',
-            color: 'rgba(255,255,255,0.6)', fontWeight: 600, minWidth: '56px', flexShrink: 0,
+            fontSize: '8px', letterSpacing: '0.24em', textTransform: 'uppercase',
+            color: 'rgba(255,255,255,0.55)', fontWeight: 600, minWidth: '48px', flexShrink: 0,
           }}>{label}</span>
           <span style={{
-            fontSize: '13px', color: 'white',
+            fontSize: '12px', color: 'white',
             fontWeight: accent ? 600 : 400,
-            opacity: accent ? 1 : 0.92,
+            opacity: accent ? 1 : 0.9,
+            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1,
           }}>{value}</span>
         </div>
       );
     }
-
     return (
       <>
         {/* ── NOWY NAGŁÓWEK ── */}
@@ -4686,7 +4686,7 @@ const ikonaSVG = o.typ === 'Pilne'
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '16px' }}>
         <div>
           <div style={{ fontSize: '10px', letterSpacing: '0.28em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.7)', marginBottom: '6px' }}>Zjazd nr {najblizszy.nr}</div>
-          <div style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: '28px', lineHeight: 1.1, color: 'white' }}>{najblizszy.daty}</div>
+          <div style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: '20px', lineHeight: 1.2, color: 'white', maxWidth: '120px' }}>{najblizszy.daty}</div>
         </div>
         {dniLiczba !== '' && (
           <div style={{ textAlign: 'right', flexShrink: 0 }}>
