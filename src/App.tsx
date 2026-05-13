@@ -4897,10 +4897,7 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
                 img: 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=400&q=70',
                 href: 'https://on-arch.pl', dot: '#B35758',
               },
-              { kind: 'Online', title: 'Materiały dodatkowe', sub: 'kursy i artykuły',
-                img: 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=400&q=70',
-                href: (grupaInfo as any)?.link_materialow || null, dot: '#B35758',
-              },
+            
               { kind: 'Drive', title: 'Folder grupy', sub: 'Google Drive',
                 img: 'https://images.unsplash.com/photo-1567016376408-0226e4d0c1ea?auto=format&fit=crop&w=400&q=70',
                 href: grupaInfo?.drive_link || null, dot: '#4a7a47',
