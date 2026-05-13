@@ -3973,6 +3973,8 @@ function urlBase64ToUint8Array(base64String: string) {
                 <div className="login-field"><label>Miasto</label><input type="text" value={nowaGrupa.miasto} onChange={e => setNowaGrupa({ ...nowaGrupa, miasto: e.target.value })} required /></div>
                 <div className="login-field"><label>Edycja</label><input type="text" value={nowaGrupa.edycja} onChange={e => setNowaGrupa({ ...nowaGrupa, edycja: e.target.value })} required /></div>
                 <div className="login-field"><label>Strefa Wiedzy — link Google Drive (opcjonalnie)</label><input type="url" value={nowaGrupa.drive_link} onChange={e => setNowaGrupa({ ...nowaGrupa, drive_link: e.target.value })} placeholder="https://drive.google.com/..." /></div>
+                <div className="login-field"><label>Link do materiałów online (opcjonalnie)</label><input type="url" value={(nowaGrupa as any).link_materialow || ''} onChange={e => setNowaGrupa({ ...nowaGrupa, ...(nowaGrupa as any), link_materialow: e.target.value })} placeholder="https://..." /></div>
+                <div className="login-field"><label>Link do nagrań z zajęć (opcjonalnie)</label><input type="url" value={(nowaGrupa as any).link_nagran || ''} onChange={e => setNowaGrupa({ ...nowaGrupa, ...(nowaGrupa as any), link_nagran: e.target.value })} placeholder="https://..." /></div>
                 <div className="login-field"><label>Numer usługi BUR (opcjonalnie)</label><input type="text" value={nowaGrupa.numer_uslugi} onChange={e => setNowaGrupa({ ...nowaGrupa, numer_uslugi: e.target.value })} placeholder="np. 2025/09/24/195975/3028966" /></div>
                 <div className="login-field"><label>Tryb zajęć</label><select value={nowaGrupa.tryb} onChange={e => setNowaGrupa({ ...nowaGrupa, tryb: e.target.value })}><option value="stacjonarny">Stacjonarny</option><option value="online">Online</option><option value="hybrydowy">Hybrydowy</option></select></div>
                 <button className="login-btn" type="submit">Dodaj grupe</button>
@@ -4009,10 +4011,18 @@ function urlBase64ToUint8Array(base64String: string) {
                             <option value="hybrydowy">⚡ Hybrydowy</option>
                           </select>
                         </td>
-                        <td style={{ padding: '6px 12px', minWidth: '180px' }}>
-                          <input type="url" defaultValue={g.drive_link || ''} placeholder="https://drive.google.com/..."
-                            onBlur={e => { if (e.target.value !== (g.drive_link || '')) zapiszDriveLink(g.id, e.target.value); }}
-                            style={{ width: '100%', fontSize: '11px', padding: '5px 8px', borderRadius: '6px', border: '0.5px solid var(--border)', fontFamily: 'Jost, sans-serif', background: g.drive_link ? '#f0faf4' : 'white' }} />
+                        <td style={{ padding: '6px 12px', minWidth: '220px' }}>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                            <input type="url" defaultValue={g.drive_link || ''} placeholder="Drive: folder grupy"
+                              onBlur={async e => { if (e.target.value !== (g.drive_link || '')) await supabase.from('grupy').update({ drive_link: e.target.value || null }).eq('id', g.id); pobierzGrupy(); }}
+                              style={{ width: '100%', fontSize: '11px', padding: '4px 8px', borderRadius: '6px', border: '0.5px solid var(--border)', fontFamily: 'Jost, sans-serif', background: g.drive_link ? '#f0faf4' : 'white' }} />
+                            <input type="url" defaultValue={(g as any).link_materialow || ''} placeholder="Materiały online"
+                              onBlur={async e => { if (e.target.value !== ((g as any).link_materialow || '')) await supabase.from('grupy').update({ link_materialow: e.target.value || null }).eq('id', g.id); pobierzGrupy(); }}
+                              style={{ width: '100%', fontSize: '11px', padding: '4px 8px', borderRadius: '6px', border: '0.5px solid var(--border)', fontFamily: 'Jost, sans-serif', background: (g as any).link_materialow ? '#f0faf4' : 'white' }} />
+                            <input type="url" defaultValue={(g as any).link_nagran || ''} placeholder="Nagrania z zajęć"
+                              onBlur={async e => { if (e.target.value !== ((g as any).link_nagran || '')) await supabase.from('grupy').update({ link_nagran: e.target.value || null }).eq('id', g.id); pobierzGrupy(); }}
+                              style={{ width: '100%', fontSize: '11px', padding: '4px 8px', borderRadius: '6px', border: '0.5px solid var(--border)', fontFamily: 'Jost, sans-serif', background: (g as any).link_nagran ? '#f0faf4' : 'white' }} />
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -4536,8 +4546,9 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
   kursant: Kursant | null;
   onNavigate: (zakl: string) => void;
   zadania: Zadanie[];
-  odpowiedzi: ZadanieOdpowiedz[];
-}) {
+    odpowiedzi: ZadanieOdpowiedz[];
+    grupaInfo?: Grupa | null;
+  }) {
     const [countdown, setCountdown] = useState({ dni: 0, godz: 0, min: 0 });
     const [obecnosciNajblizszy, setObecnosciNajblizszy] = useState<Obecnosc[]>([]);
     const [frekwencja, setFrekwencja] = useState(0);
@@ -4886,15 +4897,17 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
                 img: 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=400&q=70',
                 href: 'https://on-arch.pl', dot: '#B35758',
               },
-              {
-                kind: 'Drive', title: 'Folder grupy', sub: 'Google Drive',
-                img: 'https://images.unsplash.com/photo-1567016376408-0226e4d0c1ea?auto=format&fit=crop&w=400&q=70',
-                href: null, dot: '#4a7a47',
+              { kind: 'Online', title: 'Materiały dodatkowe', sub: 'kursy i artykuły',
+                img: 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=400&q=70',
+                href: (grupaInfo as any)?.link_materialow || null, dot: '#B35758',
               },
-              {
-                kind: 'Wideo', title: 'Nagrania z zajęć', sub: 'dotyczy grup online',
+              { kind: 'Drive', title: 'Folder grupy', sub: 'Google Drive',
+                img: 'https://images.unsplash.com/photo-1567016376408-0226e4d0c1ea?auto=format&fit=crop&w=400&q=70',
+                href: grupaInfo?.drive_link || null, dot: '#4a7a47',
+              },
+              { kind: 'Wideo', title: 'Nagrania z zajęć', sub: 'dotyczy grup online',
                 img: 'https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&w=400&q=70',
-                href: null, dot: '#1565c0',
+                href: (grupaInfo as any)?.link_nagran || null, dot: '#1565c0',
               },
             ].map((item, i) => (
               <div key={i} style={{ width: '155px', flexShrink: 0, cursor: item.href ? 'pointer' : 'default' }}
@@ -6245,7 +6258,8 @@ async function wylaczPush() {
                 onNavigate={nawiguj}
                 zadania={zadania}
                 odpowiedzi={odpowiedziZadan}
-              />
+                  grupaInfo={grupaInfo}
+                />
               )}
               {aktywnaZakladka === 'zjazdy' && <EkranZjazdy zjazdy={zjazdy} user={user} kursant={kursant} grupaInfo={grupaInfo} />}
               {aktywnaZakladka === 'ogloszenia' && <EkranOgloszenia ogloszenia={ogloszenia} onOtworzOgloszenie={otworzOgloszenie} />}
