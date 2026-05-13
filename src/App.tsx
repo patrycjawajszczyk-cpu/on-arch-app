@@ -4529,14 +4529,15 @@ const ikonaSVG = o.typ === 'Pilne'
   }
 
 //  
-  function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania }: {
-    ogloszenia: Ogloszenie[];
-    zjazdy: Zjazd[];
-    user: User;
-    kursant: Kursant | null;
-    onNavigate: (zakl: string) => void;
-    zadania: Zadanie[];
-  }) {
+function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, odpowiedzi }: {
+  ogloszenia: Ogloszenie[];
+  zjazdy: Zjazd[];
+  user: User;
+  kursant: Kursant | null;
+  onNavigate: (zakl: string) => void;
+  zadania: Zadanie[];
+  odpowiedzi: ZadanieOdpowiedz[];
+}) {
     const [countdown, setCountdown] = useState({ dni: 0, godz: 0, min: 0 });
     const [obecnosciNajblizszy, setObecnosciNajblizszy] = useState<Obecnosc[]>([]);
     const [frekwencja, setFrekwencja] = useState(0);
@@ -4839,13 +4840,18 @@ const ikonaSVG = o.typ === 'Pilne'
                         {z.termin && <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>do {new Date(z.termin).toLocaleDateString('pl-PL', { day: 'numeric', month: 'numeric' })}</span>}
                       </div>
                     </div>
-                    <div style={{ fontSize: '9px', fontWeight: 700, padding: '3px 9px', borderRadius: '20px', whiteSpace: 'nowrap', letterSpacing: '0.05em', textTransform: 'uppercase', flexShrink: 0,
-                      background: z.typ === 'praca_zaliczeniowa' ? '#fef9ec' : '#f0ece7',
-                      color: z.typ === 'praca_zaliczeniowa' ? '#c8a84b' : 'var(--brand-dark)',
-                      border: z.typ === 'praca_zaliczeniowa' ? '0.5px solid #e8d4a0' : '0.5px solid var(--border)',
-                    }}>
-                      {z.typ === 'praca_zaliczeniowa' ? 'Zaliczenie' : 'Do zrobienia'}
-                    </div>
+                    {(() => {
+                      const wyslano = odpowiedzi.some(o => o.zadanie_id === z.id);
+                      return (
+                        <div style={{ fontSize: '9px', fontWeight: 700, padding: '3px 9px', borderRadius: '20px', whiteSpace: 'nowrap', letterSpacing: '0.05em', textTransform: 'uppercase', flexShrink: 0,
+                          background: wyslano ? 'rgba(107,156,104,0.15)' : z.typ === 'praca_zaliczeniowa' ? '#fef9ec' : '#f0ece7',
+                          color: wyslano ? '#4a7a47' : z.typ === 'praca_zaliczeniowa' ? '#c8a84b' : 'var(--brand-dark)',
+                          border: wyslano ? '0.5px solid #a8d4a5' : z.typ === 'praca_zaliczeniowa' ? '0.5px solid #e8d4a0' : '0.5px solid var(--border)',
+                        }}>
+                          {wyslano ? '✓ Przesłano' : z.typ === 'praca_zaliczeniowa' ? 'Zaliczenie' : 'Do zrobienia'}
+                        </div>
+                      );
+                    })()}
                   </div>
                 ))}
               </div>
@@ -6217,11 +6223,12 @@ async function wylaczPush() {
             <>
               {aktywnaZakladka === 'home' && (
                 <EkranGlowny
-                  ogloszenia={ogloszenia} zjazdy={zjazdy}
-                  user={user} kursant={kursant}
-                  onNavigate={nawiguj}
-                  zadania={zadania}
-                />
+                ogloszenia={ogloszenia} zjazdy={zjazdy}
+                user={user} kursant={kursant}
+                onNavigate={nawiguj}
+                zadania={zadania}
+                odpowiedzi={odpowiedziZadan}
+              />
               )}
               {aktywnaZakladka === 'zjazdy' && <EkranZjazdy zjazdy={zjazdy} user={user} kursant={kursant} grupaInfo={grupaInfo} />}
               {aktywnaZakladka === 'ogloszenia' && <EkranOgloszenia ogloszenia={ogloszenia} onOtworzOgloszenie={otworzOgloszenie} />}
