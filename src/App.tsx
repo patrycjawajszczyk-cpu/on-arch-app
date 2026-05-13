@@ -4566,6 +4566,21 @@ const ikonaSVG = o.typ === 'Pilne'
       };
       update();
       const id = setInterval(update, 30000);
+      function DetailRowDark({ label, value, accent }: { label: string; value: string; accent?: boolean }) {
+        return (
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: '12px' }}>
+            <span style={{
+              fontSize: '9px', letterSpacing: '0.28em', textTransform: 'uppercase',
+              color: 'rgba(255,255,255,0.6)', fontWeight: 600, minWidth: '56px', flexShrink: 0,
+            }}>{label}</span>
+            <span style={{
+              fontSize: '13px', color: 'white',
+              fontWeight: accent ? 600 : 400,
+              opacity: accent ? 1 : 0.92,
+            }}>{value}</span>
+          </div>
+        );
+      }
       return () => clearInterval(id);
     }, [najblizszy?.data_dzien1]);
 
