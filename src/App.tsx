@@ -4014,7 +4014,7 @@ function urlBase64ToUint8Array(base64String: string) {
                         <td style={{ padding: '6px 12px', minWidth: '220px' }}>
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                             <input type="url" defaultValue={g.drive_link || ''} placeholder="Drive: folder grupy"
-                              onBlur={async e => { if (e.target.value !== (g.drive_link || '')) await supabase.from('grupy').update({ drive_link: e.target.value || null }).eq('id', g.id); pobierzGrupy(); }}
+                              onBlur={e => { if (e.target.value !== (g.drive_link || '')) zapiszDriveLink(g.id, e.target.value); }}
                               style={{ width: '100%', fontSize: '11px', padding: '4px 8px', borderRadius: '6px', border: '0.5px solid var(--border)', fontFamily: 'Jost, sans-serif', background: g.drive_link ? '#f0faf4' : 'white' }} />
                             <input type="url" defaultValue={(g as any).link_materialow || ''} placeholder="Materiały online"
                               onBlur={async e => { if (e.target.value !== ((g as any).link_materialow || '')) await supabase.from('grupy').update({ link_materialow: e.target.value || null }).eq('id', g.id); pobierzGrupy(); }}
@@ -4539,7 +4539,7 @@ const ikonaSVG = o.typ === 'Pilne'
   }
 
 //  
-function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, odpowiedzi }: {
+function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, odpowiedzi, grupaInfo }: {
   ogloszenia: Ogloszenie[];
   zjazdy: Zjazd[];
   user: User;
