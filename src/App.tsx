@@ -4528,7 +4528,7 @@ const ikonaSVG = o.typ === 'Pilne'
     );
   }
 
- 
+//  
   function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania }: {
     ogloszenia: Ogloszenie[];
     zjazdy: Zjazd[];
