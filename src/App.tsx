@@ -4815,35 +4815,81 @@ const ikonaSVG = o.typ === 'Pilne'
           </div>
           {zadania.length === 0 ? (
             <div style={{ fontSize: '12px', color: 'var(--text-muted)', fontStyle: 'italic', textAlign: 'center', padding: '10px 0' }}>Brak aktywnych zadań</div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
-              {zadania.slice(0, 3).map((z, idx) => (
-                <div key={z.id} onClick={() => onNavigate('zadania')} style={{
-                  display: 'flex', alignItems: 'center', gap: '10px', padding: '9px 0', cursor: 'pointer',
-                  borderBottom: idx < Math.min(zadania.length, 3) - 1 ? '0.5px solid var(--border-soft)' : 'none',
-                }}>
-                  <div style={{ width: '3px', height: '36px', background: z.typ === 'praca_zaliczeniowa' ? '#c8a84b' : 'var(--brand)', borderRadius: '2px', flexShrink: 0 }} />
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{z.tytul}</div>
-                    {z.termin && <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '1px' }}>do {new Date(z.termin).toLocaleDateString('pl-PL', { day: 'numeric', month: 'numeric' })}</div>}
+          ) : (() => {
+            const ZDJECIA = [
+              'https://images.unsplash.com/photo-1631679706909-1844bbd07221?auto=format&fit=crop&w=200&q=70',
+              'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=200&q=70',
+              'https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&w=200&q=70',
+              'https://images.unsplash.com/photo-1567016376408-0226e4d0c1ea?auto=format&fit=crop&w=200&q=70',
+              'https://images.unsplash.com/photo-1556909172-54557c7e4fb7?auto=format&fit=crop&w=200&q=70',
+            ];
+            const KOLORY = ['#B35758', '#E9A72D', '#6B9C68', '#B35758', '#6B9C68'];
+            return (
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                {zadania.slice(0, 3).map((z, idx) => (
+                  <div key={z.id} onClick={() => onNavigate('zadania')} style={{
+                    display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 0', cursor: 'pointer',
+                    borderBottom: idx < Math.min(zadania.length, 3) - 1 ? '0.5px solid var(--border-soft)' : 'none',
+                  }}>
+                    <div style={{ width: '4px', height: '44px', background: z.typ === 'praca_zaliczeniowa' ? '#c8a84b' : KOLORY[idx % KOLORY.length], borderRadius: '2px', flexShrink: 0 }} />
+                    <div style={{ width: '44px', height: '44px', borderRadius: '10px', background: `url(${ZDJECIA[idx % ZDJECIA.length]}) center/cover`, flexShrink: 0 }} />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{z.tytul}</div>
+                      <div style={{ display: 'flex', gap: '5px', marginTop: '2px', alignItems: 'center' }}>
+                        {z.termin && <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>do {new Date(z.termin).toLocaleDateString('pl-PL', { day: 'numeric', month: 'numeric' })}</span>}
+                      </div>
+                    </div>
+                    <div style={{ fontSize: '9px', fontWeight: 700, padding: '3px 9px', borderRadius: '20px', whiteSpace: 'nowrap', letterSpacing: '0.05em', textTransform: 'uppercase', flexShrink: 0,
+                      background: z.typ === 'praca_zaliczeniowa' ? '#fef9ec' : '#f0ece7',
+                      color: z.typ === 'praca_zaliczeniowa' ? '#c8a84b' : 'var(--brand-dark)',
+                      border: z.typ === 'praca_zaliczeniowa' ? '0.5px solid #e8d4a0' : '0.5px solid var(--border)',
+                    }}>
+                      {z.typ === 'praca_zaliczeniowa' ? 'Zaliczenie' : 'Do zrobienia'}
+                    </div>
                   </div>
-                  <div style={{ fontSize: '9px', fontWeight: 700, padding: '2px 8px', borderRadius: '20px', whiteSpace: 'nowrap', letterSpacing: '0.05em', textTransform: 'uppercase', background: z.typ === 'praca_zaliczeniowa' ? '#fef9ec' : '#f0ece7', color: z.typ === 'praca_zaliczeniowa' ? '#c8a84b' : 'var(--brand-dark)' }}>
-                    {z.typ === 'praca_zaliczeniowa' ? 'Zaliczenie' : 'Do zrobienia'}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+                ))}
+              </div>
+            );
+          })()}
         </div>
 
         {/* ── OGŁOSZENIA ── */}
-        {noweOgl.length > 0 && (
+        {ogloszenia.length > 0 && (
           <div style={{ marginBottom: '12px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
               <span style={{ fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600 }}>Ogłoszenia</span>
-              <button onClick={() => onNavigate('ogloszenia')} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '11px', color: 'var(--brand)', fontFamily: 'Jost, sans-serif' }}>{noweOgl.length} {noweOgl.length === 1 ? 'nowe' : 'nowe'} →</button>
+              <button onClick={() => onNavigate('ogloszenia')} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '11px', color: 'var(--brand)', fontFamily: 'Jost, sans-serif' }}>
+                {noweOgl.length > 0 ? `${noweOgl.length} nowe →` : 'Wszystkie →'}
+              </button>
             </div>
-            {noweOgl.slice(0, 2).map(o => <KartaOgloszenia key={o.id} o={o} onClick={() => onNavigate('ogloszenia')} />)}
+            {(noweOgl.length > 0 ? noweOgl : ogloszenia).slice(0, 2).map(o => (
+              <KartaOgloszenia key={o.id} o={o} onClick={() => onNavigate('ogloszenia')} />
+            ))}
+          </div>
+        )}
+
+        {/* ──{/* ── BIBLIOTEKA / STREFA WIEDZY ── */}
+        {najblizszy && (
+          <div style={{ marginBottom: '16px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+              <span style={{ fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600 }}>Strefa Wiedzy · PWO</span>
+            </div>
+            <div style={{ display: 'flex', gap: '10px', overflowX: 'auto', paddingBottom: '8px', scrollbarWidth: 'none' as any }}>
+              {[
+                { kind: 'PDF', title: 'Materiały zjazdu', sub: 'prezentacje i notatki', img: 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=400&q=70', href: null },
+                { kind: 'WIDEO', title: 'Nagrania z zajęć', sub: 'dostępne po zjeździe', img: 'https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&w=400&q=70', href: null },
+                { kind: 'DRIVE', title: 'Folder grupy', sub: 'Google Drive', img: 'https://images.unsplash.com/photo-1567016376408-0226e4d0c1ea?auto=format&fit=crop&w=400&q=70', href: null },
+              ].map((item, i) => (
+                <div key={i} style={{ width: '160px', flexShrink: 0 }} onClick={() => item.href && window.open(item.href, '_blank')}>
+                  <div style={{ width: '160px', height: '120px', borderRadius: '14px', background: `url(${item.img}) center/cover`, position: 'relative', marginBottom: '8px', overflow: 'hidden' }}>
+                    <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(0,0,0,0) 40%, rgba(0,0,0,0.4) 100%)' }} />
+                    <div style={{ position: 'absolute', top: 8, left: 8, padding: '3px 8px', background: 'rgba(255,255,255,0.92)', fontSize: '8px', letterSpacing: '0.2em', textTransform: 'uppercase', fontWeight: 700, borderRadius: '999px', color: '#1a1614' }}>{item.kind}</div>
+                  </div>
+                  <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text)', marginBottom: '2px' }}>{item.title}</div>
+                  <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>{item.sub}</div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
