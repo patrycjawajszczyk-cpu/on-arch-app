@@ -4528,17 +4528,8 @@ const ikonaSVG = o.typ === 'Pilne'
     );
   }
 
-  function liczDni(dataZjazdu: string): string {
-    if (!dataZjazdu) return '';
-    const dzisiaj = new Date(); dzisiaj.setHours(0, 0, 0, 0);
-    const cel = new Date(dataZjazdu); cel.setHours(0, 0, 0, 0);
-    const diff = Math.round((cel.getTime() - dzisiaj.getTime()) / (1000 * 60 * 60 * 24));
-    if (diff === 0) return 'Dzisiaj!';
-    if (diff === 1) return 'Jutro!';
-    if (diff < 0) return '';
-    return `Za ${diff} dni`;
-  }
-  function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, nieprzeslaneZadania, noweCzat }: {
+ 
+  function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania }: {
     ogloszenia: Ogloszenie[];
     zjazdy: Zjazd[];
     user: User;
