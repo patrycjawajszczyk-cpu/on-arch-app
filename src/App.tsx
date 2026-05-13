@@ -4596,6 +4596,8 @@ const ikonaSVG = o.typ === 'Pilne'
     const miesiace = ['STY','LUT','MAR','KWI','MAJ','CZE','LIP','SIE','WRZ','PAŹ','LIS','GRU'];
     const dataHeader = `${dniTygodnia[teraz.getDay()]} · ${teraz.getDate()} ${miesiace[teraz.getMonth()]}`;
     const SERIF = "'Cormorant Garamond', Georgia, serif";
+    const HERO_BG = '/wnetrze.jpg';
+
     const frekwencjaBars = Array.from({ length: 10 }, (_, i) => i < Math.round(frekwencja / 10));
 
     return (
@@ -4649,34 +4651,64 @@ const ikonaSVG = o.typ === 'Pilne'
         <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: '10px', marginBottom: '12px' }}>
           {/* Karta zjazdu */}
           {najblizszy ? (
-            <div onClick={() => onNavigate('zjazdy')} style={{
-              background: '#1C2B3A', borderRadius: '14px', padding: '16px',
-              cursor: 'pointer', display: 'flex', flexDirection: 'column', minHeight: '190px',
+  <div onClick={() => onNavigate('zjazdy')} style={{
+    position: 'relative', borderRadius: '10px', overflow: 'hidden',
+    cursor: 'pointer', minHeight: '320px', background: '#1a1614', color: 'white',
+    boxShadow: '0 30px 60px -25px rgba(0,0,0,0.35)',
+  }}>
+    <div style={{ position: 'absolute', inset: 0, background: `url(${HERO_BG}) center/cover`, filter: 'brightness(0.72) saturate(0.92)' }} />
+    <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.65) 100%)' }} />
+    <div style={{ position: 'absolute', top: 14, left: 14, width: 16, height: 16, borderTop: '1px solid rgba(255,255,255,0.5)', borderLeft: '1px solid rgba(255,255,255,0.5)' }}/>
+    <div style={{ position: 'absolute', top: 14, right: 14, width: 16, height: 16, borderTop: '1px solid rgba(255,255,255,0.5)', borderRight: '1px solid rgba(255,255,255,0.5)' }}/>
+    <div style={{ position: 'absolute', bottom: 14, left: 14, width: 16, height: 16, borderBottom: '1px solid rgba(255,255,255,0.5)', borderLeft: '1px solid rgba(255,255,255,0.5)' }}/>
+    <div style={{ position: 'absolute', bottom: 14, right: 14, width: 16, height: 16, borderBottom: '1px solid rgba(255,255,255,0.5)', borderRight: '1px solid rgba(255,255,255,0.5)' }}/>
+
+    <div style={{ position: 'relative', padding: '24px 22px 22px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: '320px' }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '16px' }}>
+        <div>
+          <div style={{ fontSize: '10px', letterSpacing: '0.28em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.7)', marginBottom: '6px' }}>Zjazd nr {najblizszy.nr}</div>
+          <div style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: '28px', lineHeight: 1.1, color: 'white' }}>{najblizszy.daty}</div>
+        </div>
+        {dniLiczba !== '' && (
+          <div style={{ textAlign: 'right', flexShrink: 0 }}>
+            <div style={{ fontFamily: SERIF, fontStyle: 'italic', fontWeight: 400, fontSize: '64px', lineHeight: 0.9, color: 'white', letterSpacing: '-0.02em' }}>{dniLiczba}</div>
+            <div style={{ fontSize: '10px', letterSpacing: '0.28em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.8)', marginTop: '4px' }}>{dniLabel}</div>
+          </div>
+        )}
+      </div>
+
+      <div style={{
+        marginTop: '24px', background: 'rgba(0,0,0,0.32)',
+        backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)',
+        borderRadius: '6px', padding: '14px 16px',
+        display: 'flex', flexDirection: 'column', gap: '8px',
+        border: '0.5px solid rgba(255,255,255,0.14)',
+      }}>
+        <DetailRowDark label="Tryb" value={najblizszy.typ === 'online' ? 'Online' : 'Stacjonarnie'} accent={najblizszy.typ === 'online'}/>
+        {najblizszy.typ === 'stacjonarny' && najblizszy.sala && najblizszy.sala !== 'Do uzupełnienia' && (
+          <DetailRowDark label="Sala" value={najblizszy.sala}/>
+        )}
+        {najblizszy.typ === 'stacjonarny' && najblizszy.adres && (
+          <DetailRowDark label="Adres" value={najblizszy.adres}/>
+        )}
+        {najblizszy.prowadzacy && najblizszy.prowadzacy.length > 0 && (
+          <DetailRowDark label="Prowadzi" value={najblizszy.prowadzacy.map(p => `${p.imie} ${p.nazwisko}`).join(', ')}/>
+        )}
+        {najblizszy.typ === 'online' && najblizszy.link_online && (
+          <a href={najblizszy.link_online} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}
+            style={{
+              marginTop: '6px', display: 'inline-flex', alignItems: 'center', gap: '10px',
+              background: 'white', color: '#1a1614', padding: '11px 16px', borderRadius: '4px',
+              fontSize: '11px', letterSpacing: '0.22em', textTransform: 'uppercase',
+              fontWeight: 600, textDecoration: 'none', alignSelf: 'flex-start',
             }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '10px' }}>
-                <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#e57373' }} />
-                <span style={{ fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.5)' }}>Wkrótce</span>
-              </div>
-              <div style={{ fontSize: '9px', color: 'rgba(255,255,255,0.4)', letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: '4px' }}>
-                Zjazd {najblizszy.nr} · {najblizszy.daty}
-              </div>
-              <div style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: '17px', color: 'white', lineHeight: 1.3, flex: 1, marginBottom: '14px' }}>
-                {najblizszy.tematy || 'Szczegóły wkrótce'}
-              </div>
-              <div style={{ display: 'flex', gap: '5px', marginBottom: '14px' }}>
-                {[{ val: countdown.dni, label: 'DNI' }, { val: countdown.godz, label: 'GODZ' }, { val: countdown.min, label: 'MIN' }].map(({ val, label }) => (
-                  <div key={label} style={{ background: 'rgba(255,255,255,0.1)', borderRadius: '6px', padding: '6px 0', textAlign: 'center', flex: 1 }}>
-                    <div style={{ fontFamily: SERIF, fontSize: '20px', color: 'white', lineHeight: 1, fontWeight: 300 }}>{String(val).padStart(2, '0')}</div>
-                    <div style={{ fontSize: '7px', color: 'rgba(255,255,255,0.4)', letterSpacing: '0.1em', marginTop: '2px' }}>{label}</div>
-                  </div>
-                ))}
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: 'rgba(255,255,255,0.6)', fontWeight: 500 }}>
-                <span>Zobacz szczegóły</span>
-                <span>→</span>
-              </div>
-            </div>
-          ) : (
+            Dołącz do zajęć →
+          </a>
+        )}
+      </div>
+    </div>
+  </div>
+) : (
             <div style={{ background: '#1C2B3A', borderRadius: '14px', padding: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '190px' }}>
               <span style={{ fontFamily: SERIF, fontStyle: 'italic', color: 'rgba(255,255,255,0.4)', fontSize: '15px' }}>Brak zjazdu</span>
             </div>
