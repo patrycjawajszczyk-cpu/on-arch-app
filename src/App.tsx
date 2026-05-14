@@ -198,6 +198,13 @@ function urlBase64ToUint8Array(base64String: string) {
     kolejnosc: number;
   };
 
+  type ZdjecieAplikacji = {
+    id: string;
+    kategoria: string;
+    url: string;
+    nazwa: string;
+    kolejnosc: number;
+  };
   type Obecnosc = {
     id: string;
     zjazd_id: number;
@@ -253,13 +260,21 @@ function urlBase64ToUint8Array(base64String: string) {
     const [pokazWyslane, setPokazWyslane] = useState(false);
   
     const SERIF = "'Cormorant Garamond', Georgia, serif";
-    const PHOTOS = [
-      'https://images.unsplash.com/photo-1581674662583-5e89b374fae6?auto=format&fit=crop&w=300&q=70',
-      'https://images.unsplash.com/photo-1652404445394-99b607de5e95?auto=format&fit=crop&w=300&q=70',
-      'https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&w=300&q=70',
-      'https://images.unsplash.com/photo-1567016376408-0226e4d0c1ea?auto=format&fit=crop&w=300&q=70',
-      'https://images.unsplash.com/photo-1556909172-54557c7e4fb7?auto=format&fit=crop&w=300&q=70',
-    ];
+    const [dbPhotos, setDbPhotos] = useState<string[]>([]);
+  const PHOTOS_FALLBACK = [
+    'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=900&q=80',
+    'https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&w=900&q=80',
+    'https://images.unsplash.com/photo-1567016376408-0226e4d0c1ea?auto=format&fit=crop&w=900&q=80',
+    'https://images.unsplash.com/photo-1631679706909-1844bbd07221?auto=format&fit=crop&w=900&q=80',
+    'https://images.unsplash.com/photo-1556909172-54557c7e4fb7?auto=format&fit=crop&w=900&q=80',
+  ];
+  const PHOTOS = dbPhotos.length > 0 ? dbPhotos : PHOTOS_FALLBACK;
+
+  useEffect(() => {
+    const kat = 'zjazdy'; // lub 'zadania' w EkranZadania
+    supabase.from('zdjecia_aplikacji').select('url').eq('kategoria', kat).order('kolejnosc')
+      .then(({ data }) => { if (data && data.length > 0) setDbPhotos(data.map(z => z.url)); });
+  }, []);
     const KOLORY = ['#B35758', '#E9A72D', '#6B9C68', '#B35758', '#6B9C68'];
   
     useEffect(() => { if (!kursant?.grupa_id) return; pobierz(); }, [kursant]);
@@ -2538,6 +2553,117 @@ function urlBase64ToUint8Array(base64String: string) {
       </div>
     );
   }
+  function AdminZdjecia() {
+    const [zdjecia, setZdjecia] = useState<ZdjecieAplikacji[]>([]);
+    const [uploading, setUploading] = useState(false);
+    const [kategoria, setKategoria] = useState<string>('hero');
+    const [komunikat, setKomunikat] = useState('');
+    const fileRef = useRef<HTMLInputElement>(null);
+  
+    const KATEGORIE = [
+      { id: 'hero', label: 'Ekran główny — tło zjazdu', opis: 'Jedno zdjęcie, widoczne w ciemnej karcie zjazdu' },
+      { id: 'zjazdy', label: 'Karty zjazdów', opis: 'Zdjęcia cyklicznie przypisywane do kart zjazdów' },
+      { id: 'zadania', label: 'Miniatury zadań', opis: 'Zdjęcia cyklicznie przypisywane do zadań' },
+      { id: 'strefa_wiedzy', label: 'Strefa Wiedzy', opis: 'Karty w sekcji materiałów na ekranie głównym' },
+    ];
+  
+    useEffect(() => { pobierz(); }, []);
+  
+    async function pobierz() {
+      const { data } = await supabase.from('zdjecia_aplikacji').select('*').order('kategoria').order('kolejnosc');
+      setZdjecia(data || []);
+    }
+  
+    async function wgrajZdjecie(e: React.ChangeEvent<HTMLInputElement>) {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      setUploading(true);
+      setKomunikat('');
+      const ext = file.name.split('.').pop();
+      const path = `${kategoria}/${Date.now()}.${ext}`;
+      const { error: uploadError } = await supabase.storage.from('app-images').upload(path, file, { upsert: false });
+      if (uploadError) { setKomunikat('Błąd uploadu: ' + uploadError.message); setUploading(false); return; }
+      const { data: urlData } = supabase.storage.from('app-images').getPublicUrl(path);
+      const { error: dbError } = await supabase.from('zdjecia_aplikacji').insert([{
+        kategoria, url: urlData.publicUrl, nazwa: file.name.split('.')[0], kolejnosc: zdjecia.filter(z => z.kategoria === kategoria).length,
+      }]);
+      if (dbError) { setKomunikat('Błąd zapisu: ' + dbError.message); } else { setKomunikat('Zdjęcie dodane!'); pobierz(); }
+      setUploading(false);
+      if (fileRef.current) fileRef.current.value = '';
+    }
+  
+    async function usun(z: ZdjecieAplikacji) {
+      if (!window.confirm(`Usunąć "${z.nazwa}"?`)) return;
+      const pathMatch = z.url.match(/app-images\/(.+)$/);
+      if (pathMatch) await supabase.storage.from('app-images').remove([pathMatch[1]]);
+      await supabase.from('zdjecia_aplikacji').delete().eq('id', z.id);
+      pobierz();
+    }
+  
+    const zdjeciaPorKat = (kat: string) => zdjecia.filter(z => z.kategoria === kat);
+  
+    return (
+      <>
+        <h2 className="page-title">Zdjęcia aplikacji</h2>
+        {komunikat && <div className="login-error" style={{ background: '#e8f5e9', color: '#2e7d32', marginBottom: '12px' }}>{komunikat}</div>}
+  
+        {/* Upload */}
+        <div style={{ background: 'white', border: '0.5px solid var(--border)', borderRadius: '14px', padding: '20px', marginBottom: '24px' }}>
+          <div style={{ fontSize: '13px', fontWeight: 600, marginBottom: '14px' }}>Dodaj nowe zdjęcie</div>
+          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '12px' }}>
+            {KATEGORIE.map(k => (
+              <button key={k.id} onClick={() => setKategoria(k.id)}
+                style={{ padding: '7px 14px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontFamily: 'Jost, sans-serif', fontSize: '12px', fontWeight: 600,
+                  background: kategoria === k.id ? 'var(--brand)' : 'var(--bg)', color: kategoria === k.id ? 'white' : 'var(--text-muted)' }}>
+                {k.label}
+              </button>
+            ))}
+          </div>
+          <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '12px', fontStyle: 'italic' }}>
+            {KATEGORIE.find(k => k.id === kategoria)?.opis}
+          </div>
+          <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+            <input ref={fileRef} type="file" accept="image/*" onChange={wgrajZdjecie} disabled={uploading} style={{ fontSize: '13px', flex: 1 }} />
+            {uploading && <div style={{ fontSize: '12px', color: 'var(--brand)' }}>Wysyłanie...</div>}
+          </div>
+          <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '8px' }}>Zalecane formaty: JPG, WebP. Rozmiar max 5 MB. Proporcje: poziome (16:9 lub 4:3).</div>
+        </div>
+  
+        {/* Lista per kategoria */}
+        {KATEGORIE.map(kat => {
+          const lista = zdjeciaPorKat(kat.id);
+          if (lista.length === 0) return null;
+          return (
+            <div key={kat.id} style={{ marginBottom: '24px' }}>
+              <div style={{ fontSize: '11px', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 700, marginBottom: '10px' }}>
+                {kat.label} ({lista.length})
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '10px' }}>
+                {lista.map((z, idx) => (
+                  <div key={z.id} style={{ borderRadius: '12px', overflow: 'hidden', border: '0.5px solid var(--border)', background: 'white' }}>
+                    <div style={{ position: 'relative' }}>
+                      <img src={z.url} alt={z.nazwa} style={{ width: '100%', height: '120px', objectFit: 'cover', display: 'block' }} />
+                      <div style={{ position: 'absolute', top: '6px', left: '6px', background: 'rgba(0,0,0,0.55)', color: 'white', fontSize: '9px', fontWeight: 700, padding: '2px 7px', borderRadius: '999px', letterSpacing: '0.1em' }}>
+                        #{idx + 1}
+                      </div>
+                    </div>
+                    <div style={{ padding: '8px 10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: '11px', color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{z.nazwa || '—'}</span>
+                      <button onClick={() => usun(z)} style={{ background: 'none', border: 'none', color: '#e57373', cursor: 'pointer', fontSize: '16px', padding: '0 2px', flexShrink: 0 }}>×</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        })}
+  
+        {zdjecia.length === 0 && !uploading && (
+          <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)', fontSize: '13px' }}>Brak wgranych zdjęć. Użyj formularza powyżej aby dodać pierwsze.</div>
+        )}
+      </>
+    );
+  }
   function AdminMaterialy() {
     const [materialy, setMaterialy] = useState<MaterialZakupu[]>([]);
     const [nowy, setNowy] = useState({ nazwa: '', opis: '', cena: '', zdjecie_url: '', link_sklepu: '' });
@@ -3083,6 +3209,7 @@ function urlBase64ToUint8Array(base64String: string) {
               { id: 'grupy',     icon: <Home size={18}/>,        label: 'Grupy' },
               { id: 'prowadzacy',icon: <User size={18}/>,        label: 'Prowadzący' },
               { id: 'ankiety',   icon: <Star size={18}/>,        label: 'Ankiety' },
+              { id: 'zdjecia', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>, label: 'Zdjęcia' },
               { id: 'materialy', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>, label: 'Materiały' },
               { id: 'aplikacje', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>, label: 'Aplikacje' },
               { id: 'backup',    icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>, label: 'Backup' },
@@ -3171,6 +3298,7 @@ function urlBase64ToUint8Array(base64String: string) {
                     { id: 'grupy',      label: 'Grupy',      opis: `${grupy.length} grup`,                icon: <Home size={22}/> },
                     { id: 'prowadzacy', label: 'Prowadzący', opis: `${prowadzacy.length} osób`,           icon: <User size={22}/> },
                     { id: 'ankiety',    label: 'Ankiety',    opis: `${ankiety.length} wypełnień`,         icon: <Star size={22}/> },
+                    { id: 'zdjecia', label: 'Zdjęcia', opis: 'Zdjęcia w aplikacji', icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg> },
                     { id: 'materialy',  label: 'Materiały', opis: 'Lista produktów',  icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg> },
                     { id: 'aplikacje',  label: 'Aplikacje',  opis: 'Portale i sklepy partnerskie', icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg> },
                     { id: 'backup',     label: 'Backup',     opis: 'Pobierz kopię bazy',                  icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> },
@@ -4119,6 +4247,7 @@ function urlBase64ToUint8Array(base64String: string) {
               )}
             </>
           )}
+{aktywnaZakladka === 'zdjecia' && <AdminZdjecia />}
 {aktywnaZakladka === 'materialy' && (
             <AdminMaterialy />
           )}
@@ -4686,6 +4815,18 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
     const [countdown, setCountdown] = useState({ dni: 0, godz: 0, min: 0 });
     const [obecnosciNajblizszy, setObecnosciNajblizszy] = useState<Obecnosc[]>([]);
     const [frekwencja, setFrekwencja] = useState(0);
+    const [heroPhoto, setHeroPhoto] = useState('/wnetrze.jpg');
+    const [appPhotos, setAppPhotos] = useState<string[]>([]);
+
+    useEffect(() => {
+      supabase.from('zdjecia_aplikacji').select('url, kategoria').order('kolejnosc')
+        .then(({ data }) => {
+          const hero = (data || []).find(z => z.kategoria === 'hero');
+          if (hero) setHeroPhoto(hero.url);
+          const zjazdy = (data || []).filter(z => z.kategoria === 'zjazdy').map(z => z.url);
+          if (zjazdy.length > 0) setAppPhotos(zjazdy);
+        });
+    }, []);
 
     const najblizszy = zjazdy.find(z => z.status === 'nadchodzacy');
     const imie = kursant?.imie || user.email.split('@')[0];
@@ -4697,6 +4838,7 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
     const circ = 2 * Math.PI * r;
     const dash = circ * (1 - procent / 100);
     const noweOgl = ogloszenia.filter(o => o.nowe);
+    
 
     useEffect(() => {
       if (!najblizszy?.data_dzien1) return;
@@ -4742,7 +4884,7 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
     const miesiace = ['STY','LUT','MAR','KWI','MAJ','CZE','LIP','SIE','WRZ','PAŹ','LIS','GRU'];
     const dataHeader = `${dniTygodnia[teraz.getDay()]} · ${teraz.getDate()} ${miesiace[teraz.getMonth()]}`;
     const SERIF = "'Cormorant Garamond', Georgia, serif";
-    const HERO_BG = '/wnetrze.jpg';
+    background: `url(${heroPhoto}) center/cover`
 
     const frekwencjaBars = Array.from({ length: 10 }, (_, i) => i < Math.round(frekwencja / 10));
 
@@ -5347,15 +5489,21 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
     const [countdown, setCountdown] = useState({ dni: 0, godz: 0, min: 0 });
   
     const SERIF = "'Cormorant Garamond', Georgia, serif";
-    const PHOTOS = [
-      'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=900&q=80',
-      'https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&w=900&q=80',
-      'https://images.unsplash.com/photo-1542621334-a254cf47733d?auto=format&fit=crop&w=900&q=80',
-      'https://images.unsplash.com/photo-1631679706909-1844bbd07221?auto=format&fit=crop&w=900&q=80',
-      'https://images.unsplash.com/photo-1618220179428-22790b461013?auto=format&fit=crop&w=900&q=80',
-      'https://images.unsplash.com/photo-1606744888344-493238951221?auto=format&fit=crop&w=900&q=80',
-    ];
-  
+    const [dbPhotos, setDbPhotos] = useState<string[]>([]);
+  const PHOTOS_FALLBACK = [
+    'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=900&q=80',
+    'https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&w=900&q=80',
+    'https://images.unsplash.com/photo-1567016376408-0226e4d0c1ea?auto=format&fit=crop&w=900&q=80',
+    'https://images.unsplash.com/photo-1631679706909-1844bbd07221?auto=format&fit=crop&w=900&q=80',
+    'https://images.unsplash.com/photo-1556909172-54557c7e4fb7?auto=format&fit=crop&w=900&q=80',
+  ];
+  const PHOTOS = dbPhotos.length > 0 ? dbPhotos : PHOTOS_FALLBACK;
+
+  useEffect(() => {
+    const kat = 'zjazdy'; // lub 'zadania' w EkranZadania
+    supabase.from('zdjecia_aplikacji').select('url').eq('kategoria', kat).order('kolejnosc')
+      .then(({ data }) => { if (data && data.length > 0) setDbPhotos(data.map(z => z.url)); });
+  }, []);
     const najblizszy = zjazdy.find(z => z.status === 'nadchodzacy');
     const filtered = filter === 'all' ? zjazdy
       : filter === 'upcoming' ? zjazdy.filter(z => z.status === 'nadchodzacy')
