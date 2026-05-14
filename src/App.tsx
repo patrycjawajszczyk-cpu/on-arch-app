@@ -4816,16 +4816,13 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
     const [obecnosciNajblizszy, setObecnosciNajblizszy] = useState<Obecnosc[]>([]);
     const [frekwencja, setFrekwencja] = useState(0);
     const [heroPhoto, setHeroPhoto] = useState('/wnetrze.jpg');
-    const [appPhotos, setAppPhotos] = useState<string[]>([]);
+  
 
     useEffect(() => {
       supabase.from('zdjecia_aplikacji').select('url, kategoria').order('kolejnosc')
         .then(({ data }) => {
           const hero = (data || []).find(z => z.kategoria === 'hero');
           if (hero) setHeroPhoto(hero.url);
-          const zjazdy = (data || []).filter(z => z.kategoria === 'zjazdy').map(z => z.url);
-          if (zjazdy.length > 0) setAppPhotos(zjazdy);
-        });
     }, []);
 
     const najblizszy = zjazdy.find(z => z.status === 'nadchodzacy');
@@ -4963,7 +4960,7 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
     cursor: 'pointer', minHeight: '320px', background: '#1a1614', color: 'white',
     boxShadow: '0 30px 60px -25px rgba(0,0,0,0.35)',
   }}>
-    <div style={{ position: 'absolute', inset: 0, background: `url(${HERO_BG}) center/cover`, filter: 'brightness(0.72) saturate(0.92)' }} />
+    <div style={{ position: 'absolute', inset: 0, background: `url(${heroPhoto}) center/cover`, filter: 'brightness(0.72) saturate(0.92)' }} />
     <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.65) 100%)' }} />
     <div style={{ position: 'absolute', top: 14, left: 14, width: 16, height: 16, borderTop: '1px solid rgba(255,255,255,0.5)', borderLeft: '1px solid rgba(255,255,255,0.5)' }}/>
     <div style={{ position: 'absolute', top: 14, right: 14, width: 16, height: 16, borderTop: '1px solid rgba(255,255,255,0.5)', borderRight: '1px solid rgba(255,255,255,0.5)' }}/>
@@ -5329,8 +5326,6 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
       </div>
     );
   }
-
-
   type KafelekDniaProps = {
     zjazd: Zjazd;
     dzien: 1 | 2;
@@ -5343,7 +5338,7 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
     odswiezObecnosci: () => void;
     wysylanie: boolean;
   };
-
+  
   function KafelekDnia({ zjazd, dzien, label, wpis, aktywnyFormularz, setAktywnyFormularz, zapiszObecnosc, usunObecnosc, odswiezObecnosci, wysylanie }: KafelekDniaProps) {
     const zakonczone = zjazd.status === 'zakonczony';
     const formularzAktywny = aktywnyFormularz?.zjazdId === zjazd.id && aktywnyFormularz?.dzien === dzien;
