@@ -5208,8 +5208,70 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
     const [modalProwadzacy, setModalProwadzacy] = useState<Prowadzacy | null>(null);
     const [aktywnyFormularz, setAktywnyFormularz] = useState<{ zjazdId: number; dzien: 1 | 2; typ: 'obecnosc' | 'nieobecnosc' | 'godziny'; powod?: string; godzPrzyb?: string; godzWyj?: string } | null>(null);
     const [wysylanie, setWysylanie] = useState(false);
-    const [zwinieteZakonczone, setZwinieteZakonczone] = useState(true);
-
+    const [filter, setFilter] = useState<'all' | 'upcoming' | 'past'>('all');
+    const [wybranyZjazd, setWybranyZjazd] = useState<Zjazd | null>(null);
+    const [countdown, setCountdown] = useState({ dni: 0, godz: 0, min: 0 });
+  
+    const SERIF = "'Cormorant Garamond', Georgia, serif";
+    const PHOTOS = [
+      'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=900&q=80',
+      'https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&w=900&q=80',
+      'https://images.unsplash.com/photo-1567016376408-0226e4d0c1ea?auto=format&fit=crop&w=900&q=80',
+      'https://images.unsplash.com/photo-1631679706909-1844bbd07221?auto=format&fit=crop&w=900&q=80',
+      'https://images.unsplash.com/photo-1556909172-54557c7e4fb7?auto=format&fit=crop&w=900&q=80',
+      'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?auto=format&fit=crop&w=900&q=80',
+    ];
+  
+    const najblizszy = zjazdy.find(z => z.status === 'nadchodzacy');
+    const filtered = filter === 'all' ? zjazdy
+      : filter === 'upcoming' ? zjazdy.filter(z => z.status === 'nadchodzacy')
+      : zjazdy.filter(z => z.status === 'zakonczony');
+  
+    useEffect(() => {
+      if (!najblizszy?.data_dzien1) return;
+      const update = () => {
+        const target = new Date(najblizszy.data_dzien1 + 'T09:00:00');
+        const diff = target.getTime() - Date.now();
+        if (diff <= 0) { setCountdown({ dni: 0, godz: 0, min: 0 }); return; }
+        setCountdown({ dni: Math.floor(diff / 86400000), godz: Math.floor((diff % 86400000) / 3600000), min: Math.floor((diff % 3600000) / 60000) });
+      };
+      update();
+      const id = setInterval(update, 30000);
+      return () => clearInterval(id);
+    }, [najblizszy?.data_dzien1]);
+  
+    useEffect(() => {
+      if (!user) return;
+      supabase.from('obecnosci').select('*').eq('user_id', user.id).then(({ data }) => setObecnosci(data || []));
+    }, [user]);
+  
+    async function odswiezObecnosci() {
+      const { data } = await supabase.from('obecnosci').select('*').eq('user_id', user.id);
+      setObecnosci(data || []);
+    }
+  
+    const pobierzDzien = (zjazdId: number, dzien: 1 | 2) => obecnosci.find(o => o.zjazd_id === zjazdId && o.dzien === dzien);
+  
+    async function zapiszObecnosc(zjazd: Zjazd, dzien: 1 | 2, status: 'potwierdzono' | 'nieobecnosc') {
+      if (!kursant) return;
+      setWysylanie(true);
+      const istniejaca = pobierzDzien(zjazd.id, dzien);
+      const powod = aktywnyFormularz?.powod || '';
+      if (istniejaca) {
+        await supabase.from('obecnosci').update({ status, powod_nieobecnosci: status === 'nieobecnosc' ? powod : null, zweryfikowano: false }).eq('id', istniejaca.id);
+      } else {
+        await supabase.from('obecnosci').insert([{ zjazd_id: zjazd.id, user_id: user.id, grupa_id: kursant.grupa_id, imie: kursant.imie, nazwisko: kursant.nazwisko, dzien, status, powod_nieobecnosci: status === 'nieobecnosc' ? powod : null }]);
+      }
+      await odswiezObecnosci();
+      setAktywnyFormularz(null);
+      setWysylanie(false);
+    }
+  
+    async function usunObecnosc(zjazdId: number, dzien: 1 | 2) {
+      await supabase.from('obecnosci').delete().eq('zjazd_id', zjazdId).eq('user_id', user.id).eq('dzien', dzien);
+      await odswiezObecnosci();
+    }
+  
     function pobierzICS(z: Zjazd) {
       const formatData = (data: string, godzina?: string | null) => {
         const d = data.replace(/-/g, '');
@@ -5217,214 +5279,220 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
         const [h, m] = godzina.split(':');
         return `${d}T${h}${m}00`;
       };
-    
       const nastepnyDzien = (data: string) => {
-        const d = new Date(data);
-        d.setDate(d.getDate() + 1);
+        const d = new Date(data); d.setDate(d.getDate() + 1);
         return d.toISOString().split('T')[0].replace(/-/g, '');
       };
-    
       const teraz = new Date().toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
-    
-      const linie: string[] = [
-        'BEGIN:VCALENDAR',
-        'VERSION:2.0',
-        'PRODID:-//ON-ARCH//PL',
-        'CALSCALE:GREGORIAN',
-        'METHOD:PUBLISH',
-      ];
-    
+      const linie: string[] = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//ON-ARCH//PL', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH'];
       const dodajDzien = (data: string, gStart?: string | null, gEnd?: string | null, nr: number = 1) => {
         const prowadzacy = (z.prowadzacy || []).map(p => `${p.imie} ${p.nazwisko}`).join(', ');
         const lokalizacja = z.typ === 'online' ? 'Online' : [z.sala, z.adres].filter(Boolean).join(', ');
         const allDay = !gStart;
         const start = allDay ? formatData(data) : formatData(data, gStart);
         const end = allDay ? nastepnyDzien(data) : formatData(data, gEnd);
-        const tytul = `ON-ARCH Zjazd ${z.nr} Dzien ${nr}`;
-        const opis = [
-          z.tematy ? `Temat: ${z.tematy}` : '',
-          prowadzacy ? `Prowadzacy: ${prowadzacy}` : '',
-        ].filter(Boolean).join('\\n');
-    
-        linie.push('BEGIN:VEVENT');
-        linie.push(`UID:onarch-${z.id}-${nr}@on-arch.pl`);
-        linie.push(`DTSTAMP:${teraz}`);
-        linie.push(`DTSTART${allDay ? ';VALUE=DATE' : ''}:${start}`);
-        linie.push(`DTEND${allDay ? ';VALUE=DATE' : ''}:${end}`);
-        linie.push(`SUMMARY:${tytul}`);
+        linie.push('BEGIN:VEVENT', `UID:onarch-${z.id}-${nr}@on-arch.pl`, `DTSTAMP:${teraz}`, `DTSTART${allDay ? ';VALUE=DATE' : ''}:${start}`, `DTEND${allDay ? ';VALUE=DATE' : ''}:${end}`, `SUMMARY:ON-ARCH Zjazd ${z.nr} Dzien ${nr}`);
         if (lokalizacja) linie.push(`LOCATION:${lokalizacja}`);
-        if (opis) linie.push(`DESCRIPTION:${opis}`);
+        if (prowadzacy) linie.push(`DESCRIPTION:Prowadzacy: ${prowadzacy}`);
         linie.push('END:VEVENT');
       };
-    
       if (z.data_dzien1) dodajDzien(z.data_dzien1, z.godzina_start_d1, z.godzina_end_d1, 1);
       if (z.data_dzien2) dodajDzien(z.data_dzien2, z.godzina_start_d2, z.godzina_end_d2, 2);
-    
       linie.push('END:VCALENDAR');
-    
-      const zawartość = linie.join('\r\n');
-      const dataUri = 'data:text/calendar;charset=utf-8,' + encodeURIComponent(zawartość);
-      const a = document.createElement('a');
-      a.href = dataUri;
-      a.download = `onarch-zjazd-${z.nr}.ics`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
+      const dataUri = 'data:text/calendar;charset=utf-8,' + encodeURIComponent(linie.join('\r\n'));
+      const a = document.createElement('a'); a.href = dataUri; a.download = `onarch-zjazd-${z.nr}.ics`;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
     }
-    useEffect(() => {
-      if (!user) return;
-      supabase.from('obecnosci').select('*').eq('user_id', user.id)
-        .then(({ data }) => setObecnosci(data || []));
-    }, [user]);
-
-    async function odswiezObecnosci() {
-      const { data } = await supabase.from('obecnosci').select('*').eq('user_id', user.id);
-      setObecnosci(data || []);
-    }
-
-    const pobierzDzien = (zjazdId: number, dzien: 1 | 2) =>
-      obecnosci.find(o => o.zjazd_id === zjazdId && o.dzien === dzien);
-
-    async function zapiszObecnosc(zjazd: Zjazd, dzien: 1 | 2, status: 'potwierdzono' | 'nieobecnosc') {
-      if (!kursant) return;
-      setWysylanie(true);
-      const istniejaca = pobierzDzien(zjazd.id, dzien);
-      const powod = aktywnyFormularz?.powod || '';
-      const godzinaData = {
-        godzina_przybycia: aktywnyFormularz?.godzPrzyb || null,
-        godzina_wyjscia: aktywnyFormularz?.godzWyj || null,
-      };
-      if (istniejaca) {
-        await supabase.from('obecnosci').update({
-          status, powod_nieobecnosci: status === 'nieobecnosc' ? powod : null,
-          zweryfikowano: false, ...godzinaData,
-        }).eq('id', istniejaca.id);
-      } else {
-        await supabase.from('obecnosci').insert([{
-          zjazd_id: zjazd.id, user_id: user.id,
-          grupa_id: kursant.grupa_id, imie: kursant.imie, nazwisko: kursant.nazwisko,
-          dzien, status, powod_nieobecnosci: status === 'nieobecnosc' ? powod : null,
-          ...godzinaData,
-        }]);
-      }
-      await odswiezObecnosci();
-      setAktywnyFormularz(null);
-      setWysylanie(false);
-    }
-
-    async function usunObecnosc(zjazdId: number, dzien: 1 | 2) {
-      await supabase.from('obecnosci').delete().eq('zjazd_id', zjazdId).eq('user_id', user.id).eq('dzien', dzien);
-      await odswiezObecnosci();
-    }
-
-
-
-
-    return (
-      <>
-        <div style={{ margin: '-18px -16px 20px', background: '#2a1f1f', padding: '16px 18px 20px', position: 'relative', overflow: 'hidden' }}>
-  <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', opacity: 0.07, pointerEvents: 'none' }} viewBox="0 0 420 80" preserveAspectRatio="xMidYMid slice">
-    <line x1="0" y1="20" x2="420" y2="20" stroke="white" strokeWidth="0.5"/>
-    <line x1="0" y1="40" x2="420" y2="40" stroke="white" strokeWidth="0.5"/>
-    <line x1="0" y1="60" x2="420" y2="60" stroke="white" strokeWidth="0.5"/>
-    <line x1="70" y1="0" x2="70" y2="80" stroke="white" strokeWidth="0.5"/>
-    <line x1="210" y1="0" x2="210" y2="80" stroke="white" strokeWidth="0.5"/>
-    <line x1="350" y1="0" x2="350" y2="80" stroke="white" strokeWidth="0.5"/>
-    <line x1="0" y1="0" x2="100" y2="80" stroke="white" strokeWidth="0.5"/>
-    <line x1="320" y1="0" x2="420" y2="80" stroke="white" strokeWidth="0.5"/>
-    <circle cx="390" cy="10" r="35" fill="none" stroke="white" strokeWidth="0.5"/>
-  </svg>
-  <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '4px' }}>Plan</div>
-          <div style={{ fontSize: '20px', color: 'white', fontFamily: 'Cormorant Garamond, serif', fontWeight: 300 }}>Twoje zjazdy</div>
-        </div>
-        {zjazdy.some(z => z.status === 'zakonczony') && (
-          <div onClick={() => setZwinieteZakonczone(v => !v)}
-            style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 2px', cursor: 'pointer', marginBottom: '6px', borderBottom: '0.5px solid var(--border)' }}>
-            <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-              Zakończone ({zjazdy.filter(z => z.status === 'zakonczony').length})
-            </span>
-            <span style={{ fontSize: '12px', color: 'var(--text-muted)', display: 'inline-block', transform: zwinieteZakonczone ? 'rotate(-90deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}>▾</span>
-          </div>
-        )}
-        {zjazdy.filter(z => zwinieteZakonczone ? z.status !== 'zakonczony' : true).map((z) => (
-          <div key={z.id} className={`sess-card ${z.status} fade-in`}>
-            <div className="sess-top">
-              <span className="sess-nr">Zjazd {z.nr}</span>
-              <span className={`s-badge s-${z.status}`}>{z.status === 'nadchodzacy' ? 'Nadchodzący' : 'Zakończony'}</span>
-            </div>
-            <div className="sess-date">{z.daty}</div>
-            {z.typ === 'online' && (
-              <div style={{ padding: '6px 14px 2px' }}>
-                <span style={{ display: 'inline-block', fontSize: '10px', fontWeight: 600, background: '#e8f0fe', color: '#1565c0', padding: '3px 10px', borderRadius: '20px', marginBottom: '6px' }}>
-                  🌐 Zajęcia online
-                </span>
+  
+    // ── WIDOK SZCZEGÓŁÓW ──
+    if (wybranyZjazd) {
+      const z = wybranyZjazd;
+      const zIdx = zjazdy.findIndex(zj => zj.id === z.id);
+      const photo = PHOTOS[zIdx % PHOTOS.length];
+      return (
+        <>
+          <div style={{ margin: '-18px -16px 0', position: 'relative', height: '260px' }}>
+            <div style={{ position: 'absolute', inset: 0, background: `url(${photo}) center/cover` }} />
+            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.1) 40%, var(--bg, #f8f5f0) 100%)' }} />
+            <button onClick={() => setWybranyZjazd(null)} style={{ position: 'absolute', top: 16, left: 16, width: 38, height: 38, borderRadius: 12, background: 'rgba(255,255,255,0.92)', border: 'none', display: 'grid', placeItems: 'center', cursor: 'pointer' }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#0F0E0C" strokeWidth="2"><path d="M15 6l-6 6 6 6"/></svg>
+            </button>
+            <div style={{ position: 'absolute', bottom: 32, left: 18, right: 18, color: '#fff' }}>
+              <div style={{ fontSize: '10px', letterSpacing: '0.28em', textTransform: 'uppercase', opacity: 0.8, marginBottom: '6px' }}>
+                Zjazd {z.nr}{z.status === 'nadchodzacy' && countdown.dni > 0 ? ` · za ${countdown.dni} dni` : z.status === 'zakonczony' ? ' · Zakończony' : ''}
               </div>
-            )}
-            <div className="sess-rows">
-              {z.typ === 'online' ? (
-                z.link_online && (
-                  <div className="sess-row" style={{ paddingBottom: '4px' }}>
-                    <a href={z.link_online} target="_blank" rel="noopener noreferrer"
-                      style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: '#1565c0', color: 'white', padding: '8px 16px', borderRadius: '10px', fontSize: '13px', fontWeight: 600, textDecoration: 'none' }}>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
-                      Dołącz do zajęć
-                    </a>
-                  </div>
-                )
-              ) : (
-                <>
-                  {z.sala && z.sala !== 'Do uzupełnienia' && <div className="sess-row"><span className="sess-lbl">Sala:</span> {z.sala}</div>}
-                  {z.adres && z.adres !== 'Do uzupełnienia' && <div className="sess-row"><span className="sess-lbl">Adres:</span> {z.adres}</div>}
-                </>
-              )}
-              {z.tematy && <div className="sess-row"><span className="sess-lbl">Temat:</span> {z.tematy}</div>}
-              {z.status === 'nadchodzacy' && (
-                <div style={{ marginTop: '8px' }}>
-                  <button onClick={() => pobierzICS(z)}
-                    style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'none', border: '0.5px solid var(--brand-mid)', borderRadius: '8px', padding: '6px 12px', fontSize: '11px', fontWeight: 600, color: 'var(--brand-dark)', cursor: 'pointer', fontFamily: 'Jost, sans-serif' }}>
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                    Dodaj do kalendarza
-                  </button>
+              <div style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: '26px', lineHeight: 1.1 }}>{z.daty}</div>
+            </div>
+          </div>
+  
+          <div style={{ paddingTop: '16px' }}>
+            {z.tematy && <div style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: '20px', color: 'var(--text)', marginBottom: '14px', lineHeight: 1.3 }}>{z.tematy}</div>}
+  
+            {/* Info grid */}
+            <div style={{ background: 'white', borderRadius: '16px', padding: '16px', marginBottom: '10px', border: '0.5px solid var(--border)' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+                <div>
+                  <div style={{ fontSize: '9px', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '4px' }}>Data</div>
+                  <div style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: '20px', color: 'var(--text)' }}>{z.daty}</div>
+                  {z.godzina_start_d1 && <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>{z.godzina_start_d1}–{z.godzina_end_d1}</div>}
+                </div>
+                <div>
+                  <div style={{ fontSize: '9px', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '4px' }}>Tryb</div>
+                  <div style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: '20px', color: 'var(--text)' }}>{z.typ === 'online' ? 'Online' : 'Stacjonarnie'}</div>
+                  {z.typ !== 'online' && z.sala && z.sala !== 'Do uzupełnienia' && <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>{z.sala}</div>}
+                </div>
+              </div>
+              {z.typ !== 'online' && z.adres && z.adres !== 'Do uzupełnienia' && (
+                <div style={{ marginTop: '12px', paddingTop: '12px', borderTop: '0.5px solid var(--border-soft)' }}>
+                  <div style={{ fontSize: '9px', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '4px' }}>Adres</div>
+                  <div style={{ fontSize: '13px', color: 'var(--text)' }}>{z.adres}</div>
                 </div>
               )}
-              {z.prowadzacy && z.prowadzacy.length > 0 && (
-  <div style={{ marginTop: '8px', paddingTop: '8px', borderTop: '0.5px solid var(--border-soft)', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-    {z.prowadzacy.map((p) => (
-      <button key={p.id} onClick={() => setModalProwadzacy(p)}
-        style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#f9f5f2', borderRadius: '10px', padding: '7px 10px', border: 'none', cursor: 'pointer', width: '100%', textAlign: 'left' }}>
-        {p.avatar_url
-          ? <img src={p.avatar_url} alt={p.imie} style={{ width: '28px', height: '28px', borderRadius: '50%', objectFit: 'cover', flexShrink: 0, border: '1.5px solid var(--brand-mid)' }} />
-          : <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'var(--brand-light)', border: '1.5px solid var(--brand-mid)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 700, color: 'var(--brand-dark)', flexShrink: 0 }}>
-              {p.imie[0]}{p.nazwisko[0]}
             </div>
-        }
-        <div>
-          <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '1px' }}>Prowadzący</div>
-          <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--brand-dark)' }}>{p.imie} {p.nazwisko}</div>
-        </div>
-        <span style={{ marginLeft: 'auto', fontSize: '11px', color: 'var(--brand)', textDecoration: 'underline', textDecorationStyle: 'dotted' }}>info</span>
-      </button>
-    ))}
-  </div>
-)}
+  
+            {/* Link online */}
+            {z.typ === 'online' && z.link_online && (
+              <a href={z.link_online} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#1565c0', borderRadius: '14px', padding: '14px 16px', textDecoration: 'none', marginBottom: '10px' }}>
+                <div>
+                  <div style={{ fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.7)', marginBottom: '2px' }}>Zajęcia online</div>
+                  <div style={{ fontSize: '14px', fontWeight: 600, color: 'white' }}>Dołącz do Google Meet →</div>
+                </div>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+              </a>
+            )}
+  
+            {/* Prowadzący */}
+            {z.prowadzacy && z.prowadzacy.length > 0 && (
+              <div style={{ background: 'white', borderRadius: '16px', padding: '14px 16px', marginBottom: '10px', border: '0.5px solid var(--border)' }}>
+                <div style={{ fontSize: '9px', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '10px' }}>Prowadzący</div>
+                {z.prowadzacy.map(p => (
+                  <button key={p.id} onClick={() => setModalProwadzacy(p)} style={{ display: 'flex', alignItems: 'center', gap: '12px', width: '100%', background: 'none', border: 'none', cursor: 'pointer', padding: '4px 0', textAlign: 'left', fontFamily: 'inherit' }}>
+                    {p.avatar_url
+                      ? <img src={p.avatar_url} alt={p.imie} style={{ width: '48px', height: '48px', borderRadius: '50%', objectFit: 'cover', border: '1.5px solid var(--border)' }} />
+                      : <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'var(--brand-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '15px', fontWeight: 600, color: 'var(--brand)', flexShrink: 0 }}>{p.imie[0]}{p.nazwisko[0]}</div>
+                    }
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: '15px', fontWeight: 600, color: 'var(--text)' }}>{p.imie} {p.nazwisko}</div>
+                      {p.bio && <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.bio}</div>}
+                    </div>
+                    <span style={{ fontSize: '11px', color: 'var(--brand)', flexShrink: 0 }}>info →</span>
+                  </button>
+                ))}
+              </div>
+            )}
+  
+            {/* Obecność */}
+            <div style={{ background: 'white', borderRadius: '16px', padding: '14px 16px', marginBottom: '10px', border: '0.5px solid var(--border)' }}>
+              <div style={{ fontSize: '9px', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '10px' }}>Twoja obecność</div>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <KafelekDnia zjazd={z} dzien={1} wpis={obecnosci.find(o => o.zjazd_id === z.id && o.dzien === 1)} aktywnyFormularz={aktywnyFormularz} setAktywnyFormularz={setAktywnyFormularz} zapiszObecnosc={zapiszObecnosc} usunObecnosc={usunObecnosc} odswiezObecnosci={odswiezObecnosci} wysylanie={wysylanie} label={z.data_dzien1 ? new Date(z.data_dzien1).toLocaleDateString('pl-PL', { weekday: 'long', day: 'numeric', month: 'long' }) : 'Dzień 1'} />
+                {z.data_dzien2 && <KafelekDnia zjazd={z} dzien={2} wpis={obecnosci.find(o => o.zjazd_id === z.id && o.dzien === 2)} aktywnyFormularz={aktywnyFormularz} setAktywnyFormularz={setAktywnyFormularz} zapiszObecnosc={zapiszObecnosc} usunObecnosc={usunObecnosc} odswiezObecnosci={odswiezObecnosci} wysylanie={wysylanie} label={new Date(z.data_dzien2).toLocaleDateString('pl-PL', { weekday: 'long', day: 'numeric', month: 'long' })} />}
+              </div>
             </div>
-
-            {/* Kafelki per dzień */}
-            <div style={{ display: 'flex', gap: '8px', padding: '8px 14px 14px' }}>
-              <KafelekDnia zjazd={z} dzien={1} wpis={obecnosci.find(o => o.zjazd_id === z.id && o.dzien === 1)} aktywnyFormularz={aktywnyFormularz} setAktywnyFormularz={setAktywnyFormularz} zapiszObecnosc={zapiszObecnosc} usunObecnosc={usunObecnosc} odswiezObecnosci={odswiezObecnosci} wysylanie={wysylanie} label={z.data_dzien1 ? new Date(z.data_dzien1).toLocaleDateString('pl-PL', { weekday: 'long', day: 'numeric', month: 'long' }) : 'Dzień 1'} />
-              {z.data_dzien2 && <KafelekDnia zjazd={z} dzien={2} wpis={obecnosci.find(o => o.zjazd_id === z.id && o.dzien === 2)} aktywnyFormularz={aktywnyFormularz} setAktywnyFormularz={setAktywnyFormularz} zapiszObecnosc={zapiszObecnosc} usunObecnosc={usunObecnosc} odswiezObecnosci={odswiezObecnosci} wysylanie={wysylanie} label={new Date(z.data_dzien2).toLocaleDateString('pl-PL', { weekday: 'long', day: 'numeric', month: 'long' })} />}
-              {/* Sekcja przygotowania — tylko dla grup PWO/POO */}
-              {grupaInfo && czyOdwroconaKlasa(grupaInfo.nazwa) && (
-                <SekcjaPrzygotowania zjazd={z} user={user} kursant={kursant} />
-              )}
-            </div>
+  
+            {/* Dodaj do kalendarza */}
+            {z.status === 'nadchodzacy' && (
+              <button onClick={() => pobierzICS(z)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', width: '100%', background: 'none', border: '0.5px solid var(--border)', borderRadius: '12px', padding: '11px 16px', fontSize: '12px', color: 'var(--brand)', cursor: 'pointer', fontFamily: 'Jost, sans-serif', marginBottom: '10px' }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                Dodaj do kalendarza (.ics)
+              </button>
+            )}
+  
+            {/* PWO sekcja */}
+            {grupaInfo && czyOdwroconaKlasa(grupaInfo.nazwa) && (
+              <SekcjaPrzygotowania zjazd={z} user={user} kursant={kursant} />
+            )}
           </div>
-        ))}
+          {modalProwadzacy && <ModalProwadzacy p={modalProwadzacy} onZamknij={() => setModalProwadzacy(null)} />}
+        </>
+      );
+    }
+  
+    // ── WIDOK LISTY ──
+    return (
+      <>
+        {/* Nagłówek */}
+        <div style={{ padding: '4px 0 16px' }}>
+          <div style={{ fontSize: '9.5px', letterSpacing: '0.28em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '8px', fontWeight: 600 }}>
+            {kursant?.grupy?.edycja || ''}{zjazdy.length > 0 ? ` · ${zjazdy.length} zjazdów` : ''}
+          </div>
+          <div style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: '38px', lineHeight: 1, letterSpacing: '-0.02em', color: 'var(--text)' }}>Zjazdy</div>
+        </div>
+  
+        {/* Filtry */}
+        <div style={{ display: 'flex', gap: '6px', marginBottom: '16px', overflowX: 'auto', scrollbarWidth: 'none' as any }}>
+          {([['all', 'Wszystkie'], ['upcoming', 'Najbliższe'], ['past', 'Minione']] as const).map(([id, label]) => (
+            <button key={id} onClick={() => setFilter(id)} style={{ padding: '7px 14px', borderRadius: 999, background: filter === id ? '#1A1715' : 'transparent', color: filter === id ? '#fff' : 'var(--text)', border: filter === id ? 'none' : '0.5px solid var(--border)', fontSize: '11px', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap', fontFamily: 'Jost, sans-serif' }}>{label}</button>
+          ))}
+        </div>
+  
+        {/* Karty */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          {filtered.map((z) => {
+            const zIdx = zjazdy.findIndex(zj => zj.id === z.id);
+            const photo = PHOTOS[zIdx % PHOTOS.length];
+            const isHero = z.id === najblizszy?.id;
+            const d1 = obecnosci.find(o => o.zjazd_id === z.id && o.dzien === 1);
+            const d2 = obecnosci.find(o => o.zjazd_id === z.id && o.dzien === 2);
+            const obecny = d1?.status === 'potwierdzono' || d2?.status === 'potwierdzono';
+  
+            if (isHero) return (
+              <button key={z.id} onClick={() => setWybranyZjazd(z)} style={{ display: 'block', width: '100%', textAlign: 'left', border: 'none', padding: 0, background: 'transparent', borderRadius: '20px', overflow: 'hidden', cursor: 'pointer', fontFamily: 'inherit' }}>
+                <div style={{ position: 'relative', minHeight: '210px', background: '#0F0E0C', borderRadius: '20px', overflow: 'hidden', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '16px', gap: '14px' }}>
+                  <div style={{ position: 'absolute', inset: 0, background: `url(${photo}) center/cover`, opacity: 0.38 }} />
+                  <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(15,14,12,0.25) 0%, rgba(15,14,12,0.88) 85%)' }} />
+                  <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span style={{ width: 6, height: 6, borderRadius: 99, background: '#B35758', boxShadow: '0 0 0 4px rgba(179,87,88,0.25)', display: 'block', flexShrink: 0 }} />
+                    <span style={{ fontSize: '9px', letterSpacing: '0.22em', textTransform: 'uppercase', fontWeight: 600, color: 'rgba(255,255,255,0.85)' }}>Wkrótce</span>
+                  </div>
+                  <div style={{ position: 'relative' }}>
+                    <div style={{ fontSize: '9.5px', letterSpacing: '0.26em', textTransform: 'uppercase', opacity: 0.72, color: 'white', marginBottom: '6px' }}>Zjazd {z.nr} · {z.daty}</div>
+                    {z.tematy && <div style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: '21px', lineHeight: 1.1, color: 'white', marginBottom: '14px' }}>{z.tematy}</div>}
+                    <div style={{ display: 'flex', gap: '6px', marginBottom: '12px' }}>
+                      {[{ n: String(countdown.dni).padStart(2,'0'), l: 'dni' }, { n: String(countdown.godz).padStart(2,'0'), l: 'godz' }, { n: String(countdown.min).padStart(2,'0'), l: 'min' }].map(({ n, l }) => (
+                        <div key={l} style={{ flex: 1, padding: '8px 4px', textAlign: 'center', background: 'rgba(255,255,255,0.10)', border: '1px solid rgba(255,255,255,0.14)', borderRadius: '10px' }}>
+                          <div style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: '22px', lineHeight: 1, color: '#fff' }}>{n}</div>
+                          <div style={{ fontSize: '8px', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.6)', marginTop: '3px' }}>{l}</div>
+                        </div>
+                      ))}
+                    </div>
+                    <div style={{ width: '100%', padding: '11px 14px', borderRadius: '12px', background: '#fff', color: '#0F0E0C', fontSize: '12px', fontWeight: 600, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span>Szczegóły i obecność</span><span>→</span>
+                    </div>
+                  </div>
+                </div>
+              </button>
+            );
+  
+            return (
+              <button key={z.id} onClick={() => setWybranyZjazd(z)} style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', background: 'white', borderRadius: '16px', padding: '12px 14px', border: '0.5px solid var(--border)', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit', width: '100%' }}>
+                <div style={{ width: '56px', height: '70px', borderRadius: '10px', background: `url(${photo}) center/cover`, flexShrink: 0 }} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '4px' }}>Zjazd {z.nr} · {z.daty}</div>
+                  {z.tematy && <div style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: '16px', lineHeight: 1.2, color: 'var(--text)', marginBottom: '5px', overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' as any }}>{z.tematy}</div>}
+                  <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' }}>
+                    <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>{z.typ === 'online' ? '🌐 Online' : '📍 Stacjonarnie'}</span>
+                    {z.prowadzacy && z.prowadzacy.length > 0 && <><span style={{ width: 2, height: 2, borderRadius: 99, background: 'var(--text-muted)', display: 'block' }} /><span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>{z.prowadzacy.map(p => p.imie).join(', ')}</span></>}
+                  </div>
+                </div>
+                <div style={{ flexShrink: 0, marginTop: '2px' }}>
+                  {z.status === 'zakonczony' && obecny && <span style={{ fontSize: '9px', color: '#4a7a47', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase' }}>✓ Obecna</span>}
+                  {z.status === 'zakonczony' && !obecny && <span style={{ fontSize: '9px', color: '#999', fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase' }}>—</span>}
+                  {z.status === 'nadchodzacy' && <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>›</span>}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+  
+        {filtered.length === 0 && (
+          <div style={{ textAlign: 'center', padding: '40px 24px', color: 'var(--text-muted)', fontFamily: SERIF, fontStyle: 'italic', fontSize: '18px' }}>Brak zjazdów w tej kategorii</div>
+        )}
+  
         {modalProwadzacy && <ModalProwadzacy p={modalProwadzacy} onZamknij={() => setModalProwadzacy(null)} />}
       </>
     );
   }
-
   function EkranOgloszenia({ ogloszenia, onOtworzOgloszenie }: { ogloszenia: Ogloszenie[]; onOtworzOgloszenie: (o: Ogloszenie) => void }) {
     return (
       <>
