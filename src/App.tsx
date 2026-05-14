@@ -1570,7 +1570,7 @@ function urlBase64ToUint8Array(base64String: string) {
   // ─── PANEL PROWADZĄCEGO ──────────────────────────────────────────────────────
 
   function PanelProwadzacego({ user, kursant, onWyloguj }: { user: User; kursant: Kursant | null; onWyloguj: () => void }) {
-    const [aktywnaZakladka, setAktywnaZakladka] = useState('zadania');
+    const [aktywnaZakladka, setAktywnaZakladka] = useState('home');
     const [mojeProwadzacyId, setMojeProwadzacyId] = useState<number | null>(null);
     const [mojeGrupy, setMojeGrupy] = useState<Grupa[]>([]);
     const [mojeGrupyIds, setMojeGrupyIds] = useState<number[]>([]);
@@ -1759,9 +1759,10 @@ function urlBase64ToUint8Array(base64String: string) {
             {kursant?.imie} {kursant?.nazwisko}
           </div>
           <nav className="biuro-sidebar-nav">
-            {[
+          {[
+              { id: 'home',      icon: <Home size={18}/>,        label: 'Pulpit' },
               { id: 'zadania',   icon: <BookOpen size={18}/>,    label: 'Zadania' },
-              { id: 'zjazdy',    icon: <Calendar size={18}/>,    label: 'Zjazdy' },
+              { id: 'zjazdy',    icon: <Calendar size={18}/>,    label: 'Zajęcia' },
               { id: 'obecnosc',  icon: <CheckSquare size={18}/>, label: 'Obecność' },
               { id: 'kursanci',  icon: <User size={18}/>,        label: 'Kursanci' },
               { id: 'ogloszenia',icon: <Bell size={18}/>,        label: 'Ogłoszenia' },
@@ -1788,8 +1789,9 @@ function urlBase64ToUint8Array(base64String: string) {
           </header>
           <div className="biuro-page-header">
             <div className="biuro-page-title">
+            {aktywnaZakladka === 'home' && 'Pulpit'}
               {aktywnaZakladka === 'zadania' && 'Zadania'}
-              {aktywnaZakladka === 'zjazdy' && 'Zjazdy'}
+              {aktywnaZakladka === 'zjazdy' && 'Zajęcia'}
               {aktywnaZakladka === 'obecnosc' && 'Obecność'}
               {aktywnaZakladka === 'kursanci' && 'Kursanci'}
               {aktywnaZakladka === 'ogloszenia' && 'Ogłoszenia'}
@@ -1803,6 +1805,59 @@ function urlBase64ToUint8Array(base64String: string) {
                 <div style={{ fontSize: '40px', marginBottom: '12px' }}>⚠️</div>
                 <p style={{ fontSize: '14px', lineHeight: '1.6' }}>Twoje konto nie jest powiązane z profilem prowadzącego.<br />Skontaktuj się z biurem.</p>
               </div>
+            )}
+            {aktywnaZakladka === 'home' && (
+              <>
+                <div style={{ marginBottom: '28px' }}>
+                  <div style={{ fontSize: '10px', letterSpacing: '0.28em', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '8px' }}>Witaj z powrotem</div>
+                  <div style={{ fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic', fontSize: '32px', color: 'var(--brand-dark)', lineHeight: 1.1, marginBottom: '4px' }}>
+                    {ladowanie ? 'Ładowanie...' : (() => { const p = prowadzacy.find ? undefined : undefined; return `${kursant?.imie || ''} ${kursant?.nazwisko || ''}`; })()}
+                  </div>
+                  <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                    {mojeGrupy.length > 0 ? `${mojeGrupy.length} ${mojeGrupy.length === 1 ? 'grupa' : 'grupy'} · ${zjazdy.filter(z => z.status === 'nadchodzacy').length} nadchodzących zajęć` : 'Panel prowadzącego On-Arch'}
+                  </div>
+                </div>
+
+                <div className="biuro-kafelki">
+                  {[
+                    { id: 'zadania',    label: 'Zadania',    opis: `${zadania.length} zadań · ${odpowiedziZadan.length} odpowiedzi`,   icon: <BookOpen size={22}/> },
+                    { id: 'zjazdy',     label: 'Zajęcia',    opis: `${zjazdy.filter(z => z.status === 'nadchodzacy').length} nadchodzących`,  icon: <Calendar size={22}/> },
+                    { id: 'obecnosc',   label: 'Obecność',   opis: 'Weryfikacja list',                                                  icon: <CheckSquare size={22}/> },
+                    { id: 'kursanci',   label: 'Kursanci',   opis: `${kursanci.length} osób`,                                           icon: <User size={22}/> },
+                    { id: 'ogloszenia', label: 'Ogłoszenia', opis: `${ogloszenia.length} ogłoszeń`,                                     icon: <Bell size={22}/> },
+                  ].map(k => (
+                    <div key={k.id} onClick={() => setAktywnaZakladka(k.id)} className="biuro-kafelek">
+                      <div className="biuro-kafelek-icon">{k.icon}</div>
+                      <div>
+                        <div className="biuro-kafelek-label">{k.label}</div>
+                        <div className="biuro-kafelek-opis">{k.opis}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {zjazdy.filter(z => z.status === 'nadchodzacy').length > 0 && (
+                  <div style={{ marginTop: '24px' }}>
+                    <div style={{ fontSize: '10px', letterSpacing: '0.24em', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '12px' }}>Najbliższe zajęcia</div>
+                    {zjazdy.filter(z => z.status === 'nadchodzacy').slice(0, 3).map(z => {
+                      const g = mojeGrupy.find(gr => gr.id === z.grupa_id);
+                      return (
+                        <div key={z.id} onClick={() => setAktywnaZakladka('zjazdy')}
+                          style={{ background: 'white', borderRadius: '12px', border: '0.5px solid var(--border)', padding: '12px 16px', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '14px', cursor: 'pointer' }}>
+                          <div style={{ width: '42px', height: '42px', borderRadius: '10px', background: 'var(--brand-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                            <span style={{ fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic', fontSize: '16px', fontWeight: 500, color: 'var(--brand)' }}>{z.nr}</span>
+                          </div>
+                          <div style={{ flex: 1 }}>
+                            <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text)', marginBottom: '2px' }}>{z.daty}</div>
+                            <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{g?.nazwa || '—'}{z.tematy ? ` · ${z.tematy}` : ''}</div>
+                          </div>
+                          <span style={{ fontSize: '9px', fontWeight: 700, padding: '3px 9px', borderRadius: '999px', background: '#e8f5e9', color: '#2e7d32', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Nadchodzące</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </>
             )}
             {!ladowanie && mojeProwadzacyId && mojeGrupyIds.length === 0 && (
               <div style={{ textAlign: 'center', padding: '40px 24px', color: 'var(--text-muted)' }}>
@@ -2102,8 +2157,9 @@ function urlBase64ToUint8Array(base64String: string) {
             )}
           </main>
           <nav className="bottom-nav biuro-mobile-nav">
+          <button className={`nav-item ${aktywnaZakladka === 'home' ? 'active' : ''}`} onClick={() => setAktywnaZakladka('home')}><Home size={20} /><span className="nav-label">Pulpit</span></button>
             <button className={`nav-item ${aktywnaZakladka === 'zadania' ? 'active' : ''}`} onClick={() => setAktywnaZakladka('zadania')}><BookOpen size={20} /><span className="nav-label">Zadania</span></button>
-            <button className={`nav-item ${aktywnaZakladka === 'zjazdy' ? 'active' : ''}`} onClick={() => setAktywnaZakladka('zjazdy')}><Calendar size={20} /><span className="nav-label">Zjazdy</span></button>
+            <button className={`nav-item ${aktywnaZakladka === 'zjazdy' ? 'active' : ''}`} onClick={() => setAktywnaZakladka('zjazdy')}><Calendar size={20} /><span className="nav-label">Zajęcia</span></button>
             <button className={`nav-item ${aktywnaZakladka === 'obecnosc' ? 'active' : ''}`} onClick={() => setAktywnaZakladka('obecnosc')}><CheckSquare size={20} /><span className="nav-label">Obecność</span></button>
             <button className={`nav-item ${aktywnaZakladka === 'kursanci' ? 'active' : ''}`} onClick={() => setAktywnaZakladka('kursanci')}><User size={20} /><span className="nav-label">Kursanci</span></button>
             <button className={`nav-item ${aktywnaZakladka === 'ogloszenia' ? 'active' : ''}`} onClick={() => setAktywnaZakladka('ogloszenia')}><Bell size={20} /><span className="nav-label">Ogłoszenia</span></button>
