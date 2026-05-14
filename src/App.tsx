@@ -254,8 +254,8 @@ function urlBase64ToUint8Array(base64String: string) {
   
     const SERIF = "'Cormorant Garamond', Georgia, serif";
     const PHOTOS = [
-      'https://images.unsplash.com/photo-1631679706909-1844bbd07221?auto=format&fit=crop&w=300&q=70',
-      'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=300&q=70',
+      'https://images.unsplash.com/photo-1664638413302-d1ca29ac885b?auto=format&fit=crop&w=300&q=70',
+      'https://images.unsplash.com/photo-1603901622056-0a5bee231395?auto=format&fit=crop&w=300&q=70',
       'https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&w=300&q=70',
       'https://images.unsplash.com/photo-1567016376408-0226e4d0c1ea?auto=format&fit=crop&w=300&q=70',
       'https://images.unsplash.com/photo-1556909172-54557c7e4fb7?auto=format&fit=crop&w=300&q=70',
