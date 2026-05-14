@@ -2870,7 +2870,6 @@ function urlBase64ToUint8Array(base64String: string) {
         miasto: nowyProwadzacy.miasto || null,
     user_id: nowyProwadzacy.user_id || null,
   }]);
-      };
       if (error) { setKomunikat('Blad: ' + error.message); } else { setKomunikat('Prowadzący dodany!'); setNowyProwadzacy({ imie: '', nazwisko: '', bio: '', avatar_url: '', email: '', telefon: '', notatki: '', miasto: '', user_id: '' }); pobierzProwadzacy(); }
     }
 
