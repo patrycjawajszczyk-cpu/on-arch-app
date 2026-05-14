@@ -1572,6 +1572,7 @@ function urlBase64ToUint8Array(base64String: string) {
   function PanelProwadzacego({ user, kursant, onWyloguj }: { user: User; kursant: Kursant | null; onWyloguj: () => void }) {
     const [aktywnaZakladka, setAktywnaZakladka] = useState('home');
     const [mojeProwadzacyId, setMojeProwadzacyId] = useState<number | null>(null);
+    const [mojeImieNazwisko, setMojeImieNazwisko] = useState('');
     const [mojeGrupy, setMojeGrupy] = useState<Grupa[]>([]);
     const [mojeGrupyIds, setMojeGrupyIds] = useState<number[]>([]);
     const [zjazdy, setZjazdy] = useState<Zjazd[]>([]);
@@ -1604,8 +1605,9 @@ function urlBase64ToUint8Array(base64String: string) {
         .eq('user_id', user.id)
         .single();
 
-      const pid = pData?.id;
-      setMojeProwadzacyId(pid || null);
+        const pid = pData?.id;
+        setMojeProwadzacyId(pid || null);
+        if (pData) setMojeImieNazwisko(`${pData.imie} ${pData.nazwisko}`);
 
       if (!pid) {
         setLadowanie(false);
@@ -1811,7 +1813,7 @@ function urlBase64ToUint8Array(base64String: string) {
                 <div style={{ marginBottom: '28px' }}>
                   <div style={{ fontSize: '10px', letterSpacing: '0.28em', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '8px' }}>Witaj z powrotem</div>
                   <div style={{ fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic', fontSize: '32px', color: 'var(--brand-dark)', lineHeight: 1.1, marginBottom: '4px' }}>
-                    {ladowanie ? 'Ładowanie...' : (() => { const p = prowadzacy.find ? undefined : undefined; return `${kursant?.imie || ''} ${kursant?.nazwisko || ''}`; })()}
+                  {ladowanie ? 'Ładowanie...' : (mojeImieNazwisko || user.email.split('@')[0])}
                   </div>
                   <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
                     {mojeGrupy.length > 0 ? `${mojeGrupy.length} ${mojeGrupy.length === 1 ? 'grupa' : 'grupy'} · ${zjazdy.filter(z => z.status === 'nadchodzacy').length} nadchodzących zajęć` : 'Panel prowadzącego On-Arch'}
