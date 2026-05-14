@@ -250,13 +250,20 @@ function urlBase64ToUint8Array(base64String: string) {
     const [linkPracy, setLinkPracy] = useState('');
     const [komentarz, setKomentarz] = useState('');
     const [wysylanie, setWysylanie] = useState(false);
-    const [sukces, setSukces] = useState<number | null>(null);
-
-    useEffect(() => {
-      if (!kursant?.grupa_id) return;
-      pobierz();
-    }, [kursant]);
-
+    const [pokazWyslane, setPokazWyslane] = useState(false);
+  
+    const SERIF = "'Cormorant Garamond', Georgia, serif";
+    const PHOTOS = [
+      'https://images.unsplash.com/photo-1631679706909-1844bbd07221?auto=format&fit=crop&w=300&q=70',
+      'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=300&q=70',
+      'https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&w=300&q=70',
+      'https://images.unsplash.com/photo-1567016376408-0226e4d0c1ea?auto=format&fit=crop&w=300&q=70',
+      'https://images.unsplash.com/photo-1556909172-54557c7e4fb7?auto=format&fit=crop&w=300&q=70',
+    ];
+    const KOLORY = ['#B35758', '#E9A72D', '#6B9C68', '#B35758', '#6B9C68'];
+  
+    useEffect(() => { if (!kursant?.grupa_id) return; pobierz(); }, [kursant]);
+  
     async function pobierz() {
       setLadowanie(true);
       const [{ data: zad }, { data: odp }] = await Promise.all([
@@ -267,9 +274,9 @@ function urlBase64ToUint8Array(base64String: string) {
       setOdpowiedzi(odp || []);
       setLadowanie(false);
     }
-
+  
     const odpowiedzDlaZadania = (zid: number) => odpowiedzi.find(o => o.zadanie_id === zid);
-
+  
     async function wyslij(zadanie: Zadanie) {
       if (!linkPracy.trim() || !kursant) return;
       setWysylanie(true);
@@ -277,115 +284,122 @@ function urlBase64ToUint8Array(base64String: string) {
       if (istniejaca) {
         await supabase.from('zadania_odpowiedzi').update({ link_pracy: linkPracy, komentarz: komentarz || null }).eq('id', istniejaca.id);
       } else {
-        await supabase.from('zadania_odpowiedzi').insert([{
-          zadanie_id: zadanie.id,
-          user_id: user.id,
-          imie: kursant.imie,
-          nazwisko: kursant.nazwisko,
-          link_pracy: linkPracy,
-          komentarz: komentarz || null,
-        }]);
+        await supabase.from('zadania_odpowiedzi').insert([{ zadanie_id: zadanie.id, user_id: user.id, imie: kursant.imie, nazwisko: kursant.nazwisko, link_pracy: linkPracy, komentarz: komentarz || null }]);
       }
-      setSukces(zadanie.id);
-      setAktywneZadanie(null);
-      setLinkPracy('');
-      setKomentarz('');
+      setAktywneZadanie(null); setLinkPracy(''); setKomentarz('');
       await pobierz();
       setWysylanie(false);
     }
-
-    if (!kursant?.grupa_id) return (
-      <div style={{ padding: '24px', textAlign: 'center', color: 'var(--text-muted)' }}>
-        Nie jesteś przypisany do żadnej grupy.
-      </div>
-    );
-
+  
+    if (!kursant?.grupa_id) return <div style={{ padding: '24px', textAlign: 'center', color: 'var(--text-muted)' }}>Nie jesteś przypisana do żadnej grupy.</div>;
+  
+    const pracaZaliczeniowa = zadania.filter(z => z.typ === 'praca_zaliczeniowa');
+    const aktywne = zadania.filter(z => z.typ !== 'praca_zaliczeniowa' && !odpowiedzDlaZadania(z.id));
+    const wyslane = zadania.filter(z => z.typ !== 'praca_zaliczeniowa' && !!odpowiedzDlaZadania(z.id));
+  
+    function FormPrzeslania({ zadanie }: { zadanie: Zadanie }) {
+      return (
+        <div style={{ padding: '14px 16px', borderTop: '0.5px solid var(--border-soft)', background: '#fffbf5' }}>
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start', marginBottom: '12px', padding: '10px 12px', background: '#fef9ec', borderRadius: '10px', border: '0.5px solid #fde68a' }}>
+            <span style={{ fontSize: '16px', flexShrink: 0 }}>💡</span>
+            <div style={{ fontSize: '11.5px', color: '#92400e', lineHeight: 1.6 }}>
+              Dodaj link do <strong>Google Drive</strong> i ustaw uprawnienia: <strong>każda osoba z linkiem → Przeglądający</strong>.
+            </div>
+          </div>
+          <div style={{ marginBottom: '8px' }}>
+            <div style={{ fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '6px' }}>Link do pracy</div>
+            <input type="url" value={linkPracy} onChange={e => setLinkPracy(e.target.value)} placeholder="https://drive.google.com/..."
+              style={{ width: '100%', fontSize: '13px', padding: '10px 12px', border: '0.5px solid var(--border)', borderRadius: '10px', fontFamily: 'Jost, sans-serif', background: 'white', boxSizing: 'border-box' }} />
+          </div>
+          <div style={{ marginBottom: '12px' }}>
+            <div style={{ fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '6px' }}>Komentarz <span style={{ fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>(opcjonalnie)</span></div>
+            <textarea value={komentarz} onChange={e => setKomentarz(e.target.value)} rows={2} placeholder="np. wersja robocza, czeka na poprawki..."
+              style={{ width: '100%', fontSize: '13px', padding: '10px 12px', border: '0.5px solid var(--border)', borderRadius: '10px', fontFamily: 'Jost, sans-serif', resize: 'none', background: 'white', boxSizing: 'border-box' }} />
+          </div>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button onClick={() => wyslij(zadanie)} disabled={wysylanie || !linkPracy.trim()}
+              style={{ flex: 1, padding: '12px', borderRadius: '12px', border: 'none', background: linkPracy.trim() ? 'var(--brand)' : '#ddd', color: 'white', fontSize: '13px', fontWeight: 600, cursor: linkPracy.trim() ? 'pointer' : 'default', fontFamily: 'Jost, sans-serif' }}>
+              {wysylanie ? 'Wysyłanie...' : 'Prześlij pracę'}
+            </button>
+            <button onClick={() => { setAktywneZadanie(null); setLinkPracy(''); setKomentarz(''); }}
+              style={{ padding: '12px 16px', borderRadius: '12px', border: '0.5px solid var(--border)', background: 'white', cursor: 'pointer', fontSize: '13px', color: 'var(--text-muted)', fontFamily: 'Jost, sans-serif' }}>
+              Anuluj
+            </button>
+          </div>
+        </div>
+      );
+    }
+  
     return (
       <>
-        <h2 className="page-title">Zadania</h2>
-
+        {/* Nagłówek */}
+        <div style={{ padding: '4px 0 20px' }}>
+          <div style={{ fontSize: '9.5px', letterSpacing: '0.28em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '8px', fontWeight: 600 }}>
+            {aktywne.length > 0 ? `${aktywne.length} do przesłania` : pracaZaliczeniowa.length > 0 ? 'Zadania domowe' : 'Brak zadań'}
+          </div>
+          <div style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: '38px', lineHeight: 1, letterSpacing: '-0.02em', color: 'var(--text)' }}>Zadania</div>
+        </div>
+  
+        {/* Skeleton */}
         {ladowanie && (
-  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-    {[1,2,3].map(i => (
-      <div key={i} style={{ background: 'white', borderRadius: '14px', border: '0.5px solid var(--border)', overflow: 'hidden' }}>
-        <div style={{ padding: '10px 14px', borderBottom: '0.5px solid var(--border-soft)', display: 'flex', justifyContent: 'space-between' }}>
-          <div className="skeleton" style={{ width: '80px', height: '14px' }} />
-          <div className="skeleton" style={{ width: '60px', height: '14px' }} />
-        </div>
-        <div style={{ padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          <div className="skeleton" style={{ width: '140px', height: '18px' }} />
-          <div className="skeleton" style={{ width: '200px', height: '12px' }} />
-          <div className="skeleton" style={{ width: '160px', height: '12px' }} />
-        </div>
-        <div style={{ display: 'flex', gap: '8px', padding: '8px 14px 14px' }}>
-          <div className="skeleton" style={{ flex: 1, height: '70px', borderRadius: '12px' }} />
-          <div className="skeleton" style={{ flex: 1, height: '70px', borderRadius: '12px' }} />
-        </div>
-      </div>
-    ))}
-  </div>
-)}
-
-        {!ladowanie && zadania.length === 0 && (
-          <div style={{ textAlign: 'center', padding: '40px 24px', color: 'var(--text-muted)' }}>
-            <div style={{ fontSize: '40px', marginBottom: '12px' }}>📋</div>
-            <p style={{ fontSize: '14px' }}>Brak zadań. Pojawią się tutaj gdy prowadzący doda nowe.</p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {[1, 2, 3].map(i => (
+              <div key={i} style={{ background: 'white', borderRadius: '16px', border: '0.5px solid var(--border)', height: '80px' }}>
+                <div className="skeleton" style={{ width: '100%', height: '100%', borderRadius: '16px' }} />
+              </div>
+            ))}
           </div>
         )}
-
-        {/* Praca zaliczeniowa — zawsze na górze jeśli istnieje */}
-        {zadania.filter(z => z.typ === 'praca_zaliczeniowa').map(z => {
+  
+        {!ladowanie && zadania.length === 0 && (
+          <div style={{ textAlign: 'center', padding: '60px 24px', color: 'var(--text-muted)' }}>
+            <div style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: '22px', marginBottom: '8px' }}>Brak zadań</div>
+            <div style={{ fontSize: '13px' }}>Pojawią się tutaj gdy prowadzący doda nowe.</div>
+          </div>
+        )}
+  
+        {/* ── PRACA ZALICZENIOWA ── */}
+        {pracaZaliczeniowa.map(z => {
           const odp = odpowiedzDlaZadania(z.id);
           const wyslano = !!odp;
           const rozwinięte = aktywneZadanie?.id === z.id;
           return (
-            <div key={z.id} className="sess-card" style={{
-              marginBottom: '16px',
-              borderColor: wyslano ? '#7aab8a' : 'var(--brand)',
-              borderWidth: '1.5px',
-            }}>
-              <div className="sess-top" style={{ background: wyslano ? '#f0faf4' : 'var(--brand-dark)' }}>
-              <span className="sess-nr" style={{ fontSize: '13px', color: wyslano ? 'var(--text)' : 'white', display: 'flex', alignItems: 'center', gap: '6px' }}>
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
-  {z.tytul}
-</span>
-                {wyslano
-                  ? <span style={{ fontSize: '10px', fontWeight: 600, color: '#2e7d32', background: '#e8f5e9', padding: '3px 8px', borderRadius: '20px', textTransform: 'uppercase' }}>✓ Przesłano</span>
-                  : <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.8)', background: 'rgba(255,255,255,0.15)', padding: '3px 8px', borderRadius: '20px', fontWeight: 500 }}>Praca zaliczeniowa</span>
-                }
+            <div key={z.id} style={{ marginBottom: '14px', borderRadius: '18px', overflow: 'hidden', border: wyslano ? '0.5px solid #b8d4b8' : '0.5px solid #e8d4a0', boxShadow: '0 2px 12px rgba(0,0,0,0.06)' }}>
+              {/* Header karty */}
+              <div style={{ background: wyslano ? 'linear-gradient(135deg, #2e7d32 0%, #4a7a47 100%)' : 'linear-gradient(135deg, #c8a84b 0%, #a07830 100%)', padding: '16px 18px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: '9px', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.75)', fontWeight: 600, marginBottom: '2px' }}>Praca zaliczeniowa</div>
+                  <div style={{ fontSize: '15px', fontWeight: 600, color: 'white' }}>{z.tytul}</div>
+                </div>
+                <div style={{ fontSize: '10px', fontWeight: 700, padding: '4px 10px', borderRadius: '999px', background: wyslano ? 'rgba(255,255,255,0.25)' : 'rgba(255,255,255,0.2)', color: 'white', letterSpacing: '0.1em', textTransform: 'uppercase', flexShrink: 0 }}>
+                  {wyslano ? '✓ Przesłana' : 'Do zrobienia'}
+                </div>
               </div>
-              <div className="sess-rows">
-                {z.opis && <div className="sess-row" style={{ whiteSpace: 'pre-line', lineHeight: '1.6' }}>{renderTekstZLinkami(z.opis)}</div>}
+  
+              {/* Body */}
+              <div style={{ background: 'white', padding: '14px 18px' }}>
+                {z.opis && <div style={{ fontSize: '13px', color: 'var(--text)', lineHeight: 1.65, marginBottom: '10px', whiteSpace: 'pre-line' }}>{renderTekstZLinkami(z.opis)}</div>}
                 {z.link_materialow && (
-                  <div className="sess-row" style={{ marginTop: '6px' }}>
-                    <span className="sess-lbl">Materiały:</span>{' '}
-                    <a href={z.link_materialow} target="_blank" rel="noopener noreferrer"
-                      style={{ color: 'var(--brand)', textDecoration: 'underline', textDecorationStyle: 'dotted', textUnderlineOffset: '3px', fontSize: '12px' }}>
-                      Otwórz link →
-                    </a>
-                  </div>
+                  <a href={z.link_materialow} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: 'var(--brand)', textDecoration: 'none', marginBottom: '8px' }}>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+                    Materiały do zadania →
+                  </a>
                 )}
-                {z.termin && (
-                  <div className="sess-row" style={{ marginTop: '4px' }}>
-                    <span className="sess-lbl">Termin:</span> {new Date(z.termin).toLocaleDateString('pl-PL')}
-                  </div>
-                )}
-              </div>
-              {wyslano && !rozwinięte && (
-                <div style={{ padding: '0 14px 12px' }}>
-                  <div style={{ background: '#f0faf4', borderRadius: '10px', padding: '10px 12px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
-                      <p style={{ fontSize: '11px', color: '#2e7d32', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.4px' }}>Twoja praca</p>
-                      <span style={{ fontSize: '10px', fontWeight: 700, padding: '2px 7px', borderRadius: '8px',
-                        background: odp!.sprawdzona ? '#e8f5e9' : '#fff8e1',
-                        color: odp!.sprawdzona ? '#2e7d32' : '#c8a84b' }}>
+                {z.termin && <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '10px' }}>Termin: {new Date(z.termin).toLocaleDateString('pl-PL')}</div>}
+  
+                {/* Wynik */}
+                {wyslano && !rozwinięte && (
+                  <div style={{ background: '#f0faf4', borderRadius: '12px', padding: '12px 14px', marginBottom: '8px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                      <span style={{ fontSize: '10px', fontWeight: 700, color: '#2e7d32', textTransform: 'uppercase', letterSpacing: '0.3px' }}>Twoja praca</span>
+                      <span style={{ fontSize: '10px', fontWeight: 700, padding: '2px 8px', borderRadius: '8px', background: odp!.sprawdzona ? '#e8f5e9' : '#fff8e1', color: odp!.sprawdzona ? '#2e7d32' : '#c8a84b' }}>
                         {odp!.sprawdzona ? '✓ Sprawdzona' : '· Do sprawdzenia'}
                       </span>
                     </div>
-                    <a href={odp!.link_pracy} target="_blank" rel="noopener noreferrer"
-                      style={{ fontSize: '12px', color: 'var(--brand)', textDecoration: 'underline', wordBreak: 'break-all' }}>
-                      {odp!.link_pracy}
-                    </a>
+                    <a href={odp!.link_pracy} target="_blank" rel="noopener noreferrer" style={{ fontSize: '12px', color: 'var(--brand)', textDecoration: 'underline', wordBreak: 'break-all' }}>{odp!.link_pracy}</a>
                     {odp!.komentarz && <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px' }}>{odp!.komentarz}</p>}
                     {odp!.uwagi_prowadzacego && (
                       <div style={{ marginTop: '8px', padding: '8px 10px', background: '#fffbeb', borderRadius: '8px', border: '0.5px solid #fef3c7' }}>
@@ -393,149 +407,129 @@ function urlBase64ToUint8Array(base64String: string) {
                         <p style={{ fontSize: '12px', color: 'var(--text)', lineHeight: 1.5 }}>{odp!.uwagi_prowadzacego}</p>
                       </div>
                     )}
-                  </div>
-                  <button onClick={() => { setAktywneZadanie(z); setLinkPracy(odp!.link_pracy); setKomentarz(odp!.komentarz || ''); }}
-                    style={{ marginTop: '8px', fontSize: '12px', color: 'var(--brand)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Jost, sans-serif' }}>
-                    Edytuj odpowiedź
-                  </button>
-                </div>
-              )}
-              {rozwinięte && (
-                <div style={{ padding: '0 14px 14px' }}>
-                  <div style={{ background: '#fffbeb', border: '0.5px solid #fef3c7', borderRadius: '10px', padding: '10px 12px', marginBottom: '12px', fontSize: '12px', color: '#92400e', lineHeight: 1.6 }}>
-                    💡 <strong>Dodaj link do Google Drive</strong> i pamiętaj, że musisz ustawić uprawnienia do przeglądania dla <strong>wszystkich, którzy mają link</strong> (Udostępnij → Każda osoba z linkiem → Przeglądający).
-                  </div>
-                  <div className="login-field" style={{ marginBottom: '8px' }}>
-                    <label style={{ fontSize: '12px' }}>Link do pracy (Google Drive, Dropbox...)</label>
-                    <input type="url" value={linkPracy} onChange={e => setLinkPracy(e.target.value)} placeholder="https://drive.google.com/..." style={{ fontSize: '13px' }} />
-                  </div>
-                  <div className="login-field" style={{ marginBottom: '10px' }}>
-                    <label style={{ fontSize: '12px' }}>Komentarz (opcjonalnie)</label>
-                    <textarea value={komentarz} onChange={e => setKomentarz(e.target.value)} rows={2} placeholder="np. wersja robocza..." style={{ fontSize: '13px', resize: 'none' }} />
-                  </div>
-                  <div style={{ display: 'flex', gap: '8px' }}>
-                    <button onClick={() => wyslij(z)} disabled={wysylanie || !linkPracy.trim()} className="login-btn" style={{ flex: 1, marginTop: 0, padding: '10px' }}>
-                      {wysylanie ? 'Wysyłanie...' : 'Prześlij pracę zaliczeniową'}
-                    </button>
-                    <button onClick={() => { setAktywneZadanie(null); setLinkPracy(''); setKomentarz(''); }}
-                      style={{ padding: '10px 16px', borderRadius: '12px', border: '0.5px solid var(--border)', background: 'white', cursor: 'pointer', fontSize: '13px', color: 'var(--text-muted)' }}>
-                      Anuluj
+                    <button onClick={() => { setAktywneZadanie(z); setLinkPracy(odp!.link_pracy); setKomentarz(odp!.komentarz || ''); }}
+                      style={{ marginTop: '8px', fontSize: '12px', color: 'var(--brand)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Jost, sans-serif', padding: 0 }}>
+                      Edytuj odpowiedź
                     </button>
                   </div>
-                </div>
-              )}
-              {!wyslano && !rozwinięte && (
-                <div style={{ padding: '0 14px 14px' }}>
-                  <button onClick={() => setAktywneZadanie(z)} className="login-btn" style={{ width: '100%', marginTop: 0, padding: '10px' }}>
+                )}
+                {!wyslano && !rozwinięte && (
+                  <button onClick={() => setAktywneZadanie(z)}
+                    style={{ width: '100%', padding: '12px', borderRadius: '12px', border: 'none', background: '#c8a84b', color: 'white', fontSize: '13px', fontWeight: 600, cursor: 'pointer', fontFamily: 'Jost, sans-serif' }}>
                     Prześlij pracę zaliczeniową
                   </button>
-                </div>
-              )}
-            </div>
-          );
-        })}
-
-        {/* Zadania domowe */}
-        {zadania.filter(z => z.typ !== 'praca_zaliczeniowa').length > 0 && (
-          <h3 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '16px', color: 'var(--text-muted)', marginBottom: '10px', fontWeight: 400 }}>
-            Zadania domowe
-          </h3>
-        )}
-
-        {zadania.filter(z => z.typ !== 'praca_zaliczeniowa').map(z => {
-          const odp = odpowiedzDlaZadania(z.id);
-          const wyslano = !!odp;
-          const rozwinięte = aktywneZadanie?.id === z.id;
-
-          return (
-            <div key={z.id} className="sess-card" style={{ marginBottom: '10px', borderColor: wyslano ? '#7aab8a' : undefined }}>
-              <div className="sess-top" style={{ background: wyslano ? '#f0faf4' : 'var(--brand-light)' }}>
-                <span className="sess-nr" style={{ fontSize: '13px' }}>{z.tytul}</span>
-                {wyslano
-                  ? <span style={{ fontSize: '10px', fontWeight: 600, color: '#2e7d32', background: '#e8f5e9', padding: '3px 8px', borderRadius: '20px', textTransform: 'uppercase' }}>✓ Przesłano</span>
-                  : z.termin
-                    ? <span style={{ fontSize: '10px', color: 'var(--brand-dark)', background: 'var(--brand-light)', padding: '3px 8px', borderRadius: '20px', fontWeight: 500 }}>do {new Date(z.termin).toLocaleDateString('pl-PL')}</span>
-                    : null
-                }
-              </div>
-              <div className="sess-rows">
-                {z.opis && <div className="sess-row" style={{ whiteSpace: 'pre-line', lineHeight: '1.6' }}>{renderTekstZLinkami(z.opis)}</div>}
-                {z.link_materialow && (
-                  <div className="sess-row" style={{ marginTop: '6px' }}>
-                    <span className="sess-lbl">Materiały:</span>{' '}
-                    <a href={z.link_materialow} target="_blank" rel="noopener noreferrer"
-                      style={{ color: 'var(--brand)', textDecoration: 'underline', textDecorationStyle: 'dotted', textUnderlineOffset: '3px', fontSize: '12px' }}>
-                      Otwórz link →
-                    </a>
-                  </div>
                 )}
               </div>
-              {wyslano && !rozwinięte && (
-                <div style={{ padding: '0 14px 12px' }}>
-                  <div style={{ background: '#f0faf4', borderRadius: '10px', padding: '10px 12px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
-                      <p style={{ fontSize: '11px', color: '#2e7d32', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.4px' }}>Twoja praca</p>
-                      <span style={{ fontSize: '10px', fontWeight: 700, padding: '2px 7px', borderRadius: '8px',
-                        background: odp!.sprawdzona ? '#e8f5e9' : '#fff8e1',
-                        color: odp!.sprawdzona ? '#2e7d32' : '#c8a84b' }}>
-                        {odp!.sprawdzona ? '✓ Sprawdzona' : '· Do sprawdzenia'}
-                      </span>
-                    </div>
-                    <a href={odp!.link_pracy} target="_blank" rel="noopener noreferrer"
-                      style={{ fontSize: '12px', color: 'var(--brand)', textDecoration: 'underline', wordBreak: 'break-all' }}>
-                      {odp!.link_pracy}
-                    </a>
-                    {odp!.komentarz && <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px' }}>{odp!.komentarz}</p>}
-                    {odp!.uwagi_prowadzacego && (
-                      <div style={{ marginTop: '8px', padding: '8px 10px', background: '#fffbeb', borderRadius: '8px', border: '0.5px solid #fef3c7' }}>
-                        <p style={{ fontSize: '10px', fontWeight: 700, color: '#c8a84b', textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: '3px' }}>💬 Uwagi prowadzącego</p>
-                        <p style={{ fontSize: '12px', color: 'var(--text)', lineHeight: 1.5 }}>{odp!.uwagi_prowadzacego}</p>
-                      </div>
-                    )}
-                  </div>
-                  <button onClick={() => { setAktywneZadanie(z); setLinkPracy(odp!.link_pracy); setKomentarz(odp!.komentarz || ''); }}
-                    style={{ marginTop: '8px', fontSize: '12px', color: 'var(--brand)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Jost, sans-serif' }}>
-                    Edytuj odpowiedź
-                  </button>
-                </div>
-              )}
-              {rozwinięte && (
-                <div style={{ padding: '0 14px 14px' }}>
-                  <div style={{ background: '#fffbeb', border: '0.5px solid #fef3c7', borderRadius: '10px', padding: '10px 12px', marginBottom: '12px', fontSize: '12px', color: '#92400e', lineHeight: 1.6 }}>
-                    💡 <strong>Dodaj link do Google Drive</strong> i pamiętaj o ustawieniu uprawnień: <strong>każda osoba z linkiem → Przeglądający</strong>.
-                  </div>
-                  <div className="login-field" style={{ marginBottom: '8px' }}>
-                    <label style={{ fontSize: '12px' }}>Link do pracy (Google Drive, Dropbox...)</label>
-                    <input type="url" value={linkPracy} onChange={e => setLinkPracy(e.target.value)} placeholder="https://drive.google.com/..." style={{ fontSize: '13px' }} />
-                  </div>
-                  <div className="login-field" style={{ marginBottom: '10px' }}>
-                    <label style={{ fontSize: '12px' }}>Komentarz (opcjonalnie)</label>
-                    <textarea value={komentarz} onChange={e => setKomentarz(e.target.value)} rows={2} placeholder="np. wersja robocza, czeka na poprawki..." style={{ fontSize: '13px', resize: 'none' }} />
-                  </div>
-                  <div style={{ display: 'flex', gap: '8px' }}>
-                    <button onClick={() => wyslij(z)} disabled={wysylanie || !linkPracy.trim()} className="login-btn" style={{ flex: 1, marginTop: 0, padding: '10px' }}>
-                      {wysylanie ? 'Wysyłanie...' : 'Prześlij pracę'}
-                    </button>
-                    <button onClick={() => { setAktywneZadanie(null); setLinkPracy(''); setKomentarz(''); }}
-                      style={{ padding: '10px 16px', borderRadius: '12px', border: '0.5px solid var(--border)', background: 'white', cursor: 'pointer', fontSize: '13px', color: 'var(--text-muted)' }}>
-                      Anuluj
-                    </button>
-                  </div>
-                </div>
-              )}
-              {!wyslano && !rozwinięte && (
-                <div style={{ padding: '0 14px 14px' }}>
-                  <button onClick={() => setAktywneZadanie(z)} className="login-btn" style={{ width: '100%', marginTop: 0, padding: '10px' }}>
-                    Prześlij pracę
-                  </button>
-                </div>
-              )}
-              {sukces === z.id && (
-                <div style={{ padding: '0 14px 12px', fontSize: '13px', color: '#2e7d32' }}>✓ Praca przesłana!</div>
-              )}
+              {rozwinięte && <FormPrzeslania zadanie={z} />}
             </div>
           );
         })}
+  
+        {/* ── ZADANIA DOMOWE — AKTYWNE ── */}
+        {aktywne.length > 0 && (
+          <>
+            {pracaZaliczeniowa.length > 0 && (
+              <div style={{ fontSize: '9.5px', letterSpacing: '0.24em', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '10px', marginTop: '4px' }}>Zadania domowe</div>
+            )}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '10px' }}>
+              {aktywne.map((z, idx) => {
+                const rozwinięte = aktywneZadanie?.id === z.id;
+                const kolor = KOLORY[idx % KOLORY.length];
+                const photo = PHOTOS[idx % PHOTOS.length];
+                return (
+                  <div key={z.id} style={{ background: 'white', borderRadius: '16px', border: '0.5px solid var(--border)', overflow: 'hidden' }}>
+                    <div onClick={() => !rozwinięte && setAktywneZadanie(z)}
+                      style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 14px', cursor: rozwinięte ? 'default' : 'pointer' }}>
+                      <div style={{ width: '4px', height: '52px', background: kolor, borderRadius: '2px', flexShrink: 0 }} />
+                      <div style={{ width: '52px', height: '52px', borderRadius: '12px', background: `url(${photo}) center/cover`, flexShrink: 0 }} />
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: '13.5px', fontWeight: 600, color: 'var(--text)', marginBottom: '3px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{z.tytul}</div>
+                        {z.opis && <div style={{ fontSize: '11px', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: '2px' }}>{z.opis}</div>}
+                        {z.termin && <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>do {new Date(z.termin).toLocaleDateString('pl-PL', { day: 'numeric', month: 'long' })}</div>}
+                      </div>
+                      <div style={{ flexShrink: 0 }}>
+                        {!rozwinięte
+                          ? <div style={{ fontSize: '9px', fontWeight: 700, padding: '4px 10px', borderRadius: '999px', background: '#f0ece7', color: 'var(--brand-dark)', textTransform: 'uppercase', letterSpacing: '0.08em', border: '0.5px solid var(--border)' }}>Do zrobienia</div>
+                          : <button onClick={() => { setAktywneZadanie(null); setLinkPracy(''); setKomentarz(''); }}
+                              style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '20px', color: 'var(--text-muted)', lineHeight: 1, padding: '0 4px' }}>×</button>
+                        }
+                      </div>
+                    </div>
+                    {rozwinięte && (
+                      <div style={{ borderTop: '0.5px solid var(--border-soft)', padding: '12px 14px' }}>
+                        {z.opis && <div style={{ fontSize: '13px', color: 'var(--text)', lineHeight: 1.65, marginBottom: '10px', whiteSpace: 'pre-line' }}>{renderTekstZLinkami(z.opis)}</div>}
+                        {z.link_materialow && (
+                          <a href={z.link_materialow} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: 'var(--brand)', textDecoration: 'none', marginBottom: '10px' }}>
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+                            Materiały →
+                          </a>
+                        )}
+                      </div>
+                    )}
+                    {rozwinięte && <FormPrzeslania zadanie={z} />}
+                  </div>
+                );
+              })}
+            </div>
+          </>
+        )}
+  
+        {/* ── PRZESŁANE ── */}
+        {wyslane.length > 0 && (
+          <div style={{ marginTop: '8px' }}>
+            <button onClick={() => setPokazWyslane(v => !v)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', background: 'none', border: 'none', cursor: 'pointer', padding: '8px 2px', marginBottom: '8px', fontFamily: 'inherit' }}>
+              <span style={{ fontSize: '9.5px', letterSpacing: '0.24em', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600 }}>Przesłane ({wyslane.length})</span>
+              <span style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'inline-block', transform: pokazWyslane ? 'rotate(0deg)' : 'rotate(-90deg)', transition: 'transform 0.2s' }}>▾</span>
+            </button>
+            {pokazWyslane && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {wyslane.map((z, idx) => {
+                  const odp = odpowiedzDlaZadania(z.id)!;
+                  const rozwinięte = aktywneZadanie?.id === z.id;
+                  const photo = PHOTOS[(aktywne.length + idx) % PHOTOS.length];
+                  return (
+                    <div key={z.id} style={{ background: 'white', borderRadius: '16px', border: '0.5px solid #b8d4b8', overflow: 'hidden' }}>
+                      <div onClick={() => !rozwinięte && setAktywneZadanie(z)} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 14px', cursor: 'pointer' }}>
+                        <div style={{ width: '4px', height: '44px', background: '#6B9C68', borderRadius: '2px', flexShrink: 0 }} />
+                        <div style={{ width: '44px', height: '44px', borderRadius: '10px', background: `url(${photo}) center/cover`, flexShrink: 0 }} />
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{z.tytul}</div>
+                          <a href={odp.link_pracy} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} style={{ fontSize: '10px', color: 'var(--brand)', textDecoration: 'none', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block' }}>{odp.link_pracy}</a>
+                        </div>
+                        <div style={{ flexShrink: 0 }}>
+                          <span style={{ fontSize: '9px', fontWeight: 700, padding: '3px 8px', borderRadius: '999px', background: odp.sprawdzona ? '#e8f5e9' : '#fff8e1', color: odp.sprawdzona ? '#2e7d32' : '#c8a84b', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                            {odp.sprawdzona ? '✓' : '⏳'}
+                          </span>
+                        </div>
+                      </div>
+                      {rozwinięte && (
+                        <>
+                          <div style={{ borderTop: '0.5px solid var(--border-soft)', padding: '12px 14px' }}>
+                            {odp.uwagi_prowadzacego && (
+                              <div style={{ padding: '10px 12px', background: '#fffbeb', borderRadius: '10px', border: '0.5px solid #fef3c7', marginBottom: '10px' }}>
+                                <p style={{ fontSize: '10px', fontWeight: 700, color: '#c8a84b', textTransform: 'uppercase', letterSpacing: '0.4px', marginBottom: '4px' }}>💬 Uwagi prowadzącego</p>
+                                <p style={{ fontSize: '12px', color: 'var(--text)', lineHeight: 1.5 }}>{odp.uwagi_prowadzacego}</p>
+                              </div>
+                            )}
+                            <button onClick={() => { setLinkPracy(odp.link_pracy); setKomentarz(odp.komentarz || ''); }}
+                              style={{ fontSize: '12px', color: 'var(--brand)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Jost, sans-serif', padding: 0, marginBottom: '4px' }}>
+                              Edytuj odpowiedź
+                            </button>
+                            <button onClick={() => { setAktywneZadanie(null); setLinkPracy(''); setKomentarz(''); }}
+                              style={{ fontSize: '12px', color: 'var(--text-muted)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Jost, sans-serif', padding: 0, marginLeft: '12px' }}>
+                              Zamknij
+                            </button>
+                          </div>
+                          {linkPracy && <FormPrzeslania zadanie={z} />}
+                        </>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
       </>
     );
   }
