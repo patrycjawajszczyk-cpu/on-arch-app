@@ -2688,7 +2688,7 @@ function urlBase64ToUint8Array(base64String: string) {
     }
     const [nowyKursant, setNowyKursant] = useState({ imie: '', nazwisko: '', email: '', grupa_id: '' });
     const [nowaGrupa, setNowaGrupa] = useState({ nazwa: '', miasto: '', edycja: '', drive_link: '', numer_uslugi: '', tryb: 'stacjonarny' });
-    const [nowyProwadzacy, setNowyProwadzacy] = useState({ imie: '', nazwisko: '', bio: '', avatar_url: '', email: '', telefon: '', notatki: '', miasto: '' });
+    const [nowyProwadzacy, setNowyProwadzacy] = useState({ imie: '', nazwisko: '', bio: '', avatar_url: '', email: '', telefon: '', notatki: '', miasto: '', user_id: '' });
     const [noweZadanie, setNoweZadanie] = useState({ tytul: '', opis: '', termin: '', link_materialow: '', grupa_id: '', typ: 'zadanie' });
     const [komunikat, setKomunikat] = useState('');
     const [importStatus, setImportStatus] = useState<{ imie: string; nazwisko: string; email: string; status: string }[]>([]);
@@ -2868,8 +2868,10 @@ function urlBase64ToUint8Array(base64String: string) {
         telefon: nowyProwadzacy.telefon || null,
         notatki: nowyProwadzacy.notatki || null,
         miasto: nowyProwadzacy.miasto || null,
+    user_id: nowyProwadzacy.user_id || null,
+  }]);
       }]);
-      if (error) { setKomunikat('Blad: ' + error.message); } else { setKomunikat('Prowadzący dodany!'); setNowyProwadzacy({ imie: '', nazwisko: '', bio: '', avatar_url: '', email: '', telefon: '', notatki: '', miasto: '' }); pobierzProwadzacy(); }
+      if (error) { setKomunikat('Blad: ' + error.message); } else { setKomunikat('Prowadzący dodany!'); setNowyProwadzacy({ imie: '', nazwisko: '', bio: '', avatar_url: '', email: '', telefon: '', notatki: '', miasto: '', user_id: '' }); pobierzProwadzacy(); }
     }
 
     async function usunProwadzacego(id: number) {
@@ -4387,6 +4389,7 @@ function urlBase64ToUint8Array(base64String: string) {
                 </div>
                 <div style={{ display: 'flex', gap: '12px' }}>
                   <div className="login-field" style={{ flex: 1 }}><label>Email</label><input type="email" value={nowyProwadzacy.email} onChange={e => setNowyProwadzacy({ ...nowyProwadzacy, email: e.target.value })} placeholder="architekt@email.pl" /></div>
+                  <div className="login-field"><label>User ID (UUID z Supabase Auth)</label><input type="text" value={nowyProwadzacy.user_id} onChange={e => setNowyProwadzacy({ ...nowyProwadzacy, user_id: e.target.value })} placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" /></div>
                   <div className="login-field" style={{ flex: 1 }}><label>Telefon</label><input type="text" value={nowyProwadzacy.telefon} onChange={e => setNowyProwadzacy({ ...nowyProwadzacy, telefon: e.target.value })} placeholder="+48 600 000 000" /></div>
                   <div className="login-field" style={{ flex: 1 }}><label>Miasto</label><input type="text" value={nowyProwadzacy.miasto} onChange={e => setNowyProwadzacy({ ...nowyProwadzacy, miasto: e.target.value })} placeholder="Warszawa" /></div>
                 </div>
