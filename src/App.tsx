@@ -1751,9 +1751,12 @@ function urlBase64ToUint8Array(base64String: string) {
       <div className="biuro-shell">
         {/* ── SIDEBAR (desktop) ── */}
         <aside className="biuro-sidebar">
-          <div className="biuro-sidebar-logo">
+        <div className="biuro-sidebar-logo">
             <OnArchLogo height={24} color="var(--brand-dark)" />
             <span className="biuro-sidebar-role">Prowadzący</span>
+          </div>
+          <div style={{ padding: '8px 16px 4px', fontSize: '11px', color: 'var(--text-muted)', borderBottom: '0.5px solid var(--border)', marginBottom: '8px', paddingBottom: '12px' }}>
+            {kursant?.imie} {kursant?.nazwisko}
           </div>
           <nav className="biuro-sidebar-nav">
             {[
