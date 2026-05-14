@@ -3037,6 +3037,7 @@ function urlBase64ToUint8Array(base64String: string) {
               { id: 'prowadzacy',icon: <User size={18}/>,        label: 'Prowadzący' },
               { id: 'ankiety',   icon: <Star size={18}/>,        label: 'Ankiety' },
               { id: 'materialy', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>, label: 'Materiały' },
+              { id: 'aplikacje', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>, label: 'Aplikacje' },
               { id: 'backup',    icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>, label: 'Backup' },
             ].map(item => (
               <button key={item.id}
@@ -3084,6 +3085,7 @@ function urlBase64ToUint8Array(base64String: string) {
               {aktywnaZakladka === 'grupy' && 'Grupy'}
               {aktywnaZakladka === 'prowadzacy' && 'Prowadzący'}
               {aktywnaZakladka === 'ankiety' && 'Ankiety'}
+              {aktywnaZakladka === 'aplikacje' && 'Aplikacje zewnętrzne'}
               {aktywnaZakladka === 'backup' && 'Backup'}
             </div>
             {pokazBackupAlert && (
@@ -3117,6 +3119,7 @@ function urlBase64ToUint8Array(base64String: string) {
                     { id: 'prowadzacy', label: 'Prowadzący', opis: `${prowadzacy.length} osób`,           icon: <User size={22}/> },
                     { id: 'ankiety',    label: 'Ankiety',    opis: `${ankiety.length} wypełnień`,         icon: <Star size={22}/> },
                     { id: 'materialy',  label: 'Materiały', opis: 'Lista produktów',  icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg> },
+                    { id: 'aplikacje',  label: 'Aplikacje',  opis: 'Portale zewnętrzne', icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg> },
                     { id: 'backup',     label: 'Backup',     opis: 'Pobierz kopię bazy',                  icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> },
                   ].map(k => (
                     <div key={k.id} onClick={() => setAktywnaZakladka(k.id)}
@@ -4057,6 +4060,71 @@ function urlBase64ToUint8Array(base64String: string) {
 {aktywnaZakladka === 'materialy' && (
             <AdminMaterialy />
           )}
+          {aktywnaZakladka === 'aplikacje' && (() => {
+            const APLIKACJE = [
+              {
+                label: 'Portal obecności online',
+                opis: 'Raporty z obecności online Google Meets i Zoom',
+                url: 'https://portal-obecnosci-online.vercel.app/',
+                kolor: '#1565c0',
+                bg: '#e8f0fe',
+                ikona: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>,
+              },
+              {
+                label: 'Portal dofinansowań',
+                opis: 'Umowy i rozliczenia dofinansowań UP, BUR, inne',
+                url: 'https://onarch-dofinansowania.vercel.app/',
+                kolor: '#2e7d32',
+                bg: '#e8f5e9',
+                ikona: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>,
+              },
+              {
+                label: 'Sprawdzanie prac zaliczeniowych',
+                opis: 'Portal oceny i recenzji prac kursantów',
+                url: 'https://onarch-evaluator.vercel.app/',
+                kolor: '#B35758',
+                bg: '#fceaea',
+                ikona: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>,
+              },
+              {
+                label: 'Ankiety PRZED i testy wiedzy',
+                opis: 'Ankiety wstępne i weryfikacja wiedzy kursantów',
+                url: 'https://onarch-testy.vercel.app/',
+                kolor: '#c8a84b',
+                bg: '#fef9ec',
+                ikona: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>,
+              },
+            ];
+
+            return (
+              <div>
+                <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '14px', color: 'var(--text-muted)', marginBottom: '20px', lineHeight: 1.6 }}>
+                  Zewnętrzne narzędzia i portale używane w procesie dydaktycznym. Kliknij kartę aby otworzyć portal w nowej zakładce.
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '12px' }}>
+                  {APLIKACJE.map((app, i) => (
+                    <a key={i} href={app.url} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
+                      <div style={{ background: 'white', borderRadius: '16px', border: '0.5px solid var(--border)', padding: '18px 20px', display: 'flex', gap: '14px', alignItems: 'flex-start', transition: 'box-shadow 0.15s', cursor: 'pointer' }}
+                        onMouseEnter={e => (e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.08)')}
+                        onMouseLeave={e => (e.currentTarget.style.boxShadow = 'none')}>
+                        <div style={{ width: '46px', height: '46px', borderRadius: '12px', background: app.kolor, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                          {app.ikona}
+                        </div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text)', marginBottom: '4px' }}>{app.label}</div>
+                          <div style={{ fontSize: '11.5px', color: 'var(--text-muted)', lineHeight: 1.5 }}>{app.opis}</div>
+                          <div style={{ marginTop: '8px', fontSize: '10px', color: app.kolor, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase' }}>Otwórz →</div>
+                        </div>
+                      </div>
+                    </a>
+                  ))}
+                </div>
+                <div style={{ marginTop: '20px', padding: '14px 16px', background: '#fffbeb', borderRadius: '12px', border: '0.5px solid #fde68a', fontSize: '12px', color: '#92400e', lineHeight: 1.6 }}>
+                  💡 Aby zmienić linki — znajdź tablicę <code style={{ background: '#fef3c7', padding: '1px 5px', borderRadius: '4px' }}>APLIKACJE</code> w kodzie App.tsx w zakładce <strong>Aplikacje zewnętrzne</strong> i podmień wartości <code style={{ background: '#fef3c7', padding: '1px 5px', borderRadius: '4px' }}>url</code>.
+                </div>
+              </div>
+            );
+          })()}
           {/* ZAKŁADKA: Backup */}
           {aktywnaZakladka === 'backup' && (
             <EkranBackup onBackupDone={() => setPokazBackupAlert(false)} />
