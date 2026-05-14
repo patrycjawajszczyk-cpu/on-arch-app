@@ -2888,7 +2888,8 @@ function urlBase64ToUint8Array(base64String: string) {
       e.preventDefault();
       const { data: authData, error: authError } = await supabase.auth.signUp({ email: nowyKursant.email, password: Math.random().toString(36).slice(-10) });
       if (authError) { setKomunikat('Blad: ' + authError.message); return; }
-      const { error } = await supabase.from('kursanci').insert([{ imie: nowyKursant.imie, nazwisko: nowyKursant.nazwisko, grupa_id: parseInt(nowyKursant.grupa_id), user_id: authData.user!.id, rola: 'kursant' }]);
+      const rola = (nowyKursant as any).rola || 'kursant';
+      const { error } = await supabase.from('kursanci').insert([{ imie: nowyKursant.imie, nazwisko: nowyKursant.nazwisko, grupa_id: rola === 'kursant' ? parseInt(nowyKursant.grupa_id) : null, user_id: authData.user!.id, rola }]);
       if (error) { setKomunikat('Blad: ' + error.message); } else { setKomunikat('Kursant dodany!'); setNowyKursant({ imie: '', nazwisko: '', email: '', grupa_id: '' }); const { data } = await supabase.from('kursanci').select('id, imie, nazwisko, email, telefon, grupa_id, user_id, certyfikat_url'); setKursanci((data || []) as unknown as KursantAdmin[]); }
     }
 
@@ -3769,7 +3770,13 @@ function urlBase64ToUint8Array(base64String: string) {
                     </div>
                     <input type="email" value={nowyKursant.email} onChange={e => setNowyKursant({ ...nowyKursant, email: e.target.value })} placeholder="Email" required style={{ width: '100%', fontSize: '12px', padding: '7px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif', marginBottom: '8px' }} />
                     <div style={{ display: 'flex', gap: '8px' }}>
-                      <select value={nowyKursant.grupa_id} onChange={e => setNowyKursant({ ...nowyKursant, grupa_id: e.target.value })} required style={{ flex: 1, fontSize: '12px', padding: '7px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif', background: 'white' }}>
+                    <select value={(nowyKursant as any).rola || 'kursant'} onChange={e => setNowyKursant({ ...nowyKursant, ...(nowyKursant as any), rola: e.target.value })}
+                        style={{ fontSize: '12px', padding: '7px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif', background: 'white', marginBottom: '8px', width: '100%' }}>
+                        <option value="kursant">Kursant</option>
+                        <option value="admin">Admin (biuro)</option>
+                        <option value="prowadzacy">Prowadzący</option>
+                      </select>
+                     <select value={nowyKursant.grupa_id} onChange={e => setNowyKursant({ ...nowyKursant, grupa_id: e.target.value })} required style={{ flex: 1, fontSize: '12px', padding: '7px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif', background: 'white' }}>
                         <option value="">Wybierz grupę</option>
                         {grupy.map(g => <option key={g.id} value={g.id}>{g.nazwa}</option>)}
                       </select>
