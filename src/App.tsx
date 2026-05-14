@@ -4831,7 +4831,7 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
             const ZDJECIA = [
               'https://images.unsplash.com/photo-1631679706909-1844bbd07221?auto=format&fit=crop&w=200&q=70',
               'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=200&q=70',
-              'https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&w=200&q=70',
+              'https://images.unsplash.com/photo-1542621334-a254cf47733d?auto=format&fit=crop&w=200&q=70',
               'https://images.unsplash.com/photo-1567016376408-0226e4d0c1ea?auto=format&fit=crop&w=200&q=70',
               'https://images.unsplash.com/photo-1556909172-54557c7e4fb7?auto=format&fit=crop&w=200&q=70',
             ];
