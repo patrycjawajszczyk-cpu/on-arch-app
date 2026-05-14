@@ -5908,154 +5908,216 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
 
   function EkranProfil({ user, kursant, zjazdy, onWyloguj, onAvatarZmieniony, grupaInfo, onOtworzAnkiete, zadania, odpowiedziZadan, pushAktywny, onWlaczPush, onWylaczPush }: { user: User; kursant: Kursant | null; zjazdy: Zjazd[]; onWyloguj: () => void; onAvatarZmieniony: (url: string) => void; grupaInfo: Grupa | null; onOtworzAnkiete: () => void; zadania?: Zadanie[]; odpowiedziZadan?: ZadanieOdpowiedz[]; pushAktywny: boolean; onWlaczPush: () => void; onWylaczPush: () => void }) {
     const [uploadowanie, setUploadowanie] = useState(false);
+    const [pokazKalendarz, setPokazKalendarz] = useState(false);
     const fileRef = useRef<HTMLInputElement>(null);
+  
+    const SERIF = "'Cormorant Garamond', Georgia, serif";
     const inicjal = kursant ? kursant.imie[0] : user.email[0].toUpperCase();
-    const nazwaGrupy = kursant?.grupy?.nazwa || 'Brak przypisania do grupy';
+    const nazwaGrupy = kursant?.grupy?.nazwa || '—';
     const miasto = kursant?.grupy?.miasto || '';
     const edycja = kursant?.grupy?.edycja || '';
+    const wszystkieZjazdy = zjazdy.length;
+    const zakonczone = zjazdy.filter(z => z.status === 'zakonczony').length;
+    const procent = wszystkieZjazdy > 0 ? Math.round((zakonczone / wszystkieZjazdy) * 100) : 0;
     const ostatniZjazd = zjazdy.length > 0 ? zjazdy[zjazdy.length - 1] : null;
     const ankietaDostepna = ostatniZjazd?.status === 'zakonczony';
-
+    const zadaniaDomowe = (zadania || []).filter(z => z.typ !== 'praca_zaliczeniowa');
+    const wyslaneZadania = (odpowiedziZadan || []).filter(o => zadaniaDomowe.some(z => z.id === o.zadanie_id)).length;
+    const r = 32, circ = 2 * Math.PI * r, dash = circ * (1 - procent / 100);
+  
     async function wgrajZdjecie(e: React.ChangeEvent<HTMLInputElement>) {
       const file = e.target.files?.[0]; if (!file) return;
       setUploadowanie(true);
       const ext = file.name.split('.').pop();
       const path = `${user.id}.${ext}`;
-      const { error: uploadError } = await supabase.storage.from('avatars').upload(path, file, { upsert: true });
-      if (uploadError) { alert('Blad wgrywania: ' + uploadError.message); setUploadowanie(false); return; }
+      const { error } = await supabase.storage.from('avatars').upload(path, file, { upsert: true });
+      if (error) { alert('Błąd: ' + error.message); setUploadowanie(false); return; }
       const { data } = supabase.storage.from('avatars').getPublicUrl(path);
       await supabase.from('kursanci').update({ avatar_url: data.publicUrl }).eq('user_id', user.id);
       onAvatarZmieniony(data.publicUrl);
       setUploadowanie(false);
     }
-
+  
     return (
       <>
-        <div className="profil-header">
-          <div className="profil-avatar-wrap" onClick={() => fileRef.current?.click()}>
-            {kursant?.avatar_url ? <img src={kursant.avatar_url} alt="avatar" className="profil-avatar-img" /> : <div className="profil-avatar">{inicjal.toUpperCase()}</div>}
-            <div className="profil-avatar-edit">{uploadowanie ? '...' : '📷'}</div>
+        {/* ── HERO ── */}
+        <div style={{ margin: '-18px -16px 0', background: 'linear-gradient(180deg, #1C2B3A 0%, #2a3d50 100%)', padding: '32px 24px 28px', position: 'relative', overflow: 'hidden' }}>
+          {/* Dekoracja */}
+          <div style={{ position: 'absolute', top: -40, right: -40, width: 160, height: 160, borderRadius: '50%', border: '1px solid rgba(255,255,255,0.08)' }} />
+          <div style={{ position: 'absolute', top: -20, right: -20, width: 100, height: 100, borderRadius: '50%', border: '1px solid rgba(255,255,255,0.06)' }} />
+  
+          <div style={{ display: 'flex', alignItems: 'center', gap: '18px', position: 'relative' }}>
+            {/* Avatar */}
+            <div style={{ position: 'relative', cursor: 'pointer' }} onClick={() => fileRef.current?.click()}>
+              {kursant?.avatar_url
+                ? <img src={kursant.avatar_url} alt="avatar" style={{ width: '72px', height: '72px', borderRadius: '50%', objectFit: 'cover', border: '2px solid rgba(255,255,255,0.3)' }} />
+                : <div style={{ width: '72px', height: '72px', borderRadius: '50%', background: 'rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: SERIF, fontSize: '28px', color: 'white', border: '2px solid rgba(255,255,255,0.2)' }}>{inicjal.toUpperCase()}</div>
+              }
+              <div style={{ position: 'absolute', bottom: 0, right: 0, width: '24px', height: '24px', borderRadius: '50%', background: '#c8a84b', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid #1C2B3A' }}>
+                {uploadowanie
+                  ? <div style={{ width: '10px', height: '10px', borderRadius: '50%', border: '1.5px solid white', borderTopColor: 'transparent', animation: 'spin 0.8s linear infinite' }} />
+                  : <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                }
+              </div>
+            </div>
+            <input ref={fileRef} type="file" accept="image/*" onChange={wgrajZdjecie} style={{ display: 'none' }} />
+  
+            {/* Info */}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: '26px', color: 'white', lineHeight: 1.1, marginBottom: '4px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {kursant ? `${kursant.imie} ${kursant.nazwisko}` : user.email}
+              </div>
+              <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.65)', marginBottom: '6px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{nazwaGrupy}</div>
+              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                {miasto && <span style={{ fontSize: '9px', letterSpacing: '0.15em', textTransform: 'uppercase', background: 'rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.8)', padding: '3px 8px', borderRadius: '999px' }}>📍 {miasto}</span>}
+                {edycja && <span style={{ fontSize: '9px', letterSpacing: '0.15em', textTransform: 'uppercase', background: 'rgba(200,168,75,0.25)', color: '#c8a84b', padding: '3px 8px', borderRadius: '999px' }}>{edycja}</span>}
+              </div>
+            </div>
           </div>
-          <input ref={fileRef} type="file" accept="image/*" onChange={wgrajZdjecie} style={{ display: 'none' }} />
-          <div className="profil-name">{kursant ? `${kursant.imie} ${kursant.nazwisko}` : user.email}</div>
-          <div className="profil-group">{nazwaGrupy}</div>
+  
+          {/* Statystyki */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', marginTop: '22px' }}>
+            {[
+              { label: 'Zjazdy', value: `${zakonczone}/${wszystkieZjazdy}`, sub: 'ukończone' },
+              { label: 'Postęp', value: `${procent}%`, sub: 'kursu' },
+              { label: 'Zadania', value: `${wyslaneZadania}/${zadaniaDomowe.length}`, sub: 'przesłane' },
+            ].map(s => (
+              <div key={s.label} style={{ background: 'rgba(255,255,255,0.08)', borderRadius: '12px', padding: '10px 8px', textAlign: 'center', border: '0.5px solid rgba(255,255,255,0.1)' }}>
+                <div style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: '22px', color: 'white', lineHeight: 1 }}>{s.value}</div>
+                <div style={{ fontSize: '8.5px', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.5)', marginTop: '4px' }}>{s.sub}</div>
+              </div>
+            ))}
+          </div>
         </div>
-        <div className="profil-card">
-          <div className="profil-row"><span className="profil-lbl">Kurs</span><span className="profil-val">Projektowanie wnętrz</span></div>
-          <div className="profil-row"><span className="profil-lbl">Miasto</span><span className="profil-val">{miasto}</span></div>
-          <div className="profil-row"><span className="profil-lbl">Edycja</span><span className="profil-val">{edycja}</span></div>
-          <div className="profil-row"><span className="profil-lbl">Email</span><span className="profil-val">{user.email}</span></div>
-          <PostepKursu zjazdy={zjazdy} />
+  
+        {/* ── PASEK POSTĘPU ── */}
+        <div style={{ background: 'white', padding: '14px 18px', borderBottom: '0.5px solid var(--border)', marginBottom: '16px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+            <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 500 }}>
+              {zakonczone === 0 ? 'Kurs jeszcze nie rozpoczęty' : zakonczone === wszystkieZjazdy ? '🎉 Kurs ukończony!' : `${zakonczone} z ${wszystkieZjazdy} zjazdów`}
+            </span>
+            <span style={{ fontSize: '11px', color: 'var(--brand)', fontWeight: 600 }}>{procent}%</span>
+          </div>
+          <div style={{ height: '4px', background: '#f0ece7', borderRadius: '999px', overflow: 'hidden' }}>
+            <div style={{ height: '100%', width: `${procent}%`, background: 'linear-gradient(90deg, #AD6B68, #B35758)', borderRadius: '999px', transition: 'width 0.6s ease' }} />
+          </div>
         </div>
-
-        {/* Strefa Wiedzy */}
-        {grupaInfo?.drive_link && (
-          <a href={grupaInfo.drive_link} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
-            <div style={{
-              background: 'white', borderRadius: '16px', padding: '16px 18px',
-              border: '0.5px solid var(--border)', marginBottom: '10px',
-              display: 'flex', alignItems: 'center', gap: '14px',
-            }}>
-              <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: '#e8f0fe', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1565c0" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
-</div>
-              <div>
-                <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text)', marginBottom: '2px' }}>Strefa Wiedzy</div>
-                <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Materiały szkoleniowe grupy · Google Drive</div>
+  
+        {/* ── KARTY AKCJI ── */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '16px' }}>
+  
+          {/* Strefa Wiedzy */}
+          {grupaInfo?.drive_link && (
+            <a href={grupaInfo.drive_link} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
+              <div style={{ background: 'white', borderRadius: '16px', padding: '14px 16px', border: '0.5px solid var(--border)', display: 'flex', alignItems: 'center', gap: '14px' }}>
+                <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: '#e8f0fe', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1565c0" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text)', marginBottom: '1px' }}>Strefa Wiedzy</div>
+                  <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Materiały grupy · Google Drive</div>
+                </div>
+                <span style={{ color: 'var(--text-muted)', fontSize: '18px' }}>›</span>
               </div>
-              <span style={{ marginLeft: 'auto', color: 'var(--brand)', fontSize: '18px' }}>→</span>
-            </div>
-          </a>
-        )}
-
-        {/* Certyfikat — zawsze widoczny */}
-        {kursant?.certyfikat_url ? (
-          <a href={kursant.certyfikat_url} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
-            <div style={{
-              background: 'white', borderRadius: '16px', padding: '16px 18px',
-              border: '0.5px solid #d4af7a', marginBottom: '10px',
-              display: 'flex', alignItems: 'center', gap: '14px',
-            }}>
-              <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: '#fef9ec', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#c8a84b" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
-</div>
-              <div>
-                <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text)', marginBottom: '2px' }}>Certyfikat ukończenia</div>
-                <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Kliknij aby pobrać</div>
+            </a>
+          )}
+  
+          {/* Certyfikat */}
+          {kursant?.certyfikat_url ? (
+            <a href={kursant.certyfikat_url} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
+              <div style={{ background: 'linear-gradient(135deg, #fdf6e8 0%, #fef9f0 100%)', borderRadius: '16px', padding: '14px 16px', border: '0.5px solid #e8d4a0', display: 'flex', alignItems: 'center', gap: '14px' }}>
+                <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: '#c8a84b', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: '14px', fontWeight: 600, color: '#2a1f1f', marginBottom: '1px' }}>Certyfikat ukończenia</div>
+                  <div style={{ fontSize: '11px', color: '#a07830' }}>Kliknij aby pobrać / wyświetlić</div>
+                </div>
+                <span style={{ color: '#c8a84b', fontSize: '18px' }}>›</span>
               </div>
-              <span style={{ marginLeft: 'auto', color: '#c8a84b', fontSize: '18px' }}>→</span>
-            </div>
-          </a>
-        ) : (
-          <div style={{
-            background: '#f8f8f8', borderRadius: '16px', padding: '16px 18px',
-            border: '0.5px dashed #d0d0d0', marginBottom: '10px',
-            display: 'flex', alignItems: 'center', gap: '14px',
-            opacity: 0.65,
-          }}>
-            <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: '#efefef', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
-</div>
-            <div>
-              <div style={{ fontSize: '14px', fontWeight: 600, color: '#aaa', marginBottom: '2px' }}>Certyfikat ukończenia</div>
-              <div style={{ fontSize: '12px', color: '#bbb', lineHeight: 1.5 }}>
-                Pojawi się po zakończeniu kursu,{'\n'}wypełnieniu ankiety i przesłaniu pracy zaliczeniowej
+            </a>
+          ) : (
+            <div style={{ background: '#fafafa', borderRadius: '16px', padding: '14px 16px', border: '0.5px dashed #d0d0d0', display: 'flex', alignItems: 'center', gap: '14px', opacity: 0.6 }}>
+              <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: '#eee', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="1.8" strokeLinecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: '14px', fontWeight: 600, color: '#aaa', marginBottom: '1px' }}>Certyfikat ukończenia</div>
+                <div style={{ fontSize: '11px', color: '#bbb' }}>Dostępny po zakończeniu kursu</div>
               </div>
             </div>
-            <span style={{ marginLeft: 'auto' }}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ccc" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
-          </div>
-        )}
-
-        {/* Ankieta — zawsze widoczna */}
-        {ankietaDostepna ? (
-          <div onClick={onOtworzAnkiete} style={{
-            background: 'var(--brand-dark)', borderRadius: '16px', padding: '16px 18px',
-            marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '14px',
-            cursor: 'pointer',
-          }}>
-            <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: 'rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-</div>
-            <div>
-              <div style={{ fontSize: '14px', fontWeight: 600, color: 'white', marginBottom: '2px' }}>Ankieta oceny kursu</div>
-              <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.7)' }}>Twoja opinia jest dla nas ważna — wypełnij!</div>
+          )}
+  
+          {/* Ankieta */}
+          {ankietaDostepna ? (
+            <div onClick={onOtworzAnkiete} style={{ background: 'var(--brand-dark)', borderRadius: '16px', padding: '14px 16px', display: 'flex', alignItems: 'center', gap: '14px', cursor: 'pointer' }}>
+              <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: 'rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: '14px', fontWeight: 600, color: 'white', marginBottom: '1px' }}>Ankieta oceny kursu</div>
+                <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.65)' }}>Twoja opinia jest dla nas ważna</div>
+              </div>
+              <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: '18px' }}>›</span>
             </div>
-            <span style={{ marginLeft: 'auto', color: 'white', fontSize: '18px' }}>→</span>
-          </div>
-        ) : (
-          <div style={{
-            background: '#f8f8f8', borderRadius: '16px', padding: '16px 18px',
-            border: '0.5px dashed #d0d0d0', marginBottom: '10px',
-            display: 'flex', alignItems: 'center', gap: '14px',
-            opacity: 0.65,
-          }}>
-            <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: '#efefef', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-</div>
-            <div>
-              <div style={{ fontSize: '14px', fontWeight: 600, color: '#aaa', marginBottom: '2px' }}>Ankieta oceny kursu</div>
-              <div style={{ fontSize: '12px', color: '#bbb', lineHeight: 1.5 }}>Odblokuje się po zakończeniu ostatniego zjazdu</div>
+          ) : (
+            <div style={{ background: '#fafafa', borderRadius: '16px', padding: '14px 16px', border: '0.5px dashed #d0d0d0', display: 'flex', alignItems: 'center', gap: '14px', opacity: 0.6 }}>
+              <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: '#eee', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="1.8" strokeLinecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: '14px', fontWeight: 600, color: '#aaa', marginBottom: '1px' }}>Ankieta oceny kursu</div>
+                <div style={{ fontSize: '11px', color: '#bbb' }}>Odblokuje się po ostatnim zjeździe</div>
+              </div>
             </div>
-            <span style={{ marginLeft: 'auto' }}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ccc" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
+          )}
+  
+          {/* Push */}
+          <div onClick={pushAktywny ? onWylaczPush : onWlaczPush} style={{ background: 'white', borderRadius: '16px', padding: '14px 16px', border: '0.5px solid var(--border)', display: 'flex', alignItems: 'center', gap: '14px', cursor: 'pointer' }}>
+            <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: pushAktywny ? '#e8f5e9' : '#f5f5f5', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={pushAktywny ? '#2e7d32' : '#999'} strokeWidth="1.8" strokeLinecap="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            </div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text)', marginBottom: '1px' }}>Powiadomienia push</div>
+              <div style={{ fontSize: '11px', color: pushAktywny ? '#2e7d32' : 'var(--text-muted)' }}>{pushAktywny ? '✓ Włączone' : 'Wyłączone — kliknij aby włączyć'}</div>
+            </div>
+            <div style={{ width: '36px', height: '20px', borderRadius: '999px', background: pushAktywny ? '#2e7d32' : '#ddd', position: 'relative', transition: 'background 0.2s', flexShrink: 0 }}>
+              <div style={{ position: 'absolute', top: '2px', left: pushAktywny ? '18px' : '2px', width: '16px', height: '16px', borderRadius: '50%', background: 'white', transition: 'left 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.2)' }} />
+            </div>
           </div>
-        )}
-
-        {/* Kalendarz zjazdów */}
+  
+          {/* Email */}
+          <div style={{ background: 'white', borderRadius: '16px', padding: '14px 16px', border: '0.5px solid var(--border)', display: 'flex', alignItems: 'center', gap: '14px' }}>
+            <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: '#f5f5f5', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#999" strokeWidth="1.8" strokeLinecap="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '1px' }}>Adres e-mail</div>
+              <div style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.email}</div>
+            </div>
+          </div>
+        </div>
+  
+        {/* ── KALENDARZ ── */}
         {zjazdy.length > 0 && (
-          <div style={{ marginBottom: '10px' }}>
-            <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text)', marginBottom: '8px', padding: '0 2px' }}>📅 Mój harmonogram</div>
-            <KalendarzZjazdow zjazdy={zjazdy} zadania={zadania} odpowiedziZadan={odpowiedziZadan} />
+          <div style={{ marginBottom: '16px' }}>
+            <button onClick={() => setPokazKalendarz(v => !v)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', background: 'none', border: 'none', cursor: 'pointer', padding: '8px 2px', marginBottom: pokazKalendarz ? '10px' : 0, fontFamily: 'inherit' }}>
+              <span style={{ fontSize: '9.5px', letterSpacing: '0.24em', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600 }}>📅 Mój harmonogram</span>
+              <span style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'inline-block', transform: pokazKalendarz ? 'rotate(0)' : 'rotate(-90deg)', transition: 'transform 0.2s' }}>▾</span>
+            </button>
+            {pokazKalendarz && <KalendarzZjazdow zjazdy={zjazdy} zadania={zadania} odpowiedziZadan={odpowiedziZadan} />}
           </div>
         )}
-
-<div style={{ marginBottom: '10px' }}>
-          <button onClick={pushAktywny ? onWylaczPush : onWlaczPush}
-            style={{ width: '100%', padding: '13px', borderRadius: '14px', border: '0.5px solid var(--border)', background: pushAktywny ? '#e8f5e9' : 'white', color: pushAktywny ? '#2e7d32' : 'var(--text)', fontSize: '14px', fontWeight: 600, cursor: 'pointer', fontFamily: 'Jost, sans-serif', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-            {pushAktywny ? 'Powiadomienia włączone' : 'Włącz powiadomienia'}
-          </button>
+  
+        {/* ── WYLOGUJ ── */}
+        <button onClick={onWyloguj} style={{ width: '100%', padding: '14px', borderRadius: '14px', border: '0.5px solid var(--border)', background: 'white', color: 'var(--text-muted)', fontSize: '14px', fontWeight: 500, cursor: 'pointer', fontFamily: 'Jost, sans-serif', marginBottom: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          Wyloguj się
+        </button>
+  
+        <div style={{ textAlign: 'center', padding: '8px 0 4px' }}>
+          <span style={{ fontSize: '10px', color: 'var(--text-muted)', letterSpacing: '0.15em' }}>ON-ARCH · STUDENT APP</span>
         </div>
-        <button className="btn-wyloguj" onClick={onWyloguj}>Wyloguj się</button>
       </>
     );
   }
