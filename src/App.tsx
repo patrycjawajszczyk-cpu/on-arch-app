@@ -3041,13 +3041,20 @@ function urlBase64ToUint8Array(base64String: string) {
               { id: 'backup',    icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>, label: 'Backup' },
             ].map(item => (
               <button key={item.id}
-                className={`biuro-sidebar-item ${aktywnaZakladka === item.id ? 'active' : ''}`}
-                style={item.id === 'backup' && pokazBackupAlert ? { color: '#c62828', background: '#ffeaea' } : {}}
+              className={`biuro-sidebar-item ${aktywnaZakladka === item.id ? 'active' : ''}`}
+              style={
+                item.id === 'backup' && pokazBackupAlert ? { color: '#c62828', background: '#ffeaea' } :
+                item.id === 'aplikacje' && aktywnaZakladka !== 'aplikacje' ? { color: '#5c3d8f' } :
+                item.id === 'aplikacje' && aktywnaZakladka === 'aplikacje' ? {} : {}
+              }
                 onClick={() => { setKomunikat(''); setEdytowane(null); setEdytowanyZjazd(null); setAktywnaZakladka(item.id); }}>
                 {item.icon}
                 <span>{item.label}</span>
                 {item.id === 'backup' && pokazBackupAlert && (
                   <span style={{ marginLeft: 'auto', width: '8px', height: '8px', borderRadius: '50%', background: '#c62828', flexShrink: 0 }} />
+                )}
+                {item.id === 'aplikacje' && (
+                  <span style={{ marginLeft: 'auto', fontSize: '8px', fontWeight: 700, background: '#5c3d8f', color: 'white', padding: '1px 6px', borderRadius: '999px', letterSpacing: '0.1em' }}>NEW</span>
                 )}
               </button>
             ))}
@@ -3119,13 +3126,16 @@ function urlBase64ToUint8Array(base64String: string) {
                     { id: 'prowadzacy', label: 'Prowadzący', opis: `${prowadzacy.length} osób`,           icon: <User size={22}/> },
                     { id: 'ankiety',    label: 'Ankiety',    opis: `${ankiety.length} wypełnień`,         icon: <Star size={22}/> },
                     { id: 'materialy',  label: 'Materiały', opis: 'Lista produktów',  icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg> },
-                    { id: 'aplikacje',  label: 'Aplikacje',  opis: 'Portale zewnętrzne', icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg> },
+                    { id: 'aplikacje',  label: 'Aplikacje',  opis: 'Portale i sklepy partnerskie',
                     { id: 'backup',     label: 'Backup',     opis: 'Pobierz kopię bazy',                  icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> },
                   ].map(k => (
                     <div key={k.id} onClick={() => setAktywnaZakladka(k.id)}
-                      className="biuro-kafelek"
-                      style={k.id === 'backup' && pokazBackupAlert ? { borderColor: '#ffcdd2', background: '#fff5f5' } : {}}>
-                      <div className="biuro-kafelek-icon" style={k.id === 'backup' && pokazBackupAlert ? { color: '#c62828' } : {}}>{k.icon}</div>
+                    className="biuro-kafelek"
+                    style={
+                      k.id === 'backup' && pokazBackupAlert ? { borderColor: '#ffcdd2', background: '#fff5f5' } :
+                      k.id === 'aplikacje' ? { borderColor: '#c9b8e8', background: 'linear-gradient(135deg, #f8f3ff 0%, #f3eefe 100%)', borderWidth: '1px' } : {}
+                    }>
+                      <div className="biuro-kafelek-icon" style={k.id === 'backup' && pokazBackupAlert ? { color: '#c62828' } : k.id === 'aplikacje' ? { color: '#5c3d8f' } : {}}>{k.icon}</div>
                       <div>
                         <div className="biuro-kafelek-label">{k.label}</div>
                         <div className="biuro-kafelek-opis">{k.opis}</div>
@@ -4093,6 +4103,15 @@ function urlBase64ToUint8Array(base64String: string) {
                 kolor: '#c8a84b',
                 bg: '#fef9ec',
                 ikona: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>,
+              },
+              {
+                label: 'Wyjścia do sklepów partnerskich',
+                opis: 'Zaplanowane wyjścia i możliwość dopisania się',
+                url: 'https://onarch-wyjscia.vercel.app/',
+                kolor: '#5c3d8f',
+                bg: '#f3eefe',
+                ikona: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>,
+                wyroznienie: true,
               },
             ];
 
