@@ -5501,26 +5501,7 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
     );
   }
 
-  function PostepKursu({ zjazdy }: { zjazdy: Zjazd[] }) {
-    const wszystkie = zjazdy.length;
-    const zakonczone = zjazdy.filter(z => z.status === 'zakonczony').length;
-    const procent = wszystkie > 0 ? Math.round((zakonczone / wszystkie) * 100) : 0;
-    return (
-      <div className="profil-postep">
-        <div className="profil-postep-header">
-          <span className="profil-postep-label">Postęp kursu</span>
-          <span className="profil-postep-count">{zakonczone} / {wszystkie} zjazdów</span>
-        </div>
-        <div className="profil-postep-track">
-          <div className="profil-postep-fill" style={{ width: `${procent}%` }} />
-        </div>
-        <div className="profil-postep-footer">
-          <span>{zakonczone === 0 ? 'Kurs jeszcze nie rozpoczęty' : zakonczone === wszystkie ? 'Kurs ukończony! 🎉' : `${procent}% ukończone`}</span>
-          <span>{wszystkie - zakonczone > 0 ? `Zostało ${wszystkie - zakonczone} zjazdów` : ''}</span>
-        </div>
-      </div>
-    );
-  }
+  
 
   // ─── KALENDARZ ZJAZDÓW ───────────────────────────────────────────────────────
 
@@ -5923,7 +5904,7 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
     const ankietaDostepna = ostatniZjazd?.status === 'zakonczony';
     const zadaniaDomowe = (zadania || []).filter(z => z.typ !== 'praca_zaliczeniowa');
     const wyslaneZadania = (odpowiedziZadan || []).filter(o => zadaniaDomowe.some(z => z.id === o.zadanie_id)).length;
-    const r = 32, circ = 2 * Math.PI * r, dash = circ * (1 - procent / 100);
+    const r = 32, circ = 2 * Math.PI * r;
   
     async function wgrajZdjecie(e: React.ChangeEvent<HTMLInputElement>) {
       const file = e.target.files?.[0]; if (!file) return;
