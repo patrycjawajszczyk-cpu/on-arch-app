@@ -5904,7 +5904,9 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
     const ankietaDostepna = ostatniZjazd?.status === 'zakonczony';
     const zadaniaDomowe = (zadania || []).filter(z => z.typ !== 'praca_zaliczeniowa');
     const wyslaneZadania = (odpowiedziZadan || []).filter(o => zadaniaDomowe.some(z => z.id === o.zadanie_id)).length;
-    const r = 32, circ = 2 * Math.PI * r;
+    const procent_r = 32;
+  const circ_unused = procent_r;
+  void circ_unused;
   
     async function wgrajZdjecie(e: React.ChangeEvent<HTMLInputElement>) {
       const file = e.target.files?.[0]; if (!file) return;
