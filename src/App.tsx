@@ -1718,19 +1718,7 @@ function urlBase64ToUint8Array(base64String: string) {
       const { data } = await supabase.from('zadania').select('*').in('grupa_id', mojeGrupyIds).order('created_at', { ascending: false });
       setZadania(data || []);
     }
-    async function zapiszEdycjeZadania(e: React.FormEvent) {
-      e.preventDefault();
-      if (!edytowaneZadanie) return;
-      const { error } = await supabase.from('zadania').update({
-        tytul: edytowaneZadanie.tytul,
-        opis: edytowaneZadanie.opis,
-        termin: edytowaneZadanie.termin || null,
-        link_materialow: edytowaneZadanie.link_materialow || null,
-        typ: edytowaneZadanie.typ,
-        zdjecie_url: edytowaneZadanie.zdjecie_url ?? null,
-      }).eq('id', edytowaneZadanie.id);
-      if (error) { setKomunikat('Błąd: ' + error.message); } else { setKomunikat('Zaktualizowano!'); setEdytowaneZadanie(null); pobierzZadania(); }
-    }
+    
     async function usunZadanie(id: number) {
       if (!window.confirm('Usunąć zadanie?')) return;
       await supabase.from('zadania').delete().eq('id', id);
@@ -2037,45 +2025,7 @@ function urlBase64ToUint8Array(base64String: string) {
                     </div>
                   </>
                 )}
-                {edytowaneZadanie && (
-          <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}
-            onClick={() => setEdytowaneZadanie(null)}>
-            <div style={{ background: 'white', borderRadius: '20px', width: '100%', maxWidth: '540px', maxHeight: '90vh', overflow: 'auto', padding: '24px' }}
-              onClick={e => e.stopPropagation()}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                <div style={{ fontSize: '16px', fontWeight: 600 }}>Edytuj zadanie</div>
-                <button onClick={() => setEdytowaneZadanie(null)} style={{ background: 'none', border: 'none', fontSize: '22px', cursor: 'pointer', color: 'var(--text-muted)' }}>×</button>
-              </div>
-              <form onSubmit={zapiszEdycjeZadania} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                <div className="login-field"><label>Tytuł</label><input value={edytowaneZadanie.tytul} onChange={e => setEdytowaneZadanie({ ...edytowaneZadanie, tytul: e.target.value })} required /></div>
-                <div className="login-field"><label>Opis</label><textarea value={edytowaneZadanie.opis || ''} onChange={e => setEdytowaneZadanie({ ...edytowaneZadanie, opis: e.target.value })} rows={3} style={{ padding: '8px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif', fontSize: '13px', resize: 'vertical' }} /></div>
-                <div className="login-field"><label>Termin</label><input type="date" value={edytowaneZadanie.termin || ''} onChange={e => setEdytowaneZadanie({ ...edytowaneZadanie, termin: e.target.value })} /></div>
-                <div className="login-field"><label>Link do materiałów</label><input type="url" value={edytowaneZadanie.link_materialow || ''} onChange={e => setEdytowaneZadanie({ ...edytowaneZadanie, link_materialow: e.target.value })} /></div>
-                <div className="login-field"><label>Typ</label>
-                  <select value={edytowaneZadanie.typ} onChange={e => setEdytowaneZadanie({ ...edytowaneZadanie, typ: e.target.value })} style={{ padding: '8px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif' }}>
-                    <option value="zadanie">Zadanie domowe</option>
-                    <option value="praca_zaliczeniowa">Praca zaliczeniowa</option>
-                  </select>
-                </div>
-                <div>
-                  <label style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.2em', display: 'block', marginBottom: '6px' }}>Zdjęcie zadania</label>
-                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                    {edytowaneZadanie.zdjecie_url && <img src={edytowaneZadanie.zdjecie_url} alt="zdjęcie" style={{ width: '80px', height: '50px', objectFit: 'cover', borderRadius: '8px', border: '0.5px solid var(--border)' }} />}
-                    <button type="button" onClick={() => setPokazGalerieZadanie(true)}
-                      style={{ padding: '7px 14px', borderRadius: '9px', border: '0.5px solid var(--border)', background: 'white', fontSize: '12px', cursor: 'pointer', fontFamily: 'Jost, sans-serif', color: 'var(--brand)' }}>
-                      {edytowaneZadanie.zdjecie_url ? '🖼 Zmień' : '🖼 Wybierz zdjęcie'}
-                    </button>
-                    {edytowaneZadanie.zdjecie_url && <button type="button" onClick={() => setEdytowaneZadanie({ ...edytowaneZadanie, zdjecie_url: null })} style={{ background: 'none', border: 'none', color: '#e57373', cursor: 'pointer', fontSize: '16px' }}>×</button>}
-                  </div>
-                </div>
-                <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
-                  <button type="submit" style={{ flex: 1, padding: '10px', borderRadius: '10px', background: 'var(--brand-dark)', color: 'white', border: 'none', fontSize: '13px', fontWeight: 600, cursor: 'pointer', fontFamily: 'Jost, sans-serif' }}>Zapisz zmiany</button>
-                  <button type="button" onClick={() => setEdytowaneZadanie(null)} style={{ padding: '10px 16px', borderRadius: '10px', border: '0.5px solid var(--border)', background: 'white', fontSize: '13px', cursor: 'pointer', fontFamily: 'Jost, sans-serif' }}>Anuluj</button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
+                
                 {aktywnaZakladka === 'kursanci' && (
                   <>
                     <h2 className="page-title">Kursanci</h2>
@@ -3240,7 +3190,7 @@ function urlBase64ToUint8Array(base64String: string) {
       await supabase.from('zadania').delete().eq('id', id);
       setKomunikat('Usunięto!'); pobierzZadania();
     }
-<button onClick={() => setEdytowaneZadanie(z)} style={{ fontSize: '11px', padding: '4px 10px', border: '0.5px solid var(--border)', borderRadius: '7px', background: 'white', cursor: 'pointer', color: 'var(--brand)', fontFamily: 'Jost, sans-serif' }}>Edytuj</button>
+
     async function importujCSV(e: React.ChangeEvent<HTMLInputElement>) {
       const file = e.target.files?.[0]; if (!file) return;
 
@@ -4652,6 +4602,8 @@ function urlBase64ToUint8Array(base64String: string) {
                                         )}
                                         {odp.length === 0 && <span style={{ fontSize: '11px', color: '#ccc', marginTop: '4px', display: 'block' }}>Brak przesłanych prac</span>}
                                       </div>
+                                      <button onClick={() => setEdytowaneZadanie(z)}
+                                        style={{ fontSize: '11px', padding: '4px 10px', border: '0.5px solid var(--border)', borderRadius: '7px', background: 'white', cursor: 'pointer', color: 'var(--brand)', fontFamily: 'Jost, sans-serif', marginRight: '4px' }}>Edytuj</button>
                                       <button onClick={() => usunZadanie(z.id)}
                                         style={{ background: 'none', border: 'none', color: '#e57373', cursor: 'pointer', fontSize: '16px', padding: '0 2px', flexShrink: 0 }}>×</button>
                                     </div>
