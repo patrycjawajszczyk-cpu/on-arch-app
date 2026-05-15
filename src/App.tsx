@@ -2891,6 +2891,7 @@ function urlBase64ToUint8Array(base64String: string) {
     const [zwinieteZadania, setZwinieteZadania] = useState<Set<number>>(new Set());
     const [edytowanyKursant, setEdytowanyKursant] = useState<{ id: number; imie: string; nazwisko: string; email: string; telefon: string } | null>(null);
     const [szukajKursant, setSzukajKursant] = useState('');
+    const [filtrGrupaKursant, setFiltrGrupaKursant] = useState('');
     const [dostepnoscData, setDostepnoscData] = useState('');
     const [filtrMiastoProw, setFiltrMiastoProw] = useState('');
     const [filtrDostepnoscProw, setFiltrDostepnoscProw] = useState('');
@@ -4128,172 +4129,167 @@ function urlBase64ToUint8Array(base64String: string) {
                 </div>
               </div>
 
-              {/* LISTA KURSANTÓW — pogrupowana, zwijana, z edycją */}
+              {/* LISTA KURSANTÓW — płaska tabela */}
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px', gap: '12px', flexWrap: 'wrap' }}>
-                <h2 className="page-title" style={{ margin: 0 }}>Lista kursantów</h2>
-                <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap', flex: 1, justifyContent: 'flex-end' }}>
-                  {/* Wyszukiwarka */}
-                  <div style={{ position: 'relative', flex: '1', maxWidth: '280px', minWidth: '160px' }}>
+                <h2 className="page-title" style={{ margin: 0 }}>
+                  Lista kursantów ({kursanci.filter(k => {
+                    const s = szukajKursant.toLowerCase().trim();
+                    const gOk = !filtrGrupaKursant || k.grupa_id === parseInt(filtrGrupaKursant);
+                    const sOk = !s || `${k.imie} ${k.nazwisko}`.toLowerCase().includes(s) || (k.email || '').toLowerCase().includes(s);
+                    return gOk && sOk;
+                  }).length})
+                </h2>
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+                  <div style={{ position: 'relative' }}>
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ position: 'absolute', left: '9px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                    <input
-                      type="text"
-                      value={szukajKursant}
-                      onChange={e => { setSzukajKursant(e.target.value); setZwinieteGrupy(new Set()); }}
-                      placeholder="Szukaj po nazwisku lub emailu…"
-                      style={{ width: '100%', fontSize: '12px', padding: '7px 10px 7px 28px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif', background: 'white' }}
-                    />
-                    {szukajKursant && (
-                      <button onClick={() => setSzukajKursant('')} style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: '14px', lineHeight: 1 }}>×</button>
-                    )}
+                    <input type="text" value={szukajKursant} onChange={e => setSzukajKursant(e.target.value)} placeholder="Szukaj..."
+                      style={{ paddingLeft: '28px', fontSize: '12px', padding: '7px 10px 7px 28px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif', width: '180px' }} />
                   </div>
-                  <button onClick={() => setZwinieteGrupy(new Set(grupy.map(g => g.id)))}
-                    style={{ fontSize: '11px', color: 'var(--text-muted)', background: 'none', border: '0.5px solid var(--border)', borderRadius: '6px', padding: '4px 10px', cursor: 'pointer', fontFamily: 'Jost, sans-serif', whiteSpace: 'nowrap' }}>
-                    Zwiń wszystkie
-                  </button>
-                  <button onClick={() => setZwinieteGrupy(new Set())}
-                    style={{ fontSize: '11px', color: 'var(--text-muted)', background: 'none', border: '0.5px solid var(--border)', borderRadius: '6px', padding: '4px 10px', cursor: 'pointer', fontFamily: 'Jost, sans-serif', whiteSpace: 'nowrap' }}>
-                    Rozwiń wszystkie
-                  </button>
+                  <select value={filtrGrupaKursant} onChange={e => setFiltrGrupaKursant(e.target.value)}
+                    style={{ fontSize: '12px', padding: '7px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif', background: 'white' }}>
+                    <option value="">Wszystkie grupy</option>
+                    {grupy.map(g => <option key={g.id} value={g.id}>{g.nazwa}</option>)}
+                  </select>
                   <button onClick={() => {
                     const naglowki = ['imie', 'nazwisko', 'email', 'telefon', 'grupa'];
-                    const wiersze = kursanci.map(k => [
-                      `"${k.imie}"`, `"${k.nazwisko}"`,
-                      `"${k.email || ''}"`, `"${k.telefon || ''}"`,
-                      `"${grupy.find(g => g.id === k.grupa_id)?.nazwa || ''}"`,
-                    ].join(','));
+                    const wiersze = kursanci.map(k => [`"${k.imie}"`, `"${k.nazwisko}"`, `"${k.email || ''}"`, `"${k.telefon || ''}"`, `"${grupy.find(g => g.id === k.grupa_id)?.nazwa || ''}"`].join(','));
                     const csv = '\uFEFF' + [naglowki.join(','), ...wiersze].join('\n');
                     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
                     const url = URL.createObjectURL(blob);
                     const a = document.createElement('a'); a.href = url; a.download = 'kursanci.csv'; a.click();
-                  }} style={{ fontSize: '12px', color: 'var(--brand)', background: 'none', border: '0.5px solid var(--border)', borderRadius: '8px', padding: '5px 12px', cursor: 'pointer', fontFamily: 'Jost, sans-serif', whiteSpace: 'nowrap' }}>
+                  }} style={{ fontSize: '12px', color: 'var(--brand)', background: 'none', border: '0.5px solid var(--border)', borderRadius: '8px', padding: '6px 12px', cursor: 'pointer', fontFamily: 'Jost, sans-serif', whiteSpace: 'nowrap' }}>
                     ⬇ CSV
                   </button>
                 </div>
               </div>
 
-              {grupy.map(g => {
-                const szukaj = szukajKursant.toLowerCase().trim();
-                const kursanciGrupy = kursanci.filter(k => {
-                  if (k.grupa_id !== g.id) return false;
-                  if (!szukaj) return true;
-                  return (
-                    `${k.imie} ${k.nazwisko}`.toLowerCase().includes(szukaj) ||
-                    (k.email || '').toLowerCase().includes(szukaj) ||
-                    (k.telefon || '').includes(szukaj)
-                  );
-                });
-                if (kursanciGrupy.length === 0) return null;
-                const zwinieta = zwinieteGrupy.has(g.id);
-                return (
-                  <div key={g.id} style={{ marginBottom: '10px' }}>
-                    <div onClick={() => setZwinieteGrupy(prev => {
-                      const next = new Set(prev);
-                      next.has(g.id) ? next.delete(g.id) : next.add(g.id);
-                      return next;
-                    })} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 14px', background: 'white', borderRadius: zwinieta ? '12px' : '12px 12px 0 0', border: '0.5px solid var(--border)', cursor: 'pointer', userSelect: 'none' as const }}>
-                      <span style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'inline-block', transform: zwinieta ? 'rotate(-90deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}>▾</span>
-                      <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '17px', fontWeight: 400, color: 'var(--brand-dark)', flex: 1 }}>{g.nazwa}</span>
-                      <span style={{ fontSize: '11px', color: 'var(--text-muted)', background: 'var(--bg)', padding: '2px 8px', borderRadius: '10px', border: '0.5px solid var(--border)' }}>
-                        {kursanciGrupy.length} {szukaj ? 'wyników' : 'osób'}
-                      </span>
-                    </div>
-                    {!zwinieta && (
-                      <div style={{ background: 'white', borderRadius: '0 0 12px 12px', border: '0.5px solid var(--border)', borderTop: 'none', overflow: 'hidden' }}>
-                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
-                          <thead>
-                            <tr style={{ background: 'var(--bg)', borderBottom: '0.5px solid var(--border)' }}>
-                              {['Imię i nazwisko', 'Email', 'Telefon', 'Certyfikat', ''].map((h, i) => (
-                                <th key={i} style={{ padding: '7px 12px', textAlign: 'left', fontWeight: 600, color: 'var(--text-muted)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.3px' }}>{h}</th>
-                              ))}
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {kursanciGrupy.map((k, idx) => {
-                              const edytuje = edytowanyKursant?.id === k.id;
-                              return (
-                                <tr key={k.id} style={{ borderBottom: idx < kursanciGrupy.length - 1 ? '0.5px solid var(--border-soft)' : 'none', background: edytuje ? '#fdf5f5' : idx % 2 === 0 ? 'white' : '#fdf9f8' }}>
-                                  <td style={{ padding: '7px 12px', whiteSpace: 'nowrap' }}>
-                                    {edytuje ? (
-                                      <div style={{ display: 'flex', gap: '4px' }}>
-                                        <input value={edytowanyKursant.imie} onChange={e => setEdytowanyKursant({ ...edytowanyKursant, imie: e.target.value })}
-                                          style={{ width: '90px', fontSize: '12px', padding: '4px 6px', border: '0.5px solid var(--brand-mid)', borderRadius: '6px', fontFamily: 'Jost, sans-serif' }} />
-                                        <input value={edytowanyKursant.nazwisko} onChange={e => setEdytowanyKursant({ ...edytowanyKursant, nazwisko: e.target.value })}
-                                          style={{ width: '110px', fontSize: '12px', padding: '4px 6px', border: '0.5px solid var(--brand-mid)', borderRadius: '6px', fontFamily: 'Jost, sans-serif' }} />
-                                      </div>
-                                    ) : (
-                                      <span style={{ fontWeight: 500, color: 'var(--text)' }}>{k.imie} {k.nazwisko}</span>
-                                    )}
-                                  </td>
-                                  <td style={{ padding: '7px 12px' }}>
-                                    {edytuje ? (
-                                      <input value={edytowanyKursant.email} onChange={e => setEdytowanyKursant({ ...edytowanyKursant, email: e.target.value })}
-                                        style={{ width: '160px', fontSize: '12px', padding: '4px 6px', border: '0.5px solid var(--brand-mid)', borderRadius: '6px', fontFamily: 'Jost, sans-serif' }} />
-                                    ) : (
-                                      <span style={{ fontSize: '11px', color: k.email ? 'var(--text-muted)' : '#ccc' }}>{k.email || '—'}</span>
-                                    )}
-                                  </td>
-                                  <td style={{ padding: '7px 12px' }}>
-                                    {edytuje ? (
-                                      <input value={edytowanyKursant.telefon} onChange={e => setEdytowanyKursant({ ...edytowanyKursant, telefon: e.target.value })}
-                                        placeholder="+48 600 000 000"
-                                        style={{ width: '130px', fontSize: '12px', padding: '4px 6px', border: '0.5px solid var(--brand-mid)', borderRadius: '6px', fontFamily: 'Jost, sans-serif' }} />
-                                    ) : (
-                                      k.telefon
-                                        ? <a href={`tel:${k.telefon}`} style={{ fontSize: '11px', color: 'var(--text-muted)', textDecoration: 'none' }}>{k.telefon}</a>
-                                        : <span style={{ fontSize: '11px', color: '#ccc' }}>—</span>
-                                    )}
-                                  </td>
-                                  <td style={{ padding: '6px 12px', minWidth: '200px' }}>
-                                    <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-                                      <input type="url" defaultValue={k.certyfikat_url || ''} placeholder="https://drive.google.com/..."
-                                        onBlur={async e => {
-                                          if (e.target.value !== (k.certyfikat_url || '')) {
-                                            await supabase.from('kursanci').update({ certyfikat_url: e.target.value || null }).eq('id', k.id);
-                                            setKomunikat(`Certyfikat zapisany dla ${k.imie} ${k.nazwisko}`);
-                                          }
-                                        }}
-                                        style={{ flex: 1, fontSize: '11px', padding: '5px 8px', borderRadius: '6px', border: '0.5px solid var(--border)', fontFamily: 'Jost, sans-serif', background: k.certyfikat_url ? '#f0faf4' : 'white' }} />
-                                      {k.certyfikat_url && (
-                                        <a href={k.certyfikat_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: '11px', color: '#2e7d32', textDecoration: 'none' }}>🎓</a>
-                                      )}
-                                    </div>
-                                  </td>
-                                  <td style={{ padding: '7px 12px', whiteSpace: 'nowrap' }}>
-                                    {edytuje ? (
-                                      <div style={{ display: 'flex', gap: '4px' }}>
-                                        <button onClick={async () => {
-                                          await supabase.from('kursanci').update({ imie: edytowanyKursant.imie, nazwisko: edytowanyKursant.nazwisko, email: edytowanyKursant.email || null, telefon: edytowanyKursant.telefon || null }).eq('id', k.id);
-                                          const { data } = await supabase.from('kursanci').select('id, imie, nazwisko, email, telefon, grupa_id, user_id, certyfikat_url');
-                                          setKursanci((data || []) as unknown as KursantAdmin[]);
-                                          setEdytowanyKursant(null); setKomunikat('Zapisano!');
-                                        }} style={{ fontSize: '11px', padding: '3px 10px', background: 'var(--brand)', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontFamily: 'Jost, sans-serif' }}>✓</button>
-                                        <button onClick={() => setEdytowanyKursant(null)}
-                                          style={{ fontSize: '11px', padding: '3px 8px', background: 'none', border: '0.5px solid var(--border)', borderRadius: '6px', cursor: 'pointer', color: 'var(--text-muted)' }}>✕</button>
-                                      </div>
-                                    ) : (
-                                      <div style={{ display: 'flex', gap: '4px' }}>
-                                        <button onClick={() => setEdytowanyKursant({ id: k.id, imie: k.imie, nazwisko: k.nazwisko, email: k.email || '', telefon: k.telefon || '' })}
-                                          style={{ fontSize: '11px', padding: '3px 10px', border: '0.5px solid var(--border)', borderRadius: '6px', background: 'white', cursor: 'pointer', color: 'var(--brand)', fontFamily: 'Jost, sans-serif' }}>Edytuj</button>
-                                        <button onClick={async () => {
-                                          if (window.confirm(`Usunąć ${k.imie} ${k.nazwisko}?`)) {
-                                            await supabase.from('kursanci').delete().eq('id', k.id);
-                                            const { data } = await supabase.from('kursanci').select('id, imie, nazwisko, email, telefon, grupa_id, user_id, certyfikat_url');
-                                            setKursanci((data || []) as unknown as KursantAdmin[]); setKomunikat('Usunięto.');
-                                          }
-                                        }} style={{ fontSize: '11px', padding: '3px 6px', border: 'none', borderRadius: '6px', background: 'none', cursor: 'pointer', color: '#e57373' }}>×</button>
-                                      </div>
-                                    )}
-                                  </td>
-                                </tr>
-                              );
-                            })}
-                          </tbody>
-                        </table>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
+              <div style={{ background: 'white', borderRadius: '12px', border: '0.5px solid var(--border)', overflow: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', tableLayout: 'fixed' }}>
+                  <thead>
+                    <tr style={{ background: 'var(--bg)', borderBottom: '0.5px solid var(--border)' }}>
+                      {['Imię i Nazwisko', 'Email', 'Telefon', 'Grupa', 'Certyfikat', 'Notatki', ''].map((h, i) => (
+                        <th key={i} style={{ padding: '9px 12px', textAlign: 'left', fontWeight: 600, color: 'var(--text-muted)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.3px', whiteSpace: 'nowrap',
+                          width: i === 0 ? '160px' : i === 1 ? '180px' : i === 2 ? '120px' : i === 3 ? '140px' : i === 4 ? '160px' : i === 5 ? 'auto' : '130px' }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {kursanci.filter(k => {
+                      const s = szukajKursant.toLowerCase().trim();
+                      const gOk = !filtrGrupaKursant || k.grupa_id === parseInt(filtrGrupaKursant);
+                      const sOk = !s || `${k.imie} ${k.nazwisko}`.toLowerCase().includes(s) || (k.email || '').toLowerCase().includes(s) || (k.telefon || '').includes(s);
+                      return gOk && sOk;
+                    }).sort((a, b) => `${a.nazwisko} ${a.imie}`.localeCompare(`${b.nazwisko} ${b.imie}`))
+                    .map((k, idx) => {
+                      const edytuje = edytowanyKursant?.id === k.id;
+                      const grupaName = grupy.find(g => g.id === k.grupa_id)?.nazwa || '—';
+                      return (
+                        <tr key={k.id} style={{ borderBottom: '0.5px solid var(--border-soft)', background: edytuje ? '#fdf5f5' : idx % 2 === 0 ? 'white' : '#fdf9f8' }}>
+                          <td style={{ padding: '8px 12px' }}>
+                            {edytuje ? (
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                <input value={edytowanyKursant.imie} onChange={e => setEdytowanyKursant({ ...edytowanyKursant, imie: e.target.value })}
+                                  style={{ fontSize: '12px', padding: '4px 6px', border: '0.5px solid var(--brand-mid)', borderRadius: '6px', fontFamily: 'Jost, sans-serif' }} />
+                                <input value={edytowanyKursant.nazwisko} onChange={e => setEdytowanyKursant({ ...edytowanyKursant, nazwisko: e.target.value })}
+                                  style={{ fontSize: '12px', padding: '4px 6px', border: '0.5px solid var(--brand-mid)', borderRadius: '6px', fontFamily: 'Jost, sans-serif' }} />
+                              </div>
+                            ) : <span style={{ fontWeight: 500, color: 'var(--text)' }}>{k.imie} {k.nazwisko}</span>}
+                          </td>
+                          <td style={{ padding: '8px 12px' }}>
+                            {edytuje ? (
+                              <input value={edytowanyKursant.email} onChange={e => setEdytowanyKursant({ ...edytowanyKursant, email: e.target.value })}
+                                style={{ width: '100%', fontSize: '12px', padding: '4px 6px', border: '0.5px solid var(--brand-mid)', borderRadius: '6px', fontFamily: 'Jost, sans-serif' }} />
+                            ) : <span style={{ fontSize: '11px', color: k.email ? 'var(--text-muted)' : '#ccc' }}>{k.email || '—'}</span>}
+                          </td>
+                          <td style={{ padding: '8px 12px' }}>
+                            {edytuje ? (
+                              <input value={edytowanyKursant.telefon} onChange={e => setEdytowanyKursant({ ...edytowanyKursant, telefon: e.target.value })} placeholder="+48 600 000 000"
+                                style={{ width: '100%', fontSize: '12px', padding: '4px 6px', border: '0.5px solid var(--brand-mid)', borderRadius: '6px', fontFamily: 'Jost, sans-serif' }} />
+                            ) : k.telefon ? <a href={`tel:${k.telefon}`} style={{ fontSize: '11px', color: 'var(--text-muted)', textDecoration: 'none' }}>{k.telefon}</a>
+                              : <span style={{ fontSize: '11px', color: '#ccc' }}>—</span>}
+                          </td>
+                          <td style={{ padding: '8px 12px' }}>
+                            {edytuje ? (
+                              <select value={(edytowanyKursant as any).grupa_id || ''} onChange={e => setEdytowanyKursant({ ...edytowanyKursant, ...(edytowanyKursant as any), grupa_id: e.target.value ? parseInt(e.target.value) : null })}
+                                style={{ fontSize: '12px', padding: '4px 6px', border: '0.5px solid var(--brand-mid)', borderRadius: '6px', fontFamily: 'Jost, sans-serif', background: 'white' }}>
+                                <option value="">Brak grupy</option>
+                                {grupy.map(g => <option key={g.id} value={g.id}>{g.nazwa}</option>)}
+                              </select>
+                            ) : <span style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '6px', background: k.grupa_id ? 'var(--brand-light)' : '#f5f5f5', color: k.grupa_id ? 'var(--brand-dark)' : '#999' }}>{grupaName}</span>}
+                          </td>
+                          <td style={{ padding: '8px 12px' }}>
+                            <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                              <input type="url" defaultValue={k.certyfikat_url || ''} placeholder="https://drive.google.com/..."
+                                onBlur={async e => {
+                                  if (e.target.value !== (k.certyfikat_url || '')) {
+                                    await supabase.from('kursanci').update({ certyfikat_url: e.target.value || null }).eq('id', k.id);
+                                    setKomunikat(`Certyfikat zapisany — ${k.imie} ${k.nazwisko}`);
+                                  }
+                                }}
+                                style={{ flex: 1, fontSize: '11px', padding: '4px 7px', borderRadius: '6px', border: '0.5px solid var(--border)', fontFamily: 'Jost, sans-serif', background: k.certyfikat_url ? '#f0faf4' : 'white', minWidth: 0 }} />
+                              {k.certyfikat_url && <a href={k.certyfikat_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: '13px', textDecoration: 'none' }}>🎓</a>}
+                            </div>
+                          </td>
+                          <td style={{ padding: '8px 12px' }}>
+                            <textarea defaultValue={(k as any).notatki || ''} rows={1} placeholder="Notatka..."
+                              onBlur={async e => {
+                                const val = e.target.value.trim();
+                                if (val !== ((k as any).notatki || '').trim()) {
+                                  await supabase.from('kursanci').update({ notatki: val || null } as any).eq('id', k.id);
+                                  setKomunikat(`Notatka zapisana — ${k.imie} ${k.nazwisko}`);
+                                }
+                              }}
+                              style={{ width: '100%', fontSize: '11px', padding: '4px 7px', borderRadius: '6px', border: '0.5px solid var(--border)', fontFamily: 'Jost, sans-serif', resize: 'vertical', minHeight: '30px' }} />
+                          </td>
+                          <td style={{ padding: '8px 12px', whiteSpace: 'nowrap' }}>
+                            {edytuje ? (
+                              <div style={{ display: 'flex', gap: '4px' }}>
+                                <button onClick={async () => {
+                                  await supabase.from('kursanci').update({ imie: edytowanyKursant.imie, nazwisko: edytowanyKursant.nazwisko, email: edytowanyKursant.email || null, telefon: edytowanyKursant.telefon || null, grupa_id: (edytowanyKursant as any).grupa_id ?? k.grupa_id }).eq('id', k.id);
+                                  const { data } = await supabase.from('kursanci').select('id, imie, nazwisko, email, telefon, grupa_id, user_id, certyfikat_url');
+                                  setKursanci((data || []) as unknown as KursantAdmin[]);
+                                  setEdytowanyKursant(null); setKomunikat('Zapisano!');
+                                }} style={{ fontSize: '11px', padding: '3px 10px', background: 'var(--brand)', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontFamily: 'Jost, sans-serif' }}>✓</button>
+                                <button onClick={() => setEdytowanyKursant(null)}
+                                  style={{ fontSize: '11px', padding: '3px 8px', background: 'none', border: '0.5px solid var(--border)', borderRadius: '6px', cursor: 'pointer', color: 'var(--text-muted)' }}>✕</button>
+                              </div>
+                            ) : (
+                              <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                                <button onClick={() => setEdytowanyKursant({ id: k.id, imie: k.imie, nazwisko: k.nazwisko, email: k.email || '', telefon: k.telefon || '', ...(k as any) })}
+                                  style={{ fontSize: '11px', padding: '3px 9px', border: '0.5px solid var(--border)', borderRadius: '6px', background: 'white', cursor: 'pointer', color: 'var(--brand)', fontFamily: 'Jost, sans-serif' }}>Edytuj</button>
+                                {k.grupa_id && (
+                                  <button onClick={async () => {
+                                    if (window.confirm(`Usunąć ${k.imie} ${k.nazwisko} z grupy?`)) {
+                                      await supabase.from('kursanci').update({ grupa_id: null }).eq('id', k.id);
+                                      const { data } = await supabase.from('kursanci').select('id, imie, nazwisko, email, telefon, grupa_id, user_id, certyfikat_url');
+                                      setKursanci((data || []) as unknown as KursantAdmin[]); setKomunikat('Usunięto z grupy.');
+                                    }
+                                  }} style={{ fontSize: '11px', padding: '3px 9px', border: '0.5px solid #fbbf24', borderRadius: '6px', background: '#fffbeb', cursor: 'pointer', color: '#92400e', fontFamily: 'Jost, sans-serif' }}>−Grupa</button>
+                                )}
+                                <button onClick={async () => {
+                                  if (window.confirm(`Usunąć ${k.imie} ${k.nazwisko}?`)) {
+                                    await supabase.from('kursanci').delete().eq('id', k.id);
+                                    const { data } = await supabase.from('kursanci').select('id, imie, nazwisko, email, telefon, grupa_id, user_id, certyfikat_url');
+                                    setKursanci((data || []) as unknown as KursantAdmin[]); setKomunikat('Usunięto.');
+                                  }
+                                }} style={{ fontSize: '11px', padding: '3px 6px', border: 'none', borderRadius: '6px', background: 'none', cursor: 'pointer', color: '#e57373' }}>×</button>
+                              </div>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+                {kursanci.filter(k => {
+                  const s = szukajKursant.toLowerCase().trim();
+                  const gOk = !filtrGrupaKursant || k.grupa_id === parseInt(filtrGrupaKursant);
+                  const sOk = !s || `${k.imie} ${k.nazwisko}`.toLowerCase().includes(s) || (k.email || '').toLowerCase().includes(s);
+                  return gOk && sOk;
+                }).length === 0 && (
+                  <div style={{ textAlign: 'center', padding: '32px', color: 'var(--text-muted)', fontSize: '13px' }}>Brak kursantów</div>
+                )}
+              </div>
             </>
           )}
 
