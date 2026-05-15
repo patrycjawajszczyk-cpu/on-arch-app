@@ -1314,31 +1314,31 @@
     .app {
       max-width: 100%;
       display: grid;
+      grid-template-areas:
+        "header header"
+        "nav    main";
       grid-template-columns: 200px 1fr;
       grid-template-rows: auto 1fr;
       min-height: 100dvh;
     }
   
     .header {
-      grid-column: 1 / -1;
-      grid-row: 1;
+      grid-area: header;
     }
   
     .bottom-nav {
-      grid-column: 1;
-      grid-row: 2;
+      grid-area: nav;
       flex-direction: column;
-      height: auto;
       align-items: stretch;
+      justify-content: flex-start;
+      height: auto;
+      min-height: calc(100vh - 60px);
       padding: 16px 8px;
       border-top: none;
       border-right: 0.5px solid var(--border);
       background: white;
-      justify-content: flex-start;
       gap: 4px;
-      position: sticky;
-      top: 0;
-      height: calc(100vh - 60px);
+      position: static;
     }
   
     .nav-item {
@@ -1348,7 +1348,7 @@
       padding: 10px 14px;
       border-radius: 10px;
       height: auto;
-      font-size: 13px;
+      width: 100%;
     }
   
     .nav-label {
@@ -1356,25 +1356,21 @@
       font-size: 13px;
     }
   
-    .nav-item.active {
-      background: var(--brand-light);
-    }
-  
     .nav-badge {
       margin-left: auto;
     }
   
     .main {
-      grid-column: 2;
-      grid-row: 2;
+      grid-area: main;
       max-width: 100%;
-      padding: 24px 32px;
+      padding: 24px 36px;
       overflow-y: auto;
+      min-height: calc(100vh - 60px);
     }
   }
   
   @media (min-width: 1200px) {
     .main {
-      padding: 28px 48px;
+      padding: 28px 56px;
     }
   }
