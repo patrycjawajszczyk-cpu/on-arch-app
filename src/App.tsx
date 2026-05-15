@@ -82,6 +82,7 @@ function urlBase64ToUint8Array(base64String: string) {
     link_materialow: string | null;
     typ: string;
     created_at: string;
+    zdjecie_url?: string | null;
   };
 
   type ZadanieOdpowiedz = {
@@ -115,6 +116,7 @@ function urlBase64ToUint8Array(base64String: string) {
     godzina_start_d2: string | null;
     godzina_end_d2: string | null;
     grupa_id: number;
+    zdjecie_url?: string | null;
     prowadzacy?: Prowadzacy[];
   };
 
@@ -450,7 +452,7 @@ function urlBase64ToUint8Array(base64String: string) {
               {aktywne.map((z, idx) => {
                 const rozwinięte = aktywneZadanie?.id === z.id;
                 const kolor = KOLORY[idx % KOLORY.length];
-                const photo = PHOTOS[idx % PHOTOS.length];
+                const photo = z.zdjecie_url || PHOTOS[zIdx % PHOTOS.length];;
                 return (
                   <div key={z.id} style={{ background: 'white', borderRadius: '16px', border: '0.5px solid var(--border)', overflow: 'hidden' }}>
                     <div onClick={() => !rozwinięte && setAktywneZadanie(z)}
@@ -2553,10 +2555,71 @@ function urlBase64ToUint8Array(base64String: string) {
       </div>
     );
   }
+  function GaleriaZdjec({ onWybierz, onZamknij }: { onWybierz: (url: string) => void; onZamknij: () => void }) {
+    const [zdjecia, setZdjecia] = useState<ZdjecieAplikacji[]>([]);
+    const [filtrTag, setFiltrTag] = useState('');
+    const [ladowanie, setLadowanie] = useState(true);
+
+    useEffect(() => {
+      supabase.from('zdjecia_aplikacji').select('*').order('tag').order('kolejnosc')
+        .then(({ data }) => { setZdjecia(data || []); setLadowanie(false); });
+    }, []);
+
+    const tagi = [...new Set(zdjecia.map(z => z.tag).filter(Boolean))];
+    const lista = filtrTag ? zdjecia.filter(z => z.tag === filtrTag) : zdjecia;
+
+    return (
+      <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}
+        onClick={onZamknij}>
+        <div style={{ background: 'white', borderRadius: '20px', width: '100%', maxWidth: '700px', maxHeight: '80vh', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}
+          onClick={e => e.stopPropagation()}>
+          <div style={{ padding: '18px 20px', borderBottom: '0.5px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ fontSize: '15px', fontWeight: 600 }}>Wybierz zdjęcie</div>
+            <button onClick={onZamknij} style={{ background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer', color: 'var(--text-muted)' }}>×</button>
+          </div>
+          <div style={{ padding: '12px 20px', borderBottom: '0.5px solid var(--border)', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+            <button onClick={() => setFiltrTag('')}
+              style={{ padding: '5px 12px', borderRadius: '999px', border: 'none', cursor: 'pointer', fontSize: '11px', fontWeight: 600, fontFamily: 'Jost, sans-serif', background: !filtrTag ? 'var(--brand-dark)' : '#f0ece7', color: !filtrTag ? 'white' : 'var(--text-muted)' }}>
+              Wszystkie
+            </button>
+            {tagi.map(tag => (
+              <button key={tag} onClick={() => setFiltrTag(tag)}
+                style={{ padding: '5px 12px', borderRadius: '999px', border: 'none', cursor: 'pointer', fontSize: '11px', fontWeight: 600, fontFamily: 'Jost, sans-serif', background: filtrTag === tag ? 'var(--brand-dark)' : '#f0ece7', color: filtrTag === tag ? 'white' : 'var(--text-muted)' }}>
+                {tag}
+              </button>
+            ))}
+          </div>
+          <div style={{ padding: '16px 20px', overflowY: 'auto', flex: 1 }}>
+            {ladowanie && <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>Ładowanie...</div>}
+            {!ladowanie && lista.length === 0 && (
+              <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)', fontSize: '13px' }}>
+                Brak zdjęć{filtrTag ? ` z tagiem "${filtrTag}"` : ''} — wgraj je w zakładce Zdjęcia.
+              </div>
+            )}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '10px' }}>
+              {lista.map(z => (
+                <div key={z.id} onClick={() => { onWybierz(z.url); onZamknij(); }}
+                  style={{ borderRadius: '12px', overflow: 'hidden', border: '0.5px solid var(--border)', cursor: 'pointer', transition: 'transform 0.15s, box-shadow 0.15s' }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = 'scale(1.03)'; (e.currentTarget as HTMLElement).style.boxShadow = '0 4px 16px rgba(0,0,0,0.12)'; }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = ''; (e.currentTarget as HTMLElement).style.boxShadow = ''; }}>
+                  <img src={z.url} alt={z.nazwa} style={{ width: '100%', height: '110px', objectFit: 'cover', display: 'block' }} />
+                  <div style={{ padding: '6px 8px', background: 'white' }}>
+                    <div style={{ fontSize: '10px', fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{z.nazwa || '—'}</div>
+                    {z.tag && <div style={{ fontSize: '9px', color: 'var(--brand)', marginTop: '2px', letterSpacing: '0.08em', textTransform: 'uppercase' }}>{z.tag}</div>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
   function AdminZdjecia() {
     const [zdjecia, setZdjecia] = useState<ZdjecieAplikacji[]>([]);
     const [uploading, setUploading] = useState(false);
     const [kategoria, setKategoria] = useState<string>('hero');
+  const [tag, setTag] = useState('');
     const [komunikat, setKomunikat] = useState('');
     const fileRef = useRef<HTMLInputElement>(null);
   
@@ -2585,7 +2648,7 @@ function urlBase64ToUint8Array(base64String: string) {
       if (uploadError) { setKomunikat('Błąd uploadu: ' + uploadError.message); setUploading(false); return; }
       const { data: urlData } = supabase.storage.from('app-images').getPublicUrl(path);
       const { error: dbError } = await supabase.from('zdjecia_aplikacji').insert([{
-        kategoria, url: urlData.publicUrl, nazwa: file.name.split('.')[0], kolejnosc: zdjecia.filter(z => z.kategoria === kategoria).length,
+        kategoria, url: urlData.publicUrl, nazwa: file.name.split('.')[0], kolejnosc: zdjecia.filter(z => z.kategoria === kategoria).length, tag: tag.trim() || null,
       }]);
       if (dbError) { setKomunikat('Błąd zapisu: ' + dbError.message); } else { setKomunikat('Zdjęcie dodane!'); pobierz(); }
       setUploading(false);
@@ -2623,6 +2686,13 @@ function urlBase64ToUint8Array(base64String: string) {
             {KATEGORIE.find(k => k.id === kategoria)?.opis}
           </div>
           <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+          <div style={{ marginBottom: '12px' }}>
+          <label style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 600, display: 'block', marginBottom: '5px', textTransform: 'uppercase', letterSpacing: '0.2em' }}>Tag tematyczny (opcjonalnie)</label>
+          <input type="text" value={tag} onChange={e => setTag(e.target.value)}
+            placeholder="np. teoria, rysunek, sketchup, autocad, ogrody"
+            style={{ width: '100%', fontSize: '13px', padding: '8px 12px', border: '0.5px solid var(--border)', borderRadius: '9px', fontFamily: 'Jost, sans-serif' }} />
+          <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '4px' }}>Tagi pozwalają przypisywać zdjęcia do konkretnych tematów zajęć</div>
+        </div>
             <input ref={fileRef} type="file" accept="image/*" onChange={wgrajZdjecie} disabled={uploading} style={{ fontSize: '13px', flex: 1 }} />
             {uploading && <div style={{ fontSize: '12px', color: 'var(--brand)' }}>Wysyłanie...</div>}
           </div>
@@ -2771,6 +2841,8 @@ function urlBase64ToUint8Array(base64String: string) {
     const [odpowiedziZadan, setOdpowiedziZadan] = useState<ZadanieOdpowiedz[]>([]);
     const [edytowane, setEdytowane] = useState<Ogloszenie | null>(null);
     const [edytowanyZjazd, setEdytowanyZjazd] = useState<Zjazd | null>(null);
+    const [pokazGalerieZjazd, setPokazGalerieZjazd] = useState(false);
+    const [pokazGalerieZadanie, setPokazGalerieZadanie] = useState(false);
     const [noweOgl, setNoweOgl] = useState({ typ: 'Informacja', tytul: '', tresc: '', szczegoly: '', nowe: true, grupa_id: '' });
     const [nowyZjazd, setNowyZjazd] = useState({ nr: '', daty: '', sala: '', adres: '', tematy: '', status: 'nadchodzacy', typ: 'stacjonarny', link_online: '', data_zjazdu: '', data_dzien1: '', data_dzien2: '', grupa_id: '', prowadzacy_id: '' });
 
@@ -2992,6 +3064,7 @@ function urlBase64ToUint8Array(base64String: string) {
         adres: edytowanyZjazd.adres,
         tematy: edytowanyZjazd.tematy,
         status: edytowanyZjazd.status,
+        zdjecie_url: edytowanyZjazd.zdjecie_url ?? null,
         typ: (edytowanyZjazd as any).typ || 'stacjonarny',
         link_online: (edytowanyZjazd as any).link_online || null,
         data_zjazdu: edytowanyZjazd.data_zjazdu,
@@ -3505,7 +3578,22 @@ function urlBase64ToUint8Array(base64String: string) {
                         </div>
                       );
                     })()}
-
+<div style={{ marginBottom: '12px' }}>
+                      <label style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.2em', display: 'block', marginBottom: '6px' }}>Zdjęcie zjazdu</label>
+                      <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                        {edytowanyZjazd.zdjecie_url && (
+                          <img src={edytowanyZjazd.zdjecie_url} alt="zdjęcie" style={{ width: '80px', height: '50px', objectFit: 'cover', borderRadius: '8px', border: '0.5px solid var(--border)' }} />
+                        )}
+                        <button type="button" onClick={() => setPokazGalerieZjazd(true)}
+                          style={{ padding: '7px 14px', borderRadius: '9px', border: '0.5px solid var(--border)', background: 'white', fontSize: '12px', cursor: 'pointer', fontFamily: 'Jost, sans-serif', color: 'var(--brand)' }}>
+                          {edytowanyZjazd.zdjecie_url ? '🖼 Zmień zdjęcie' : '🖼 Wybierz zdjęcie'}
+                        </button>
+                        {edytowanyZjazd.zdjecie_url && (
+                          <button type="button" onClick={() => setEdytowanyZjazd({ ...edytowanyZjazd, zdjecie_url: null })}
+                            style={{ padding: '7px', borderRadius: '9px', border: 'none', background: 'none', fontSize: '13px', cursor: 'pointer', color: '#e57373' }}>×</button>
+                        )}
+                      </div>
+                    </div>
                     <button className="login-btn" type="submit">Zapisz zmiany</button>
                     <button className="btn-link" onClick={() => setEdytowanyZjazd(null)}>Anuluj</button>
                   </form>
@@ -4726,6 +4814,18 @@ function urlBase64ToUint8Array(base64String: string) {
           )}
         </main>
         </div>
+        {pokazGalerieZjazd && edytowanyZjazd && (
+          <GaleriaZdjec
+            onWybierz={url => setEdytowanyZjazd({ ...edytowanyZjazd, zdjecie_url: url })}
+            onZamknij={() => setPokazGalerieZjazd(false)}
+          />
+        )}
+        {pokazGalerieZadanie && (
+          <GaleriaZdjec
+            onWybierz={url => setNoweZadanie({ ...noweZadanie, zdjecie_url: url } as any)}
+            onZamknij={() => setPokazGalerieZadanie(false)}
+          />
+        )}
       </div>
     );
   }          
@@ -5575,7 +5675,7 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
     if (wybranyZjazd) {
       const z = wybranyZjazd;
       const zIdx = zjazdy.findIndex(zj => zj.id === z.id);
-      const photo = PHOTOS[zIdx % PHOTOS.length];
+      const photo = z.zdjecie_url || PHOTOS[zIdx % PHOTOS.length];;
       return (
         <>
           <div style={{ margin: '-18px -16px 0', position: 'relative', height: '260px' }}>
@@ -5697,7 +5797,7 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
           {filtered.map((z) => {
             const zIdx = zjazdy.findIndex(zj => zj.id === z.id);
-            const photo = PHOTOS[zIdx % PHOTOS.length];
+            const photo = z.zdjecie_url || PHOTOS[zIdx % PHOTOS.length];;
             const isHero = z.id === najblizszy?.id;
             const d1 = obecnosci.find(o => o.zjazd_id === z.id && o.dzien === 1);
             const d2 = obecnosci.find(o => o.zjazd_id === z.id && o.dzien === 2);
