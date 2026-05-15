@@ -6828,6 +6828,7 @@ async function wylaczPush() {
           <OnArchLogo height={22} color="var(--brand-dark)" />
           {avatarUrl ? <img src={avatarUrl} alt="avatar" className="avatar-img" /> : <div className="avatar">{inicjal.toUpperCase()}</div>}
         </header>
+       <div className="app-body">
         <main className="main" style={aktywnaZakladka === 'czat' ? { padding: 0, overflow: 'hidden' } : {}}>
           {pokazAnkiete ? (
             <div>
@@ -6886,6 +6887,7 @@ async function wylaczPush() {
           </button>
           <button className={`nav-item ${aktywnaZakladka === 'profil' ? 'active' : ''}`} onClick={() => nawiguj('profil')}><User size={20} /><span className="nav-label">Profil</span></button>
         </nav>
+      </div>
       </div>
     );
   }
