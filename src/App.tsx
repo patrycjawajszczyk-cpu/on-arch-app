@@ -1600,7 +1600,7 @@ function urlBase64ToUint8Array(base64String: string) {
     const [odpowiedziZadan, setOdpowiedziZadan] = useState<ZadanieOdpowiedz[]>([]);
     const [notatki, setNotatki] = useState<Notatka[]>([]);
     const [aktywneOgloszenie, setAktywneOgloszenie] = useState<Ogloszenie | null>(null);
-    const [noweZadanie, setNoweZadanie] = useState({ tytul: '', opis: '', termin: '', link_materialow: '', grupa_id: '', typ: 'zadanie' });
+    const [noweZadanie, setNoweZadanie] = useState({ tytul: '', opis: '', termin: '', link_materialow: '', grupa_id: '', typ: 'zadanie', zdjecie_url: '' });
     const [wybranaGrupa, setWybranaGrupa] = useState('');
     const [aktywnaNotatkaKursant, setAktywnaNotatkaKursant] = useState<string | null>(null);
     const [trescNotatki, setTrescNotatki] = useState('');
@@ -2934,7 +2934,7 @@ function urlBase64ToUint8Array(base64String: string) {
     const [nowyKursant, setNowyKursant] = useState({ imie: '', nazwisko: '', email: '', grupa_id: '' });
     const [nowaGrupa, setNowaGrupa] = useState({ nazwa: '', miasto: '', edycja: '', drive_link: '', numer_uslugi: '', tryb: 'stacjonarny' });
     const [nowyProwadzacy, setNowyProwadzacy] = useState({ imie: '', nazwisko: '', bio: '', avatar_url: '', email: '', telefon: '', notatki: '', miasto: '', user_id: '' });
-    const [noweZadanie, setNoweZadanie] = useState({ tytul: '', opis: '', termin: '', link_materialow: '', grupa_id: '', typ: 'zadanie' });
+    const [noweZadanie, setNoweZadanie] = useState({ tytul: '', opis: '', termin: '', link_materialow: '', grupa_id: '', typ: 'zadanie', zdjecie_url: '' });
     const [komunikat, setKomunikat] = useState('');
     const [importStatus, setImportStatus] = useState<{ imie: string; nazwisko: string; email: string; status: string }[]>([]);
     const [importowanie, setImportowanie] = useState(false);
