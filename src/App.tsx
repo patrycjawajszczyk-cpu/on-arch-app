@@ -2567,7 +2567,7 @@ function urlBase64ToUint8Array(base64String: string) {
         .then(({ data }) => { setZdjecia(data || []); setLadowanie(false); });
     }, []);
 
-    const [noweZadanie, setNoweZadanie] = useState({ tytul: '', opis: '', termin: '', link_materialow: '', grupa_id: '', typ: 'zadanie', zdjecie_url: '' });
+    const tagi = [...new Set(zdjecia.map(z => z.tag).filter((t): t is string => !!t))];
     const lista = filtrTag ? zdjecia.filter(z => z.tag === filtrTag) : zdjecia;
 
     return (
@@ -3163,7 +3163,7 @@ function urlBase64ToUint8Array(base64String: string) {
       }]);
       if (error) { setKomunikat('Blad: ' + error.message); } else {
         setKomunikat('Zadanie dodane!');
-        setNoweZadanie({ tytul: '', opis: '', termin: '', link_materialow: '', grupa_id: noweZadanie.grupa_id, typ: 'zadanie' });
+        setNoweZadanie({ tytul: '', opis: '', termin: '', link_materialow: '', grupa_id: noweZadanie.grupa_id, typ: 'zadanie', zdjecie_url:'' });
         pobierzZadania();
       }
     }
