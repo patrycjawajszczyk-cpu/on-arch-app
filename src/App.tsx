@@ -2566,7 +2566,7 @@ function urlBase64ToUint8Array(base64String: string) {
         .then(({ data }) => { setZdjecia(data || []); setLadowanie(false); });
     }, []);
 
-    const tagi = [...new Set(zdjecia.map(z => z.tag).filter(Boolean))];
+    const tagi = [...new Set(zdjecia.map(z => z.tag).filter((t): t is string => !!t))];
     const lista = filtrTag ? zdjecia.filter(z => z.tag === filtrTag) : zdjecia;
 
     return (
