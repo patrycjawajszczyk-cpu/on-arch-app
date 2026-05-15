@@ -1324,6 +1324,13 @@
     }
   
     .bottom-nav {
+      position: static !important;
+      bottom: auto !important;
+      left: auto !important;
+      transform: none !important;
+      max-width: none !important;
+      z-index: auto !important;
+      order: -1;
       width: 200px;
       flex-shrink: 0;
       flex-direction: column;
@@ -1333,11 +1340,10 @@
       padding: 16px 8px;
       border-top: none;
       border-right: 0.5px solid var(--border);
+      border-left: none;
       background: white;
       gap: 4px;
-      position: static;
       overflow-y: auto;
-      order: -1;
     }
   
     .nav-item {
