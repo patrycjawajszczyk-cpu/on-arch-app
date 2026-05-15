@@ -206,6 +206,7 @@ function urlBase64ToUint8Array(base64String: string) {
     url: string;
     nazwa: string;
     kolejnosc: number;
+    tag?: string | null;
   };
   type Obecnosc = {
     id: string;
@@ -452,7 +453,7 @@ function urlBase64ToUint8Array(base64String: string) {
               {aktywne.map((z, idx) => {
                 const rozwinięte = aktywneZadanie?.id === z.id;
                 const kolor = KOLORY[idx % KOLORY.length];
-                const photo = z.zdjecie_url || PHOTOS[zIdx % PHOTOS.length];;
+                const photo = z.zdjecie_url || PHOTOS[idx % PHOTOS.length];
                 return (
                   <div key={z.id} style={{ background: 'white', borderRadius: '16px', border: '0.5px solid var(--border)', overflow: 'hidden' }}>
                     <div onClick={() => !rozwinięte && setAktywneZadanie(z)}
