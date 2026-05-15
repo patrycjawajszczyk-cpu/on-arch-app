@@ -274,7 +274,7 @@ function urlBase64ToUint8Array(base64String: string) {
   const PHOTOS = dbPhotos.length > 0 ? dbPhotos : PHOTOS_FALLBACK;
 
   useEffect(() => {
-    const kat = 'zjazdy'; // lub 'zadania' w EkranZadania
+    const kat = 'zadania'; // lub 'zadania' w EkranZadania
     supabase.from('zdjecia_aplikacji').select('url').eq('kategoria', kat).order('kolejnosc')
       .then(({ data }) => { if (data && data.length > 0) setDbPhotos(data.map(z => z.url)); });
   }, []);
