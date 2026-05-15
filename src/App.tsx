@@ -1659,7 +1659,7 @@ function urlBase64ToUint8Array(base64String: string) {
       // 4. Pobierz tylko swoje grupy, kursantów, zadania, ogłoszenia
       const [{ data: gr }, { data: ku }, { data: og }, { data: zad }, { data: odp }] = await Promise.all([
         supabase.from('grupy').select('*').in('id', grupyIds),
-        supabase.from('kursanci').select('id, imie, nazwisko, email, telefon, grupa_id, user_id, certyfikat_url').eq('rola', 'kursant').in('grupa_id', grupyIds),
+        supabase.from('kursanci').select('id, imie, nazwisko, email, telefon, grupa_id, user_id, certyfikat_url, notatki, dofinansowanie').eq('rola', 'kursant').in('grupa_id', grupyIds),
         supabase.from('ogloszenia').select('*').order('data_utworzenia', { ascending: false }),
         supabase.from('zadania').select('*').in('grupa_id', grupyIds).order('created_at', { ascending: false }),
         supabase.from('zadania_odpowiedzi').select('*').order('created_at', { ascending: false }),
@@ -2891,6 +2891,7 @@ function urlBase64ToUint8Array(base64String: string) {
     const [edytowanyKursant, setEdytowanyKursant] = useState<{ id: number; imie: string; nazwisko: string; email: string; telefon: string } | null>(null);
     const [szukajKursant, setSzukajKursant] = useState('');
     const [filtrGrupaKursant, setFiltrGrupaKursant] = useState('');
+    const [rozwinietaKursant, setRozwinietaKursant] = useState<number | null>(null);
     const [dostepnoscData, setDostepnoscData] = useState('');
     const [filtrMiastoProw, setFiltrMiastoProw] = useState('');
     const [filtrDostepnoscProw, setFiltrDostepnoscProw] = useState('');
@@ -2947,7 +2948,7 @@ function urlBase64ToUint8Array(base64String: string) {
 
     useEffect(() => {
       pobierzGrupy(); pobierzOgloszenia(); pobierzZjazdy(); pobierzProwadzacy(); pobierzZadania();
-      supabase.from('kursanci').select('id, imie, nazwisko, email, telefon, grupa_id, user_id, certyfikat_url').then(({ data }) => setKursanci((data || []) as unknown as KursantAdmin[]));
+      supabase.from('kursanci').select('id, imie, nazwisko, email, telefon, grupa_id, user_id, certyfikat_url, notatki, dofinansowanie').then(({ data }) => setKursanci((data || []) as unknown as KursantAdmin[]));
       supabase.from('ankiety').select('*').order('created_at', { ascending: false }).then(({ data }) => setAnkiety((data || []) as unknown as OdpowiedziAnkiety[]));
       supabase.from('zadania_odpowiedzi').select('*').order('created_at', { ascending: false }).then(({ data }) => setOdpowiedziZadan(data || []));
     }, []);
@@ -3140,7 +3141,7 @@ function urlBase64ToUint8Array(base64String: string) {
       if (authError) { setKomunikat('Blad: ' + authError.message); return; }
       const rola = (nowyKursant as any).rola || 'kursant';
       const { error } = await supabase.from('kursanci').insert([{ imie: nowyKursant.imie, nazwisko: nowyKursant.nazwisko, grupa_id: rola === 'kursant' ? parseInt(nowyKursant.grupa_id) : null, user_id: authData.user!.id, rola }]);
-      if (error) { setKomunikat('Blad: ' + error.message); } else { setKomunikat('Kursant dodany!'); setNowyKursant({ imie: '', nazwisko: '', email: '', grupa_id: '' }); const { data } = await supabase.from('kursanci').select('id, imie, nazwisko, email, telefon, grupa_id, user_id, certyfikat_url'); setKursanci((data || []) as unknown as KursantAdmin[]); }
+      if (error) { setKomunikat('Blad: ' + error.message); } else { setKomunikat('Kursant dodany!'); setNowyKursant({ imie: '', nazwisko: '', email: '', grupa_id: '' }); const { data } = await supabase.from('kursanci').select('id, imie, nazwisko, email, telefon, grupa_id, user_id, certyfikat_url, notatki, dofinansowanie'); setKursanci((data || []) as unknown as KursantAdmin[]); }
     }
 
     async function dodajGrupe(e: React.FormEvent) {
@@ -3259,7 +3260,7 @@ function urlBase64ToUint8Array(base64String: string) {
 
       setImportStatus([...wyniki]);
       setImportowanie(false);
-      const { data } = await supabase.from('kursanci').select('id, imie, nazwisko, email, telefon, grupa_id, user_id, certyfikat_url');
+      const { data } = await supabase.from('kursanci').select('id, imie, nazwisko, email, telefon, grupa_id, user_id, certyfikat_url, notatki, dofinansowanie');
       setKursanci((data || []) as unknown as KursantAdmin[]);
       if (fileRef.current) fileRef.current.value = '';
     }
@@ -4163,12 +4164,11 @@ function urlBase64ToUint8Array(base64String: string) {
               </div>
 
               <div style={{ background: 'white', borderRadius: '12px', border: '0.5px solid var(--border)', overflow: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', tableLayout: 'fixed' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px' }}>
                   <thead>
                     <tr style={{ background: 'var(--bg)', borderBottom: '0.5px solid var(--border)' }}>
-                      {['Imię i Nazwisko', 'Email', 'Telefon', 'Grupa', 'Certyfikat', 'Notatki', ''].map((h, i) => (
-                        <th key={i} style={{ padding: '9px 12px', textAlign: 'left', fontWeight: 600, color: 'var(--text-muted)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.3px', whiteSpace: 'nowrap',
-                          width: i === 0 ? '130px' : i === 1 ? '150px' : i === 2 ? '100px' : i === 3 ? '110px' : i === 4 ? '140px' : i === 5 ? '140px' : '110px' }}>{h}</th>
+                      {['', 'Imię i Nazwisko', 'Email', 'Telefon', 'Grupa', ''].map((h, i) => (
+                        <th key={i} style={{ padding: '8px 10px', textAlign: 'left', fontWeight: 600, color: 'var(--text-muted)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.3px', whiteSpace: 'nowrap' }}>{h}</th>
                       ))}
                     </tr>
                   </thead>
@@ -4181,101 +4181,138 @@ function urlBase64ToUint8Array(base64String: string) {
                     }).sort((a, b) => `${a.nazwisko} ${a.imie}`.localeCompare(`${b.nazwisko} ${b.imie}`))
                     .map((k, idx) => {
                       const edytuje = edytowanyKursant?.id === k.id;
+                      const rozwiniety = rozwinietaKursant === k.id;
                       const grupaName = grupy.find(g => g.id === k.grupa_id)?.nazwa || '—';
+                      const dofinansowanie = (k as any).dofinansowanie;
+                      const rowBg = edytuje ? '#fdf5f5' : dofinansowanie ? '#e8f0fe' : idx % 2 === 0 ? 'white' : '#fdf9f8';
                       return (
-                        <tr key={k.id} style={{ borderBottom: '0.5px solid var(--border-soft)', background: edytuje ? '#fdf5f5' : idx % 2 === 0 ? 'white' : '#fdf9f8' }}>
-                          <td style={{ padding: '5px 8px' }}>
-                            {edytuje ? (
-                              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                <input value={edytowanyKursant.imie} onChange={e => setEdytowanyKursant({ ...edytowanyKursant, imie: e.target.value })}
-                                  style={{ fontSize: '12px', padding: '4px 6px', border: '0.5px solid var(--brand-mid)', borderRadius: '6px', fontFamily: 'Jost, sans-serif' }} />
-                                <input value={edytowanyKursant.nazwisko} onChange={e => setEdytowanyKursant({ ...edytowanyKursant, nazwisko: e.target.value })}
-                                  style={{ fontSize: '12px', padding: '4px 6px', border: '0.5px solid var(--brand-mid)', borderRadius: '6px', fontFamily: 'Jost, sans-serif' }} />
-                              </div>
-                            ) : <span style={{ fontWeight: 500, color: 'var(--text)' }}>{k.imie} {k.nazwisko}</span>}
-                          </td>
-                          <td style={{ padding: '8px 12px' }}>
-                            {edytuje ? (
-                              <input value={edytowanyKursant.email} onChange={e => setEdytowanyKursant({ ...edytowanyKursant, email: e.target.value })}
-                                style={{ width: '100%', fontSize: '12px', padding: '4px 6px', border: '0.5px solid var(--brand-mid)', borderRadius: '6px', fontFamily: 'Jost, sans-serif' }} />
-                            ) : <span style={{ fontSize: '11px', color: k.email ? 'var(--text-muted)' : '#ccc' }}>{k.email || '—'}</span>}
-                          </td>
-                          <td style={{ padding: '8px 12px' }}>
-                            {edytuje ? (
-                              <input value={edytowanyKursant.telefon} onChange={e => setEdytowanyKursant({ ...edytowanyKursant, telefon: e.target.value })} placeholder="+48 600 000 000"
-                                style={{ width: '100%', fontSize: '12px', padding: '4px 6px', border: '0.5px solid var(--brand-mid)', borderRadius: '6px', fontFamily: 'Jost, sans-serif' }} />
-                            ) : k.telefon ? <a href={`tel:${k.telefon}`} style={{ fontSize: '11px', color: 'var(--text-muted)', textDecoration: 'none' }}>{k.telefon}</a>
-                              : <span style={{ fontSize: '11px', color: '#ccc' }}>—</span>}
-                          </td>
-                          <td style={{ padding: '8px 12px' }}>
-                            {edytuje ? (
-                              <select value={(edytowanyKursant as any).grupa_id || ''} onChange={e => setEdytowanyKursant({ ...edytowanyKursant, ...(edytowanyKursant as any), grupa_id: e.target.value ? parseInt(e.target.value) : null })}
-                                style={{ fontSize: '12px', padding: '4px 6px', border: '0.5px solid var(--brand-mid)', borderRadius: '6px', fontFamily: 'Jost, sans-serif', background: 'white' }}>
-                                <option value="">Brak grupy</option>
-                                {grupy.map(g => <option key={g.id} value={g.id}>{g.nazwa}</option>)}
-                              </select>
-                            ) : <span style={{ fontSize: '11px', padding: '2px 8px', borderRadius: '6px', background: k.grupa_id ? 'var(--brand-light)' : '#f5f5f5', color: k.grupa_id ? 'var(--brand-dark)' : '#999' }}>{grupaName}</span>}
-                          </td>
-                          <td style={{ padding: '8px 12px' }}>
-                            <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
-                              <input type="url" defaultValue={k.certyfikat_url || ''} placeholder="https://drive.google.com/..."
-                                onBlur={async e => {
-                                  if (e.target.value !== (k.certyfikat_url || '')) {
-                                    await supabase.from('kursanci').update({ certyfikat_url: e.target.value || null }).eq('id', k.id);
-                                    setKomunikat(`Certyfikat zapisany — ${k.imie} ${k.nazwisko}`);
-                                  }
-                                }}
-                                style={{ flex: 1, fontSize: '11px', padding: '4px 7px', borderRadius: '6px', border: '0.5px solid var(--border)', fontFamily: 'Jost, sans-serif', background: k.certyfikat_url ? '#f0faf4' : 'white', minWidth: 0 }} />
-                              {k.certyfikat_url && <a href={k.certyfikat_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: '13px', textDecoration: 'none' }}>🎓</a>}
-                            </div>
-                          </td>
-                          <td style={{ padding: '8px 12px' }}>
-                            <textarea defaultValue={(k as any).notatki || ''} rows={1} placeholder="Notatka..."
-                              onBlur={async e => {
-                                const val = e.target.value.trim();
-                                if (val !== ((k as any).notatki || '').trim()) {
-                                  await supabase.from('kursanci').update({ notatki: val || null } as any).eq('id', k.id);
-                                  setKomunikat(`Notatka zapisana — ${k.imie} ${k.nazwisko}`);
-                                }
-                              }}
-                              style={{ width: '100%', fontSize: '11px', padding: '4px 7px', borderRadius: '6px', border: '0.5px solid var(--border)', fontFamily: 'Jost, sans-serif', resize: 'vertical', minHeight: '30px' }} />
-                          </td>
-                          <td style={{ padding: '8px 12px', whiteSpace: 'nowrap' }}>
-                            {edytuje ? (
-                              <div style={{ display: 'flex', gap: '4px' }}>
-                                <button onClick={async () => {
-                                  await supabase.from('kursanci').update({ imie: edytowanyKursant.imie, nazwisko: edytowanyKursant.nazwisko, email: edytowanyKursant.email || null, telefon: edytowanyKursant.telefon || null, grupa_id: (edytowanyKursant as any).grupa_id ?? k.grupa_id }).eq('id', k.id);
-                                  const { data } = await supabase.from('kursanci').select('id, imie, nazwisko, email, telefon, grupa_id, user_id, certyfikat_url');
-                                  setKursanci((data || []) as unknown as KursantAdmin[]);
-                                  setEdytowanyKursant(null); setKomunikat('Zapisano!');
-                                }} style={{ fontSize: '11px', padding: '3px 10px', background: 'var(--brand)', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontFamily: 'Jost, sans-serif' }}>✓</button>
-                                <button onClick={() => setEdytowanyKursant(null)}
-                                  style={{ fontSize: '11px', padding: '3px 8px', background: 'none', border: '0.5px solid var(--border)', borderRadius: '6px', cursor: 'pointer', color: 'var(--text-muted)' }}>✕</button>
-                              </div>
-                            ) : (
-                              <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
-                                <button onClick={() => setEdytowanyKursant({ id: k.id, imie: k.imie, nazwisko: k.nazwisko, email: k.email || '', telefon: k.telefon || '', ...(k as any) })}
-                                  style={{ fontSize: '11px', padding: '3px 9px', border: '0.5px solid var(--border)', borderRadius: '6px', background: 'white', cursor: 'pointer', color: 'var(--brand)', fontFamily: 'Jost, sans-serif' }}>Edytuj</button>
-                                {k.grupa_id && (
+                        <>
+                          <tr key={k.id} style={{ borderBottom: rozwiniety ? 'none' : '0.5px solid var(--border-soft)', background: rowBg, cursor: 'pointer' }}>
+                            {/* Expand icon */}
+                            <td style={{ padding: '6px 6px 6px 12px', width: '24px' }} onClick={() => !edytuje && setRozwinietaKursant(rozwiniety ? null : k.id)}>
+                              <span style={{ fontSize: '10px', color: 'var(--text-muted)', display: 'inline-block', transform: rozwiniety ? 'rotate(0deg)' : 'rotate(-90deg)', transition: 'transform 0.15s' }}>▾</span>
+                            </td>
+                            {/* Imię i Nazwisko */}
+                            <td style={{ padding: '6px 10px' }} onClick={() => !edytuje && setRozwinietaKursant(rozwiniety ? null : k.id)}>
+                              {edytuje ? (
+                                <div style={{ display: 'flex', gap: '4px' }}>
+                                  <input value={edytowanyKursant.imie} onChange={e => setEdytowanyKursant({ ...edytowanyKursant, imie: e.target.value })}
+                                    style={{ width: '80px', fontSize: '11px', padding: '3px 6px', border: '0.5px solid var(--brand-mid)', borderRadius: '6px', fontFamily: 'Jost, sans-serif' }} />
+                                  <input value={edytowanyKursant.nazwisko} onChange={e => setEdytowanyKursant({ ...edytowanyKursant, nazwisko: e.target.value })}
+                                    style={{ width: '100px', fontSize: '11px', padding: '3px 6px', border: '0.5px solid var(--brand-mid)', borderRadius: '6px', fontFamily: 'Jost, sans-serif' }} />
+                                </div>
+                              ) : <span style={{ fontWeight: 500, color: dofinansowanie ? '#1565c0' : 'var(--text)' }}>{k.imie} {k.nazwisko}</span>}
+                            </td>
+                            {/* Email */}
+                            <td style={{ padding: '6px 10px' }} onClick={() => !edytuje && setRozwinietaKursant(rozwiniety ? null : k.id)}>
+                              {edytuje ? (
+                                <input value={edytowanyKursant.email} onChange={e => setEdytowanyKursant({ ...edytowanyKursant, email: e.target.value })}
+                                  style={{ width: '160px', fontSize: '11px', padding: '3px 6px', border: '0.5px solid var(--brand-mid)', borderRadius: '6px', fontFamily: 'Jost, sans-serif' }} />
+                              ) : <span style={{ color: k.email ? 'var(--text-muted)' : '#ccc' }}>{k.email || '—'}</span>}
+                            </td>
+                            {/* Telefon */}
+                            <td style={{ padding: '6px 10px' }} onClick={() => !edytuje && setRozwinietaKursant(rozwiniety ? null : k.id)}>
+                              {edytuje ? (
+                                <input value={edytowanyKursant.telefon} onChange={e => setEdytowanyKursant({ ...edytowanyKursant, telefon: e.target.value })} placeholder="+48..."
+                                  style={{ width: '110px', fontSize: '11px', padding: '3px 6px', border: '0.5px solid var(--brand-mid)', borderRadius: '6px', fontFamily: 'Jost, sans-serif' }} />
+                              ) : k.telefon ? <span style={{ color: 'var(--text-muted)' }}>{k.telefon}</span> : <span style={{ color: '#ccc' }}>—</span>}
+                            </td>
+                            {/* Grupa */}
+                            <td style={{ padding: '6px 10px' }} onClick={() => !edytuje && setRozwinietaKursant(rozwiniety ? null : k.id)}>
+                              {edytuje ? (
+                                <select value={(edytowanyKursant as any).grupa_id || ''} onChange={e => setEdytowanyKursant({ ...edytowanyKursant, ...(edytowanyKursant as any), grupa_id: e.target.value ? parseInt(e.target.value) : null })}
+                                  style={{ fontSize: '11px', padding: '3px 6px', border: '0.5px solid var(--brand-mid)', borderRadius: '6px', fontFamily: 'Jost, sans-serif', background: 'white' }}>
+                                  <option value="">Brak grupy</option>
+                                  {grupy.map(g => <option key={g.id} value={g.id}>{g.nazwa}</option>)}
+                                </select>
+                              ) : <span style={{ fontSize: '10px', padding: '2px 7px', borderRadius: '6px', background: k.grupa_id ? (dofinansowanie ? '#bbdefb' : 'var(--brand-light)') : '#f5f5f5', color: k.grupa_id ? (dofinansowanie ? '#1565c0' : 'var(--brand-dark)') : '#999' }}>{grupaName}</span>}
+                            </td>
+                            {/* Akcje */}
+                            <td style={{ padding: '6px 10px', whiteSpace: 'nowrap' }}>
+                              {edytuje ? (
+                                <div style={{ display: 'flex', gap: '4px' }}>
                                   <button onClick={async () => {
-                                    if (window.confirm(`Usunąć ${k.imie} ${k.nazwisko} z grupy?`)) {
+                                    await supabase.from('kursanci').update({ imie: edytowanyKursant.imie, nazwisko: edytowanyKursant.nazwisko, email: edytowanyKursant.email || null, telefon: edytowanyKursant.telefon || null, grupa_id: (edytowanyKursant as any).grupa_id ?? k.grupa_id }).eq('id', k.id);
+                                    const { data } = await supabase.from('kursanci').select('id, imie, nazwisko, email, telefon, grupa_id, user_id, certyfikat_url, notatki, dofinansowanie');
+                                    setKursanci((data || []) as unknown as KursantAdmin[]);
+                                    setEdytowanyKursant(null); setKomunikat('Zapisano!');
+                                  }} style={{ fontSize: '11px', padding: '3px 9px', background: 'var(--brand)', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontFamily: 'Jost, sans-serif' }}>✓</button>
+                                  <button onClick={() => setEdytowanyKursant(null)}
+                                    style={{ fontSize: '11px', padding: '3px 7px', background: 'none', border: '0.5px solid var(--border)', borderRadius: '6px', cursor: 'pointer', color: 'var(--text-muted)' }}>✕</button>
+                                </div>
+                              ) : (
+                                <div style={{ display: 'flex', gap: '4px' }}>
+                                  <button onClick={e => { e.stopPropagation(); setEdytowanyKursant({ id: k.id, imie: k.imie, nazwisko: k.nazwisko, email: k.email || '', telefon: k.telefon || '', ...(k as any) }); }}
+                                    style={{ fontSize: '11px', padding: '3px 9px', border: '0.5px solid var(--border)', borderRadius: '6px', background: 'white', cursor: 'pointer', color: 'var(--brand)', fontFamily: 'Jost, sans-serif' }}>Edytuj</button>
+                                  {k.grupa_id && (
+                                    <button onClick={async e => { e.stopPropagation(); if (window.confirm(`Usunąć ${k.imie} ${k.nazwisko} z grupy?`)) {
                                       await supabase.from('kursanci').update({ grupa_id: null }).eq('id', k.id);
-                                      const { data } = await supabase.from('kursanci').select('id, imie, nazwisko, email, telefon, grupa_id, user_id, certyfikat_url');
+                                      const { data } = await supabase.from('kursanci').select('id, imie, nazwisko, email, telefon, grupa_id, user_id, certyfikat_url, notatki, dofinansowanie');
                                       setKursanci((data || []) as unknown as KursantAdmin[]); setKomunikat('Usunięto z grupy.');
-                                    }
-                                  }} style={{ fontSize: '11px', padding: '3px 9px', border: '0.5px solid #fbbf24', borderRadius: '6px', background: '#fffbeb', cursor: 'pointer', color: '#92400e', fontFamily: 'Jost, sans-serif' }}>Usuń z grupy</button>
-                                )}
-                                <button onClick={async () => {
-                                  if (window.confirm(`Usunąć ${k.imie} ${k.nazwisko}?`)) {
+                                    }}}
+                                    style={{ fontSize: '11px', padding: '3px 9px', border: '0.5px solid #fbbf24', borderRadius: '6px', background: '#fffbeb', cursor: 'pointer', color: '#92400e', fontFamily: 'Jost, sans-serif' }}>Usuń z gr.</button>
+                                  )}
+                                  <button onClick={async e => { e.stopPropagation(); if (window.confirm(`Usunąć ${k.imie} ${k.nazwisko}?`)) {
                                     await supabase.from('kursanci').delete().eq('id', k.id);
-                                    const { data } = await supabase.from('kursanci').select('id, imie, nazwisko, email, telefon, grupa_id, user_id, certyfikat_url');
+                                    const { data } = await supabase.from('kursanci').select('id, imie, nazwisko, email, telefon, grupa_id, user_id, certyfikat_url, notatki, dofinansowanie');
                                     setKursanci((data || []) as unknown as KursantAdmin[]); setKomunikat('Usunięto.');
-                                  }
-                                }} style={{ fontSize: '11px', padding: '3px 6px', border: 'none', borderRadius: '6px', background: 'none', cursor: 'pointer', color: '#e57373' }}>×</button>
-                              </div>
-                            )}
-                          </td>
-                        </tr>
+                                  }}}
+                                    style={{ fontSize: '11px', padding: '3px 6px', border: 'none', borderRadius: '6px', background: 'none', cursor: 'pointer', color: '#e57373' }}>×</button>
+                                </div>
+                              )}
+                            </td>
+                          </tr>
+                          {/* Rozwinięty wiersz */}
+                          {rozwiniety && (
+                            <tr style={{ background: dofinansowanie ? '#f0f6ff' : '#fafaf8', borderBottom: '0.5px solid var(--border-soft)' }}>
+                              <td colSpan={6} style={{ padding: '12px 16px 14px 46px' }}>
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '14px' }}>
+                                  {/* Certyfikat */}
+                                  <div>
+                                    <div style={{ fontSize: '9px', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '5px' }}>Certyfikat (link)</div>
+                                    <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                                      <input type="url" defaultValue={k.certyfikat_url || ''} placeholder="https://drive.google.com/..."
+                                        onBlur={async e => {
+                                          if (e.target.value !== (k.certyfikat_url || '')) {
+                                            await supabase.from('kursanci').update({ certyfikat_url: e.target.value || null }).eq('id', k.id);
+                                            setKomunikat(`Certyfikat zapisany — ${k.imie} ${k.nazwisko}`);
+                                          }
+                                        }}
+                                        style={{ flex: 1, fontSize: '11px', padding: '5px 8px', borderRadius: '7px', border: '0.5px solid var(--border)', fontFamily: 'Jost, sans-serif', background: k.certyfikat_url ? '#f0faf4' : 'white' }} />
+                                      {k.certyfikat_url && <a href={k.certyfikat_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: '14px', textDecoration: 'none' }}>🎓</a>}
+                                    </div>
+                                  </div>
+                                  {/* Notatki */}
+                                  <div>
+                                    <div style={{ fontSize: '9px', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '5px' }}>Notatki</div>
+                                    <textarea defaultValue={(k as any).notatki || ''} rows={2} placeholder="Notatka o kursancie..."
+                                      onBlur={async e => {
+                                        const val = e.target.value.trim();
+                                        if (val !== ((k as any).notatki || '').trim()) {
+                                          await supabase.from('kursanci').update({ notatki: val || null } as any).eq('id', k.id);
+                                          setKomunikat(`Notatka zapisana — ${k.imie} ${k.nazwisko}`);
+                                        }
+                                      }}
+                                      style={{ width: '100%', fontSize: '11px', padding: '5px 8px', borderRadius: '7px', border: '0.5px solid var(--border)', fontFamily: 'Jost, sans-serif', resize: 'vertical' }} />
+                                  </div>
+                                  {/* Dofinansowanie */}
+                                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', paddingTop: '20px' }}>
+                                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '12px', fontWeight: 500, color: dofinansowanie ? '#1565c0' : 'var(--text)' }}>
+                                      <input type="checkbox" checked={!!dofinansowanie} onChange={async e => {
+                                        await supabase.from('kursanci').update({ dofinansowanie: e.target.checked } as any).eq('id', k.id);
+                                        const { data } = await supabase.from('kursanci').select('id, imie, nazwisko, email, telefon, grupa_id, user_id, certyfikat_url, notatki, dofinansowanie');
+                                        setKursanci((data || []) as unknown as KursantAdmin[]);
+                                        setKomunikat(e.target.checked ? `${k.imie} ${k.nazwisko} — dofinansowanie zaznaczone` : `${k.imie} ${k.nazwisko} — dofinansowanie odznaczone`);
+                                      }} style={{ width: '16px', height: '16px', accentColor: '#1565c0', cursor: 'pointer' }} />
+                                      Dofinansowanie
+                                    </label>
+                                    {dofinansowanie && <span style={{ fontSize: '10px', background: '#bbdefb', color: '#1565c0', padding: '2px 8px', borderRadius: '999px', fontWeight: 600 }}>Aktywne</span>}
+                                  </div>
+                                </div>
+                              </td>
+                            </tr>
+                          )}
+                        </>
                       );
                     })}
                   </tbody>
