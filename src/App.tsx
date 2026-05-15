@@ -152,6 +152,7 @@ function urlBase64ToUint8Array(base64String: string) {
     rola: string;
     avatar_url: string | null;
     certyfikat_url: string | null;
+    folder_prywatny?: string | null;
     onboarding_done: boolean;
     grupy: { nazwa: string; miasto: string; edycja: string; numer_uslugi?: string | null } | null;
   };
@@ -4282,6 +4283,21 @@ function urlBase64ToUint8Array(base64String: string) {
                                       {k.certyfikat_url && <a href={k.certyfikat_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: '14px', textDecoration: 'none' }}>🎓</a>}
                                     </div>
                                   </div>
+                                  {/* Folder prywatny */}
+                                  <div>
+                                    <div style={{ fontSize: '9px', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '5px' }}>Folder prywatny (link)</div>
+                                    <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                                      <input type="url" defaultValue={(k as any).folder_prywatny || ''} placeholder="https://drive.google.com/..."
+                                        onBlur={async e => {
+                                          if (e.target.value !== ((k as any).folder_prywatny || '')) {
+                                            await supabase.from('kursanci').update({ folder_prywatny: e.target.value || null } as any).eq('id', k.id);
+                                            setKomunikat(`Folder prywatny zapisany — ${k.imie} ${k.nazwisko}`);
+                                          }
+                                        }}
+                                        style={{ flex: 1, fontSize: '11px', padding: '5px 8px', borderRadius: '7px', border: '0.5px solid var(--border)', fontFamily: 'Jost, sans-serif', background: (k as any).folder_prywatny ? '#f3e8ff' : 'white' }} />
+                                      {(k as any).folder_prywatny && <a href={(k as any).folder_prywatny} target="_blank" rel="noopener noreferrer" style={{ fontSize: '14px', textDecoration: 'none' }}>🔒</a>}
+                                    </div>
+                                  </div>
                                   {/* Notatki */}
                                   <div>
                                     <div style={{ fontSize: '9px', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '5px' }}>Notatki</div>
@@ -6506,6 +6522,20 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
           )}
   
           {/* Certyfikat */}
+          {kursant?.folder_prywatny && (
+            <a href={kursant.folder_prywatny} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
+              <div style={{ background: 'white', borderRadius: '16px', padding: '14px 16px', border: '0.5px solid var(--border)', display: 'flex', alignItems: 'center', gap: '14px' }}>
+                <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: '#f3e8ff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text)', marginBottom: '1px' }}>Folder prywatny</div>
+                  <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Dokumenty poufne · umowy, prace zaliczeniowe</div>
+                </div>
+                <span style={{ color: 'var(--text-muted)', fontSize: '18px' }}>›</span>
+              </div>
+            </a>
+          )}
           {kursant?.certyfikat_url ? (
             <a href={kursant.certyfikat_url} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
               <div style={{ background: 'linear-gradient(135deg, #fdf6e8 0%, #fef9f0 100%)', borderRadius: '16px', padding: '14px 16px', border: '0.5px solid #e8d4a0', display: 'flex', alignItems: 'center', gap: '14px' }}>
@@ -6716,7 +6746,7 @@ async function wylaczPush() {
           return;
         }
 
-        const { data: kursantData } = await supabase.from('kursanci').select('imie, nazwisko, grupa_id, rola, avatar_url, certyfikat_url, onboarding_done').eq('user_id', user!.id).single();
+        const { data: kursantData } = await supabase.from('kursanci').select('imie, nazwisko, grupa_id, rola, avatar_url, certyfikat_url, onboarding_done, folder_prywatny').eq('user_id', user!.id).single();
         let grupaData = null;
         if (kursantData?.grupa_id) {
           const { data } = await supabase.from('grupy').select('id, nazwa, miasto, edycja, drive_link, link_materialow, link_nagran').eq('id', kursantData.grupa_id).single();
