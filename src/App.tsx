@@ -2886,7 +2886,6 @@ function urlBase64ToUint8Array(base64String: string) {
     const [widokZjazdow, setWidokZjazdow] = useState<'tabela' | 'kalendarz'>('tabela');
     const [kalFiltrGrupa, setKalFiltrGrupa] = useState('');
     const [kalFiltrProwadzacy, setKalFiltrProwadzacy] = useState('');
-    const [zwinieteGrupy, setZwinieteGrupy] = useState<Set<number>>(new Set());
     const [zwinieteZjazdy, setZwinieteZjazdy] = useState<Set<number>>(new Set());
     const [zwinieteZadania, setZwinieteZadania] = useState<Set<number>>(new Set());
     const [edytowanyKursant, setEdytowanyKursant] = useState<{ id: number; imie: string; nazwisko: string; email: string; telefon: string } | null>(null);
