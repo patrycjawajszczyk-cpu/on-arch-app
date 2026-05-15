@@ -4800,7 +4800,7 @@ const ikonaSVG = o.typ === 'Pilne'
       </>
     );
   }
-
+ 
 //  
 function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, odpowiedzi, grupaInfo }: {
   ogloszenia: Ogloszenie[];
@@ -4823,6 +4823,7 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
         .then(({ data }) => {
           const hero = (data || []).find(z => z.kategoria === 'hero');
           if (hero) setHeroPhoto(hero.url);
+        });
     }, []);
 
     const najblizszy = zjazdy.find(z => z.status === 'nadchodzacy');
@@ -5326,22 +5327,10 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
       </div>
     );
   }
-  type KafelekDniaProps = {
-    zjazd: Zjazd;
-    dzien: 1 | 2;
-    label: string;
-    wpis: Obecnosc | undefined;
-    aktywnyFormularz: { zjazdId: number; dzien: 1 | 2; typ: string; powod?: string; godzPrzyb?: string; godzWyj?: string } | null;
-    setAktywnyFormularz: (v: any) => void;
-    zapiszObecnosc: (zjazd: Zjazd, dzien: 1 | 2, status: 'potwierdzono' | 'nieobecnosc') => void;
-    usunObecnosc: (zjazdId: number, dzien: 1 | 2) => void;
-    odswiezObecnosci: () => void;
-    wysylanie: boolean;
-  };
+
   
-  function KafelekDnia({ zjazd, dzien, label, wpis, aktywnyFormularz, setAktywnyFormularz, zapiszObecnosc, usunObecnosc, odswiezObecnosci, wysylanie }: KafelekDniaProps) {
-    const zakonczone = zjazd.status === 'zakonczony';
-    const formularzAktywny = aktywnyFormularz?.zjazdId === zjazd.id && aktywnyFormularz?.dzien === dzien;
+  function KafelekDnia(props: any) {
+    const { zjazd, dzien, label, wpis, aktywnyFormularz, setAktywnyFormularz, zapiszObecnosc, usunObecnosc, odswiezObecnosci, wysylanie } = props;
 
     const kolorTla = zakonczone
       ? (wpis?.status === 'potwierdzono' ? '#f5faf6' : wpis?.status === 'nieobecnosc' ? '#fdf5f5' : '#f8f8f8')
@@ -6689,4 +6678,3 @@ async function wylaczPush() {
       </div>
     );
   }
-}  
