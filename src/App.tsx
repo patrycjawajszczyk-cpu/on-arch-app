@@ -4168,7 +4168,7 @@ function urlBase64ToUint8Array(base64String: string) {
                     <tr style={{ background: 'var(--bg)', borderBottom: '0.5px solid var(--border)' }}>
                       {['Imię i Nazwisko', 'Email', 'Telefon', 'Grupa', 'Certyfikat', 'Notatki', ''].map((h, i) => (
                         <th key={i} style={{ padding: '9px 12px', textAlign: 'left', fontWeight: 600, color: 'var(--text-muted)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.3px', whiteSpace: 'nowrap',
-                          wwidth: i === 0 ? '130px' : i === 1 ? '150px' : i === 2 ? '100px' : i === 3 ? '110px' : i === 4 ? '140px' : i === 5 ? '140px' : '110px' }}>{h}</th>
+                          width: i === 0 ? '130px' : i === 1 ? '150px' : i === 2 ? '100px' : i === 3 ? '110px' : i === 4 ? '140px' : i === 5 ? '140px' : '110px' }}>{h}</th>
                       ))}
                     </tr>
                   </thead>
