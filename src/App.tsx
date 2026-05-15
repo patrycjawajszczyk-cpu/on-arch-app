@@ -1710,10 +1710,11 @@ function urlBase64ToUint8Array(base64String: string) {
         termin: noweZadanie.termin || null,
         link_materialow: noweZadanie.link_materialow || null,
         typ: noweZadanie.typ || 'zadanie',
+        zdjecie_url: noweZadanie.zdjecie_url || null,
       }]);
       if (error) { setKomunikat('Błąd: ' + error.message); return; }
       setKomunikat('Zadanie dodane!');
-      setNoweZadanie({ tytul: '', opis: '', termin: '', link_materialow: '', grupa_id: noweZadanie.grupa_id, typ: 'zadanie' });
+      setNoweZadanie({ tytul: '', opis: '', termin: '', link_materialow: '', grupa_id: '', typ: 'zadanie', zdjecie_url: '' });
       const { data } = await supabase.from('zadania').select('*').in('grupa_id', mojeGrupyIds).order('created_at', { ascending: false });
       setZadania(data || []);
     }
@@ -2566,7 +2567,7 @@ function urlBase64ToUint8Array(base64String: string) {
         .then(({ data }) => { setZdjecia(data || []); setLadowanie(false); });
     }, []);
 
-    const tagi = [...new Set(zdjecia.map(z => z.tag).filter((t): t is string => !!t))];
+    const [noweZadanie, setNoweZadanie] = useState({ tytul: '', opis: '', termin: '', link_materialow: '', grupa_id: '', typ: 'zadanie', zdjecie_url: '' });
     const lista = filtrTag ? zdjecia.filter(z => z.tag === filtrTag) : zdjecia;
 
     return (
@@ -4445,6 +4446,22 @@ function urlBase64ToUint8Array(base64String: string) {
                     </div>
                     <input type="url" value={noweZadanie.link_materialow} onChange={e => setNoweZadanie({ ...noweZadanie, link_materialow: e.target.value })} placeholder="Link do materiałów (opcjonalnie)"
                       style={{ width: '100%', fontSize: '12px', padding: '7px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif', marginBottom: '8px' }} />
+                      <div style={{ marginBottom: '8px' }}>
+                  <label style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.2em', display: 'block', marginBottom: '6px' }}>Zdjęcie zadania</label>
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                    {noweZadanie.zdjecie_url && (
+                      <img src={noweZadanie.zdjecie_url} alt="zdjęcie" style={{ width: '80px', height: '50px', objectFit: 'cover', borderRadius: '8px', border: '0.5px solid var(--border)' }} />
+                    )}
+                    <button type="button" onClick={() => setPokazGalerieZadanie(true)}
+                      style={{ padding: '7px 14px', borderRadius: '9px', border: '0.5px solid var(--border)', background: 'white', fontSize: '12px', cursor: 'pointer', fontFamily: 'Jost, sans-serif', color: 'var(--brand)' }}>
+                      {noweZadanie.zdjecie_url ? '🖼 Zmień zdjęcie' : '🖼 Wybierz zdjęcie'}
+                    </button>
+                    {noweZadanie.zdjecie_url && (
+                      <button type="button" onClick={() => setNoweZadanie({ ...noweZadanie, zdjecie_url: '' })}
+                        style={{ padding: '7px', borderRadius: '9px', border: 'none', background: 'none', fontSize: '13px', cursor: 'pointer', color: '#e57373' }}>×</button>
+                    )}
+                  </div>
+                </div>
                     <button type="submit" style={{ width: '100%', padding: '8px', background: 'var(--brand)', color: 'white', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 600, cursor: 'pointer', fontFamily: 'Jost, sans-serif' }}>
                       + Dodaj zadanie
                     </button>
@@ -4823,7 +4840,7 @@ function urlBase64ToUint8Array(base64String: string) {
         )}
         {pokazGalerieZadanie && (
           <GaleriaZdjec
-            onWybierz={url => setNoweZadanie({ ...noweZadanie, zdjecie_url: url } as any)}
+            onWybierz={url => setNoweZadanie({ ...noweZadanie, zdjecie_url: url })}
             onZamknij={() => setPokazGalerieZadanie(false)}
           />
         )}
