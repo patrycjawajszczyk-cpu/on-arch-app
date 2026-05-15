@@ -5331,7 +5331,8 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
   
   function KafelekDnia(props: any) {
     const { zjazd, dzien, label, wpis, aktywnyFormularz, setAktywnyFormularz, zapiszObecnosc, usunObecnosc, odswiezObecnosci, wysylanie } = props;
-
+    const zakonczone = zjazd.status === 'zakonczony';
+    const formularzAktywny = aktywnyFormularz?.zjazdId === zjazd.id && aktywnyFormularz?.dzien === dzien;
     const kolorTla = zakonczone
       ? (wpis?.status === 'potwierdzono' ? '#f5faf6' : wpis?.status === 'nieobecnosc' ? '#fdf5f5' : '#f8f8f8')
       : (!wpis ? 'var(--surface-2)' : wpis.status === 'potwierdzono' ? '#f0faf4' : '#fff8f8');
