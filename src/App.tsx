@@ -6824,7 +6824,7 @@ async function wylaczPush() {
 
     return (
       <div className="app">
-        <header className="header" style={aktywnaZakladka === 'home' && !aktywneOgloszenie && !pokazAnkiete ? { display: 'none' } : {}}>
+        <header className="header" style={{ position: 'static', ...(aktywnaZakladka === 'home' && !aktywneOgloszenie && !pokazAnkiete ? { display: 'none' } : {}) }}>
           <OnArchLogo height={22} color="var(--brand-dark)" />
           {avatarUrl ? <img src={avatarUrl} alt="avatar" className="avatar-img" /> : <div className="avatar">{inicjal.toUpperCase()}</div>}
         </header>
