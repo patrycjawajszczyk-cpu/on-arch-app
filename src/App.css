@@ -1332,7 +1332,7 @@
       align-items: stretch;
       justify-content: flex-start;
       height: auto;
-      min-height: calc(100vh - 60px);
+      height: calc(100vh - 60px);
       padding: 16px 8px;
       border-top: none;
       border-right: 0.5px solid var(--border);
@@ -1365,7 +1365,7 @@
       max-width: 100%;
       padding: 24px 36px;
       overflow-y: auto;
-      min-height: calc(100vh - 60px);
+      height: calc(100vh - 60px);
     }
   }
   
