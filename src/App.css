@@ -1319,6 +1319,8 @@
   
     .header {
       grid-area: header;
+      position: static !important;
+      z-index: auto !important;
     }
   
     .bottom-nav {
@@ -1368,9 +1370,5 @@
     .main {
       padding: 28px 56px;
     }
-    .header {
-      grid-area: header;
-      position: static !important;
-    z-index: auto !important;
-    }
+    
   }
