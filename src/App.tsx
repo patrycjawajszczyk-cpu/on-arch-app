@@ -3958,7 +3958,7 @@ function urlBase64ToUint8Array(base64String: string) {
                           {/* Tabela + podsumowanie — zwijane */}
                           {!zwinieta && (<>
                           <div style={{ background: 'white', borderRadius: '0', border: '0.5px solid var(--border)', borderTop: 'none', overflow: 'hidden' }}>
-                          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', tableLayout: 'fixed' }}>
+                          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px', tableLayout: 'auto' }}>
                               <thead>
                                 <tr style={{ background: 'var(--bg)', borderBottom: '0.5px solid var(--border)' }}>
                                   {['#', 'Daty', 'Temat', 'Prowadzący', 'Status', ''].map((h, i) => (
@@ -4168,7 +4168,7 @@ function urlBase64ToUint8Array(base64String: string) {
                     <tr style={{ background: 'var(--bg)', borderBottom: '0.5px solid var(--border)' }}>
                       {['Imię i Nazwisko', 'Email', 'Telefon', 'Grupa', 'Certyfikat', 'Notatki', ''].map((h, i) => (
                         <th key={i} style={{ padding: '9px 12px', textAlign: 'left', fontWeight: 600, color: 'var(--text-muted)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.3px', whiteSpace: 'nowrap',
-                          width: i === 0 ? '160px' : i === 1 ? '180px' : i === 2 ? '120px' : i === 3 ? '140px' : i === 4 ? '160px' : i === 5 ? 'auto' : '130px' }}>{h}</th>
+                          wwidth: i === 0 ? '130px' : i === 1 ? '150px' : i === 2 ? '100px' : i === 3 ? '110px' : i === 4 ? '140px' : i === 5 ? '140px' : '110px' }}>{h}</th>
                       ))}
                     </tr>
                   </thead>
@@ -4184,7 +4184,7 @@ function urlBase64ToUint8Array(base64String: string) {
                       const grupaName = grupy.find(g => g.id === k.grupa_id)?.nazwa || '—';
                       return (
                         <tr key={k.id} style={{ borderBottom: '0.5px solid var(--border-soft)', background: edytuje ? '#fdf5f5' : idx % 2 === 0 ? 'white' : '#fdf9f8' }}>
-                          <td style={{ padding: '8px 12px' }}>
+                          <td style={{ padding: '5px 8px' }}>
                             {edytuje ? (
                               <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                                 <input value={edytowanyKursant.imie} onChange={e => setEdytowanyKursant({ ...edytowanyKursant, imie: e.target.value })}
@@ -4263,7 +4263,7 @@ function urlBase64ToUint8Array(base64String: string) {
                                       const { data } = await supabase.from('kursanci').select('id, imie, nazwisko, email, telefon, grupa_id, user_id, certyfikat_url');
                                       setKursanci((data || []) as unknown as KursantAdmin[]); setKomunikat('Usunięto z grupy.');
                                     }
-                                  }} style={{ fontSize: '11px', padding: '3px 9px', border: '0.5px solid #fbbf24', borderRadius: '6px', background: '#fffbeb', cursor: 'pointer', color: '#92400e', fontFamily: 'Jost, sans-serif' }}>−Grupa</button>
+                                  }} style={{ fontSize: '11px', padding: '3px 9px', border: '0.5px solid #fbbf24', borderRadius: '6px', background: '#fffbeb', cursor: 'pointer', color: '#92400e', fontFamily: 'Jost, sans-serif' }}>Usuń z grupy</button>
                                 )}
                                 <button onClick={async () => {
                                   if (window.confirm(`Usunąć ${k.imie} ${k.nazwisko}?`)) {
