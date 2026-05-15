@@ -5086,6 +5086,20 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
 
     const wpis_d1 = obecnosciNajblizszy.find(o => o.dzien === 1);
     const wpis_d2 = obecnosciNajblizszy.find(o => o.dzien === 2);
+    async function zapiszObecnoscHome(dzien: 1 | 2) {
+      if (!najblizszy || !kursant) return;
+      const istniejaca = obecnosciNajblizszy.find(o => o.dzien === dzien);
+      if (istniejaca) {
+        await supabase.from('obecnosci').delete().eq('id', istniejaca.id);
+        setObecnosciNajblizszy(prev => prev.filter(o => o.id !== istniejaca.id));
+      } else {
+        const { data: nowy } = await supabase.from('obecnosci').insert([{
+          zjazd_id: najblizszy.id, user_id: user.id, grupa_id: kursant.grupa_id,
+          imie: kursant.imie, nazwisko: kursant.nazwisko, dzien, status: 'potwierdzono',
+        }]).select().single();
+        if (nowy) setObecnosciNajblizszy(prev => [...prev, nowy as Obecnosc]);
+      }
+    }
 
     const teraz = new Date();
     const dniTygodnia = ['ND','PN','WT','ŚR','CZW','PT','SOB'];
@@ -5272,7 +5286,7 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
                 { dzien: 1, data: najblizszy.data_dzien1, wpis: wpis_d1 },
                 ...(najblizszy.data_dzien2 ? [{ dzien: 2, data: najblizszy.data_dzien2, wpis: wpis_d2 }] : []),
               ].map(({ dzien, data, wpis }) => (
-                <div key={dzien} onClick={() => onNavigate('zjazdy')} style={{
+                <div key={dzien} onClick={() => zapiszObecnoscHome(dzien as 1 | 2)} style={{
                   flex: 1, borderRadius: '10px', padding: '10px 12px', cursor: 'pointer',
                   background: wpis?.status === 'potwierdzono' ? '#1C2B3A' : 'white',
                   border: `1.5px solid ${wpis?.status === 'potwierdzono' ? '#1C2B3A' : 'var(--border)'}`,
@@ -5289,8 +5303,11 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
                       D{dzien} · {new Date(data).toLocaleDateString('pl-PL', { day: 'numeric', month: 'numeric' })}
                     </div>
                     <div style={{ fontSize: '11px', fontWeight: 600, color: wpis?.status === 'potwierdzono' ? 'white' : 'var(--text)' }}>
-                      {wpis?.status === 'potwierdzono' ? 'Będę' : 'Potwierdź'}
+                      {wpis?.status === 'potwierdzono' ? '✓ Będę' : 'Potwierdź'}
                     </div>
+                    {wpis?.status === 'potwierdzono' && (
+                      <div style={{ fontSize: '9px', color: 'rgba(255,255,255,0.5)', marginTop: '1px' }}>kliknij aby cofnąć</div>
+                    )}
                   </div>
                 </div>
               ))}
