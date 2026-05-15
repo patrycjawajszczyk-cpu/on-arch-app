@@ -1310,3 +1310,71 @@
     animation: shimmer 1.4s infinite linear;
     border-radius: 10px;
   }
+  @media (min-width: 768px) {
+    .app {
+      max-width: 100%;
+      display: grid;
+      grid-template-columns: 200px 1fr;
+      grid-template-rows: auto 1fr;
+      min-height: 100dvh;
+    }
+  
+    .header {
+      grid-column: 1 / -1;
+      grid-row: 1;
+    }
+  
+    .bottom-nav {
+      grid-column: 1;
+      grid-row: 2;
+      flex-direction: column;
+      height: auto;
+      align-items: stretch;
+      padding: 16px 8px;
+      border-top: none;
+      border-right: 0.5px solid var(--border);
+      background: white;
+      justify-content: flex-start;
+      gap: 4px;
+      position: sticky;
+      top: 0;
+      height: calc(100vh - 60px);
+    }
+  
+    .nav-item {
+      flex-direction: row;
+      justify-content: flex-start;
+      gap: 10px;
+      padding: 10px 14px;
+      border-radius: 10px;
+      height: auto;
+      font-size: 13px;
+    }
+  
+    .nav-label {
+      display: block;
+      font-size: 13px;
+    }
+  
+    .nav-item.active {
+      background: var(--brand-light);
+    }
+  
+    .nav-badge {
+      margin-left: auto;
+    }
+  
+    .main {
+      grid-column: 2;
+      grid-row: 2;
+      max-width: 100%;
+      padding: 24px 32px;
+      overflow-y: auto;
+    }
+  }
+  
+  @media (min-width: 1200px) {
+    .main {
+      padding: 28px 48px;
+    }
+  }
