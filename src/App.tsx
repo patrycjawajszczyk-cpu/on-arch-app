@@ -5379,7 +5379,7 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
               {
                 kind: 'Online', title: 'Materiały dodatkowe', sub: 'kursy i artykuły',
                 img: 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=400&q=70',
-                href: 'https://on-arch.pl', dot: '#B35758',
+                href: (grupaInfo as any)?.link_materialow || null, dot: '#B35758',
               },
             
               { kind: 'Drive', title: 'Folder grupy', sub: 'Google Drive',
@@ -6702,7 +6702,7 @@ async function wylaczPush() {
         const { data: kursantData } = await supabase.from('kursanci').select('imie, nazwisko, grupa_id, rola, avatar_url, certyfikat_url, onboarding_done').eq('user_id', user!.id).single();
         let grupaData = null;
         if (kursantData?.grupa_id) {
-          const { data } = await supabase.from('grupy').select('id, nazwa, miasto, edycja, drive_link').eq('id', kursantData.grupa_id).single();
+          const { data } = await supabase.from('grupy').select('id, nazwa, miasto, edycja, drive_link, link_materialow, link_nagran').eq('id', kursantData.grupa_id).single();
           grupaData = data;
           setGrupaInfo(data as Grupa | null);
         }
