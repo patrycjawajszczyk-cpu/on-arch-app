@@ -505,7 +505,7 @@ function urlBase64ToUint8Array(base64String: string) {
                 {wyslane.map((z, idx) => {
                   const odp = odpowiedzDlaZadania(z.id)!;
                   const rozwinięte = aktywneZadanie?.id === z.id;
-                  const photo = PHOTOS[(aktywne.length + idx) % PHOTOS.length];
+                  const photo = z.zdjecie_url || PHOTOS[(aktywne.length + idx) % PHOTOS.length];
                   return (
                     <div key={z.id} style={{ background: 'white', borderRadius: '16px', border: '0.5px solid #b8d4b8', overflow: 'hidden' }}>
                       <div onClick={() => !rozwinięte && setAktywneZadanie(z)} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 14px', cursor: 'pointer' }}>
