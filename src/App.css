@@ -46,16 +46,13 @@
    /* ─── Header ────────────────────────────────────────── */
    
    .header {
-     display: flex;
-     justify-content: space-between;
-     align-items: center;
-     padding: 14px 20px;
-     background: var(--surface);
-     border-bottom: 0.5px solid var(--border);
-     position: sticky;
-     top: 0;
-     z-index: 10;
-   }
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 20px;
+    background: var(--surface);
+    border-bottom: 0.5px solid var(--border);
+  }
    
    .logo {
      font-size: 20px;
@@ -1014,9 +1011,7 @@
      padding: 14px 20px;
      background: var(--surface);
      border-bottom: 0.5px solid var(--border);
-     position: sticky;
-     top: 0;
-     z-index: 10;
+  
    }
    
    /* ── PAGE HEADER (desktop) ── */
