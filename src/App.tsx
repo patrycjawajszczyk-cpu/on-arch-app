@@ -1724,7 +1724,7 @@ function urlBase64ToUint8Array(base64String: string) {
       await supabase.from('zadania').delete().eq('id', id);
       setZadania(prev => prev.filter(z => z.id !== id));
     }
-    <button onClick={() => setEdytowaneZadanie(z)} style={{ fontSize: '11px', padding: '4px 10px', border: '0.5px solid var(--border)', borderRadius: '7px', background: 'white', cursor: 'pointer', color: 'var(--brand)', fontFamily: 'Jost, sans-serif' }}>Edytuj</button>
+    
 
     async function dodajOgloszenieProw(e: React.FormEvent) {
       e.preventDefault();
