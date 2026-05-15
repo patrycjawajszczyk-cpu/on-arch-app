@@ -6828,7 +6828,7 @@ async function wylaczPush() {
           <OnArchLogo height={22} color="var(--brand-dark)" />
           {avatarUrl ? <img src={avatarUrl} alt="avatar" className="avatar-img" /> : <div className="avatar">{inicjal.toUpperCase()}</div>}
         </header>
-        <main className="main" style={aktywnaZakladka === 'czat' ? { padding: 0 } : {}}>
+        <main className="main" style={aktywnaZakladka === 'czat' ? { padding: 0, overflow: 'hidden' } : {}}>
           {pokazAnkiete ? (
             <div>
               <button className="btn-wroc" onClick={() => setPokazAnkiete(false)} style={{ marginBottom: '12px' }}>← Wróć do profilu</button>
