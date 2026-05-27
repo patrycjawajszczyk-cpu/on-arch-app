@@ -4291,6 +4291,8 @@ function urlBase64ToUint8Array(base64String: string) {
                                         onBlur={async e => {
                                           if (e.target.value !== ((k as any).folder_prywatny || '')) {
                                             await supabase.from('kursanci').update({ folder_prywatny: e.target.value || null } as any).eq('id', k.id);
+                                            const { data: refreshed } = await supabase.from('kursanci').select('id, imie, nazwisko, email, telefon, grupa_id, user_id, certyfikat_url, notatki, dofinansowanie, folder_prywatny');
+                                            setKursanci((refreshed || []) as unknown as KursantAdmin[]);
                                             setKomunikat(`Folder prywatny zapisany — ${k.imie} ${k.nazwisko}`);
                                           }
                                         }}
