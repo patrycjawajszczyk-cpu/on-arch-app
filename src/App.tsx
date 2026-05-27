@@ -4308,7 +4308,9 @@ function urlBase64ToUint8Array(base64String: string) {
                                         const val = e.target.value.trim();
                                         if (val !== ((k as any).notatki || '').trim()) {
                                           await supabase.from('kursanci').update({ notatki: val || null } as any).eq('id', k.id);
-                                          setKomunikat(`Notatka zapisana — ${k.imie} ${k.nazwisko}`);
+const { data: refreshed } = await supabase.from('kursanci').select('id, imie, nazwisko, email, telefon, grupa_id, user_id, certyfikat_url, notatki, dofinansowanie, folder_prywatny');
+setKursanci((refreshed || []) as unknown as KursantAdmin[]);
+setKomunikat(`Notatka zapisana — ${k.imie} ${k.nazwisko}`);
                                         }
                                       }}
                                       style={{ width: '100%', fontSize: '11px', padding: '5px 8px', borderRadius: '7px', border: '0.5px solid var(--border)', fontFamily: 'Jost, sans-serif', resize: 'vertical' }} />
