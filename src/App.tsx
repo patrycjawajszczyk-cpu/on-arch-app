@@ -701,26 +701,7 @@ function urlBase64ToUint8Array(base64String: string) {
               </span>
               {lista.length > 0 && (
                 <div style={{ display: 'flex', gap: '8px' }}>
-                  <button onClick={async () => {
-  let key = sessionStorage.getItem('sb_service_key') || '';
-  if (!key) {
-    const input = window.prompt('Wklej klucz service_role:');
-    if (!input?.trim()) return;
-    key = input.trim();
-    sessionStorage.setItem('sb_service_key', key);
-  }
-  const doNaprawy = kursanci.filter(k => k.email);
-  setKomunikat(`Naprawiam ${doNaprawy.length} kont...`);
-  for (const k of doNaprawy) {
-    await naprawIWyslijEmail(k, key);
-    await new Promise(r => setTimeout(r, 400));
-  }
-  const { data } = await supabase.from('kursanci').select('id, imie, nazwisko, email, telefon, grupa_id, user_id, certyfikat_url, notatki, dofinansowanie, folder_prywatny');
-  setKursanci((data || []) as unknown as KursantAdmin[]);
-  setKomunikat('✓ Wszyscy kursanci naprawieni');
-}} style={{ fontSize: '12px', color: '#4338ca', background: '#eef2ff', border: '0.5px solid #6366f1', borderRadius: '8px', padding: '5px 10px', cursor: 'pointer', fontFamily: 'Jost, sans-serif' }}>
-  ⚙ Napraw wszystkich
-  </button>
+                  
                   <button onClick={eksportujCSV} style={{ fontSize: '12px', color: 'var(--brand)', background: 'none', border: '0.5px solid var(--brand-mid)', borderRadius: '8px', padding: '5px 10px', cursor: 'pointer', fontFamily: 'Jost, sans-serif' }}>
                     ⬇ CSV
                   </button>
