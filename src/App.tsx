@@ -2950,7 +2950,7 @@ function urlBase64ToUint8Array(base64String: string) {
     const [wybranaGrupaAnkiety, setWybranaGrupaAnkiety] = useState('');
     const [wybranaGrupaZadan, setWybranaGrupaZadan] = useState('');
     const [wybranaGrupaDetail, setWybranaGrupaDetail] = useState<number | null>(null);
-const [zakladkaGrupy, setZakladkaGrupy] = useState<'kursanci' | 'zjazdy' | 'ogloszenia'>('kursanci');
+    const [zakladkaGrupy, setZakladkaGrupy] = useState<'kursanci' | 'zjazdy' | 'ogloszenia' | 'ustawienia'>('kursanci');
     const fileRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
@@ -4695,7 +4695,7 @@ setKomunikat(`Notatka zapisana — ${k.imie} ${k.nazwisko}`);
                       </div>
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '12px', marginBottom: '28px' }}>
                         {grupy.filter(g => statusGrupy(g.id) !== 'zakonczona').map(g => {
-                          const status = statusGrupy(g.id);
+                            
                           const ileKursantow = kursanci.filter(k => k.grupa_id === g.id).length;
                           const ileZjazdow = zjazdy.filter(z => z.grupa_id === g.id).length;
                           return (
