@@ -3333,7 +3333,7 @@ function urlBase64ToUint8Array(base64String: string) {
           await supabase.from('kursanci').update({ user_id: authUser.id }).eq('id', kursant.id);
     
           // Wyślij email z ustawieniem hasła
-          await supabase.auth.resetPasswordForEmail(kursant.email, {
+          await supabase.auth.resetPasswordForEmail(kursant.email ?? '', {
             redirectTo: 'https://on-arch-akademia.vercel.app',
           });
           setKomunikat(`✓ UUID naprawiony + email z hasłem wysłany → ${kursant.email}`);
