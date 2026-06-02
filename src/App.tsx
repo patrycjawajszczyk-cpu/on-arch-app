@@ -4262,7 +4262,9 @@ function urlBase64ToUint8Array(base64String: string) {
                                   <option value="">Brak grupy</option>
                                   {grupy.map(g => <option key={g.id} value={g.id}>{g.nazwa}</option>)}
                                 </select>
-                              ) : <span style={{ fontSize: '10px', padding: '2px 7px', borderRadius: '6px', background: k.grupa_id ? (dofinansowanie ? '#bbdefb' : 'var(--brand-light)') : '#f5f5f5', color: k.grupa_id ? (dofinansowanie ? '#1565c0' : 'var(--brand-dark)') : '#999' }}>{grupaName}</span>}
+                              ) : <span
+                              onClick={k.grupa_id ? e => { e.stopPropagation(); setAktywnaZakladkaB('grupy'); } : undefined}
+                              style={{ fontSize: '10px', padding: '2px 7px', borderRadius: '6px', background: k.grupa_id ? (dofinansowanie ? '#bbdefb' : 'var(--brand-light)') : '#f5f5f5', color: k.grupa_id ? (dofinansowanie ? '#1565c0' : 'var(--brand-dark)') : '#999', cursor: k.grupa_id ? 'pointer' : 'default', textDecoration: k.grupa_id ? 'underline dotted' : 'none' }}>{grupaName}</span>}
                             </td>
                             {/* Akcje */}
                             <td style={{ padding: '6px 10px', whiteSpace: 'nowrap' }}>
@@ -4287,14 +4289,7 @@ function urlBase64ToUint8Array(base64String: string) {
                                   )}
                                   <button onClick={e => { e.stopPropagation(); setEdytowanyKursant({ id: k.id, imie: k.imie, nazwisko: k.nazwisko, email: k.email || '', telefon: k.telefon || '', ...(k as any) }); }}
                                     style={{ fontSize: '11px', padding: '3px 9px', border: '0.5px solid var(--border)', borderRadius: '6px', background: 'white', cursor: 'pointer', color: 'var(--brand)', fontFamily: 'Jost, sans-serif' }}>Edytuj</button>
-                                  {k.grupa_id && (
-                                    <button onClick={async e => { e.stopPropagation(); if (window.confirm(`Usunąć ${k.imie} ${k.nazwisko} z grupy?`)) {
-                                      await supabase.from('kursanci').update({ grupa_id: null }).eq('id', k.id);
-                                      const { data } = await supabase.from('kursanci').select('id, imie, nazwisko, email, telefon, grupa_id, user_id, certyfikat_url, notatki, dofinansowanie, folder_prywatny');
-                                      setKursanci((data || []) as unknown as KursantAdmin[]); setKomunikat('Usunięto z grupy.');
-                                    }}}
-                                    style={{ fontSize: '11px', padding: '3px 9px', border: '0.5px solid #fbbf24', borderRadius: '6px', background: '#fffbeb', cursor: 'pointer', color: '#92400e', fontFamily: 'Jost, sans-serif' }}>Usuń z gr.</button>
-                                  )}
+                              
                                   <button onClick={async e => { e.stopPropagation(); if (window.confirm(`Usunąć ${k.imie} ${k.nazwisko}?`)) {
                                     await supabase.from('kursanci').delete().eq('id', k.id);
                                     const { data } = await supabase.from('kursanci').select('id, imie, nazwisko, email, telefon, grupa_id, user_id, certyfikat_url, notatki, dofinansowanie, folder_prywatny');
@@ -4370,6 +4365,21 @@ setKomunikat(`Notatka zapisana — ${k.imie} ${k.nazwisko}`);
                                     </label>
                                     {dofinansowanie && <span style={{ fontSize: '10px', background: '#bbdefb', color: '#1565c0', padding: '2px 8px', borderRadius: '999px', fontWeight: 600 }}>Aktywne</span>}
                                   </div>
+                                  {/* Usuń z grupy */}
+                                  {k.grupa_id && (
+                                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', paddingTop: '20px' }}>
+                                      <button onClick={async () => {
+                                        if (window.confirm(`Usunąć ${k.imie} ${k.nazwisko} z grupy?`)) {
+                                          await supabase.from('kursanci').update({ grupa_id: null }).eq('id', k.id);
+                                          const { data } = await supabase.from('kursanci').select('id, imie, nazwisko, email, telefon, grupa_id, user_id, certyfikat_url, notatki, dofinansowanie, folder_prywatny');
+                                          setKursanci((data || []) as unknown as KursantAdmin[]);
+                                          setKomunikat('Usunięto z grupy.');
+                                        }
+                                      }} style={{ fontSize: '11px', padding: '5px 12px', border: '0.5px solid #fbbf24', borderRadius: '8px', background: '#fffbeb', cursor: 'pointer', color: '#92400e', fontFamily: 'Jost, sans-serif' }}>
+                                        Usuń z grupy
+                                      </button>
+                                    </div>
+                                  )}
                                 </div>
                               </td>
                             </tr>
