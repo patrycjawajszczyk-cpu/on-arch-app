@@ -3287,37 +3287,36 @@ function urlBase64ToUint8Array(base64String: string) {
     const ankietyFiltrowane = wybranaGrupaAnkiety ? ankiety.filter((a: any) => a.grupa_id === parseInt(wybranaGrupaAnkiety)) : ankiety;
     async function wyslijZaproszenie(kursant: KursantAdmin) {
       if (!kursant.email) { setKomunikat('Kursant nie ma adresu email!'); return; }
-      let key = sessionStorage.getItem('sb_service_key') || '';
-  if (!key) {
-    const input = window.prompt('Wklej klucz service_role (Supabase → Settings → API):\n(zostanie zapamiętany na tę sesję)');
-    if (!input?.trim()) return;
-    key = input.trim();
-    sessionStorage.setItem('sb_service_key', key);
-  }
-  setWysylanieZaproszenia(kursant.id);
-      setKomunikat('Wysyłam zaproszenie...');
-      const SUPABASE_URL = 'https://bksebyxrknubyokwuaby.supabase.co';
+      setWysylanieZaproszenia(kursant.id);
       try {
-        const res = await fetch(`${SUPABASE_URL}/auth/v1/invite`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'apikey': key,
-            'Authorization': `Bearer ${key}`,
-          },
-          body: JSON.stringify({ email: kursant.email }),
-        });
-        const userData = await res.json();
-        if (!res.ok || !userData.id) {
-          setKomunikat(`Błąd: ${userData.msg || userData.message || 'nieznany błąd'}`);
-          return;
-        }
-        if (!kursant.user_id) {
+        if (kursant.user_id) {
+          // Kursant ma konto — wyślij reset hasła
+          const { error } = await supabase.auth.resetPasswordForEmail(kursant.email, {
+            redirectTo: 'https://on-arch-akademia.vercel.app',
+          });
+          if (error) { setKomunikat(`Błąd: ${error.message}`); return; }
+          setKomunikat(`✓ Email z ustawieniem hasła wysłany do ${kursant.email}`);
+        } else {
+          // Kursant bez konta — wyślij zaproszenie
+          const key = sessionStorage.getItem('sb_service_key') || (() => {
+            const input = window.prompt('Wklej klucz service_role (Supabase → Settings → API):');
+            if (!input?.trim()) return '';
+            sessionStorage.setItem('sb_service_key', input.trim());
+            return input.trim();
+          })();
+          if (!key) return;
+          const res = await fetch('https://bksebyxrknubyokwuaby.supabase.co/auth/v1/invite', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'apikey': key, 'Authorization': `Bearer ${key}` },
+            body: JSON.stringify({ email: kursant.email }),
+          });
+          const userData = await res.json();
+          if (!res.ok || !userData.id) { setKomunikat(`Błąd: ${userData.msg || userData.message || res.status}`); return; }
           await supabase.from('kursanci').update({ user_id: userData.id }).eq('id', kursant.id);
+          const { data } = await supabase.from('kursanci').select('id, imie, nazwisko, email, telefon, grupa_id, user_id, certyfikat_url, notatki, dofinansowanie, folder_prywatny');
+          setKursanci((data || []) as unknown as KursantAdmin[]);
+          setKomunikat(`✓ Zaproszenie wysłane do ${kursant.email}`);
         }
-        const { data } = await supabase.from('kursanci').select('id, imie, nazwisko, email, telefon, grupa_id, user_id, certyfikat_url, notatki, dofinansowanie, folder_prywatny');
-        setKursanci((data || []) as unknown as KursantAdmin[]);
-        setKomunikat(`✓ Zaproszenie wysłane do ${kursant.email}`);
       } catch (err: any) {
         setKomunikat(`Błąd sieci: ${err.message}`);
       } finally {
