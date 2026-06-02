@@ -4286,10 +4286,12 @@ function urlBase64ToUint8Array(base64String: string) {
                               ) : (
                                 <div style={{ display: 'flex', gap: '4px' }}>
                                  {k.email && (
-                                    <button onClick={e => { e.stopPropagation(); wyslijZaproszenie(k); }}
-                                      style={{ fontSize: '11px', padding: '3px 9px', border: '0.5px solid #6366f1', borderRadius: '6px', background: '#eef2ff', cursor: 'pointer', color: '#4338ca', fontFamily: 'Jost, sans-serif' }}>
-                                      ✉ Zaproś
-                                    </button>
+                                    <button
+                                    onClick={e => { e.stopPropagation(); wyslijZaproszenie(k); }}
+                                    disabled={wysylanieZaproszenia === k.id}
+                                    style={{ fontSize: '11px', padding: '3px 9px', border: '0.5px solid #6366f1', borderRadius: '6px', background: wysylanieZaproszenia === k.id ? '#e0e7ff' : '#eef2ff', cursor: wysylanieZaproszenia === k.id ? 'wait' : 'pointer', color: '#4338ca', fontFamily: 'Jost, sans-serif' }}>
+                                    {wysylanieZaproszenia === k.id ? '...' : '✉ Zaproś'}
+                                  </button>
                                   )}
                                   <button onClick={e => { e.stopPropagation(); setEdytowanyKursant({ id: k.id, imie: k.imie, nazwisko: k.nazwisko, email: k.email || '', telefon: k.telefon || '', ...(k as any) }); }}
                                     style={{ fontSize: '11px', padding: '3px 9px', border: '0.5px solid var(--border)', borderRadius: '6px', background: 'white', cursor: 'pointer', color: 'var(--brand)', fontFamily: 'Jost, sans-serif' }}>Edytuj</button>
