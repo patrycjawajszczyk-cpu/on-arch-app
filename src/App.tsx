@@ -701,6 +701,25 @@ function urlBase64ToUint8Array(base64String: string) {
               </span>
               {lista.length > 0 && (
                 <div style={{ display: 'flex', gap: '8px' }}>
+                  <button onClick={async () => {
+  let key = sessionStorage.getItem('sb_service_key') || '';
+  if (!key) {
+    const input = window.prompt('Wklej klucz service_role:');
+    if (!input?.trim()) return;
+    key = input.trim();
+    sessionStorage.setItem('sb_service_key', key);
+  }
+  const doNaprawy = kursanci.filter(k => k.email);
+  setKomunikat(`Naprawiam ${doNaprawy.length} kont...`);
+  for (const k of doNaprawy) {
+    await naprawIWyslijEmail(k, key);
+    await new Promise(r => setTimeout(r, 400));
+  }
+  const { data } = await supabase.from('kursanci').select('id, imie, nazwisko, email, telefon, grupa_id, user_id, certyfikat_url, notatki, dofinansowanie, folder_prywatny');
+  setKursanci((data || []) as unknown as KursantAdmin[]);
+  setKomunikat('✓ Wszyscy kursanci naprawieni');
+}} style={{ fontSize: '12px', color: '#4338ca', background: '#eef2ff', border: '0.5px solid #6366f1', borderRadius: '8px', padding: '5px 10px', cursor: 'pointer', fontFamily: 'Jost, sans-serif' }}>
+  ⚙ Napraw wszyst
                   <button onClick={eksportujCSV} style={{ fontSize: '12px', color: 'var(--brand)', background: 'none', border: '0.5px solid var(--brand-mid)', borderRadius: '8px', padding: '5px 10px', cursor: 'pointer', fontFamily: 'Jost, sans-serif' }}>
                     ⬇ CSV
                   </button>
@@ -3287,40 +3306,61 @@ function urlBase64ToUint8Array(base64String: string) {
     const ankietyFiltrowane = wybranaGrupaAnkiety ? ankiety.filter((a: any) => a.grupa_id === parseInt(wybranaGrupaAnkiety)) : ankiety;
     async function wyslijZaproszenie(kursant: KursantAdmin) {
       if (!kursant.email) { setKomunikat('Kursant nie ma adresu email!'); return; }
+      let key = sessionStorage.getItem('sb_service_key') || '';
+      if (!key) {
+        const input = window.prompt('Wklej klucz service_role (Supabase → Settings → API):');
+        if (!input?.trim()) return;
+        key = input.trim();
+        sessionStorage.setItem('sb_service_key', key);
+      }
       setWysylanieZaproszenia(kursant.id);
+      await naprawIWyslijEmail(kursant, key);
+      const { data } = await supabase.from('kursanci').select('id, imie, nazwisko, email, telefon, grupa_id, user_id, certyfikat_url, notatki, dofinansowanie, folder_prywatny');
+      setKursanci((data || []) as unknown as KursantAdmin[]);
+      setWysylanieZaproszenia(null);
+    }
+    
+    async function naprawIWyslijEmail(kursant: KursantAdmin, key: string) {
+      const SUPABASE_URL = 'https://bksebyxrknubyokwuaby.supabase.co';
       try {
-        if (kursant.user_id) {
-          // Kursant ma konto — wyślij reset hasła
-          const { error } = await supabase.auth.resetPasswordForEmail(kursant.email, {
+        // 1. Spróbuj zaprosić (nowe konto)
+        const inviteRes = await fetch(`${SUPABASE_URL}/auth/v1/invite`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'apikey': key, 'Authorization': `Bearer ${key}` },
+          body: JSON.stringify({ email: kursant.email }),
+        });
+        const inviteData = await inviteRes.json();
+    
+        if (inviteRes.ok && inviteData.id) {
+          // Nowe konto — zapisz prawdziwy UUID
+          await supabase.from('kursanci').update({ user_id: inviteData.id }).eq('id', kursant.id);
+          setKomunikat(`✓ Zaproszenie wysłane → ${kursant.email}`);
+          return;
+        }
+    
+        if (inviteRes.status === 422) {
+          // Konto już istnieje — znajdź prawdziwy UUID po emailu
+          const listRes = await fetch(`${SUPABASE_URL}/auth/v1/admin/users?page=1&per_page=1000`, {
+            headers: { 'apikey': key, 'Authorization': `Bearer ${key}` },
+          });
+          const listData = await listRes.json();
+          const authUser = (listData.users || []).find((u: any) => u.email === kursant.email);
+          if (!authUser) { setKomunikat(`Nie znaleziono konta dla ${kursant.email}`); return; }
+    
+          // Zaktualizuj user_id na prawdziwy UUID
+          await supabase.from('kursanci').update({ user_id: authUser.id }).eq('id', kursant.id);
+    
+          // Wyślij email z ustawieniem hasła
+          await supabase.auth.resetPasswordForEmail(kursant.email, {
             redirectTo: 'https://on-arch-akademia.vercel.app',
           });
-          if (error) { setKomunikat(`Błąd: ${error.message}`); return; }
-          setKomunikat(`✓ Email z ustawieniem hasła wysłany do ${kursant.email}`);
-        } else {
-          // Kursant bez konta — wyślij zaproszenie
-          const key = sessionStorage.getItem('sb_service_key') || (() => {
-            const input = window.prompt('Wklej klucz service_role (Supabase → Settings → API):');
-            if (!input?.trim()) return '';
-            sessionStorage.setItem('sb_service_key', input.trim());
-            return input.trim();
-          })();
-          if (!key) return;
-          const res = await fetch('https://bksebyxrknubyokwuaby.supabase.co/auth/v1/invite', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'apikey': key, 'Authorization': `Bearer ${key}` },
-            body: JSON.stringify({ email: kursant.email }),
-          });
-          const userData = await res.json();
-          if (!res.ok || !userData.id) { setKomunikat(`Błąd: ${userData.msg || userData.message || res.status}`); return; }
-          await supabase.from('kursanci').update({ user_id: userData.id }).eq('id', kursant.id);
-          const { data } = await supabase.from('kursanci').select('id, imie, nazwisko, email, telefon, grupa_id, user_id, certyfikat_url, notatki, dofinansowanie, folder_prywatny');
-          setKursanci((data || []) as unknown as KursantAdmin[]);
-          setKomunikat(`✓ Zaproszenie wysłane do ${kursant.email}`);
+          setKomunikat(`✓ UUID naprawiony + email z hasłem wysłany → ${kursant.email}`);
+          return;
         }
+    
+        setKomunikat(`Błąd: ${inviteData.msg || inviteData.message || inviteRes.status}`);
       } catch (err: any) {
         setKomunikat(`Błąd sieci: ${err.message}`);
-      } finally {
-        setWysylanieZaproszenia(null);
       }
     }
     return (
