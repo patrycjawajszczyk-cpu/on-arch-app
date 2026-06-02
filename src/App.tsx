@@ -2948,6 +2948,8 @@ function urlBase64ToUint8Array(base64String: string) {
     const [importowanie, setImportowanie] = useState(false);
     const [wybranaGrupaAnkiety, setWybranaGrupaAnkiety] = useState('');
     const [wybranaGrupaZadan, setWybranaGrupaZadan] = useState('');
+    const [wybranaGrupaDetail, setWybranaGrupaDetail] = useState<number | null>(null);
+const [zakladkaGrupy, setZakladkaGrupy] = useState<'kursanci' | 'zjazdy' | 'ogloszenia'>('kursanci');
     const fileRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
@@ -3344,6 +3346,11 @@ function urlBase64ToUint8Array(base64String: string) {
       } catch (err: any) {
         setKomunikat(`Błąd sieci: ${err.message}`);
       }
+    }
+    function statusGrupy(grupaId: number): 'aktywna' | 'zakonczona' | 'brak' {
+      const gz = zjazdy.filter(z => z.grupa_id === grupaId);
+      if (gz.length === 0) return 'brak';
+      return gz.some(z => z.status === 'nadchodzacy') ? 'aktywna' : 'zakonczona';
     }
     return (
       <div className="biuro-shell">
@@ -4448,73 +4455,288 @@ setKomunikat(`Notatka zapisana — ${k.imie} ${k.nazwisko}`);
             </>
           )}
 
-          {aktywnaZakladka === 'grupy' && (
+{aktywnaZakladka === 'grupy' && (
             <>
-              <h2 className="page-title">Nowa grupa</h2>
-              <form className="admin-form" onSubmit={dodajGrupe}>
-                <div className="login-field"><label>Nazwa grupy</label><input type="text" value={nowaGrupa.nazwa} onChange={e => setNowaGrupa({ ...nowaGrupa, nazwa: e.target.value })} required /></div>
-                <div className="login-field"><label>Miasto</label><input type="text" value={nowaGrupa.miasto} onChange={e => setNowaGrupa({ ...nowaGrupa, miasto: e.target.value })} required /></div>
-                <div className="login-field"><label>Edycja</label><input type="text" value={nowaGrupa.edycja} onChange={e => setNowaGrupa({ ...nowaGrupa, edycja: e.target.value })} required /></div>
-                <div className="login-field"><label>Strefa Wiedzy — link Google Drive (opcjonalnie)</label><input type="url" value={nowaGrupa.drive_link} onChange={e => setNowaGrupa({ ...nowaGrupa, drive_link: e.target.value })} placeholder="https://drive.google.com/..." /></div>
-                <div className="login-field"><label>Link do materiałów online (opcjonalnie)</label><input type="url" value={(nowaGrupa as any).link_materialow || ''} onChange={e => setNowaGrupa({ ...nowaGrupa, ...(nowaGrupa as any), link_materialow: e.target.value })} placeholder="https://..." /></div>
-                <div className="login-field"><label>Link do nagrań z zajęć (opcjonalnie)</label><input type="url" value={(nowaGrupa as any).link_nagran || ''} onChange={e => setNowaGrupa({ ...nowaGrupa, ...(nowaGrupa as any), link_nagran: e.target.value })} placeholder="https://..." /></div>
-                <div className="login-field"><label>Numer usługi BUR (opcjonalnie)</label><input type="text" value={nowaGrupa.numer_uslugi} onChange={e => setNowaGrupa({ ...nowaGrupa, numer_uslugi: e.target.value })} placeholder="np. 2025/09/24/195975/3028966" /></div>
-                <div className="login-field"><label>Tryb zajęć</label><select value={nowaGrupa.tryb} onChange={e => setNowaGrupa({ ...nowaGrupa, tryb: e.target.value })}><option value="stacjonarny">Stacjonarny</option><option value="online">Online</option><option value="hybrydowy">Hybrydowy</option></select></div>
-                <button className="login-btn" type="submit">Dodaj grupe</button>
-              </form>
-              <h2 className="page-title" style={{ marginTop: '24px' }}>Lista grup</h2>
-              <div style={{ background: 'white', borderRadius: '12px', border: '0.5px solid var(--border)', overflow: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
-                  <thead>
-                    <tr style={{ background: 'var(--bg)', borderBottom: '0.5px solid var(--border)' }}>
-                      {['ID', 'Nazwa', 'Miasto', 'Edycja', 'Tryb', 'Strefa Wiedzy (Drive)'].map((h, i) => (
-                        <th key={i} style={{ padding: '8px 12px', textAlign: 'left', fontWeight: 600, color: 'var(--text-muted)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.3px', whiteSpace: 'nowrap' }}>{h}</th>
+              {wybranaGrupaDetail !== null ? (() => {
+                const g = grupy.find(x => x.id === wybranaGrupaDetail);
+                if (!g) return null;
+                const kursanciGrupy = kursanci.filter(k => k.grupa_id === g.id);
+                const zjazdyGrupy = zjazdy.filter(z => z.grupa_id === g.id);
+                const ogloszeniaGrupy = ogloszenia.filter(o => o.grupa_id === g.id || o.grupa_id === null);
+                const ogloszeniaGrupyOnly = ogloszenia.filter(o => o.grupa_id === g.id);
+                const status = statusGrupy(g.id);
+                const statusKolor = status === 'aktywna' ? { bg: '#e8f5e9', color: '#2e7d32' } : status === 'zakonczona' ? { bg: '#f5f5f5', color: '#9e9e9e' } : { bg: 'var(--bg)', color: 'var(--muted)' };
+                const statusLabel = status === 'aktywna' ? 'AKTYWNA' : status === 'zakonczona' ? 'ZAKOŃCZONA' : 'BRAK ZJAZDÓW';
+
+                return (
+                  <>
+                    {/* Nagłówek grupy */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px', flexWrap: 'wrap' }}>
+                      <button onClick={() => { setWybranaGrupaDetail(null); setZakladkaGrupy('kursanci'); }}
+                        style={{ fontSize: '13px', padding: '6px 14px', border: '0.5px solid var(--border)', borderRadius: '8px', background: 'white', cursor: 'pointer', color: 'var(--text-muted)', fontFamily: 'Jost, sans-serif', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        ← Grupy
+                      </button>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                          <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '22px', fontWeight: 400, color: 'var(--brand-dark)', margin: 0 }}>{g.nazwa}</h2>
+                          <span style={{ fontSize: '10px', fontWeight: 700, padding: '3px 10px', borderRadius: '20px', background: statusKolor.bg, color: statusKolor.color, letterSpacing: '0.08em' }}>{statusLabel}</span>
+                        </div>
+                        <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '3px' }}>
+                          {g.miasto} · {g.edycja} {g.tryb && `· ${g.tryb}`}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Stats */}
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', marginBottom: '20px' }}>
+                      {[
+                        { label: 'Kursanci', val: kursanciGrupy.length, icon: '👤' },
+                        { label: 'Zjazdy', val: zjazdyGrupy.length, icon: '📅' },
+                        { label: 'Ogłoszenia', val: ogloszeniaGrupyOnly.length, icon: '📢' },
+                      ].map(s => (
+                        <div key={s.label} style={{ background: 'white', border: '0.5px solid var(--border)', borderRadius: '12px', padding: '14px 16px', textAlign: 'center' }}>
+                          <div style={{ fontSize: '20px', marginBottom: '4px' }}>{s.icon}</div>
+                          <div style={{ fontSize: '22px', fontWeight: 600, color: 'var(--brand-dark)' }}>{s.val}</div>
+                          <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{s.label}</div>
+                        </div>
                       ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {grupy.map((g, idx) => (
-                      <tr key={g.id} style={{ borderBottom: idx < grupy.length - 1 ? '0.5px solid var(--border-soft)' : 'none', background: idx % 2 === 0 ? 'white' : '#fdf9f8' }}>
-                        <td style={{ padding: '9px 12px', fontWeight: 700, color: 'var(--brand)', width: '40px' }}>{g.id}</td>
-                        <td style={{ padding: '9px 12px', fontWeight: 500, color: 'var(--text)', whiteSpace: 'nowrap' }}>
-                          {g.nazwa}
-                          <span style={{ marginLeft: '8px', fontSize: '10px', color: 'var(--text-muted)', background: 'var(--bg)', padding: '1px 6px', borderRadius: '6px', border: '0.5px solid var(--border)', fontWeight: 400 }}>
-                            {kursanci.filter(k => k.grupa_id === g.id).length} os.
-                          </span>
-                        </td>
-                        <td style={{ padding: '9px 12px', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>{g.miasto}</td>
-                        <td style={{ padding: '9px 12px', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>{g.edycja}</td>
-                        <td style={{ padding: '7px 12px', whiteSpace: 'nowrap' }}>
-                          <select defaultValue={g.tryb || 'stacjonarny'}
-                            onChange={async e => { await supabase.from('grupy').update({ tryb: e.target.value }).eq('id', g.id); pobierzGrupy(); }}
-                            style={{ fontSize: '11px', padding: '3px 8px', border: '0.5px solid var(--border)', borderRadius: '6px', fontFamily: 'Jost, sans-serif', background: 'white',
-                              color: g.tryb === 'online' ? '#1565c0' : g.tryb === 'hybrydowy' ? '#c8a84b' : 'var(--text)' }}>
-                            <option value="stacjonarny">📍 Stacjonarny</option>
-                            <option value="online">🌐 Online</option>
-                            <option value="hybrydowy">⚡ Hybrydowy</option>
-                          </select>
-                        </td>
-                        <td style={{ padding: '6px 12px', minWidth: '220px' }}>
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                            <input type="url" defaultValue={g.drive_link || ''} placeholder="Drive: folder grupy"
-                              onBlur={e => { if (e.target.value !== (g.drive_link || '')) zapiszDriveLink(g.id, e.target.value); }}
-                              style={{ width: '100%', fontSize: '11px', padding: '4px 8px', borderRadius: '6px', border: '0.5px solid var(--border)', fontFamily: 'Jost, sans-serif', background: g.drive_link ? '#f0faf4' : 'white' }} />
-                            <input type="url" defaultValue={(g as any).link_materialow || ''} placeholder="Materiały online"
-                              onBlur={async e => { if (e.target.value !== ((g as any).link_materialow || '')) await supabase.from('grupy').update({ link_materialow: e.target.value || null }).eq('id', g.id); pobierzGrupy(); }}
-                              style={{ width: '100%', fontSize: '11px', padding: '4px 8px', borderRadius: '6px', border: '0.5px solid var(--border)', fontFamily: 'Jost, sans-serif', background: (g as any).link_materialow ? '#f0faf4' : 'white' }} />
-                            <input type="url" defaultValue={(g as any).link_nagran || ''} placeholder="Nagrania z zajęć"
-                              onBlur={async e => { if (e.target.value !== ((g as any).link_nagran || '')) await supabase.from('grupy').update({ link_nagran: e.target.value || null }).eq('id', g.id); pobierzGrupy(); }}
-                              style={{ width: '100%', fontSize: '11px', padding: '4px 8px', borderRadius: '6px', border: '0.5px solid var(--border)', fontFamily: 'Jost, sans-serif', background: (g as any).link_nagran ? '#f0faf4' : 'white' }} />
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </div>
+
+                    {/* Tabs */}
+                    <div style={{ display: 'flex', background: 'white', border: '0.5px solid var(--border)', borderRadius: '10px', overflow: 'hidden', marginBottom: '16px', width: 'fit-content' }}>
+                      {(['kursanci', 'zjazdy', 'ogloszenia'] as const).map(tab => (
+                        <button key={tab} onClick={() => setZakladkaGrupy(tab)}
+                          style={{ padding: '8px 20px', border: 'none', background: zakladkaGrupy === tab ? 'var(--brand)' : 'white', color: zakladkaGrupy === tab ? 'white' : 'var(--text-muted)', fontSize: '12px', fontWeight: 500, cursor: 'pointer', fontFamily: 'Jost, sans-serif', transition: 'all 0.15s' }}>
+                          {tab === 'kursanci' ? `Kursanci (${kursanciGrupy.length})` : tab === 'zjazdy' ? `Zjazdy (${zjazdyGrupy.length})` : `Ogłoszenia (${ogloszeniaGrupyOnly.length})`}
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* TAB: KURSANCI */}
+                    {zakladkaGrupy === 'kursanci' && (
+                      <div style={{ background: 'white', borderRadius: '12px', border: '0.5px solid var(--border)', overflow: 'auto' }}>
+                        {kursanciGrupy.length === 0 ? (
+                          <div style={{ padding: '32px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '13px' }}>Brak kursantów w tej grupie</div>
+                        ) : (
+                          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+                            <thead>
+                              <tr style={{ background: 'var(--bg)', borderBottom: '0.5px solid var(--border)' }}>
+                                {['Imię i Nazwisko', 'Email', 'Telefon', 'Konto', ''].map((h, i) => (
+                                  <th key={i} style={{ padding: '9px 14px', textAlign: 'left', fontWeight: 600, color: 'var(--text-muted)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.3px' }}>{h}</th>
+                                ))}
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {kursanciGrupy.map((k, idx) => (
+                                <tr key={k.id} style={{ borderBottom: idx < kursanciGrupy.length - 1 ? '0.5px solid var(--border-soft)' : 'none', background: (k as any).dofinansowanie ? '#e8f0fe' : idx % 2 === 0 ? 'white' : '#fdf9f8' }}>
+                                  <td style={{ padding: '10px 14px', fontWeight: 500, color: 'var(--text)' }}>{k.imie} {k.nazwisko}</td>
+                                  <td style={{ padding: '10px 14px', color: 'var(--text-muted)' }}>{k.email || '—'}</td>
+                                  <td style={{ padding: '10px 14px', color: 'var(--text-muted)' }}>{k.telefon || '—'}</td>
+                                  <td style={{ padding: '10px 14px' }}>
+                                    {k.user_id
+                                      ? <span style={{ fontSize: '10px', background: '#e8f5e9', color: '#2e7d32', padding: '2px 8px', borderRadius: '8px', fontWeight: 600 }}>✓ Aktywne</span>
+                                      : <span style={{ fontSize: '10px', background: '#fff3e0', color: '#e65100', padding: '2px 8px', borderRadius: '8px', fontWeight: 600 }}>Brak konta</span>
+                                    }
+                                  </td>
+                                  <td style={{ padding: '10px 14px' }}>
+                                    <button onClick={() => { setAktywnaZakladka('kursanci'); }}
+                                      style={{ fontSize: '11px', padding: '3px 9px', border: '0.5px solid var(--border)', borderRadius: '6px', background: 'white', cursor: 'pointer', color: 'var(--brand)', fontFamily: 'Jost, sans-serif' }}>
+                                      Edytuj
+                                    </button>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        )}
+                      </div>
+                    )}
+
+                    {/* TAB: ZJAZDY */}
+                    {zakladkaGrupy === 'zjazdy' && (
+                      <>
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '10px' }}>
+                          <button onClick={() => { setAktywnaZakladka('zjazdy'); setTabelaGrupa(String(g.id)); }}
+                            style={{ fontSize: '12px', padding: '7px 16px', border: 'none', borderRadius: '9px', background: 'var(--brand)', color: 'white', cursor: 'pointer', fontFamily: 'Jost, sans-serif', fontWeight: 600 }}>
+                            + Dodaj zjazdy dla tej grupy →
+                          </button>
+                        </div>
+                        <div style={{ background: 'white', borderRadius: '12px', border: '0.5px solid var(--border)', overflow: 'auto' }}>
+                          {zjazdyGrupy.length === 0 ? (
+                            <div style={{ padding: '32px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '13px' }}>Brak zjazdów — dodaj przez przycisk powyżej</div>
+                          ) : (
+                            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+                              <thead>
+                                <tr style={{ background: 'var(--bg)', borderBottom: '0.5px solid var(--border)' }}>
+                                  {['#', 'Daty', 'Temat', 'Prowadzący', 'Status', ''].map((h, i) => (
+                                    <th key={i} style={{ padding: '9px 14px', textAlign: 'left', fontWeight: 600, color: 'var(--text-muted)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.3px' }}>{h}</th>
+                                  ))}
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {zjazdyGrupy.map((z, idx) => (
+                                  <tr key={z.id} style={{ borderBottom: idx < zjazdyGrupy.length - 1 ? '0.5px solid var(--border-soft)' : 'none', background: idx % 2 === 0 ? 'white' : '#fdf9f8' }}>
+                                    <td style={{ padding: '9px 14px', fontWeight: 700, color: 'var(--brand-dark)', width: '32px' }}>{z.nr}</td>
+                                    <td style={{ padding: '9px 14px', whiteSpace: 'nowrap' }}>
+                                      {z.daty}
+                                      {z.typ === 'online' && <span style={{ marginLeft: '6px', fontSize: '10px', background: '#e8f0fe', color: '#1565c0', padding: '1px 6px', borderRadius: '8px', fontWeight: 600 }}>online</span>}
+                                    </td>
+                                    <td style={{ padding: '9px 14px', color: 'var(--text-muted)', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{z.tematy || '—'}</td>
+                                    <td style={{ padding: '9px 14px', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>{(z.prowadzacy || []).map((p: any) => `${p.imie} ${p.nazwisko}`).join(', ') || '—'}</td>
+                                    <td style={{ padding: '9px 14px' }}>
+                                      <span style={{ fontSize: '10px', fontWeight: 600, padding: '2px 8px', borderRadius: '10px', background: z.status === 'nadchodzacy' ? '#e8f5e9' : '#f5f5f5', color: z.status === 'nadchodzacy' ? '#2e7d32' : '#999' }}>
+                                        {z.status === 'nadchodzacy' ? 'Nadchodzący' : 'Zakończony'}
+                                      </span>
+                                    </td>
+                                    <td style={{ padding: '9px 14px', whiteSpace: 'nowrap' }}>
+                                      <button onClick={() => { setEdytowanyZjazd(z); setAktywnaZakladka('zjazdy'); }}
+                                        style={{ fontSize: '11px', padding: '3px 10px', border: '0.5px solid var(--border)', borderRadius: '6px', background: 'white', cursor: 'pointer', color: 'var(--brand)', fontFamily: 'Jost, sans-serif', marginRight: '4px' }}>
+                                        Edytuj
+                                      </button>
+                                      <button onClick={() => usunZjazd(z.id)}
+                                        style={{ fontSize: '11px', padding: '3px 6px', border: 'none', borderRadius: '6px', background: 'none', cursor: 'pointer', color: '#e57373' }}>×</button>
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          )}
+                        </div>
+                      </>
+                    )}
+
+                    {/* TAB: OGŁOSZENIA */}
+                    {zakladkaGrupy === 'ogloszenia' && (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                        {/* Mini formularz */}
+                        <div style={{ background: 'white', border: '0.5px solid var(--border)', borderRadius: '14px', padding: '16px 20px' }}>
+                          <div style={{ fontSize: '13px', fontWeight: 600, marginBottom: '10px' }}>Nowe ogłoszenie dla: <span style={{ color: 'var(--brand)' }}>{g.nazwa}</span></div>
+                          <form onSubmit={async e => {
+                            e.preventDefault();
+                            const form = e.target as HTMLFormElement;
+                            const typ = (form.querySelector('[name=typ]') as HTMLSelectElement).value;
+                            const tytul = (form.querySelector('[name=tytul]') as HTMLInputElement).value;
+                            const tresc = (form.querySelector('[name=tresc]') as HTMLInputElement).value;
+                            const szczegoly = (form.querySelector('[name=szczegoly]') as HTMLTextAreaElement).value;
+                            await supabase.from('ogloszenia').insert([{ typ, tytul, tresc, szczegoly, grupa_id: g.id, nowe: true, data_utworzenia: new Date().toISOString() }]);
+                            pobierzOgloszenia();
+                            form.reset();
+                            setKomunikat('Ogłoszenie dodane!');
+                          }}>
+                            <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
+                              <select name="typ" style={{ flex: 1, fontSize: '12px', padding: '7px 8px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif' }}>
+                                <option>Informacja</option><option>Pilne</option><option>Zmiana</option>
+                              </select>
+                            </div>
+                            <input name="tytul" type="text" placeholder="Tytuł *" required style={{ width: '100%', fontSize: '12px', padding: '7px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif', marginBottom: '8px' }} />
+                            <input name="tresc" type="text" placeholder="Krótki opis *" required style={{ width: '100%', fontSize: '12px', padding: '7px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif', marginBottom: '8px' }} />
+                            <textarea name="szczegoly" placeholder="Pełna treść (opcjonalnie)" rows={3} style={{ width: '100%', fontSize: '12px', padding: '7px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif', resize: 'vertical', marginBottom: '8px' }} />
+                            <button type="submit" style={{ width: '100%', padding: '8px', background: 'var(--brand)', color: 'white', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 600, cursor: 'pointer', fontFamily: 'Jost, sans-serif' }}>+ Dodaj ogłoszenie</button>
+                          </form>
+                        </div>
+                        {/* Lista ogłoszeń grupy */}
+                        <div style={{ background: 'white', borderRadius: '12px', border: '0.5px solid var(--border)', overflow: 'hidden' }}>
+                          {ogloszeniaGrupyOnly.length === 0 ? (
+                            <div style={{ padding: '24px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '13px' }}>Brak ogłoszeń dla tej grupy</div>
+                          ) : ogloszeniaGrupyOnly.map((o, idx) => (
+                            <div key={o.id} style={{ padding: '12px 16px', borderBottom: idx < ogloszeniaGrupyOnly.length - 1 ? '0.5px solid var(--border-soft)' : 'none', display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+                              <span style={{ fontSize: '10px', fontWeight: 700, padding: '2px 8px', borderRadius: '8px', flexShrink: 0, marginTop: '2px', background: o.typ === 'Pilne' ? '#ffeaea' : o.typ === 'Zmiana' ? '#fef9ec' : 'var(--brand-light)', color: o.typ === 'Pilne' ? '#c62828' : o.typ === 'Zmiana' ? '#c8a84b' : 'var(--brand-dark)' }}>{o.typ}</span>
+                              <div style={{ flex: 1 }}>
+                                <div style={{ fontWeight: 500, fontSize: '13px', color: 'var(--text)' }}>{o.tytul}</div>
+                                <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '2px' }}>{o.tresc}</div>
+                              </div>
+                              <div style={{ display: 'flex', gap: '4px', flexShrink: 0 }}>
+                                <button onClick={() => { setEdytowane(o); setAktywnaZakladka('ogloszenia'); }}
+                                  style={{ fontSize: '11px', padding: '3px 9px', border: '0.5px solid var(--border)', borderRadius: '6px', background: 'white', cursor: 'pointer', color: 'var(--brand)', fontFamily: 'Jost, sans-serif' }}>Edytuj</button>
+                                <button onClick={() => usunOgloszenie(o.id)}
+                                  style={{ fontSize: '11px', padding: '3px 6px', border: 'none', background: 'none', cursor: 'pointer', color: '#e57373' }}>×</button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </>
+                );
+              })() : (
+                <>
+                  <h2 className="page-title">Nowa grupa</h2>
+                  <form className="admin-form" onSubmit={dodajGrupe}>
+                    <div className="login-field"><label>Nazwa grupy</label><input type="text" value={nowaGrupa.nazwa} onChange={e => setNowaGrupa({ ...nowaGrupa, nazwa: e.target.value })} required /></div>
+                    <div className="login-field"><label>Miasto</label><input type="text" value={nowaGrupa.miasto} onChange={e => setNowaGrupa({ ...nowaGrupa, miasto: e.target.value })} required /></div>
+                    <div className="login-field"><label>Edycja</label><input type="text" value={nowaGrupa.edycja} onChange={e => setNowaGrupa({ ...nowaGrupa, edycja: e.target.value })} required /></div>
+                    <div className="login-field"><label>Strefa Wiedzy — link Google Drive (opcjonalnie)</label><input type="url" value={nowaGrupa.drive_link} onChange={e => setNowaGrupa({ ...nowaGrupa, drive_link: e.target.value })} placeholder="https://drive.google.com/..." /></div>
+                    <div className="login-field"><label>Link do materiałów online (opcjonalnie)</label><input type="url" value={(nowaGrupa as any).link_materialow || ''} onChange={e => setNowaGrupa({ ...nowaGrupa, ...(nowaGrupa as any), link_materialow: e.target.value })} placeholder="https://..." /></div>
+                    <div className="login-field"><label>Link do nagrań z zajęć (opcjonalnie)</label><input type="url" value={(nowaGrupa as any).link_nagran || ''} onChange={e => setNowaGrupa({ ...nowaGrupa, ...(nowaGrupa as any), link_nagran: e.target.value })} placeholder="https://..." /></div>
+                    <div className="login-field"><label>Numer usługi BUR (opcjonalnie)</label><input type="text" value={nowaGrupa.numer_uslugi} onChange={e => setNowaGrupa({ ...nowaGrupa, numer_uslugi: e.target.value })} placeholder="np. 2025/09/24/195975/3028966" /></div>
+                    <div className="login-field"><label>Tryb zajęć</label><select value={nowaGrupa.tryb} onChange={e => setNowaGrupa({ ...nowaGrupa, tryb: e.target.value })}><option value="stacjonarny">Stacjonarny</option><option value="online">Online</option><option value="hybrydowy">Hybrydowy</option></select></div>
+                    <button className="login-btn" type="submit">Dodaj grupę</button>
+                  </form>
+
+                  <h2 className="page-title" style={{ marginTop: '24px' }}>Lista grup</h2>
+                  <div style={{ background: 'white', borderRadius: '12px', border: '0.5px solid var(--border)', overflow: 'auto' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+                      <thead>
+                        <tr style={{ background: 'var(--bg)', borderBottom: '0.5px solid var(--border)' }}>
+                          {['ID', 'Nazwa', 'Miasto', 'Edycja', 'Tryb', 'Strefa Wiedzy'].map((h, i) => (
+                            <th key={i} style={{ padding: '8px 12px', textAlign: 'left', fontWeight: 600, color: 'var(--text-muted)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.3px', whiteSpace: 'nowrap' }}>{h}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {grupy.map((g, idx) => {
+                          const status = statusGrupy(g.id);
+                          const zakonczona = status === 'zakonczona';
+                          return (
+                            <tr key={g.id} style={{ borderBottom: idx < grupy.length - 1 ? '0.5px solid var(--border-soft)' : 'none', background: idx % 2 === 0 ? 'white' : '#fdf9f8', opacity: zakonczona ? 0.6 : 1 }}>
+                              <td style={{ padding: '9px 12px', fontWeight: 700, color: 'var(--brand)', width: '40px' }}>{g.id}</td>
+                              <td style={{ padding: '9px 12px', whiteSpace: 'nowrap' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                                  <span onClick={() => setWybranaGrupaDetail(g.id)}
+                                    style={{ fontWeight: 500, color: 'var(--brand-dark)', cursor: 'pointer', textDecoration: 'underline dotted' }}>
+                                    {g.nazwa}
+                                  </span>
+                                  <span style={{ fontSize: '10px', color: 'var(--text-muted)', background: 'var(--bg)', padding: '1px 6px', borderRadius: '6px', border: '0.5px solid var(--border)', fontWeight: 400 }}>
+                                    {kursanci.filter(k => k.grupa_id === g.id).length} os.
+                                  </span>
+                                  {status === 'aktywna' && <span style={{ fontSize: '9px', fontWeight: 700, padding: '2px 7px', borderRadius: '20px', background: '#e8f5e9', color: '#2e7d32', letterSpacing: '0.05em' }}>AKTYWNA</span>}
+                                  {status === 'zakonczona' && <span style={{ fontSize: '9px', fontWeight: 700, padding: '2px 7px', borderRadius: '20px', background: '#f5f5f5', color: '#9e9e9e', letterSpacing: '0.05em' }}>ZAKOŃCZONA</span>}
+                                </div>
+                              </td>
+                              <td style={{ padding: '9px 12px', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>{g.miasto}</td>
+                              <td style={{ padding: '9px 12px', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>{g.edycja}</td>
+                              <td style={{ padding: '7px 12px', whiteSpace: 'nowrap' }}>
+                                <select defaultValue={g.tryb || 'stacjonarny'}
+                                  onChange={async e => { await supabase.from('grupy').update({ tryb: e.target.value }).eq('id', g.id); pobierzGrupy(); }}
+                                  style={{ fontSize: '11px', padding: '3px 8px', border: '0.5px solid var(--border)', borderRadius: '6px', fontFamily: 'Jost, sans-serif', background: 'white', color: g.tryb === 'online' ? '#1565c0' : g.tryb === 'hybrydowy' ? '#c8a84b' : 'var(--text)' }}>
+                                  <option value="stacjonarny">📍 Stacjonarny</option>
+                                  <option value="online">🌐 Online</option>
+                                  <option value="hybrydowy">⚡ Hybrydowy</option>
+                                </select>
+                              </td>
+                              <td style={{ padding: '6px 12px', minWidth: '220px' }}>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                  <input type="url" defaultValue={g.drive_link || ''} placeholder="Drive: folder grupy"
+                                    onBlur={e => { if (e.target.value !== (g.drive_link || '')) zapiszDriveLink(g.id, e.target.value); }}
+                                    style={{ width: '100%', fontSize: '11px', padding: '4px 8px', borderRadius: '6px', border: '0.5px solid var(--border)', fontFamily: 'Jost, sans-serif', background: g.drive_link ? '#f0faf4' : 'white' }} />
+                                  <input type="url" defaultValue={(g as any).link_materialow || ''} placeholder="Materiały online"
+                                    onBlur={async e => { if (e.target.value !== ((g as any).link_materialow || '')) { await supabase.from('grupy').update({ link_materialow: e.target.value || null }).eq('id', g.id); pobierzGrupy(); } }}
+                                    style={{ width: '100%', fontSize: '11px', padding: '4px 8px', borderRadius: '6px', border: '0.5px solid var(--border)', fontFamily: 'Jost, sans-serif', background: (g as any).link_materialow ? '#f0faf4' : 'white' }} />
+                                  <input type="url" defaultValue={(g as any).link_nagran || ''} placeholder="Nagrania z zajęć"
+                                    onBlur={async e => { if (e.target.value !== ((g as any).link_nagran || '')) { await supabase.from('grupy').update({ link_nagran: e.target.value || null }).eq('id', g.id); pobierzGrupy(); } }}
+                                    style={{ width: '100%', fontSize: '11px', padding: '4px 8px', borderRadius: '6px', border: '0.5px solid var(--border)', fontFamily: 'Jost, sans-serif', background: (g as any).link_nagran ? '#f0faf4' : 'white' }} />
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
+              )}
             </>
           )}
-
           {aktywnaZakladka === 'ankiety' && (
             <>
               <h2 className="page-title">Wyniki ankiet</h2>
