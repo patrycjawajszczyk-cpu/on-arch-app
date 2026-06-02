@@ -2841,6 +2841,7 @@ function urlBase64ToUint8Array(base64String: string) {
     const [kursanci, setKursanci] = useState<KursantAdmin[]>([]);
     const [ogloszenia, setOgloszenia] = useState<Ogloszenie[]>([]);
     const [zjazdy, setZjazdy] = useState<Zjazd[]>([]);
+    const [pokazFormGrupy, setPokazFormGrupy] = useState(false);
     const [prowadzacy, setProwadzacy] = useState<Prowadzacy[]>([]);
     const [ankiety, setAnkiety] = useState<OdpowiedziAnkiety[]>([]);
     const [zadania, setZadania] = useState<Zadanie[]>([]);
