@@ -2950,7 +2950,7 @@ function urlBase64ToUint8Array(base64String: string) {
     const [wybranaGrupaAnkiety, setWybranaGrupaAnkiety] = useState('');
     const [wybranaGrupaZadan, setWybranaGrupaZadan] = useState('');
     const [wybranaGrupaDetail, setWybranaGrupaDetail] = useState<number | null>(null);
-    const [zakladkaGrupy, setZakladkaGrupy] = useState<'kursanci' | 'zjazdy' | 'ogloszenia' | 'ustawienia'>('kursanci');
+const [zakladkaGrupy, setZakladkaGrupy] = useState<'kursanci' | 'zjazdy' | 'ogloszenia'>('kursanci');
     const fileRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
@@ -4652,51 +4652,7 @@ setKomunikat(`Notatka zapisana — ${k.imie} ${k.nazwisko}`);
                         </div>
                       </div>
                     )}
-                    {/* TAB: USTAWIENIA */}
-                    {zakladkaGrupy === 'ustawienia' && (
-                      <div style={{ background: 'white', borderRadius: '14px', border: '0.5px solid var(--border)', padding: '20px 24px' }}>
-                        <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text)', marginBottom: '16px' }}>Ustawienia grupy</div>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                          {[
-                            { label: 'Folder grupy (Google Drive)', field: 'drive_link', placeholder: 'https://drive.google.com/...' },
-                            { label: 'Materiały online', field: 'link_materialow', placeholder: 'https://...' },
-                            { label: 'Nagrania z zajęć', field: 'link_nagran', placeholder: 'https://...' },
-                          ].map(({ label, field, placeholder }) => (
-                            <div key={field}>
-                              <div style={{ fontSize: '10px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.2em', marginBottom: '5px' }}>{label}</div>
-                              <input type="url"
-                                defaultValue={(g as any)[field] || ''}
-                                placeholder={placeholder}
-                                onBlur={async e => {
-                                  if (e.target.value !== ((g as any)[field] || '')) {
-                                    await supabase.from('grupy').update({ [field]: e.target.value || null }).eq('id', g.id);
-                                    pobierzGrupy();
-                                    setKomunikat(`Zapisano — ${label}`);
-                                  }
-                                }}
-                                style={{ width: '100%', fontSize: '13px', padding: '9px 12px', border: '0.5px solid var(--border)', borderRadius: '10px', fontFamily: 'Jost, sans-serif', background: (g as any)[field] ? '#f0faf4' : 'white' }}
-                              />
-                            </div>
-                          ))}
-                          <div>
-                            <div style={{ fontSize: '10px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.2em', marginBottom: '5px' }}>Tryb zajęć</div>
-                            <select defaultValue={g.tryb || 'stacjonarny'}
-                              onChange={async e => { await supabase.from('grupy').update({ tryb: e.target.value }).eq('id', g.id); pobierzGrupy(); setKomunikat('Tryb zapisany'); }}
-                              style={{ fontSize: '13px', padding: '9px 12px', border: '0.5px solid var(--border)', borderRadius: '10px', fontFamily: 'Jost, sans-serif', background: 'white', width: '100%' }}>
-                              <option value="stacjonarny">📍 Stacjonarny</option>
-                              <option value="online">🌐 Online</option>
-                              <option value="hybrydowy">⚡ Hybrydowy</option>
-                            </select>
-                          </div>
-                          {(g as any).numer_uslugi && (
-                            <div>
-                              <div style={{ fontSize: '10px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.2em', marginBottom: '5px' }}>Numer usługi BUR</div>
-                              <div style={{ fontSize: '13px', color: 'var(--text)', padding: '9px 12px', background: 'var(--bg)', borderRadius: '10px', border: '0.5px solid var(--border)' }}>{(g as any).numer_uslugi}</div>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    )}
+                    
                   </>
                 );
               })() : (
@@ -4730,51 +4686,83 @@ setKomunikat(`Notatka zapisana — ${k.imie} ${k.nazwisko}`);
                     </div>
                   )}
 
-                  {/* Karty grup */}
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '12px' }}>
-                    {grupy.map(g => {
-                      const status = statusGrupy(g.id);
-                      const zakonczona = status === 'zakonczona';
-                      const ileKursantow = kursanci.filter(k => k.grupa_id === g.id).length;
-                      const ileZjazdow = zjazdy.filter(z => z.grupa_id === g.id).length;
-                      return (
-                        <div key={g.id} onClick={() => setWybranaGrupaDetail(g.id)}
-                          style={{ background: 'white', borderRadius: '14px', border: `0.5px solid ${status === 'aktywna' ? 'var(--brand-mid)' : 'var(--border)'}`, padding: '16px 18px', cursor: 'pointer', opacity: zakonczona ? 0.65 : 1, transition: 'box-shadow 0.15s, transform 0.1s', position: 'relative', overflow: 'hidden' }}
-                          onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.boxShadow = '0 4px 16px rgba(0,0,0,0.08)'; (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-1px)'; }}
-                          onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.boxShadow = 'none'; (e.currentTarget as HTMLDivElement).style.transform = 'none'; }}>
-                          {/* Status pasek */}
-                          {status === 'aktywna' && <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '3px', background: 'var(--brand)' }} />}
-                          {/* Nagłówek karty */}
-                          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '8px', marginBottom: '10px' }}>
-                            <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '17px', fontWeight: 500, color: 'var(--brand-dark)', lineHeight: 1.3 }}>{g.nazwa}</div>
-                            {status === 'aktywna' && <span style={{ fontSize: '9px', fontWeight: 700, padding: '3px 8px', borderRadius: '20px', background: '#e8f5e9', color: '#2e7d32', whiteSpace: 'nowrap', flexShrink: 0 }}>AKTYWNA</span>}
-                            {status === 'zakonczona' && <span style={{ fontSize: '9px', fontWeight: 700, padding: '3px 8px', borderRadius: '20px', background: '#f5f5f5', color: '#9e9e9e', whiteSpace: 'nowrap', flexShrink: 0 }}>ZAKOŃCZONA</span>}
-                          </div>
-                          {/* Meta */}
-                          <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '12px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                            <span>📍 {g.miasto}</span>
-                            <span>· {g.edycja}</span>
-                            {g.tryb && <span style={{ background: g.tryb === 'online' ? '#e8f0fe' : 'var(--bg)', color: g.tryb === 'online' ? '#1565c0' : 'var(--text-muted)', padding: '1px 6px', borderRadius: '6px', fontWeight: 500 }}>
-                              {g.tryb === 'online' ? '🌐 Online' : g.tryb === 'hybrydowy' ? '⚡ Hybr.' : '📍 Stac.'}
-                            </span>}
-                          </div>
-                          {/* Stats */}
-                          <div style={{ display: 'flex', gap: '12px', borderTop: '0.5px solid var(--border-soft)', paddingTop: '10px' }}>
-                            <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
-                              <span style={{ fontWeight: 600, color: 'var(--text)', fontSize: '15px' }}>{ileKursantow}</span> kursantów
+                  {/* Karty grup — aktywne */}
+                  {grupy.filter(g => statusGrupy(g.id) !== 'zakonczona').length > 0 && (
+                    <>
+                      <div style={{ fontSize: '11px', fontWeight: 700, color: '#2e7d32', letterSpacing: '0.15em', textTransform: 'uppercase', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#2e7d32', display: 'inline-block' }} />
+                        Aktywne ({grupy.filter(g => statusGrupy(g.id) !== 'zakonczona').length})
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '12px', marginBottom: '28px' }}>
+                        {grupy.filter(g => statusGrupy(g.id) !== 'zakonczona').map(g => {
+                          const status = statusGrupy(g.id);
+                          const ileKursantow = kursanci.filter(k => k.grupa_id === g.id).length;
+                          const ileZjazdow = zjazdy.filter(z => z.grupa_id === g.id).length;
+                          return (
+                            <div key={g.id} onClick={() => setWybranaGrupaDetail(g.id)}
+                              style={{ background: 'white', borderRadius: '14px', border: '0.5px solid var(--brand-mid)', padding: '16px 18px', cursor: 'pointer', transition: 'box-shadow 0.15s, transform 0.1s', position: 'relative', overflow: 'hidden' }}
+                              onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.boxShadow = '0 4px 16px rgba(0,0,0,0.08)'; (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-1px)'; }}
+                              onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.boxShadow = 'none'; (e.currentTarget as HTMLDivElement).style.transform = 'none'; }}>
+                              <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '3px', background: 'var(--brand)' }} />
+                              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '8px', marginBottom: '10px' }}>
+                                <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '17px', fontWeight: 500, color: 'var(--brand-dark)', lineHeight: 1.3 }}>{g.nazwa}</div>
+                                <span style={{ fontSize: '9px', fontWeight: 700, padding: '3px 8px', borderRadius: '20px', background: '#e8f5e9', color: '#2e7d32', whiteSpace: 'nowrap', flexShrink: 0 }}>AKTYWNA</span>
+                              </div>
+                              <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '12px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                                <span>📍 {g.miasto}</span><span>· {g.edycja}</span>
+                                {g.tryb && <span style={{ background: g.tryb === 'online' ? '#e8f0fe' : 'var(--bg)', color: g.tryb === 'online' ? '#1565c0' : 'var(--text-muted)', padding: '1px 6px', borderRadius: '6px', fontWeight: 500 }}>
+                                  {g.tryb === 'online' ? '🌐 Online' : g.tryb === 'hybrydowy' ? '⚡ Hybr.' : '📍 Stac.'}
+                                </span>}
+                              </div>
+                              <div style={{ display: 'flex', gap: '12px', borderTop: '0.5px solid var(--border-soft)', paddingTop: '10px' }}>
+                                <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}><span style={{ fontWeight: 600, color: 'var(--text)', fontSize: '15px' }}>{ileKursantow}</span> kursantów</div>
+                                <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}><span style={{ fontWeight: 600, color: 'var(--text)', fontSize: '15px' }}>{ileZjazdow}</span> zjazdów</div>
+                              </div>
                             </div>
-                            <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
-                              <span style={{ fontWeight: 600, color: 'var(--text)', fontSize: '15px' }}>{ileZjazdow}</span> zjazdów
+                          );
+                        })}
+                      </div>
+                    </>
+                  )}
+
+                  {/* Karty grup — zakończone */}
+                  {grupy.filter(g => statusGrupy(g.id) === 'zakonczona').length > 0 && (
+                    <>
+                      <div style={{ height: '1px', background: 'var(--border)', marginBottom: '20px' }} />
+                      <div style={{ fontSize: '11px', fontWeight: 700, color: '#9e9e9e', letterSpacing: '0.15em', textTransform: 'uppercase', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#9e9e9e', display: 'inline-block' }} />
+                        Zakończone ({grupy.filter(g => statusGrupy(g.id) === 'zakonczona').length})
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '12px' }}>
+                        {grupy.filter(g => statusGrupy(g.id) === 'zakonczona').map(g => {
+                          const ileKursantow = kursanci.filter(k => k.grupa_id === g.id).length;
+                          const ileZjazdow = zjazdy.filter(z => z.grupa_id === g.id).length;
+                          return (
+                            <div key={g.id} onClick={() => setWybranaGrupaDetail(g.id)}
+                              style={{ background: 'white', borderRadius: '14px', border: '0.5px solid var(--border)', padding: '16px 18px', cursor: 'pointer', opacity: 0.65, transition: 'box-shadow 0.15s', position: 'relative', overflow: 'hidden' }}
+                              onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.boxShadow = '0 4px 16px rgba(0,0,0,0.08)'; }}
+                              onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.boxShadow = 'none'; }}>
+                              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '8px', marginBottom: '10px' }}>
+                                <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '17px', fontWeight: 500, color: 'var(--brand-dark)', lineHeight: 1.3 }}>{g.nazwa}</div>
+                                <span style={{ fontSize: '9px', fontWeight: 700, padding: '3px 8px', borderRadius: '20px', background: '#f5f5f5', color: '#9e9e9e', whiteSpace: 'nowrap', flexShrink: 0 }}>ZAKOŃCZONA</span>
+                              </div>
+                              <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '12px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                                <span>📍 {g.miasto}</span><span>· {g.edycja}</span>
+                              </div>
+                              <div style={{ display: 'flex', gap: '12px', borderTop: '0.5px solid var(--border-soft)', paddingTop: '10px' }}>
+                                <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}><span style={{ fontWeight: 600, color: 'var(--text)', fontSize: '15px' }}>{ileKursantow}</span> kursantów</div>
+                                <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}><span style={{ fontWeight: 600, color: 'var(--text)', fontSize: '15px' }}>{ileZjazdow}</span> zjazdów</div>
+                              </div>
                             </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </>
-                )}
+                          );
+                        })}
+                      </div>
+                    </>
+                  )}
                 </>
               )}
+            </>
+          )}
           {aktywnaZakladka === 'ankiety' && (
             <>
               <h2 className="page-title">Wyniki ankiet</h2>
