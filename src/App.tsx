@@ -4462,7 +4462,7 @@ setKomunikat(`Notatka zapisana — ${k.imie} ${k.nazwisko}`);
                 if (!g) return null;
                 const kursanciGrupy = kursanci.filter(k => k.grupa_id === g.id);
                 const zjazdyGrupy = zjazdy.filter(z => z.grupa_id === g.id);
-                const ogloszeniaGrupy = ogloszenia.filter(o => o.grupa_id === g.id || o.grupa_id === null);
+              
                 const ogloszeniaGrupyOnly = ogloszenia.filter(o => o.grupa_id === g.id);
                 const status = statusGrupy(g.id);
                 const statusKolor = status === 'aktywna' ? { bg: '#e8f5e9', color: '#2e7d32' } : status === 'zakonczona' ? { bg: '#f5f5f5', color: '#9e9e9e' } : { bg: 'var(--bg)', color: 'var(--muted)' };
