@@ -719,7 +719,8 @@ function urlBase64ToUint8Array(base64String: string) {
   setKursanci((data || []) as unknown as KursantAdmin[]);
   setKomunikat('✓ Wszyscy kursanci naprawieni');
 }} style={{ fontSize: '12px', color: '#4338ca', background: '#eef2ff', border: '0.5px solid #6366f1', borderRadius: '8px', padding: '5px 10px', cursor: 'pointer', fontFamily: 'Jost, sans-serif' }}>
-  ⚙ Napraw wszyst
+  ⚙ Napraw wszystkich
+  </button>
                   <button onClick={eksportujCSV} style={{ fontSize: '12px', color: 'var(--brand)', background: 'none', border: '0.5px solid var(--brand-mid)', borderRadius: '8px', padding: '5px 10px', cursor: 'pointer', fontFamily: 'Jost, sans-serif' }}>
                     ⬇ CSV
                   </button>
