@@ -3310,7 +3310,9 @@ function urlBase64ToUint8Array(base64String: string) {
           setKomunikat(`Błąd: ${userData.msg || userData.message || 'nieznany błąd'}`);
           return;
         }
-        await supabase.from('kursanci').update({ user_id: userData.id }).eq('id', kursant.id);
+        if (!kursant.user_id) {
+          await supabase.from('kursanci').update({ user_id: userData.id }).eq('id', kursant.id);
+        }
         const { data } = await supabase.from('kursanci').select('id, imie, nazwisko, email, telefon, grupa_id, user_id, certyfikat_url, notatki, dofinansowanie, folder_prywatny');
         setKursanci((data || []) as unknown as KursantAdmin[]);
         setKomunikat(`✓ Zaproszenie wysłane do ${kursant.email}`);
@@ -4277,7 +4279,7 @@ function urlBase64ToUint8Array(base64String: string) {
                                 </div>
                               ) : (
                                 <div style={{ display: 'flex', gap: '4px' }}>
-                                  {!k.user_id && k.email && (
+                                 {k.email && (
                                     <button onClick={e => { e.stopPropagation(); wyslijZaproszenie(k); }}
                                       style={{ fontSize: '11px', padding: '3px 9px', border: '0.5px solid #6366f1', borderRadius: '6px', background: '#eef2ff', cursor: 'pointer', color: '#4338ca', fontFamily: 'Jost, sans-serif' }}>
                                       ✉ Zaproś
