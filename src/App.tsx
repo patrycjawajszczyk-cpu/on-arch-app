@@ -2942,6 +2942,7 @@ function urlBase64ToUint8Array(base64String: string) {
     const [edytowaneZadanie, setEdytowaneZadanie] = useState<Zadanie | null>(null);
     const [noweZadanie, setNoweZadanie] = useState({ tytul: '', opis: '', termin: '', link_materialow: '', grupa_id: '', typ: 'zadanie', zdjecie_url: '' });
     const [komunikat, setKomunikat] = useState('');
+    const [wysylanieZaproszenia, setWysylanieZaproszenia] = useState<number | null>(null);
     const [importStatus, setImportStatus] = useState<{ imie: string; nazwisko: string; email: string; status: string }[]>([]);
     const [importowanie, setImportowanie] = useState(false);
     const [wybranaGrupaAnkiety, setWybranaGrupaAnkiety] = useState('');
