@@ -2848,8 +2848,7 @@ function urlBase64ToUint8Array(base64String: string) {
     const [edytowanyZjazd, setEdytowanyZjazd] = useState<Zjazd | null>(null);
     const [pokazGalerieZjazd, setPokazGalerieZjazd] = useState(false);
     const [pokazGalerieZadanie, setPokazGalerieZadanie] = useState(false);
-    const [serviceRoleKey, setServiceRoleKey] = useState<string>('');
-    const [wysylanieZaproszenia, setWysylanieZaproszenia] = useState<number | null>(null);
+  
     const [noweOgl, setNoweOgl] = useState({ typ: 'Informacja', tytul: '', tresc: '', szczegoly: '', nowe: true, grupa_id: '' });
     const [nowyZjazd, setNowyZjazd] = useState({ nr: '', daty: '', sala: '', adres: '', tematy: '', status: 'nadchodzacy', typ: 'stacjonarny', link_online: '', data_zjazdu: '', data_dzien1: '', data_dzien2: '', grupa_id: '', prowadzacy_id: '' });
 
