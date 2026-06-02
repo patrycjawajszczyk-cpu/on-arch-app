@@ -3157,11 +3157,6 @@ const [zakladkaGrupy, setZakladkaGrupy] = useState<'kursanci' | 'zjazdy' | 'oglo
       if (error) { setKomunikat('Blad: ' + error.message); } else { setKomunikat('Grupa dodana!'); setNowaGrupa({ nazwa: '', miasto: '', edycja: '', drive_link: '', numer_uslugi: '', tryb: 'stacjonarny' }); pobierzGrupy(); }
     }
 
-    async function zapiszDriveLink(grupaId: number, link: string) {
-      const { error } = await supabase.from('grupy').update({ drive_link: link || null }).eq('id', grupaId);
-      if (error) { setKomunikat('Blad: ' + error.message); } else { setKomunikat('Link zapisany!'); pobierzGrupy(); }
-    }
-
     async function dodajZadanie(e: React.FormEvent) {
       e.preventDefault();
       const { error } = await supabase.from('zadania').insert([{
@@ -4505,10 +4500,10 @@ setKomunikat(`Notatka zapisana — ${k.imie} ${k.nazwisko}`);
 
                     {/* Tabs */}
                     <div style={{ display: 'flex', background: 'white', border: '0.5px solid var(--border)', borderRadius: '10px', overflow: 'hidden', marginBottom: '16px', width: 'fit-content' }}>
-                      {(['kursanci', 'zjazdy', 'ogloszenia'] as const).map(tab => (
+                    {(['kursanci', 'zjazdy', 'ogloszenia', 'ustawienia'] as const).map(tab => (
                         <button key={tab} onClick={() => setZakladkaGrupy(tab)}
                           style={{ padding: '8px 20px', border: 'none', background: zakladkaGrupy === tab ? 'var(--brand)' : 'white', color: zakladkaGrupy === tab ? 'white' : 'var(--text-muted)', fontSize: '12px', fontWeight: 500, cursor: 'pointer', fontFamily: 'Jost, sans-serif', transition: 'all 0.15s' }}>
-                          {tab === 'kursanci' ? `Kursanci (${kursanciGrupy.length})` : tab === 'zjazdy' ? `Zjazdy (${zjazdyGrupy.length})` : `Ogłoszenia (${ogloszeniaGrupyOnly.length})`}
+                          {tab === 'kursanci' ? `Kursanci (${kursanciGrupy.length})` : tab === 'zjazdy' ? `Zjazdy (${zjazdyGrupy.length})` : tab === 'ogloszenia' ? `Ogłoszenia (${ogloszeniaGrupyOnly.length})` : '⚙ Ustawienia'}
                         </button>
                       ))}
                     </div>
@@ -4654,6 +4649,51 @@ setKomunikat(`Notatka zapisana — ${k.imie} ${k.nazwisko}`);
                               </div>
                             </div>
                           ))}
+                        </div>
+                      </div>
+                    )}
+                    {/* TAB: USTAWIENIA */}
+                    {zakladkaGrupy === 'ustawienia' && (
+                      <div style={{ background: 'white', borderRadius: '14px', border: '0.5px solid var(--border)', padding: '20px 24px' }}>
+                        <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text)', marginBottom: '16px' }}>Ustawienia grupy</div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                          {[
+                            { label: 'Folder grupy (Google Drive)', field: 'drive_link', placeholder: 'https://drive.google.com/...' },
+                            { label: 'Materiały online', field: 'link_materialow', placeholder: 'https://...' },
+                            { label: 'Nagrania z zajęć', field: 'link_nagran', placeholder: 'https://...' },
+                          ].map(({ label, field, placeholder }) => (
+                            <div key={field}>
+                              <div style={{ fontSize: '10px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.2em', marginBottom: '5px' }}>{label}</div>
+                              <input type="url"
+                                defaultValue={(g as any)[field] || ''}
+                                placeholder={placeholder}
+                                onBlur={async e => {
+                                  if (e.target.value !== ((g as any)[field] || '')) {
+                                    await supabase.from('grupy').update({ [field]: e.target.value || null }).eq('id', g.id);
+                                    pobierzGrupy();
+                                    setKomunikat(`Zapisano — ${label}`);
+                                  }
+                                }}
+                                style={{ width: '100%', fontSize: '13px', padding: '9px 12px', border: '0.5px solid var(--border)', borderRadius: '10px', fontFamily: 'Jost, sans-serif', background: (g as any)[field] ? '#f0faf4' : 'white' }}
+                              />
+                            </div>
+                          ))}
+                          <div>
+                            <div style={{ fontSize: '10px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.2em', marginBottom: '5px' }}>Tryb zajęć</div>
+                            <select defaultValue={g.tryb || 'stacjonarny'}
+                              onChange={async e => { await supabase.from('grupy').update({ tryb: e.target.value }).eq('id', g.id); pobierzGrupy(); setKomunikat('Tryb zapisany'); }}
+                              style={{ fontSize: '13px', padding: '9px 12px', border: '0.5px solid var(--border)', borderRadius: '10px', fontFamily: 'Jost, sans-serif', background: 'white', width: '100%' }}>
+                              <option value="stacjonarny">📍 Stacjonarny</option>
+                              <option value="online">🌐 Online</option>
+                              <option value="hybrydowy">⚡ Hybrydowy</option>
+                            </select>
+                          </div>
+                          {(g as any).numer_uslugi && (
+                            <div>
+                              <div style={{ fontSize: '10px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.2em', marginBottom: '5px' }}>Numer usługi BUR</div>
+                              <div style={{ fontSize: '13px', color: 'var(--text)', padding: '9px 12px', background: 'var(--bg)', borderRadius: '10px', border: '0.5px solid var(--border)' }}>{(g as any).numer_uslugi}</div>
+                            </div>
+                          )}
                         </div>
                       </div>
                     )}
