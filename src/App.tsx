@@ -4660,83 +4660,80 @@ setKomunikat(`Notatka zapisana — ${k.imie} ${k.nazwisko}`);
                 );
               })() : (
                 <>
-                  <h2 className="page-title">Nowa grupa</h2>
-                  <form className="admin-form" onSubmit={dodajGrupe}>
-                    <div className="login-field"><label>Nazwa grupy</label><input type="text" value={nowaGrupa.nazwa} onChange={e => setNowaGrupa({ ...nowaGrupa, nazwa: e.target.value })} required /></div>
-                    <div className="login-field"><label>Miasto</label><input type="text" value={nowaGrupa.miasto} onChange={e => setNowaGrupa({ ...nowaGrupa, miasto: e.target.value })} required /></div>
-                    <div className="login-field"><label>Edycja</label><input type="text" value={nowaGrupa.edycja} onChange={e => setNowaGrupa({ ...nowaGrupa, edycja: e.target.value })} required /></div>
-                    <div className="login-field"><label>Strefa Wiedzy — link Google Drive (opcjonalnie)</label><input type="url" value={nowaGrupa.drive_link} onChange={e => setNowaGrupa({ ...nowaGrupa, drive_link: e.target.value })} placeholder="https://drive.google.com/..." /></div>
-                    <div className="login-field"><label>Link do materiałów online (opcjonalnie)</label><input type="url" value={(nowaGrupa as any).link_materialow || ''} onChange={e => setNowaGrupa({ ...nowaGrupa, ...(nowaGrupa as any), link_materialow: e.target.value })} placeholder="https://..." /></div>
-                    <div className="login-field"><label>Link do nagrań z zajęć (opcjonalnie)</label><input type="url" value={(nowaGrupa as any).link_nagran || ''} onChange={e => setNowaGrupa({ ...nowaGrupa, ...(nowaGrupa as any), link_nagran: e.target.value })} placeholder="https://..." /></div>
-                    <div className="login-field"><label>Numer usługi BUR (opcjonalnie)</label><input type="text" value={nowaGrupa.numer_uslugi} onChange={e => setNowaGrupa({ ...nowaGrupa, numer_uslugi: e.target.value })} placeholder="np. 2025/09/24/195975/3028966" /></div>
-                    <div className="login-field"><label>Tryb zajęć</label><select value={nowaGrupa.tryb} onChange={e => setNowaGrupa({ ...nowaGrupa, tryb: e.target.value })}><option value="stacjonarny">Stacjonarny</option><option value="online">Online</option><option value="hybrydowy">Hybrydowy</option></select></div>
-                    <button className="login-btn" type="submit">Dodaj grupę</button>
-                  </form>
+                  {/* Nagłówek + przycisk dodaj */}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
+                    <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '22px', fontWeight: 400, color: 'var(--brand-dark)', margin: 0 }}>
+                      Grupy <span style={{ fontSize: '14px', color: 'var(--text-muted)', fontFamily: 'Jost, sans-serif' }}>({grupy.length})</span>
+                    </h2>
+                    <button onClick={() => setPokazFormGrupy(v => !v)}
+                      style={{ fontSize: '13px', padding: '8px 20px', border: pokazFormGrupy ? '0.5px solid var(--brand-mid)' : 'none', borderRadius: '10px', background: pokazFormGrupy ? 'white' : 'var(--brand)', color: pokazFormGrupy ? 'var(--brand)' : 'white', cursor: 'pointer', fontFamily: 'Jost, sans-serif', fontWeight: 600, transition: 'all 0.15s' }}>
+                      {pokazFormGrupy ? '✕ Anuluj' : '+ Dodaj grupę'}
+                    </button>
+                  </div>
 
-                  <h2 className="page-title" style={{ marginTop: '24px' }}>Lista grup</h2>
-                  <div style={{ background: 'white', borderRadius: '12px', border: '0.5px solid var(--border)', overflow: 'auto' }}>
-                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
-                      <thead>
-                        <tr style={{ background: 'var(--bg)', borderBottom: '0.5px solid var(--border)' }}>
-                          {['ID', 'Nazwa', 'Miasto', 'Edycja', 'Tryb', 'Strefa Wiedzy'].map((h, i) => (
-                            <th key={i} style={{ padding: '8px 12px', textAlign: 'left', fontWeight: 600, color: 'var(--text-muted)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.3px', whiteSpace: 'nowrap' }}>{h}</th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {grupy.map((g, idx) => {
-                          const status = statusGrupy(g.id);
-                          const zakonczona = status === 'zakonczona';
-                          return (
-                            <tr key={g.id} style={{ borderBottom: idx < grupy.length - 1 ? '0.5px solid var(--border-soft)' : 'none', background: idx % 2 === 0 ? 'white' : '#fdf9f8', opacity: zakonczona ? 0.6 : 1 }}>
-                              <td style={{ padding: '9px 12px', fontWeight: 700, color: 'var(--brand)', width: '40px' }}>{g.id}</td>
-                              <td style={{ padding: '9px 12px', whiteSpace: 'nowrap' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                                  <span onClick={() => setWybranaGrupaDetail(g.id)}
-                                    style={{ fontWeight: 500, color: 'var(--brand-dark)', cursor: 'pointer', textDecoration: 'underline dotted' }}>
-                                    {g.nazwa}
-                                  </span>
-                                  <span style={{ fontSize: '10px', color: 'var(--text-muted)', background: 'var(--bg)', padding: '1px 6px', borderRadius: '6px', border: '0.5px solid var(--border)', fontWeight: 400 }}>
-                                    {kursanci.filter(k => k.grupa_id === g.id).length} os.
-                                  </span>
-                                  {status === 'aktywna' && <span style={{ fontSize: '9px', fontWeight: 700, padding: '2px 7px', borderRadius: '20px', background: '#e8f5e9', color: '#2e7d32', letterSpacing: '0.05em' }}>AKTYWNA</span>}
-                                  {status === 'zakonczona' && <span style={{ fontSize: '9px', fontWeight: 700, padding: '2px 7px', borderRadius: '20px', background: '#f5f5f5', color: '#9e9e9e', letterSpacing: '0.05em' }}>ZAKOŃCZONA</span>}
-                                </div>
-                              </td>
-                              <td style={{ padding: '9px 12px', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>{g.miasto}</td>
-                              <td style={{ padding: '9px 12px', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>{g.edycja}</td>
-                              <td style={{ padding: '7px 12px', whiteSpace: 'nowrap' }}>
-                                <select defaultValue={g.tryb || 'stacjonarny'}
-                                  onChange={async e => { await supabase.from('grupy').update({ tryb: e.target.value }).eq('id', g.id); pobierzGrupy(); }}
-                                  style={{ fontSize: '11px', padding: '3px 8px', border: '0.5px solid var(--border)', borderRadius: '6px', fontFamily: 'Jost, sans-serif', background: 'white', color: g.tryb === 'online' ? '#1565c0' : g.tryb === 'hybrydowy' ? '#c8a84b' : 'var(--text)' }}>
-                                  <option value="stacjonarny">📍 Stacjonarny</option>
-                                  <option value="online">🌐 Online</option>
-                                  <option value="hybrydowy">⚡ Hybrydowy</option>
-                                </select>
-                              </td>
-                              <td style={{ padding: '6px 12px', minWidth: '220px' }}>
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                  <input type="url" defaultValue={g.drive_link || ''} placeholder="Drive: folder grupy"
-                                    onBlur={e => { if (e.target.value !== (g.drive_link || '')) zapiszDriveLink(g.id, e.target.value); }}
-                                    style={{ width: '100%', fontSize: '11px', padding: '4px 8px', borderRadius: '6px', border: '0.5px solid var(--border)', fontFamily: 'Jost, sans-serif', background: g.drive_link ? '#f0faf4' : 'white' }} />
-                                  <input type="url" defaultValue={(g as any).link_materialow || ''} placeholder="Materiały online"
-                                    onBlur={async e => { if (e.target.value !== ((g as any).link_materialow || '')) { await supabase.from('grupy').update({ link_materialow: e.target.value || null }).eq('id', g.id); pobierzGrupy(); } }}
-                                    style={{ width: '100%', fontSize: '11px', padding: '4px 8px', borderRadius: '6px', border: '0.5px solid var(--border)', fontFamily: 'Jost, sans-serif', background: (g as any).link_materialow ? '#f0faf4' : 'white' }} />
-                                  <input type="url" defaultValue={(g as any).link_nagran || ''} placeholder="Nagrania z zajęć"
-                                    onBlur={async e => { if (e.target.value !== ((g as any).link_nagran || '')) { await supabase.from('grupy').update({ link_nagran: e.target.value || null }).eq('id', g.id); pobierzGrupy(); } }}
-                                    style={{ width: '100%', fontSize: '11px', padding: '4px 8px', borderRadius: '6px', border: '0.5px solid var(--border)', fontFamily: 'Jost, sans-serif', background: (g as any).link_nagran ? '#f0faf4' : 'white' }} />
-                                </div>
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
+                  {/* Formularz — zwijany */}
+                  {pokazFormGrupy && (
+                    <div style={{ background: 'white', border: '0.5px solid var(--border)', borderRadius: '16px', padding: '20px 24px', marginBottom: '24px' }}>
+                      <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text)', marginBottom: '16px' }}>Nowa grupa</div>
+                      <form className="admin-form" onSubmit={async e => { await dodajGrupe(e); setPokazFormGrupy(false); }}>
+                        <div className="login-field"><label>Nazwa grupy</label><input type="text" value={nowaGrupa.nazwa} onChange={e => setNowaGrupa({ ...nowaGrupa, nazwa: e.target.value })} required /></div>
+                        <div className="login-field"><label>Miasto</label><input type="text" value={nowaGrupa.miasto} onChange={e => setNowaGrupa({ ...nowaGrupa, miasto: e.target.value })} required /></div>
+                        <div className="login-field"><label>Edycja</label><input type="text" value={nowaGrupa.edycja} onChange={e => setNowaGrupa({ ...nowaGrupa, edycja: e.target.value })} required /></div>
+                        <div className="login-field"><label>Strefa Wiedzy — link Google Drive</label><input type="url" value={nowaGrupa.drive_link} onChange={e => setNowaGrupa({ ...nowaGrupa, drive_link: e.target.value })} placeholder="https://drive.google.com/..." /></div>
+                        <div className="login-field"><label>Link do materiałów online</label><input type="url" value={(nowaGrupa as any).link_materialow || ''} onChange={e => setNowaGrupa({ ...nowaGrupa, ...(nowaGrupa as any), link_materialow: e.target.value })} placeholder="https://..." /></div>
+                        <div className="login-field"><label>Link do nagrań z zajęć</label><input type="url" value={(nowaGrupa as any).link_nagran || ''} onChange={e => setNowaGrupa({ ...nowaGrupa, ...(nowaGrupa as any), link_nagran: e.target.value })} placeholder="https://..." /></div>
+                        <div className="login-field"><label>Numer usługi BUR</label><input type="text" value={nowaGrupa.numer_uslugi} onChange={e => setNowaGrupa({ ...nowaGrupa, numer_uslugi: e.target.value })} placeholder="np. 2025/09/24/195975/3028966" /></div>
+                        <div className="login-field"><label>Tryb zajęć</label><select value={nowaGrupa.tryb} onChange={e => setNowaGrupa({ ...nowaGrupa, tryb: e.target.value })}><option value="stacjonarny">Stacjonarny</option><option value="online">Online</option><option value="hybrydowy">Hybrydowy</option></select></div>
+                        <button className="login-btn" type="submit">Dodaj grupę</button>
+                      </form>
+                    </div>
+                  )}
+
+                  {/* Karty grup */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '12px' }}>
+                    {grupy.map(g => {
+                      const status = statusGrupy(g.id);
+                      const zakonczona = status === 'zakonczona';
+                      const ileKursantow = kursanci.filter(k => k.grupa_id === g.id).length;
+                      const ileZjazdow = zjazdy.filter(z => z.grupa_id === g.id).length;
+                      return (
+                        <div key={g.id} onClick={() => setWybranaGrupaDetail(g.id)}
+                          style={{ background: 'white', borderRadius: '14px', border: `0.5px solid ${status === 'aktywna' ? 'var(--brand-mid)' : 'var(--border)'}`, padding: '16px 18px', cursor: 'pointer', opacity: zakonczona ? 0.65 : 1, transition: 'box-shadow 0.15s, transform 0.1s', position: 'relative', overflow: 'hidden' }}
+                          onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.boxShadow = '0 4px 16px rgba(0,0,0,0.08)'; (e.currentTarget as HTMLDivElement).style.transform = 'translateY(-1px)'; }}
+                          onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.boxShadow = 'none'; (e.currentTarget as HTMLDivElement).style.transform = 'none'; }}>
+                          {/* Status pasek */}
+                          {status === 'aktywna' && <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '3px', background: 'var(--brand)' }} />}
+                          {/* Nagłówek karty */}
+                          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '8px', marginBottom: '10px' }}>
+                            <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '17px', fontWeight: 500, color: 'var(--brand-dark)', lineHeight: 1.3 }}>{g.nazwa}</div>
+                            {status === 'aktywna' && <span style={{ fontSize: '9px', fontWeight: 700, padding: '3px 8px', borderRadius: '20px', background: '#e8f5e9', color: '#2e7d32', whiteSpace: 'nowrap', flexShrink: 0 }}>AKTYWNA</span>}
+                            {status === 'zakonczona' && <span style={{ fontSize: '9px', fontWeight: 700, padding: '3px 8px', borderRadius: '20px', background: '#f5f5f5', color: '#9e9e9e', whiteSpace: 'nowrap', flexShrink: 0 }}>ZAKOŃCZONA</span>}
+                          </div>
+                          {/* Meta */}
+                          <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '12px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                            <span>📍 {g.miasto}</span>
+                            <span>· {g.edycja}</span>
+                            {g.tryb && <span style={{ background: g.tryb === 'online' ? '#e8f0fe' : 'var(--bg)', color: g.tryb === 'online' ? '#1565c0' : 'var(--text-muted)', padding: '1px 6px', borderRadius: '6px', fontWeight: 500 }}>
+                              {g.tryb === 'online' ? '🌐 Online' : g.tryb === 'hybrydowy' ? '⚡ Hybr.' : '📍 Stac.'}
+                            </span>}
+                          </div>
+                          {/* Stats */}
+                          <div style={{ display: 'flex', gap: '12px', borderTop: '0.5px solid var(--border-soft)', paddingTop: '10px' }}>
+                            <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                              <span style={{ fontWeight: 600, color: 'var(--text)', fontSize: '15px' }}>{ileKursantow}</span> kursantów
+                            </div>
+                            <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                              <span style={{ fontWeight: 600, color: 'var(--text)', fontSize: '15px' }}>{ileZjazdow}</span> zjazdów
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 </>
+                )}
+                </>
               )}
-            </>
-          )}
           {aktywnaZakladka === 'ankiety' && (
             <>
               <h2 className="page-title">Wyniki ankiet</h2>
