@@ -2848,6 +2848,7 @@ function urlBase64ToUint8Array(base64String: string) {
     const [edytowanyZjazd, setEdytowanyZjazd] = useState<Zjazd | null>(null);
     const [pokazGalerieZjazd, setPokazGalerieZjazd] = useState(false);
     const [pokazGalerieZadanie, setPokazGalerieZadanie] = useState(false);
+    const [serviceRoleKey, setServiceRoleKey] = useState<string>('');
     const [noweOgl, setNoweOgl] = useState({ typ: 'Informacja', tytul: '', tresc: '', szczegoly: '', nowe: true, grupa_id: '' });
     const [nowyZjazd, setNowyZjazd] = useState({ nr: '', daty: '', sala: '', adres: '', tematy: '', status: 'nadchodzacy', typ: 'stacjonarny', link_online: '', data_zjazdu: '', data_dzien1: '', data_dzien2: '', grupa_id: '', prowadzacy_id: '' });
 
@@ -3283,7 +3284,40 @@ function urlBase64ToUint8Array(base64String: string) {
     }
 
     const ankietyFiltrowane = wybranaGrupaAnkiety ? ankiety.filter((a: any) => a.grupa_id === parseInt(wybranaGrupaAnkiety)) : ankiety;
-
+    async function wyslijZaproszenie(kursant: KursantAdmin) {
+      if (!kursant.email) { setKomunikat('Kursant nie ma adresu email!'); return; }
+      let key = serviceRoleKey;
+      if (!key) {
+        const input = window.prompt('Wklej klucz service_role (Supabase → Settings → API):\n(zostanie zapamiętany na tę sesję)');
+        if (!input?.trim()) return;
+        key = input.trim();
+        setServiceRoleKey(key);
+      }
+      setKomunikat('Wysyłam zaproszenie...');
+      const SUPABASE_URL = 'https://bksebyxrknubyokwuaby.supabase.co';
+      try {
+        const res = await fetch(`${SUPABASE_URL}/auth/v1/invite`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': key,
+            'Authorization': `Bearer ${key}`,
+          },
+          body: JSON.stringify({ email: kursant.email }),
+        });
+        const userData = await res.json();
+        if (!res.ok || !userData.id) {
+          setKomunikat(`Błąd: ${userData.msg || userData.message || 'nieznany błąd'}`);
+          return;
+        }
+        await supabase.from('kursanci').update({ user_id: userData.id }).eq('id', kursant.id);
+        const { data } = await supabase.from('kursanci').select('id, imie, nazwisko, email, telefon, grupa_id, user_id, certyfikat_url, notatki, dofinansowanie, folder_prywatny');
+        setKursanci((data || []) as unknown as KursantAdmin[]);
+        setKomunikat(`✓ Zaproszenie wysłane do ${kursant.email}`);
+      } catch (err: any) {
+        setKomunikat(`Błąd sieci: ${err.message}`);
+      }
+    }
     return (
       <div className="biuro-shell">
         {/* ── SIDEBAR (desktop) ── */}
@@ -4243,6 +4277,12 @@ function urlBase64ToUint8Array(base64String: string) {
                                 </div>
                               ) : (
                                 <div style={{ display: 'flex', gap: '4px' }}>
+                                  {!k.user_id && k.email && (
+                                    <button onClick={e => { e.stopPropagation(); wyslijZaproszenie(k); }}
+                                      style={{ fontSize: '11px', padding: '3px 9px', border: '0.5px solid #6366f1', borderRadius: '6px', background: '#eef2ff', cursor: 'pointer', color: '#4338ca', fontFamily: 'Jost, sans-serif' }}>
+                                      ✉ Zaproś
+                                    </button>
+                                  )}
                                   <button onClick={e => { e.stopPropagation(); setEdytowanyKursant({ id: k.id, imie: k.imie, nazwisko: k.nazwisko, email: k.email || '', telefon: k.telefon || '', ...(k as any) }); }}
                                     style={{ fontSize: '11px', padding: '3px 9px', border: '0.5px solid var(--border)', borderRadius: '6px', background: 'white', cursor: 'pointer', color: 'var(--brand)', fontFamily: 'Jost, sans-serif' }}>Edytuj</button>
                                   {k.grupa_id && (
