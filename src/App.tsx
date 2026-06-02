@@ -2843,6 +2843,8 @@ function urlBase64ToUint8Array(base64String: string) {
     const [zjazdy, setZjazdy] = useState<Zjazd[]>([]);
     const [pokazFormGrupy, setPokazFormGrupy] = useState(false);
     const [prowadzacy, setProwadzacy] = useState<Prowadzacy[]>([]);
+    const [obecnosciGrupyData, setObecnosciGrupyData] = useState<any[]>([]);
+    const [ladowanieObecnosci, setLadowanieObecnosci] = useState(false);
     const [ankiety, setAnkiety] = useState<OdpowiedziAnkiety[]>([]);
     const [zadania, setZadania] = useState<Zadanie[]>([]);
     const [odpowiedziZadan, setOdpowiedziZadan] = useState<ZadanieOdpowiedz[]>([]);
@@ -2950,7 +2952,7 @@ function urlBase64ToUint8Array(base64String: string) {
     const [wybranaGrupaAnkiety, setWybranaGrupaAnkiety] = useState('');
     const [wybranaGrupaZadan, setWybranaGrupaZadan] = useState('');
     const [wybranaGrupaDetail, setWybranaGrupaDetail] = useState<number | null>(null);
-    const [zakladkaGrupy, setZakladkaGrupy] = useState<'kursanci' | 'zjazdy' | 'ogloszenia' | 'ustawienia'>('kursanci');
+    const [zakladkaGrupy, setZakladkaGrupy] = useState<'kursanci' | 'zjazdy' | 'ogloszenia' | 'ustawienia' | 'obecnosci'>('kursanci');
     const fileRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
@@ -3348,6 +3350,14 @@ function urlBase64ToUint8Array(base64String: string) {
       if (gz.length === 0) return 'brak';
       return gz.some(z => z.status === 'nadchodzacy') ? 'aktywna' : 'zakonczona';
     }
+    useEffect(() => {
+      if (zakladkaGrupy !== 'obecnosci' || !wybranaGrupaDetail) return;
+      const ids = zjazdy.filter(z => z.grupa_id === wybranaGrupaDetail).map(z => z.id);
+      if (ids.length === 0) { setObecnosciGrupyData([]); return; }
+      setLadowanieObecnosci(true);
+      supabase.from('obecnosci').select('*').in('zjazd_id', ids)
+        .then(({ data }) => { setObecnosciGrupyData(data || []); setLadowanieObecnosci(false); });
+    }, [zakladkaGrupy, wybranaGrupaDetail]);
     return (
       <div className="biuro-shell">
         {/* ── SIDEBAR (desktop) ── */}
@@ -4500,10 +4510,10 @@ setKomunikat(`Notatka zapisana — ${k.imie} ${k.nazwisko}`);
 
                     {/* Tabs */}
                     <div style={{ display: 'flex', background: 'white', border: '0.5px solid var(--border)', borderRadius: '10px', overflow: 'hidden', marginBottom: '16px', width: 'fit-content' }}>
-                    {(['kursanci', 'zjazdy', 'ogloszenia', 'ustawienia'] as const).map(tab => (
+                    {(['kursanci', 'zjazdy', 'ogloszenia', 'obecnosci', 'ustawienia'] as const).map(tab => (
                         <button key={tab} onClick={() => setZakladkaGrupy(tab)}
                           style={{ padding: '8px 20px', border: 'none', background: zakladkaGrupy === tab ? 'var(--brand)' : 'white', color: zakladkaGrupy === tab ? 'white' : 'var(--text-muted)', fontSize: '12px', fontWeight: 500, cursor: 'pointer', fontFamily: 'Jost, sans-serif', transition: 'all 0.15s' }}>
-                          {tab === 'kursanci' ? `Kursanci (${kursanciGrupy.length})` : tab === 'zjazdy' ? `Zjazdy (${zjazdyGrupy.length})` : tab === 'ogloszenia' ? `Ogłoszenia (${ogloszeniaGrupyOnly.length})` : '⚙ Ustawienia'}
+                          {tab === 'kursanci' ? `Kursanci (${kursanciGrupy.length})` : tab === 'zjazdy' ? `Zjazdy (${zjazdyGrupy.length})` : tab === 'ogloszenia' ? `Ogłoszenia (${ogloszeniaGrupyOnly.length})` : tab === 'obecnosci' ? '📋 Obecności' : '⚙ Ustawienia'}
                         </button>
                       ))}
                     </div>
@@ -4652,6 +4662,146 @@ setKomunikat(`Notatka zapisana — ${k.imie} ${k.nazwisko}`);
                         </div>
                       </div>
                     )}
+                    {/* TAB: OBECNOŚCI */}
+                    {zakladkaGrupy === 'obecnosci' && (
+                      <div>
+                        {ladowanieObecnosci ? (
+                          <div style={{ padding: '32px', textAlign: 'center', color: 'var(--text-muted)' }}>Ładowanie...</div>
+                        ) : (() => {
+                          const obecnosciByZjazd: Record<number, any[]> = {};
+                          obecnosciGrupyData.forEach(o => {
+                            if (!obecnosciByZjazd[o.zjazd_id]) obecnosciByZjazd[o.zjazd_id] = [];
+                            obecnosciByZjazd[o.zjazd_id].push(o);
+                          });
+                          const statsPerKursant = kursanciGrupy.map(k => {
+                            let obecne = 0, mozliwe = 0;
+                            zjazdyGrupy.forEach(z => {
+                              const dni = [z.data_dzien1, z.data_dzien2].filter(Boolean).length;
+                              mozliwe += dni;
+                              if (k.user_id) obecne += (obecnosciByZjazd[z.id] || []).filter(o => o.user_id === k.user_id && o.status === 'potwierdzono').length;
+                            });
+                            return { kursant: k, obecne, mozliwe, pct: mozliwe > 0 ? Math.round(obecne / mozliwe * 100) : 0 };
+                          });
+                          return (
+                            <>
+                              <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.15em', marginBottom: '10px' }}>Frekwencja per zjazd</div>
+                              <div style={{ background: 'white', borderRadius: '12px', border: '0.5px solid var(--border)', overflow: 'auto', marginBottom: '24px' }}>
+                                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+                                  <thead>
+                                    <tr style={{ background: 'var(--bg)', borderBottom: '0.5px solid var(--border)' }}>
+                                      {['Zjazd', 'Data', 'Obecni', 'Nieobecni / Niepotwierdzone', '%'].map((h, i) => (
+                                        <th key={i} style={{ padding: '9px 14px', textAlign: 'left', fontWeight: 600, color: 'var(--text-muted)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.3px' }}>{h}</th>
+                                      ))}
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {zjazdyGrupy.map((z, idx) => {
+                                      const rekordy = obecnosciByZjazd[z.id] || [];
+                                      const obecniIds = new Set(rekordy.filter(o => o.status === 'potwierdzono').map(o => o.user_id));
+                                      const obecni = kursanciGrupy.filter(k => k.user_id && obecniIds.has(k.user_id));
+                                      const nieobecni = kursanciGrupy.filter(k => !k.user_id || !obecniIds.has(k.user_id));
+                                      const pct = kursanciGrupy.length > 0 ? Math.round(obecni.length / kursanciGrupy.length * 100) : 0;
+                                      return (
+                                        <tr key={z.id} style={{ borderBottom: idx < zjazdyGrupy.length - 1 ? '0.5px solid var(--border-soft)' : 'none', background: idx % 2 === 0 ? 'white' : '#fdf9f8' }}>
+                                          <td style={{ padding: '10px 14px', fontWeight: 700, color: 'var(--brand-dark)' }}>#{z.nr}</td>
+                                          <td style={{ padding: '10px 14px', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>{z.daty}</td>
+                                          <td style={{ padding: '10px 14px' }}>
+                                            {obecni.length === 0 ? <span style={{ color: 'var(--text-muted)' }}>—</span> :
+                                              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                                                {obecni.map(k => <span key={k.id} style={{ fontSize: '10px', background: '#e8f5e9', color: '#2e7d32', padding: '2px 7px', borderRadius: '20px', fontWeight: 500 }}>{k.imie} {k.nazwisko}</span>)}
+                                              </div>}
+                                          </td>
+                                          <td style={{ padding: '10px 14px' }}>
+                                            {nieobecni.length === 0 ? <span style={{ color: 'var(--text-muted)' }}>—</span> :
+                                              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                                                {nieobecni.map(k => <span key={k.id} style={{ fontSize: '10px', background: '#ffebee', color: '#c62828', padding: '2px 7px', borderRadius: '20px', fontWeight: 500 }}>{k.imie} {k.nazwisko}</span>)}
+                                              </div>}
+                                          </td>
+                                          <td style={{ padding: '10px 14px' }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                              <div style={{ flex: 1, height: '6px', background: '#f0f0f0', borderRadius: '3px', minWidth: '60px' }}>
+                                                <div style={{ height: '100%', width: `${pct}%`, background: pct >= 80 ? '#2e7d32' : pct >= 50 ? '#e67e22' : '#c62828', borderRadius: '3px' }} />
+                                              </div>
+                                              <span style={{ fontSize: '12px', fontWeight: 700, color: pct >= 80 ? '#2e7d32' : pct >= 50 ? '#e67e22' : '#c62828', whiteSpace: 'nowrap' }}>{pct}%</span>
+                                            </div>
+                                          </td>
+                                        </tr>
+                                      );
+                                    })}
+                                  </tbody>
+                                </table>
+                              </div>
+                              <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.15em', marginBottom: '10px' }}>Frekwencja per kursant</div>
+                              <div style={{ background: 'white', borderRadius: '12px', border: '0.5px solid var(--border)', overflow: 'auto' }}>
+                                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+                                  <thead>
+                                    <tr style={{ background: 'var(--bg)', borderBottom: '0.5px solid var(--border)' }}>
+                                      {['Kursant', 'Obecności', 'Nieobecności', 'Frekwencja'].map((h, i) => (
+                                        <th key={i} style={{ padding: '9px 14px', textAlign: 'left', fontWeight: 600, color: 'var(--text-muted)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.3px' }}>{h}</th>
+                                      ))}
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {statsPerKursant.sort((a, b) => b.pct - a.pct).map((s, idx) => (
+                                      <tr key={s.kursant.id} style={{ borderBottom: idx < statsPerKursant.length - 1 ? '0.5px solid var(--border-soft)' : 'none', background: s.pct < 50 ? '#fff5f5' : idx % 2 === 0 ? 'white' : '#fdf9f8' }}>
+                                        <td style={{ padding: '10px 14px', fontWeight: 500 }}>{s.kursant.imie} {s.kursant.nazwisko}</td>
+                                        <td style={{ padding: '10px 14px' }}><span style={{ fontSize: '11px', background: '#e8f5e9', color: '#2e7d32', padding: '3px 10px', borderRadius: '20px', fontWeight: 600 }}>{s.obecne} / {s.mozliwe}</span></td>
+                                        <td style={{ padding: '10px 14px' }}><span style={{ fontSize: '11px', background: s.mozliwe - s.obecne > 0 ? '#ffebee' : '#f5f5f5', color: s.mozliwe - s.obecne > 0 ? '#c62828' : '#9e9e9e', padding: '3px 10px', borderRadius: '20px', fontWeight: 600 }}>{s.mozliwe - s.obecne} / {s.mozliwe}</span></td>
+                                        <td style={{ padding: '10px 14px' }}>
+                                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                            <div style={{ width: '100px', height: '7px', background: '#f0f0f0', borderRadius: '4px' }}>
+                                              <div style={{ height: '100%', width: `${s.pct}%`, background: s.pct >= 80 ? '#2e7d32' : s.pct >= 50 ? '#e67e22' : '#c62828', borderRadius: '4px' }} />
+                                            </div>
+                                            <span style={{ fontWeight: 700, fontSize: '13px', color: s.pct >= 80 ? '#2e7d32' : s.pct >= 50 ? '#e67e22' : '#c62828' }}>{s.pct}%</span>
+                                          </div>
+                                        </td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              </div>
+                            </>
+                          );
+                        })()}
+                      </div>
+                    )}
+
+                    {/* TAB: USTAWIENIA */}
+                    {zakladkaGrupy === 'ustawienia' && (
+                      <div style={{ background: 'white', borderRadius: '14px', border: '0.5px solid var(--border)', padding: '20px 24px' }}>
+                        <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text)', marginBottom: '16px' }}>Ustawienia grupy</div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                          {[
+                            { label: 'Folder grupy (Google Drive)', field: 'drive_link', placeholder: 'https://drive.google.com/...' },
+                            { label: 'Materiały online', field: 'link_materialow', placeholder: 'https://...' },
+                            { label: 'Nagrania z zajęć', field: 'link_nagran', placeholder: 'https://...' },
+                          ].map(({ label, field, placeholder }) => (
+                            <div key={field}>
+                              <div style={{ fontSize: '10px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.2em', marginBottom: '5px' }}>{label}</div>
+                              <input type="url" defaultValue={(g as any)[field] || ''} placeholder={placeholder}
+                                onBlur={async e => {
+                                  if (e.target.value !== ((g as any)[field] || '')) {
+                                    await supabase.from('grupy').update({ [field]: e.target.value || null }).eq('id', g.id);
+                                    pobierzGrupy();
+                                    setKomunikat(`Zapisano — ${label}`);
+                                  }
+                                }}
+                                style={{ width: '100%', fontSize: '13px', padding: '9px 12px', border: '0.5px solid var(--border)', borderRadius: '10px', fontFamily: 'Jost, sans-serif', background: (g as any)[field] ? '#f0faf4' : 'white' }} />
+                            </div>
+                          ))}
+                          <div>
+                            <div style={{ fontSize: '10px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.2em', marginBottom: '5px' }}>Tryb zajęć</div>
+                            <select defaultValue={g.tryb || 'stacjonarny'}
+                              onChange={async e => { await supabase.from('grupy').update({ tryb: e.target.value }).eq('id', g.id); pobierzGrupy(); setKomunikat('Tryb zapisany'); }}
+                              style={{ fontSize: '13px', padding: '9px 12px', border: '0.5px solid var(--border)', borderRadius: '10px', fontFamily: 'Jost, sans-serif', background: 'white', width: '100%' }}>
+                              <option value="stacjonarny">📍 Stacjonarny</option>
+                              <option value="online">🌐 Online</option>
+                              <option value="hybrydowy">⚡ Hybrydowy</option>
+                            </select>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                     
                   </>
                 );
@@ -4695,7 +4845,7 @@ setKomunikat(`Notatka zapisana — ${k.imie} ${k.nazwisko}`);
                       </div>
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '12px', marginBottom: '28px' }}>
                         {grupy.filter(g => statusGrupy(g.id) !== 'zakonczona').map(g => {
-                            
+
                           const ileKursantow = kursanci.filter(k => k.grupa_id === g.id).length;
                           const ileZjazdow = zjazdy.filter(z => z.grupa_id === g.id).length;
                           return (
