@@ -2950,7 +2950,7 @@ function urlBase64ToUint8Array(base64String: string) {
     const [wybranaGrupaAnkiety, setWybranaGrupaAnkiety] = useState('');
     const [wybranaGrupaZadan, setWybranaGrupaZadan] = useState('');
     const [wybranaGrupaDetail, setWybranaGrupaDetail] = useState<number | null>(null);
-const [zakladkaGrupy, setZakladkaGrupy] = useState<'kursanci' | 'zjazdy' | 'ogloszenia'>('kursanci');
+    const [zakladkaGrupy, setZakladkaGrupy] = useState<'kursanci' | 'zjazdy' | 'ogloszenia' | 'ustawienia'>('kursanci');
     const fileRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
