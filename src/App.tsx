@@ -3325,8 +3325,8 @@ function urlBase64ToUint8Array(base64String: string) {
           const listRes = await fetch(`${SUPABASE_URL}/auth/v1/admin/users?page=1&per_page=1000`, {
             headers: { 'apikey': key, 'Authorization': `Bearer ${key}` },
           });
-          const listData = await listRes.json();
-          const authUser = (listData.users || []).find((u: any) => u.email === kursant.email);
+          const listData = await listRes.json();const authUser = (listData.users || []).find((u: any) => u.email === (kursant.email ?? ''));
+          
           if (!authUser) { setKomunikat(`Nie znaleziono konta dla ${kursant.email}`); return; }
     
           // Zaktualizuj user_id na prawdziwy UUID
