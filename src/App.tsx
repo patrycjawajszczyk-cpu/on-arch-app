@@ -4212,6 +4212,26 @@ function urlBase64ToUint8Array(base64String: string) {
                     <option value="">Wszystkie grupy</option>
                     {grupy.map(g => <option key={g.id} value={g.id}>{g.nazwa}</option>)}
                   </select>
+                  <button onClick={async () => {
+  let key = sessionStorage.getItem('sb_service_key') || '';
+  if (!key) {
+    const input = window.prompt('Wklej klucz service_role:');
+    if (!input?.trim()) return;
+    key = input.trim();
+    sessionStorage.setItem('sb_service_key', key);
+  }
+  const doNaprawy = kursanci.filter(k => k.email);
+  setKomunikat(`Naprawiam ${doNaprawy.length} kont...`);
+  for (const k of doNaprawy) {
+    await naprawIWyslijEmail(k, key);
+    await new Promise(r => setTimeout(r, 400));
+  }
+  const { data } = await supabase.from('kursanci').select('id, imie, nazwisko, email, telefon, grupa_id, user_id, certyfikat_url, notatki, dofinansowanie, folder_prywatny');
+  setKursanci((data || []) as unknown as KursantAdmin[]);
+  setKomunikat('✓ Wszyscy kursanci naprawieni');
+}} style={{ fontSize: '12px', color: '#4338ca', background: '#eef2ff', border: '0.5px solid #6366f1', borderRadius: '8px', padding: '6px 12px', cursor: 'pointer', fontFamily: 'Jost, sans-serif', whiteSpace: 'nowrap' }}>
+  ⚙ Napraw wszystkich
+</button>
                   <button onClick={() => {
                     const naglowki = ['imie', 'nazwisko', 'email', 'telefon', 'grupa'];
                     const wiersze = kursanci.map(k => [`"${k.imie}"`, `"${k.nazwisko}"`, `"${k.email || ''}"`, `"${k.telefon || ''}"`, `"${grupy.find(g => g.id === k.grupa_id)?.nazwa || ''}"`].join(','));
