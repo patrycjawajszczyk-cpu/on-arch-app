@@ -2849,6 +2849,7 @@ function urlBase64ToUint8Array(base64String: string) {
     const [pokazGalerieZjazd, setPokazGalerieZjazd] = useState(false);
     const [pokazGalerieZadanie, setPokazGalerieZadanie] = useState(false);
     const [serviceRoleKey, setServiceRoleKey] = useState<string>('');
+    const [wysylanieZaproszenia, setWysylanieZaproszenia] = useState<number | null>(null);
     const [noweOgl, setNoweOgl] = useState({ typ: 'Informacja', tytul: '', tresc: '', szczegoly: '', nowe: true, grupa_id: '' });
     const [nowyZjazd, setNowyZjazd] = useState({ nr: '', daty: '', sala: '', adres: '', tematy: '', status: 'nadchodzacy', typ: 'stacjonarny', link_online: '', data_zjazdu: '', data_dzien1: '', data_dzien2: '', grupa_id: '', prowadzacy_id: '' });
 
@@ -3286,13 +3287,14 @@ function urlBase64ToUint8Array(base64String: string) {
     const ankietyFiltrowane = wybranaGrupaAnkiety ? ankiety.filter((a: any) => a.grupa_id === parseInt(wybranaGrupaAnkiety)) : ankiety;
     async function wyslijZaproszenie(kursant: KursantAdmin) {
       if (!kursant.email) { setKomunikat('Kursant nie ma adresu email!'); return; }
-      let key = serviceRoleKey;
-      if (!key) {
-        const input = window.prompt('Wklej klucz service_role (Supabase → Settings → API):\n(zostanie zapamiętany na tę sesję)');
-        if (!input?.trim()) return;
-        key = input.trim();
-        setServiceRoleKey(key);
-      }
+      let key = sessionStorage.getItem('sb_service_key') || '';
+  if (!key) {
+    const input = window.prompt('Wklej klucz service_role (Supabase → Settings → API):\n(zostanie zapamiętany na tę sesję)');
+    if (!input?.trim()) return;
+    key = input.trim();
+    sessionStorage.setItem('sb_service_key', key);
+  }
+  setWysylanieZaproszenia(kursant.id);
       setKomunikat('Wysyłam zaproszenie...');
       const SUPABASE_URL = 'https://bksebyxrknubyokwuaby.supabase.co';
       try {
@@ -3318,6 +3320,8 @@ function urlBase64ToUint8Array(base64String: string) {
         setKomunikat(`✓ Zaproszenie wysłane do ${kursant.email}`);
       } catch (err: any) {
         setKomunikat(`Błąd sieci: ${err.message}`);
+      } finally {
+        setWysylanieZaproszenia(null);
       }
     }
     return (
