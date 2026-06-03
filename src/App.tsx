@@ -4409,6 +4409,64 @@ const [zwinieteZadania, setZwinieteZadania] = useState<Set<number>>(() => new Se
                                       {(k as any).folder_prywatny && <a href={(k as any).folder_prywatny} target="_blank" rel="noopener noreferrer" style={{ fontSize: '14px', textDecoration: 'none' }}>🔒</a>}
                                     </div>
                                   </div>
+                                  {/* Data urodzenia */}
+<div>
+  <div style={{ fontSize: '9px', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '5px' }}>Data urodzenia</div>
+  <input type="date" defaultValue={(k as any).data_urodzenia || ''}
+    onBlur={async e => {
+      if (e.target.value !== ((k as any).data_urodzenia || '')) {
+        await supabase.from('kursanci').update({ data_urodzenia: e.target.value || null } as any).eq('id', k.id);
+        const { data: refreshed } = await supabase.from('kursanci').select('id, imie, nazwisko, email, telefon, grupa_id, user_id, certyfikat_url, notatki, dofinansowanie, folder_prywatny, data_urodzenia, miejsce_urodzenia, adres_wysylka, dane_fv');
+        setKursanci((refreshed || []) as unknown as KursantAdmin[]);
+        setKomunikat(`Zapisano — ${k.imie} ${k.nazwisko}`);
+      }
+    }}
+    style={{ width: '100%', fontSize: '11px', padding: '5px 8px', borderRadius: '7px', border: '0.5px solid var(--border)', fontFamily: 'Jost, sans-serif' }} />
+</div>
+{/* Miejsce urodzenia */}
+<div>
+  <div style={{ fontSize: '9px', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '5px' }}>Miejsce urodzenia</div>
+  <input defaultValue={(k as any).miejsce_urodzenia || ''} placeholder="np. Warszawa"
+    onBlur={async e => {
+      if (e.target.value !== ((k as any).miejsce_urodzenia || '')) {
+        await supabase.from('kursanci').update({ miejsce_urodzenia: e.target.value || null } as any).eq('id', k.id);
+        const { data: refreshed } = await supabase.from('kursanci').select('id, imie, nazwisko, email, telefon, grupa_id, user_id, certyfikat_url, notatki, dofinansowanie, folder_prywatny, data_urodzenia, miejsce_urodzenia, adres_wysylka, dane_fv');
+        setKursanci((refreshed || []) as unknown as KursantAdmin[]);
+        setKomunikat(`Zapisano — ${k.imie} ${k.nazwisko}`);
+      }
+    }}
+    style={{ width: '100%', fontSize: '11px', padding: '5px 8px', borderRadius: '7px', border: '0.5px solid var(--border)', fontFamily: 'Jost, sans-serif' }} />
+</div>
+{/* Adres do wysyłek */}
+<div>
+  <div style={{ fontSize: '9px', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '5px' }}>Adres do wysyłek</div>
+  <textarea defaultValue={(k as any).adres_wysylka || ''} rows={2} placeholder="Ulica, kod, miasto"
+    onBlur={async e => {
+      const val = e.target.value.trim();
+      if (val !== ((k as any).adres_wysylka || '').trim()) {
+        await supabase.from('kursanci').update({ adres_wysylka: val || null } as any).eq('id', k.id);
+        const { data: refreshed } = await supabase.from('kursanci').select('id, imie, nazwisko, email, telefon, grupa_id, user_id, certyfikat_url, notatki, dofinansowanie, folder_prywatny, data_urodzenia, miejsce_urodzenia, adres_wysylka, dane_fv');
+        setKursanci((refreshed || []) as unknown as KursantAdmin[]);
+        setKomunikat(`Zapisano — ${k.imie} ${k.nazwisko}`);
+      }
+    }}
+    style={{ width: '100%', fontSize: '11px', padding: '5px 8px', borderRadius: '7px', border: '0.5px solid var(--border)', fontFamily: 'Jost, sans-serif', resize: 'vertical' }} />
+</div>
+{/* Dane do faktury */}
+<div>
+  <div style={{ fontSize: '9px', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '5px' }}>Dane do faktury</div>
+  <textarea defaultValue={(k as any).dane_fv || ''} rows={2} placeholder="Nazwa, NIP, adres"
+    onBlur={async e => {
+      const val = e.target.value.trim();
+      if (val !== ((k as any).dane_fv || '').trim()) {
+        await supabase.from('kursanci').update({ dane_fv: val || null } as any).eq('id', k.id);
+        const { data: refreshed } = await supabase.from('kursanci').select('id, imie, nazwisko, email, telefon, grupa_id, user_id, certyfikat_url, notatki, dofinansowanie, folder_prywatny, data_urodzenia, miejsce_urodzenia, adres_wysylka, dane_fv');
+        setKursanci((refreshed || []) as unknown as KursantAdmin[]);
+        setKomunikat(`Zapisano — ${k.imie} ${k.nazwisko}`);
+      }
+    }}
+    style={{ width: '100%', fontSize: '11px', padding: '5px 8px', borderRadius: '7px', border: '0.5px solid var(--border)', fontFamily: 'Jost, sans-serif', resize: 'vertical' }} />
+</div>
                                   {/* Notatki */}
                                   <div>
                                     <div style={{ fontSize: '9px', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '5px' }}>Notatki</div>
@@ -5421,64 +5479,7 @@ setKomunikat(`Notatka zapisana — ${k.imie} ${k.nazwisko}`);
                               onBlur={async e => { const nowe = e.target.value.trim(); if (nowe !== (p.bio || '').trim()) { await supabase.from('prowadzacy').update({ bio: nowe || null }).eq('id', p.id); pobierzProwadzacy(); }}}
                               style={{ width: '100%', fontSize: '12px', padding: '6px 8px', border: '0.5px solid var(--border)', borderRadius: '7px', fontFamily: 'Jost, sans-serif', resize: 'vertical' }} />
                           </div>
-                          {/* Data urodzenia */}
-<div>
-  <div style={{ fontSize: '9px', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '5px' }}>Data urodzenia</div>
-  <input type="date" defaultValue={(k as any).data_urodzenia || ''}
-    onBlur={async e => {
-      if (e.target.value !== ((k as any).data_urodzenia || '')) {
-        await supabase.from('kursanci').update({ data_urodzenia: e.target.value || null } as any).eq('id', k.id);
-        const { data: refreshed } = await supabase.from('kursanci').select('id, imie, nazwisko, email, telefon, grupa_id, user_id, certyfikat_url, notatki, dofinansowanie, folder_prywatny, data_urodzenia, miejsce_urodzenia, adres_wysylka, dane_fv');
-        setKursanci((refreshed || []) as unknown as KursantAdmin[]);
-        setKomunikat(`Zapisano — ${k.imie} ${k.nazwisko}`);
-      }
-    }}
-    style={{ width: '100%', fontSize: '11px', padding: '5px 8px', borderRadius: '7px', border: '0.5px solid var(--border)', fontFamily: 'Jost, sans-serif' }} />
-</div>
-{/* Miejsce urodzenia */}
-<div>
-  <div style={{ fontSize: '9px', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '5px' }}>Miejsce urodzenia</div>
-  <input defaultValue={(k as any).miejsce_urodzenia || ''} placeholder="np. Warszawa"
-    onBlur={async e => {
-      if (e.target.value !== ((k as any).miejsce_urodzenia || '')) {
-        await supabase.from('kursanci').update({ miejsce_urodzenia: e.target.value || null } as any).eq('id', k.id);
-        const { data: refreshed } = await supabase.from('kursanci').select('id, imie, nazwisko, email, telefon, grupa_id, user_id, certyfikat_url, notatki, dofinansowanie, folder_prywatny, data_urodzenia, miejsce_urodzenia, adres_wysylka, dane_fv');
-        setKursanci((refreshed || []) as unknown as KursantAdmin[]);
-        setKomunikat(`Zapisano — ${k.imie} ${k.nazwisko}`);
-      }
-    }}
-    style={{ width: '100%', fontSize: '11px', padding: '5px 8px', borderRadius: '7px', border: '0.5px solid var(--border)', fontFamily: 'Jost, sans-serif' }} />
-</div>
-{/* Adres do wysyłek */}
-<div>
-  <div style={{ fontSize: '9px', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '5px' }}>Adres do wysyłek</div>
-  <textarea defaultValue={(k as any).adres_wysylka || ''} rows={2} placeholder="Ulica, kod, miasto"
-    onBlur={async e => {
-      const val = e.target.value.trim();
-      if (val !== ((k as any).adres_wysylka || '').trim()) {
-        await supabase.from('kursanci').update({ adres_wysylka: val || null } as any).eq('id', k.id);
-        const { data: refreshed } = await supabase.from('kursanci').select('id, imie, nazwisko, email, telefon, grupa_id, user_id, certyfikat_url, notatki, dofinansowanie, folder_prywatny, data_urodzenia, miejsce_urodzenia, adres_wysylka, dane_fv');
-        setKursanci((refreshed || []) as unknown as KursantAdmin[]);
-        setKomunikat(`Zapisano — ${k.imie} ${k.nazwisko}`);
-      }
-    }}
-    style={{ width: '100%', fontSize: '11px', padding: '5px 8px', borderRadius: '7px', border: '0.5px solid var(--border)', fontFamily: 'Jost, sans-serif', resize: 'vertical' }} />
-</div>
-{/* Dane do faktury */}
-<div>
-  <div style={{ fontSize: '9px', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '5px' }}>Dane do faktury</div>
-  <textarea defaultValue={(k as any).dane_fv || ''} rows={2} placeholder="Nazwa, NIP, adres"
-    onBlur={async e => {
-      const val = e.target.value.trim();
-      if (val !== ((k as any).dane_fv || '').trim()) {
-        await supabase.from('kursanci').update({ dane_fv: val || null } as any).eq('id', k.id);
-        const { data: refreshed } = await supabase.from('kursanci').select('id, imie, nazwisko, email, telefon, grupa_id, user_id, certyfikat_url, notatki, dofinansowanie, folder_prywatny, data_urodzenia, miejsce_urodzenia, adres_wysylka, dane_fv');
-        setKursanci((refreshed || []) as unknown as KursantAdmin[]);
-        setKomunikat(`Zapisano — ${k.imie} ${k.nazwisko}`);
-      }
-    }}
-    style={{ width: '100%', fontSize: '11px', padding: '5px 8px', borderRadius: '7px', border: '0.5px solid var(--border)', fontFamily: 'Jost, sans-serif', resize: 'vertical' }} />
-</div>
+                        
                           {/* Notatki */}
                           <div style={{ marginTop: '10px' }}>
                             <label style={{ fontSize: '10px', fontWeight: 600, color: '#c8a84b', textTransform: 'uppercase', letterSpacing: '0.4px', display: 'block', marginBottom: '4px' }}>🔒 Notatki wewnętrzne</label>
