@@ -5912,16 +5912,16 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
             {[
               {
                 kind: 'Online', title: 'Materiały dodatkowe', sub: 'kursy i artykuły',
-                img: 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=400&q=70',
+                img: '/ikona-materialy-dodatkowe.svg',
                 href: (grupaInfo as any)?.link_materialow || null, dot: '#B35758',
               },
             
               { kind: 'Drive', title: 'Folder grupy', sub: 'Google Drive',
-                img: 'https://images.unsplash.com/photo-1567016376408-0226e4d0c1ea?auto=format&fit=crop&w=400&q=70',
+                img: '/ikona-folder-grupy.svg',
                 href: grupaInfo?.drive_link || null, dot: '#4a7a47',
               },
               { kind: 'Wideo', title: 'Nagrania z zajęć', sub: 'dotyczy grup online',
-                img: 'https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&w=400&q=70',
+                img: '/ikona-nagrania.svg',
                 href: (grupaInfo as any)?.link_nagran || null, dot: '#1565c0',
               },
             ].map((item, i) => (

@@ -1,0 +1,14 @@
+<svg viewBox="0 0 120 120" width="120" height="120" xmlns="http://www.w3.org/2000/svg" role="img">
+  <title>Nagrania z zajęć</title>
+  <circle cx="60" cy="60" r="54" fill="#EDE4E4"/>
+  <rect x="20" y="34" width="80" height="52" rx="6" fill="#1C2B3A"/>
+  <rect x="26" y="40" width="68" height="40" rx="3" fill="#2A3F54"/>
+  <rect x="26" y="60" width="68" height="20" rx="2" fill="#152030" opacity="0.5"/>
+  <rect x="50" y="86" width="20" height="6" rx="2" fill="#1C2B3A"/>
+  <rect x="44" y="90" width="32" height="5" rx="2.5" fill="#152030"/>
+  <circle cx="60" cy="60" r="16" fill="#AD6B68" opacity="0.9"/>
+  <circle cx="60" cy="60" r="16" fill="none" stroke="#C98080" stroke-width="1.5"/>
+  <polygon points="56,53 56,67 71,60" fill="white" opacity="0.95"/>
+  <circle cx="80" cy="44" r="4" fill="#AD6B68"/>
+  <circle cx="80" cy="44" r="2.5" fill="#C05050"/>
+</svg>
