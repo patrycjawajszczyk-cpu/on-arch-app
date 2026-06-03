@@ -5488,14 +5488,7 @@ const ikonaSVG = o.typ === 'Pilne'
   function renderTekstZLinkami(tekst: string) {
     if (!tekst) return null;
     return tekst.split('\n').map((linia, li) => {
-      // **pogrubienie**
       const czesci: React.ReactNode[] = [];
-      const boldRegex = /\*\*(.+?)\*\*/g;
-      const urlRegex = /(https?:\/\/[^\s\)]+)/g;
-      let ostatni = 0;
-      let match;
-  
-      // Połącz bold + URL w jednym przebiegu przez linie
       const combined = /\*\*(.+?)\*\*|(https?:\/\/[^\s\)]+)/g;
       let m;
       let pos = 0;
@@ -5514,7 +5507,6 @@ const ikonaSVG = o.typ === 'Pilne'
         pos = m.index + m[0].length;
       }
       if (pos < linia.length) czesci.push(<span key={`t${li}-end`}>{linia.slice(pos)}</span>);
-  
       return <div key={li} style={{ minHeight: linia.trim() === '' ? '12px' : undefined }}>{czesci}</div>;
     });
   }
