@@ -5487,29 +5487,36 @@ const ikonaSVG = o.typ === 'Pilne'
 
   function renderTekstZLinkami(tekst: string) {
     if (!tekst) return null;
-    const urlRegex = /(https?:\/\/[^\s]+)/g;
-    const czesci = tekst.split(urlRegex);
-    return czesci.map((czesc, i) =>
-      urlRegex.test(czesc) ? (
-        <a
-          key={i}
-          href={czesc}
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{
-            color: 'var(--brand)',
-            textDecoration: 'underline',
-            textDecorationStyle: 'dotted',
-            textUnderlineOffset: '3px',
-            wordBreak: 'break-all',
-          }}
-        >
-          {czesc}
-        </a>
-      ) : (
-        <span key={i}>{czesc}</span>
-      )
-    );
+    return tekst.split('\n').map((linia, li) => {
+      // **pogrubienie**
+      const czesci: React.ReactNode[] = [];
+      const boldRegex = /\*\*(.+?)\*\*/g;
+      const urlRegex = /(https?:\/\/[^\s\)]+)/g;
+      let ostatni = 0;
+      let match;
+  
+      // Połącz bold + URL w jednym przebiegu przez linie
+      const combined = /\*\*(.+?)\*\*|(https?:\/\/[^\s\)]+)/g;
+      let m;
+      let pos = 0;
+      while ((m = combined.exec(linia)) !== null) {
+        if (m.index > pos) czesci.push(<span key={`t${li}-${pos}`}>{linia.slice(pos, m.index)}</span>);
+        if (m[1] !== undefined) {
+          czesci.push(<strong key={`b${li}-${m.index}`}>{m[1]}</strong>);
+        } else {
+          czesci.push(
+            <a key={`a${li}-${m.index}`} href={m[0]} target="_blank" rel="noopener noreferrer"
+              style={{ color: 'var(--brand)', textDecoration: 'underline', textDecorationStyle: 'dotted', textUnderlineOffset: '3px', wordBreak: 'break-all' }}>
+              {m[0]}
+            </a>
+          );
+        }
+        pos = m.index + m[0].length;
+      }
+      if (pos < linia.length) czesci.push(<span key={`t${li}-end`}>{linia.slice(pos)}</span>);
+  
+      return <div key={li} style={{ minHeight: linia.trim() === '' ? '12px' : undefined }}>{czesci}</div>;
+    });
   }
 
   function EkranSzczegoly({ o, onWroc }: { o: Ogloszenie; onWroc: () => void }) {
