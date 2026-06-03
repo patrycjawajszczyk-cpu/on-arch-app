@@ -2892,8 +2892,8 @@ function urlBase64ToUint8Array(base64String: string) {
     const [widokZjazdow, setWidokZjazdow] = useState<'tabela' | 'kalendarz'>('tabela');
     const [kalFiltrGrupa, setKalFiltrGrupa] = useState('');
     const [kalFiltrProwadzacy, setKalFiltrProwadzacy] = useState('');
-    const [zwinieteZjazdy, setZwinieteZjazdy] = useState<Set<number>>(new Set());
-    const [zwinieteZadania, setZwinieteZadania] = useState<Set<number>>(new Set());
+    const [zwinieteZjazdy, setZwinieteZjazdy] = useState<Set<number>>(() => new Set(grupy.map(g => g.id)));
+const [zwinieteZadania, setZwinieteZadania] = useState<Set<number>>(() => new Set(grupy.map(g => g.id)));
     const [edytowanyKursant, setEdytowanyKursant] = useState<{ id: number; imie: string; nazwisko: string; email: string; telefon: string } | null>(null);
     const [szukajKursant, setSzukajKursant] = useState('');
     const [filtrGrupaKursant, setFiltrGrupaKursant] = useState('');
@@ -2962,7 +2962,13 @@ function urlBase64ToUint8Array(base64String: string) {
       supabase.from('zadania_odpowiedzi').select('*').order('created_at', { ascending: false }).then(({ data }) => setOdpowiedziZadan(data || []));
     }, []);
 
-    async function pobierzGrupy() { const { data } = await supabase.from('grupy').select('*'); setGrupy(data || []); }
+    async function pobierzGrupy() {
+      const { data } = await supabase.from('grupy').select('*');
+      setGrupy(data || []);
+      const ids = new Set((data || []).map(g => g.id));
+      setZwinieteZjazdy(ids);
+      setZwinieteZadania(new Set(ids));
+    }
     async function pobierzOgloszenia() { const { data } = await supabase.from('ogloszenia').select('*').order('data_utworzenia', { ascending: false }); setOgloszenia(data || []); }
     async function pobierzZadania() { const { data } = await supabase.from('zadania').select('*').order('created_at', { ascending: false }); setZadania(data || []); }
     async function pobierzZjazdy() {
@@ -4014,9 +4020,15 @@ function urlBase64ToUint8Array(base64String: string) {
                   )}
 
                   {/* Zgrupowane per grupa */}
-                  {grupy
-                    .filter(g => !((nowyZjazd as any)._filterGrupa) || g.id === parseInt((nowyZjazd as any)._filterGrupa))
-                    .map(g => {
+                  {[...grupy]
+  .filter(g => !((nowyZjazd as any)._filterGrupa) || g.id === parseInt((nowyZjazd as any)._filterGrupa))
+  .sort((a, b) => {
+    const sa = statusGrupy(a.id) === 'aktywna' ? 0 : 1;
+    const sb = statusGrupy(b.id) === 'aktywna' ? 0 : 1;
+    return sa - sb;
+  })
+  .map(g => {
+    const zakonczona = statusGrupy(g.id) === 'zakonczona';
                       const zjazdyGrupy = zjazdy.filter(z => z.grupa_id === g.id);
                       if (zjazdyGrupy.length === 0) return null;
                       const zwinieta = zwinieteZjazdy.has(g.id);
@@ -4024,7 +4036,7 @@ function urlBase64ToUint8Array(base64String: string) {
                         <div key={g.id} style={{ marginBottom: '12px' }}>
                           {/* Nagłówek grupy — klikalny */}
                           <div onClick={() => setZwinieteZjazdy(prev => { const next = new Set(prev); next.has(g.id) ? next.delete(g.id) : next.add(g.id); return next; })}
-                            style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 14px', background: 'white', borderRadius: zwinieta ? '12px' : '12px 12px 0 0', border: '0.5px solid var(--border)', cursor: 'pointer', userSelect: 'none' as const }}>
+                            style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 14px', background: zakonczona ? '#fafafa' : 'white', borderRadius: zwinieta ? '12px' : '12px 12px 0 0', border: '0.5px solid var(--border)', cursor: 'pointer', userSelect: 'none' as const, opacity: zakonczona ? 0.6 : 1 }}>
                             <span style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'inline-block', transform: zwinieta ? 'rotate(-90deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}>▾</span>
                             <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '17px', fontWeight: 400, color: 'var(--brand-dark)', flex: 1 }}>{g.nazwa}</span>
                             <span style={{ fontSize: '11px', color: 'var(--text-muted)', background: 'var(--bg)', padding: '2px 8px', borderRadius: '10px', border: '0.5px solid var(--border)' }}>
@@ -5089,9 +5101,15 @@ setKomunikat(`Notatka zapisana — ${k.imie} ${k.nazwisko}`);
                     </div>
                   </div>
 
-                  {grupy
-                    .filter(g => !wybranaGrupaZadan || g.id === parseInt(wybranaGrupaZadan))
-                    .map(g => {
+                  {[...grupy]
+  .filter(g => !wybranaGrupaZadan || g.id === parseInt(wybranaGrupaZadan))
+  .sort((a, b) => {
+    const sa = statusGrupy(a.id) === 'aktywna' ? 0 : 1;
+    const sb = statusGrupy(b.id) === 'aktywna' ? 0 : 1;
+    return sa - sb;
+  })
+  .map(g => {
+    const zakonczona = statusGrupy(g.id) === 'zakonczona';
                       const zadaniaGrupy = zadania.filter(z => z.grupa_id === g.id);
                       if (zadaniaGrupy.length === 0) return null;
                       const zwinieta = zwinieteZadania.has(g.id);
@@ -5099,7 +5117,7 @@ setKomunikat(`Notatka zapisana — ${k.imie} ${k.nazwisko}`);
                         <div key={g.id} style={{ marginBottom: '10px' }}>
                           {/* Nagłówek grupy */}
                           <div onClick={() => setZwinieteZadania(prev => { const next = new Set(prev); next.has(g.id) ? next.delete(g.id) : next.add(g.id); return next; })}
-                            style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '9px 14px', background: 'white', borderRadius: zwinieta ? '12px' : '12px 12px 0 0', border: '0.5px solid var(--border)', cursor: 'pointer', userSelect: 'none' as const }}>
+                            style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '9px 14px', background: zakonczona ? '#fafafa' : 'white', borderRadius: zwinieta ? '12px' : '12px 12px 0 0', border: '0.5px solid var(--border)', cursor: 'pointer', userSelect: 'none' as const, opacity: zakonczona ? 0.6 : 1 }}>
                             <span style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'inline-block', transform: zwinieta ? 'rotate(-90deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}>▾</span>
                             <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '16px', fontWeight: 400, color: 'var(--brand-dark)', flex: 1 }}>{g.nazwa}</span>
                             <span style={{ fontSize: '11px', color: 'var(--text-muted)', background: 'var(--bg)', padding: '2px 8px', borderRadius: '10px', border: '0.5px solid var(--border)' }}>
