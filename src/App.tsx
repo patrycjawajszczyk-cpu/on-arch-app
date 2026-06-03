@@ -5928,7 +5928,7 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
               <div key={i} style={{ width: '155px', flexShrink: 0, cursor: item.href ? 'pointer' : 'default' }}
                 onClick={() => item.href && window.open(item.href, '_blank')}>
                 <div style={{ width: '155px', height: '110px', borderRadius: '14px', background: `url(${item.img}) center/cover`, position: 'relative', marginBottom: '8px', overflow: 'hidden' }}>
-                  <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(160deg, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.45) 100%)' }} />
+                  <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(160deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.10) 100%)' }} />
                   <div style={{ position: 'absolute', top: 8, left: 8, display: 'flex', alignItems: 'center', gap: '5px' }}>
                     <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: item.dot }} />
                     <span style={{ padding: '2px 7px', background: 'rgba(255,255,255,0.9)', fontSize: '8px', letterSpacing: '0.18em', textTransform: 'uppercase', fontWeight: 700, borderRadius: '999px', color: '#1a1614' }}>{item.kind}</span>
