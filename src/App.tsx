@@ -5761,6 +5761,11 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
           <div style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: '36px', lineHeight: 1.05, color: 'var(--text)', marginBottom: '6px' }}>
             Cześć, {imie}.
           </div>
+          {kursant?.grupy?.nazwa && (
+            <div style={{ fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--brand)', fontWeight: 600, marginBottom: '4px' }}>
+              {kursant.grupy.nazwa}
+            </div>
+          )}
           {najblizszy && (
             <div style={{ fontSize: '13px', color: 'var(--text-muted)', lineHeight: 1.5 }}>
               Twój <strong style={{ color: 'var(--text)' }}>{najblizszy.nr}. zjazd</strong>{' '}
@@ -5806,6 +5811,9 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
         display: 'flex', flexDirection: 'column', gap: '8px',
         border: '0.5px solid rgba(255,255,255,0.14)',
       }}>
+        {najblizszy.tematy && (
+          <DetailRowDark label="Temat" value={najblizszy.tematy}/>
+        )}
         <DetailRowDark label="Tryb" value={najblizszy.typ === 'online' ? 'Online' : 'Stacjonarnie'} accent={najblizszy.typ === 'online'}/>
         {najblizszy.typ === 'stacjonarny' && najblizszy.sala && najblizszy.sala !== 'Do uzupełnienia' && (
           <DetailRowDark label="Sala" value={najblizszy.sala}/>
