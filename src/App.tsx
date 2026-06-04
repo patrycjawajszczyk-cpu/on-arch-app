@@ -5644,13 +5644,17 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
     useEffect(() => {
       if (!najblizszy?.data_dzien1) return;
       const update = () => {
-        const target = new Date(najblizszy.data_dzien1 + 'T09:00:00');
-        const diff = target.getTime() - Date.now();
+        const dzisDzien = new Date();
+        dzisDzien.setHours(0, 0, 0, 0);
+        const targetDzien = new Date(najblizszy.data_dzien1 + 'T00:00:00');
+        targetDzien.setHours(0, 0, 0, 0);
+        const diff = targetDzien.getTime() - dzisDzien.getTime();
         if (diff <= 0) { setCountdown({ dni: 0, godz: 0, min: 0 }); return; }
+        const diffMs = new Date(najblizszy.data_dzien1 + 'T09:00:00').getTime() - Date.now();
         setCountdown({
-          dni: Math.floor(diff / 86400000),
-          godz: Math.floor((diff % 86400000) / 3600000),
-          min: Math.floor((diff % 3600000) / 60000),
+          dni: Math.round(diff / 86400000),
+          godz: Math.floor((diffMs % 86400000) / 3600000),
+          min: Math.floor((diffMs % 3600000) / 60000),
         });
       };
       update();
@@ -5658,12 +5662,12 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
       return () => clearInterval(id);
     }, [najblizszy?.data_dzien1]);
 
-    useEffect(() => {
-      if (!najblizszy?.id || !user?.id) return;
-      supabase.from('obecnosci').select('*')
-        .eq('zjazd_id', najblizszy.id).eq('user_id', user.id)
-        .then(({ data }) => setObecnosciNajblizszy(data || []));
-    }, [najblizszy?.id, user?.id]);
+      useEffect(() => {
+        if (!najblizszy?.id || !user?.id) return;
+        supabase.from('obecnosci').select('*')
+          .eq('zjazd_id', najblizszy.id).eq('user_id', user.id)
+          .then(({ data }) => setObecnosciNajblizszy(data || []));
+      }, [najblizszy?.id, user?.id]);
 
     useEffect(() => {
       if (!user?.id || zakonczone === 0) return;
