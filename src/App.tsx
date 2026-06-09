@@ -4960,7 +4960,9 @@ setKomunikat(`Notatka zapisana — ${k.imie} ${k.nazwisko}`);
                         <div className="login-field"><label>Link do nagrań z zajęć</label><input type="url" value={(nowaGrupa as any).link_nagran || ''} onChange={e => setNowaGrupa({ ...nowaGrupa, ...(nowaGrupa as any), link_nagran: e.target.value })} placeholder="https://..." /></div>
                         <div className="login-field"><label>Numer usługi BUR</label><input type="text" value={nowaGrupa.numer_uslugi} onChange={e => setNowaGrupa({ ...nowaGrupa, numer_uslugi: e.target.value })} placeholder="np. 2025/09/24/195975/3028966" /></div>
                         <div className="login-field"><label>Tryb zajęć</label><select value={nowaGrupa.tryb} onChange={e => setNowaGrupa({ ...nowaGrupa, tryb: e.target.value })}><option value="stacjonarny">Stacjonarny</option><option value="online">Online</option><option value="hybrydowy">Hybrydowy</option></select></div>
+                        <div className="login-field"><label>Liczba godzin szkoleniowych</label><input type="number" value={(nowaGrupa as any).liczba_godzin || ''} onChange={e => setNowaGrupa({ ...nowaGrupa, ...(nowaGrupa as any), liczba_godzin: e.target.value })} placeholder="np. 120" /></div>
                         <button className="login-btn" type="submit">Dodaj grupę</button>
+            
                       </form>
                     </div>
                   )}
