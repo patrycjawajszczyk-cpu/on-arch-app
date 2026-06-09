@@ -4378,8 +4378,7 @@ const [zwinieteZadania, setZwinieteZadania] = useState<Set<number>>(() => new Se
                             <tr style={{ background: dofinansowanie ? '#f0f6ff' : '#fafaf8', borderBottom: '0.5px solid var(--border-soft)' }}>
                               <td colSpan={6} style={{ padding: '12px 16px 14px 46px' }}>
                                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '14px' }}>
-                                // ============================================================
-
+                             
 {/* Certyfikat */}
 <div>
   <div style={{ fontSize: '9px', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '5px' }}>Certyfikat</div>
