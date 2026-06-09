@@ -1,6 +1,7 @@
   import { useState, useEffect, useRef } from 'react';
   import './App.css';
   import { supabase } from './supabase';
+const CERTYFIKAT_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwdPxr9x1AcHLjemaDA3UNa5XcM4YRlO7ZHHDVpNgYrCle8u-_oomsTUF0TbsgxGIux/exec';
   const VAPID_PUBLIC_KEY = 'BFAbFXIqcGQtsjB0EWALrzt14OOGbPsEZtK2RHuz2R5REYhBtiUOg_H1vjq6XiwdnyJnyftcY0dM8bLuWcqba7o';
 
 function urlBase64ToUint8Array(base64String: string) {
@@ -4377,21 +4378,114 @@ const [zwinieteZadania, setZwinieteZadania] = useState<Set<number>>(() => new Se
                             <tr style={{ background: dofinansowanie ? '#f0f6ff' : '#fafaf8', borderBottom: '0.5px solid var(--border-soft)' }}>
                               <td colSpan={6} style={{ padding: '12px 16px 14px 46px' }}>
                                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '14px' }}>
-                                  {/* Certyfikat */}
-                                  <div>
-                                    <div style={{ fontSize: '9px', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '5px' }}>Certyfikat (link)</div>
-                                    <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-                                      <input type="url" defaultValue={k.certyfikat_url || ''} placeholder="https://drive.google.com/..."
-                                        onBlur={async e => {
-                                          if (e.target.value !== (k.certyfikat_url || '')) {
-                                            await supabase.from('kursanci').update({ certyfikat_url: e.target.value || null }).eq('id', k.id);
-                                            setKomunikat(`Certyfikat zapisany — ${k.imie} ${k.nazwisko}`);
-                                          }
-                                        }}
-                                        style={{ flex: 1, fontSize: '11px', padding: '5px 8px', borderRadius: '7px', border: '0.5px solid var(--border)', fontFamily: 'Jost, sans-serif', background: k.certyfikat_url ? '#f0faf4' : 'white' }} />
-                                      {k.certyfikat_url && <a href={k.certyfikat_url} target="_blank" rel="noopener noreferrer" style={{ fontSize: '14px', textDecoration: 'none' }}>🎓</a>}
-                                    </div>
-                                  </div>
+                                // ============================================================
+//  ZMIANA W App.tsx — przycisk "Wydaj certyfikat"
+//  Wklej w sekcji Certyfikat (linia ~4369) zamiast obecnego
+//  pola input z linkiem
+// ============================================================
+
+// 1. Na górze pliku (lub w osobnym pliku konfiguracyjnym)
+//    dodaj URL wdrożonego Apps Script:
+const CERTYFIKAT_SCRIPT_URL = 'TUTAJ_WKLEJ_URL_WDROZENIA_APPS_SCRIPT';
+
+// ─────────────────────────────────────────────────────────────
+// 2. Zastąp sekcję {/* Certyfikat */} w panelu kursantów:
+// ─────────────────────────────────────────────────────────────
+
+{/* Certyfikat */}
+<div>
+  <div style={{ fontSize: '9px', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '5px' }}>Certyfikat</div>
+
+  {k.certyfikat_url ? (
+    // Certyfikat już istnieje — pokaż link + opcja cofnięcia
+    <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+      <a href={k.certyfikat_url} target="_blank" rel="noopener noreferrer"
+        style={{ fontSize: '11px', color: 'var(--brand)', textDecoration: 'underline', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        🎓 {(k as any).nr_certyfikatu || 'Pobierz certyfikat'}
+      </a>
+      <button
+        onClick={async () => {
+          if (!confirm('Czy na pewno chcesz usunąć link do certyfikatu?')) return;
+          await supabase.from('kursanci').update({ certyfikat_url: null } as any).eq('id', k.id);
+          const { data: refreshed } = await supabase.from('kursanci').select('id, imie, nazwisko, email, telefon, grupa_id, user_id, certyfikat_url, notatki, dofinansowanie, folder_prywatny, data_urodzenia, miejsce_urodzenia, adres_wysylka, dane_fv');
+          setKursanci((refreshed || []) as unknown as KursantAdmin[]);
+          setKomunikat('Certyfikat usunięty.');
+        }}
+        style={{ fontSize: '10px', color: '#999', background: 'none', border: 'none', cursor: 'pointer', padding: '2px 4px' }}>
+        ✕
+      </button>
+    </div>
+  ) : (
+    // Brak certyfikatu — przycisk generowania
+    <button
+      onClick={async () => {
+        const grupa = grupy.find(g => g.id === k.grupa_id);
+        if (!grupa) { setKomunikat('Brak danych grupy.'); return; }
+
+        // Sprawdź dane urodzenia
+        const dataUr = (k as any).data_urodzenia || null;
+        const miejsceUr = (k as any).miejsce_urodzenia || null;
+
+        // Data ukończenia — ostatni zjazd grupy lub dziś
+        const ostatniZjazd = zjazdy
+          .filter(z => z.grupa_id === k.grupa_id && z.status === 'zakonczony')
+          .sort((a, b) => (b.data_dzien1 || '').localeCompare(a.data_dzien1 || ''))[0];
+        const dataUkonczenia = ostatniZjazd?.data_dzien1 || new Date().toISOString().split('T')[0];
+
+        setKomunikat(`Generuję certyfikat dla ${k.imie} ${k.nazwisko}…`);
+
+        try {
+          const res = await fetch(CERTYFIKAT_SCRIPT_URL, {
+            method: 'POST',
+            body: JSON.stringify({
+              imie: k.imie,
+              nazwisko: k.nazwisko,
+              data_urodzenia: dataUr,
+              miejsce_urodzenia: miejsceUr,
+              nazwa_kursu: grupa.nazwa,
+              godziny: (grupa as any).liczba_godzin || '',
+              data_ukonczenia: dataUkonczenia,
+              tryb_kursu: grupa.tryb || 'online',
+              miasto_kursu: grupa.miasto || 'Łódź',
+            })
+          });
+          const json = await res.json();
+
+          if (json.ok) {
+            // Zapisz URL i numer w kursanci
+            await supabase.from('kursanci')
+              .update({ certyfikat_url: json.url, nr_certyfikatu: json.nr } as any)
+              .eq('id', k.id);
+
+            // Zapisz w tabeli certyfikaty
+            await supabase.from('certyfikaty').insert({
+              kursant_id: k.id,
+              nr_certyfikatu: json.nr,
+              nazwa_kursu: grupa.nazwa,
+              data_wydania: new Date().toISOString().split('T')[0],
+              pdf_url: json.url,
+            });
+
+            const { data: refreshed } = await supabase.from('kursanci').select('id, imie, nazwisko, email, telefon, grupa_id, user_id, certyfikat_url, notatki, dofinansowanie, folder_prywatny, data_urodzenia, miejsce_urodzenia, adres_wysylka, dane_fv');
+            setKursanci((refreshed || []) as unknown as KursantAdmin[]);
+            setKomunikat(`✅ Certyfikat ${json.nr} wygenerowany!`);
+          } else {
+            setKomunikat(`❌ Błąd: ${json.error}`);
+          }
+        } catch (err) {
+          setKomunikat('❌ Błąd połączenia ze skryptem.');
+        }
+      }}
+      style={{
+        fontSize: '11px', fontWeight: 600, letterSpacing: '0.1em',
+        padding: '6px 14px', borderRadius: '7px', cursor: 'pointer',
+        background: '#1C2B3A', color: 'white', border: 'none',
+        fontFamily: 'Jost, sans-serif', width: '100%'
+      }}>
+      🎓 Wydaj certyfikat
+    </button>
+  )}
+</div>
                                   {/* Folder prywatny */}
                                   <div>
                                     <div style={{ fontSize: '9px', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '5px' }}>Folder prywatny (link)</div>
