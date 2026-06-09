@@ -1,7 +1,7 @@
   import { useState, useEffect, useRef } from 'react';
   import './App.css';
   import { supabase } from './supabase';
-const CERTYFIKAT_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwdPxr9x1AcHLjemaDA3UNa5XcM4YRlO7ZHHDVpNgYrCle8u-_oomsTUF0TbsgxGIux/exec';
+const CERTYFIKAT_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzcLy027hhswd584_y2v8cb23H28BbuuD7VkIfAiPuXfl9nxh96kp-Hri1TOTmGy_hz/exec';
   const VAPID_PUBLIC_KEY = 'BFAbFXIqcGQtsjB0EWALrzt14OOGbPsEZtK2RHuz2R5REYhBtiUOg_H1vjq6XiwdnyJnyftcY0dM8bLuWcqba7o';
 
 function urlBase64ToUint8Array(base64String: string) {
