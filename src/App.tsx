@@ -4405,30 +4405,27 @@ const [zwinieteZadania, setZwinieteZadania] = useState<Set<number>>(() => new Se
   ) : (
     // Brak certyfikatu — przycisk generowania
     <button
-      onClick={async () => {
+      onClick={async (e) => {
+        e.stopPropagation();
+        e.currentTarget.style.opacity = '0.5';
+        e.currentTarget.textContent = 'Generuję…';
         const grupa = grupy.find(g => g.id === k.grupa_id);
         if (!grupa) { setKomunikat('Brak danych grupy.'); return; }
-
-        // Sprawdź dane urodzenia
-        const dataUr = (k as any).data_urodzenia || null;
-        const miejsceUr = (k as any).miejsce_urodzenia || null;
-
-        // Data ukończenia — ostatni zjazd grupy lub dziś
         const ostatniZjazd = zjazdy
           .filter(z => z.grupa_id === k.grupa_id && z.status === 'zakonczony')
           .sort((a, b) => (b.data_dzien1 || '').localeCompare(a.data_dzien1 || ''))[0];
         const dataUkonczenia = ostatniZjazd?.data_dzien1 || new Date().toISOString().split('T')[0];
-
         setKomunikat(`Generuję certyfikat dla ${k.imie} ${k.nazwisko}…`);
-
         try {
-          const res = await fetch(CERTYFIKAT_SCRIPT_URL, {
+          fetch(CERTYFIKAT_SCRIPT_URL, {
             method: 'POST',
+            mode: 'no-cors',
             body: JSON.stringify({
+              kursant_id: k.id,
               imie: k.imie,
               nazwisko: k.nazwisko,
-              data_urodzenia: dataUr,
-              miejsce_urodzenia: miejsceUr,
+              data_urodzenia: (k as any).data_urodzenia || null,
+              miejsce_urodzenia: (k as any).miejsce_urodzenia || null,
               nazwa_kursu: grupa.nazwa,
               godziny: (grupa as any).liczba_godzin || '',
               data_ukonczenia: dataUkonczenia,
@@ -4436,39 +4433,18 @@ const [zwinieteZadania, setZwinieteZadania] = useState<Set<number>>(() => new Se
               miasto_kursu: grupa.miasto || 'Łódź',
             })
           });
-          const json = await res.json();
-
-          if (json.ok) {
-            // Zapisz URL i numer w kursanci
-            await supabase.from('kursanci')
-              .update({ certyfikat_url: json.url, nr_certyfikatu: json.nr } as any)
-              .eq('id', k.id);
-
-            // Zapisz w tabeli certyfikaty
-            await supabase.from('certyfikaty').insert({
-              kursant_id: k.id,
-              nr_certyfikatu: json.nr,
-              nazwa_kursu: grupa.nazwa,
-              data_wydania: new Date().toISOString().split('T')[0],
-              pdf_url: json.url,
-            });
-
-            const { data: refreshed } = await supabase.from('kursanci').select('id, imie, nazwisko, email, telefon, grupa_id, user_id, certyfikat_url, notatki, dofinansowanie, folder_prywatny, data_urodzenia, miejsce_urodzenia, adres_wysylka, dane_fv');
-            setKursanci((refreshed || []) as unknown as KursantAdmin[]);
-            setKomunikat(`✅ Certyfikat ${json.nr} wygenerowany!`);
-          } else {
-            setKomunikat(`❌ Błąd: ${json.error}`);
-          }
-        } catch (err) {
+          setKomunikat('Generuję certyfikat… (może potrwać ~15 sek)');
+          await new Promise(r => setTimeout(r, 15000));
+          const { data: refreshed } = await supabase.from('kursanci').select('id, imie, nazwisko, email, telefon, grupa_id, user_id, certyfikat_url, notatki, dofinansowanie, folder_prywatny, data_urodzenia, miejsce_urodzenia, adres_wysylka, dane_fv');
+          setKursanci((refreshed || []) as unknown as KursantAdmin[]);
+          setKomunikat(`✅ Certyfikat wygenerowany!`);
+        } catch {
           setKomunikat('❌ Błąd połączenia ze skryptem.');
         }
       }}
-      style={{
-        fontSize: '11px', fontWeight: 600, letterSpacing: '0.1em',
-        padding: '6px 14px', borderRadius: '7px', cursor: 'pointer',
-        background: '#1C2B3A', color: 'white', border: 'none',
-        fontFamily: 'Jost, sans-serif', width: '100%'
-      }}>
+      onMouseDown={e => (e.currentTarget.style.opacity = '0.6')}
+      onMouseUp={e => (e.currentTarget.style.opacity = '1')}
+      style={{ fontSize: '11px', fontWeight: 600, letterSpacing: '0.1em', padding: '6px 14px', borderRadius: '7px', cursor: 'pointer', background: '#1C2B3A', color: 'white', border: 'none', fontFamily: 'Jost, sans-serif', width: '100%', transition: 'opacity 0.15s' }}>
       🎓 Wydaj certyfikat
     </button>
   )}
