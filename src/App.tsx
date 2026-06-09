@@ -7226,6 +7226,7 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
           const res = await fetch(CERTYFIKAT_SCRIPT_URL, {
             method: 'POST',
             body: JSON.stringify({
+              kursant_id: k.id,
               imie: k.imie,
               nazwisko: k.nazwisko,
               data_urodzenia: (k as any).data_urodzenia || null,
