@@ -7192,44 +7192,72 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
           )}
   
           {/* Certyfikat */}
-          {kursant?.folder_prywatny && (
-            <a href={kursant.folder_prywatny} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
-              <div style={{ background: 'white', borderRadius: '16px', padding: '14px 16px', border: '0.5px solid var(--border)', display: 'flex', alignItems: 'center', gap: '14px' }}>
-                <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: '#f3e8ff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                </div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text)', marginBottom: '1px' }}>Folder prywatny</div>
-                  <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Dokumenty poufne · umowy, prace zaliczeniowe</div>
-                </div>
-                <span style={{ color: 'var(--text-muted)', fontSize: '18px' }}>›</span>
-              </div>
-            </a>
-          )}
-          {kursant?.certyfikat_url ? (
-            <a href={kursant.certyfikat_url} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
-              <div style={{ background: 'linear-gradient(135deg, #fdf6e8 0%, #fef9f0 100%)', borderRadius: '16px', padding: '14px 16px', border: '0.5px solid #e8d4a0', display: 'flex', alignItems: 'center', gap: '14px' }}>
-                <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: '#c8a84b', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
-                </div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: '14px', fontWeight: 600, color: '#2a1f1f', marginBottom: '1px' }}>Certyfikat ukończenia</div>
-                  <div style={{ fontSize: '11px', color: '#a07830' }}>Kliknij aby pobrać / wyświetlić</div>
-                </div>
-                <span style={{ color: '#c8a84b', fontSize: '18px' }}>›</span>
-              </div>
-            </a>
-          ) : (
-            <div style={{ background: '#fafafa', borderRadius: '16px', padding: '14px 16px', border: '0.5px dashed #d0d0d0', display: 'flex', alignItems: 'center', gap: '14px', opacity: 0.6 }}>
-              <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: '#eee', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="1.8" strokeLinecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-              </div>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: '14px', fontWeight: 600, color: '#aaa', marginBottom: '1px' }}>Certyfikat ukończenia</div>
-                <div style={{ fontSize: '11px', color: '#bbb' }}>Dostępny po zakończeniu kursu</div>
-              </div>
-            </div>
-          )}
+<div>
+  <div style={{ fontSize: '9px', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '5px' }}>Certyfikat</div>
+  {k.certyfikat_url ? (
+    <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+      <a href={k.certyfikat_url} target="_blank" rel="noopener noreferrer"
+        style={{ fontSize: '11px', color: 'var(--brand)', textDecoration: 'underline', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        🎓 {(k as any).nr_certyfikatu || 'Pobierz certyfikat'}
+      </a>
+      <button
+        onClick={async (e) => {
+          e.stopPropagation();
+          if (!confirm('Czy na pewno chcesz usunąć certyfikat?')) return;
+          await supabase.from('kursanci').update({ certyfikat_url: null, nr_certyfikatu: null } as any).eq('id', k.id);
+          const { data: refreshed } = await supabase.from('kursanci').select('id, imie, nazwisko, email, telefon, grupa_id, user_id, certyfikat_url, notatki, dofinansowanie, folder_prywatny, data_urodzenia, miejsce_urodzenia, adres_wysylka, dane_fv');
+          setKursanci((refreshed || []) as unknown as KursantAdmin[]);
+          setKomunikat('Certyfikat usunięty.');
+        }}
+        style={{ fontSize: '10px', color: '#999', background: 'none', border: 'none', cursor: 'pointer', padding: '2px 4px' }}>✕</button>
+    </div>
+  ) : (
+    <button
+      onClick={async (e) => {
+        e.stopPropagation();
+        const grupa = grupy.find(g => g.id === k.grupa_id);
+        if (!grupa) { setKomunikat('Brak danych grupy.'); return; }
+        const ostatniZjazd = zjazdy
+          .filter(z => z.grupa_id === k.grupa_id && z.status === 'zakonczony')
+          .sort((a, b) => (b.data_dzien1 || '').localeCompare(a.data_dzien1 || ''))[0];
+        const dataUkonczenia = ostatniZjazd?.data_dzien1 || new Date().toISOString().split('T')[0];
+        setKomunikat(`Generuję certyfikat dla ${k.imie} ${k.nazwisko}…`);
+        try {
+          const res = await fetch(CERTYFIKAT_SCRIPT_URL, {
+            method: 'POST',
+            body: JSON.stringify({
+              imie: k.imie,
+              nazwisko: k.nazwisko,
+              data_urodzenia: (k as any).data_urodzenia || null,
+              miejsce_urodzenia: (k as any).miejsce_urodzenia || null,
+              nazwa_kursu: grupa.nazwa,
+              godziny: (grupa as any).liczba_godzin || '',
+              data_ukonczenia: dataUkonczenia,
+              tryb_kursu: grupa.tryb || 'online',
+              miasto_kursu: grupa.miasto || 'Łódź',
+            })
+          });
+          const json = await res.json();
+          if (json.ok) {
+            await supabase.from('kursanci').update({ certyfikat_url: json.url, nr_certyfikatu: json.nr } as any).eq('id', k.id);
+            await supabase.from('certyfikaty').insert({ kursant_id: k.id, nr_certyfikatu: json.nr, nazwa_kursu: grupa.nazwa, data_wydania: new Date().toISOString().split('T')[0], pdf_url: json.url });
+            const { data: refreshed } = await supabase.from('kursanci').select('id, imie, nazwisko, email, telefon, grupa_id, user_id, certyfikat_url, notatki, dofinansowanie, folder_prywatny, data_urodzenia, miejsce_urodzenia, adres_wysylka, dane_fv');
+            setKursanci((refreshed || []) as unknown as KursantAdmin[]);
+            setKomunikat(`✅ Certyfikat ${json.nr} wygenerowany!`);
+          } else {
+            setKomunikat(`❌ Błąd: ${json.error}`);
+          }
+        } catch {
+          setKomunikat('❌ Błąd połączenia ze skryptem.');
+        }
+      }}
+      onMouseDown={e => (e.currentTarget.style.opacity = '0.6')}
+      onMouseUp={e => (e.currentTarget.style.opacity = '1')}
+      style={{ fontSize: '11px', fontWeight: 600, letterSpacing: '0.1em', padding: '6px 14px', borderRadius: '7px', cursor: 'pointer', background: '#1C2B3A', color: 'white', border: 'none', fontFamily: 'Jost, sans-serif', width: '100%', transition: 'opacity 0.15s' }}>
+      🎓 Wydaj certyfikat
+    </button>
+  )}
+</div>
   
           {/* Ankieta */}
           {ankietaDostepna ? (
