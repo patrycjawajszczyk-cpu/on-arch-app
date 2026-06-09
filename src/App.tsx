@@ -4379,18 +4379,6 @@ const [zwinieteZadania, setZwinieteZadania] = useState<Set<number>>(() => new Se
                               <td colSpan={6} style={{ padding: '12px 16px 14px 46px' }}>
                                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '14px' }}>
                                 // ============================================================
-//  ZMIANA W App.tsx — przycisk "Wydaj certyfikat"
-//  Wklej w sekcji Certyfikat (linia ~4369) zamiast obecnego
-//  pola input z linkiem
-// ============================================================
-
-// 1. Na górze pliku (lub w osobnym pliku konfiguracyjnym)
-//    dodaj URL wdrożonego Apps Script:
-const CERTYFIKAT_SCRIPT_URL = 'TUTAJ_WKLEJ_URL_WDROZENIA_APPS_SCRIPT';
-
-// ─────────────────────────────────────────────────────────────
-// 2. Zastąp sekcję {/* Certyfikat */} w panelu kursantów:
-// ─────────────────────────────────────────────────────────────
 
 {/* Certyfikat */}
 <div>
