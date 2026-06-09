@@ -4311,7 +4311,7 @@ const [zwinieteZadania, setZwinieteZadania] = useState<Set<number>>(() => new Se
                                   <input value={edytowanyKursant.nazwisko} onChange={e => setEdytowanyKursant({ ...edytowanyKursant, nazwisko: e.target.value })}
                                     style={{ width: '100px', fontSize: '11px', padding: '3px 6px', border: '0.5px solid var(--brand-mid)', borderRadius: '6px', fontFamily: 'Jost, sans-serif' }} />
                                 </div>
-                              {k.certyfikat_url && <span title="Certyfikat wydany" style={{ marginLeft: '6px', fontSize: '13px' }}>📜</span>}
+                              ) : <span style={{ fontWeight: 500, color: dofinansowanie ? '#1565c0' : 'var(--text)' }}>{k.imie} {k.nazwisko}{k.certyfikat_url && <span title="Certyfikat wydany" style={{ marginLeft: '6px', fontSize: '13px' }}>📜</span>}</span>}
                             </td>
                             {/* Email */}
                             <td style={{ padding: '6px 10px' }} onClick={() => !edytuje && setRozwinietaKursant(rozwiniety ? null : k.id)}>
