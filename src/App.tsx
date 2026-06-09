@@ -4900,6 +4900,38 @@ setKomunikat(`Notatka zapisana — ${k.imie} ${k.nazwisko}`);
                       <div style={{ background: 'white', borderRadius: '14px', border: '0.5px solid var(--border)', padding: '20px 24px' }}>
                         <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text)', marginBottom: '16px' }}>Ustawienia grupy</div>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                        {[
+                            { label: 'Nazwa grupy', field: 'nazwa', placeholder: 'np. Projektowanie Wnętrz' },
+                            { label: 'Miasto', field: 'miasto', placeholder: 'np. Łódź' },
+                            { label: 'Edycja', field: 'edycja', placeholder: 'np. 09.03' },
+                            { label: 'Numer usługi BUR', field: 'numer_uslugi', placeholder: 'np. 2025/09/...' },
+                          ].map(({ label, field, placeholder }) => (
+                            <div key={field}>
+                              <div style={{ fontSize: '10px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.2em', marginBottom: '5px' }}>{label}</div>
+                              <input type="text" defaultValue={(g as any)[field] || ''} placeholder={placeholder}
+                                onBlur={async e => {
+                                  if (e.target.value !== ((g as any)[field] || '')) {
+                                    await supabase.from('grupy').update({ [field]: e.target.value || null }).eq('id', g.id);
+                                    pobierzGrupy();
+                                    setKomunikat(`Zapisano — ${label}`);
+                                  }
+                                }}
+                                style={{ width: '100%', fontSize: '13px', padding: '9px 12px', border: '0.5px solid var(--border)', borderRadius: '10px', fontFamily: 'Jost, sans-serif', background: 'white' }} />
+                            </div>
+                          ))}
+                          <div>
+                            <div style={{ fontSize: '10px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.2em', marginBottom: '5px' }}>Liczba godzin szkoleniowych</div>
+                            <input type="number" defaultValue={(g as any).liczba_godzin || ''} placeholder="np. 120"
+                              onBlur={async e => {
+                                const val = e.target.value ? parseInt(e.target.value) : null;
+                                if (val !== ((g as any).liczba_godzin ?? null)) {
+                                  await supabase.from('grupy').update({ liczba_godzin: val }).eq('id', g.id);
+                                  pobierzGrupy();
+                                  setKomunikat('Zapisano — liczba godzin');
+                                }
+                              }}
+                              style={{ width: '100%', fontSize: '13px', padding: '9px 12px', border: '0.5px solid var(--border)', borderRadius: '10px', fontFamily: 'Jost, sans-serif', background: 'white' }} />
+                          </div>
                           {[
                             { label: 'Folder grupy (Google Drive)', field: 'drive_link', placeholder: 'https://drive.google.com/...' },
                             { label: 'Materiały online', field: 'link_materialow', placeholder: 'https://...' },
