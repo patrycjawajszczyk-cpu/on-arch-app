@@ -1662,7 +1662,7 @@ function urlBase64ToUint8Array(base64String: string) {
       // 4. Pobierz tylko swoje grupy, kursantów, zadania, ogłoszenia
       const [{ data: gr }, { data: ku }, { data: og }, { data: zad }, { data: odp }] = await Promise.all([
         supabase.from('grupy').select('*').in('id', grupyIds),
-        supabase.from('kursanci').select('id, imie, nazwisko, email, telefon, grupa_id, user_id, certyfikat_url, notatki, dofinansowanie, folder_prywatny, data_urodzenia, miejsce_urodzenia, adres_wysylka, dane_fv').eq('rola', 'kursant').in('grupa_id', grupyIds),
+        supabase.from('kursanci').select('id, imie, nazwisko, email, telefon, grupa_id, user_id, certyfikat_url, nr_certyfikatu, notatki, dofinansowanie, folder_prywatny, data_urodzenia, miejsce_urodzenia, adres_wysylka, dane_fv').eq('rola', 'kursant').in('grupa_id', grupyIds),
         supabase.from('ogloszenia').select('*').order('data_utworzenia', { ascending: false }),
         supabase.from('zadania').select('*').in('grupa_id', grupyIds).order('created_at', { ascending: false }),
         supabase.from('zadania_odpowiedzi').select('*').order('created_at', { ascending: false }),
@@ -2958,7 +2958,7 @@ const [zwinieteZadania, setZwinieteZadania] = useState<Set<number>>(() => new Se
 
     useEffect(() => {
       pobierzGrupy(); pobierzOgloszenia(); pobierzZjazdy(); pobierzProwadzacy(); pobierzZadania();
-      supabase.from('kursanci').select('id, imie, nazwisko, email, telefon, grupa_id, user_id, certyfikat_url, notatki, dofinansowanie, folder_prywatny, data_urodzenia, miejsce_urodzenia, adres_wysylka, dane_fv').then(({ data }) => setKursanci((data || []) as unknown as KursantAdmin[]));
+      supabase.from('kursanci').select('id, imie, nazwisko, email, telefon, grupa_id, user_id, certyfikat_url, nr_certyfikatu, notatki, dofinansowanie, folder_prywatny, data_urodzenia, miejsce_urodzenia, adres_wysylka, dane_fv').then(({ data }) => setKursanci((data || []) as unknown as KursantAdmin[]));
       supabase.from('ankiety').select('*').order('created_at', { ascending: false }).then(({ data }) => setAnkiety((data || []) as unknown as OdpowiedziAnkiety[]));
       supabase.from('zadania_odpowiedzi').select('*').order('created_at', { ascending: false }).then(({ data }) => setOdpowiedziZadan(data || []));
     }, []);
@@ -3157,7 +3157,7 @@ const [zwinieteZadania, setZwinieteZadania] = useState<Set<number>>(() => new Se
       if (authError) { setKomunikat('Blad: ' + authError.message); return; }
       const rola = (nowyKursant as any).rola || 'kursant';
       const { error } = await supabase.from('kursanci').insert([{ imie: nowyKursant.imie, nazwisko: nowyKursant.nazwisko, grupa_id: rola === 'kursant' ? parseInt(nowyKursant.grupa_id) : null, user_id: authData.user!.id, rola }]);
-      if (error) { setKomunikat('Blad: ' + error.message); } else { setKomunikat('Kursant dodany!'); setNowyKursant({ imie: '', nazwisko: '', email: '', grupa_id: '' }); const { data } = await supabase.from('kursanci').select('id, imie, nazwisko, email, telefon, grupa_id, user_id, certyfikat_url, notatki, dofinansowanie, folder_prywatny, data_urodzenia, miejsce_urodzenia, adres_wysylka, dane_fv'); setKursanci((data || []) as unknown as KursantAdmin[]); }
+      if (error) { setKomunikat('Blad: ' + error.message); } else { setKomunikat('Kursant dodany!'); setNowyKursant({ imie: '', nazwisko: '', email: '', grupa_id: '' }); const { data } = await supabase.from('kursanci').select('id, imie, nazwisko, email, telefon, grupa_id, user_id, certyfikat_url, nr_certyfikatu, notatki, dofinansowanie, folder_prywatny, data_urodzenia, miejsce_urodzenia, adres_wysylka, dane_fv'); setKursanci((data || []) as unknown as KursantAdmin[]); }
     }
 
     async function dodajGrupe(e: React.FormEvent) {
@@ -3271,7 +3271,7 @@ const [zwinieteZadania, setZwinieteZadania] = useState<Set<number>>(() => new Se
 
       setImportStatus([...wyniki]);
       setImportowanie(false);
-      const { data } = await supabase.from('kursanci').select('id, imie, nazwisko, email, telefon, grupa_id, user_id, certyfikat_url, notatki, dofinansowanie, folder_prywatny, data_urodzenia, miejsce_urodzenia, adres_wysylka, dane_fv');
+      const { data } = await supabase.from('kursanci').select('id, imie, nazwisko, email, telefon, grupa_id, user_id, certyfikat_url, nr_certyfikatu, notatki, dofinansowanie, folder_prywatny, data_urodzenia, miejsce_urodzenia, adres_wysylka, dane_fv');
       setKursanci((data || []) as unknown as KursantAdmin[]);
       if (fileRef.current) fileRef.current.value = '';
     }
@@ -3304,7 +3304,7 @@ const [zwinieteZadania, setZwinieteZadania] = useState<Set<number>>(() => new Se
       }
       setWysylanieZaproszenia(kursant.id);
       await naprawIWyslijEmail(kursant, key);
-      const { data } = await supabase.from('kursanci').select('id, imie, nazwisko, email, telefon, grupa_id, user_id, certyfikat_url, notatki, dofinansowanie, folder_prywatny, data_urodzenia, miejsce_urodzenia, adres_wysylka, dane_fv');
+      const { data } = await supabase.from('kursanci').select('id, imie, nazwisko, email, telefon, grupa_id, user_id, certyfikat_url, nr_certyfikatu, notatki, dofinansowanie, folder_prywatny, data_urodzenia, miejsce_urodzenia, adres_wysylka, dane_fv');
       setKursanci((data || []) as unknown as KursantAdmin[]);
       setWysylanieZaproszenia(null);
     }
@@ -4252,7 +4252,7 @@ const [zwinieteZadania, setZwinieteZadania] = useState<Set<number>>(() => new Se
     await naprawIWyslijEmail(k, key);
     await new Promise(r => setTimeout(r, 400));
   }
-  const { data } = await supabase.from('kursanci').select('id, imie, nazwisko, email, telefon, grupa_id, user_id, certyfikat_url, notatki, dofinansowanie, folder_prywatny, data_urodzenia, miejsce_urodzenia, adres_wysylka, dane_fv');
+  const { data } = await supabase.from('kursanci').select('id, imie, nazwisko, email, telefon, grupa_id, user_id, certyfikat_url, nr_certyfikatu, notatki, dofinansowanie, folder_prywatny, data_urodzenia, miejsce_urodzenia, adres_wysylka, dane_fv');
   setKursanci((data || []) as unknown as KursantAdmin[]);
   setKomunikat('✓ Wszyscy kursanci naprawieni');
 }} style={{ fontSize: '12px', color: '#4338ca', background: '#eef2ff', border: '0.5px solid #6366f1', borderRadius: '8px', padding: '6px 12px', cursor: 'pointer', fontFamily: 'Jost, sans-serif', whiteSpace: 'nowrap' }}>
@@ -4343,7 +4343,7 @@ const [zwinieteZadania, setZwinieteZadania] = useState<Set<number>>(() => new Se
                                 <div style={{ display: 'flex', gap: '4px' }}>
                                   <button onClick={async () => {
                                     await supabase.from('kursanci').update({ imie: edytowanyKursant.imie, nazwisko: edytowanyKursant.nazwisko, email: edytowanyKursant.email || null, telefon: edytowanyKursant.telefon || null, grupa_id: (edytowanyKursant as any).grupa_id ?? k.grupa_id }).eq('id', k.id);
-                                    const { data } = await supabase.from('kursanci').select('id, imie, nazwisko, email, telefon, grupa_id, user_id, certyfikat_url, notatki, dofinansowanie, folder_prywatny, data_urodzenia, miejsce_urodzenia, adres_wysylka, dane_fv');
+                                    const { data } = await supabase.from('kursanci').select('id, imie, nazwisko, email, telefon, grupa_id, user_id, certyfikat_url, nr_certyfikatu, notatki, dofinansowanie, folder_prywatny, data_urodzenia, miejsce_urodzenia, adres_wysylka, dane_fv');
                                     setKursanci((data || []) as unknown as KursantAdmin[]);
                                     setEdytowanyKursant(null); setKomunikat('Zapisano!');
                                   }} style={{ fontSize: '11px', padding: '3px 9px', background: 'var(--brand)', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontFamily: 'Jost, sans-serif' }}>✓</button>
@@ -4365,7 +4365,7 @@ const [zwinieteZadania, setZwinieteZadania] = useState<Set<number>>(() => new Se
                               
                                   <button onClick={async e => { e.stopPropagation(); if (window.confirm(`Usunąć ${k.imie} ${k.nazwisko}?`)) {
                                     await supabase.from('kursanci').delete().eq('id', k.id);
-                                    const { data } = await supabase.from('kursanci').select('id, imie, nazwisko, email, telefon, grupa_id, user_id, certyfikat_url, notatki, dofinansowanie, folder_prywatny, data_urodzenia, miejsce_urodzenia, adres_wysylka, dane_fv');
+                                    const { data } = await supabase.from('kursanci').select('id, imie, nazwisko, email, telefon, grupa_id, user_id, certyfikat_url, nr_certyfikatu, notatki, dofinansowanie, folder_prywatny, data_urodzenia, miejsce_urodzenia, adres_wysylka, dane_fv');
                                     setKursanci((data || []) as unknown as KursantAdmin[]); setKomunikat('Usunięto.');
                                   }}}
                                     style={{ fontSize: '11px', padding: '3px 6px', border: 'none', borderRadius: '6px', background: 'none', cursor: 'pointer', color: '#e57373' }}>×</button>
@@ -4394,7 +4394,7 @@ const [zwinieteZadania, setZwinieteZadania] = useState<Set<number>>(() => new Se
         onClick={async () => {
           if (!confirm('Czy na pewno chcesz usunąć link do certyfikatu?')) return;
           await supabase.from('kursanci').update({ certyfikat_url: null } as any).eq('id', k.id);
-          const { data: refreshed } = await supabase.from('kursanci').select('id, imie, nazwisko, email, telefon, grupa_id, user_id, certyfikat_url, notatki, dofinansowanie, folder_prywatny, data_urodzenia, miejsce_urodzenia, adres_wysylka, dane_fv');
+          const { data: refreshed } = await supabase.from('kursanci').select('id, imie, nazwisko, email, telefon, grupa_id, user_id, certyfikat_url, nr_certyfikatu, notatki, dofinansowanie, folder_prywatny, data_urodzenia, miejsce_urodzenia, adres_wysylka, dane_fv');
           setKursanci((refreshed || []) as unknown as KursantAdmin[]);
           setKomunikat('Certyfikat usunięty.');
         }}
@@ -4435,7 +4435,7 @@ const [zwinieteZadania, setZwinieteZadania] = useState<Set<number>>(() => new Se
           });
           setKomunikat('Generuję certyfikat… (może potrwać ~15 sek)');
           await new Promise(r => setTimeout(r, 15000));
-          const { data: refreshed } = await supabase.from('kursanci').select('id, imie, nazwisko, email, telefon, grupa_id, user_id, certyfikat_url, notatki, dofinansowanie, folder_prywatny, data_urodzenia, miejsce_urodzenia, adres_wysylka, dane_fv');
+          const { data: refreshed } = await supabase.from('kursanci').select('id, imie, nazwisko, email, telefon, grupa_id, user_id, certyfikat_url, nr_certyfikatu, notatki, dofinansowanie, folder_prywatny, data_urodzenia, miejsce_urodzenia, adres_wysylka, dane_fv');
           setKursanci((refreshed || []) as unknown as KursantAdmin[]);
           setKomunikat(`✅ Certyfikat wygenerowany!`);
         } catch {
@@ -4457,7 +4457,7 @@ const [zwinieteZadania, setZwinieteZadania] = useState<Set<number>>(() => new Se
                                         onBlur={async e => {
                                           if (e.target.value !== ((k as any).folder_prywatny || '')) {
                                             await supabase.from('kursanci').update({ folder_prywatny: e.target.value || null } as any).eq('id', k.id);
-                                            const { data: refreshed } = await supabase.from('kursanci').select('id, imie, nazwisko, email, telefon, grupa_id, user_id, certyfikat_url, notatki, dofinansowanie, folder_prywatny, data_urodzenia, miejsce_urodzenia, adres_wysylka, dane_fv');
+                                            const { data: refreshed } = await supabase.from('kursanci').select('id, imie, nazwisko, email, telefon, grupa_id, user_id, certyfikat_url, nr_certyfikatu, notatki, dofinansowanie, folder_prywatny, data_urodzenia, miejsce_urodzenia, adres_wysylka, dane_fv');
                                             setKursanci((refreshed || []) as unknown as KursantAdmin[]);
                                             setKomunikat(`Folder prywatny zapisany — ${k.imie} ${k.nazwisko}`);
                                           }
@@ -4473,7 +4473,7 @@ const [zwinieteZadania, setZwinieteZadania] = useState<Set<number>>(() => new Se
     onBlur={async e => {
       if (e.target.value !== ((k as any).data_urodzenia || '')) {
         await supabase.from('kursanci').update({ data_urodzenia: e.target.value || null } as any).eq('id', k.id);
-        const { data: refreshed } = await supabase.from('kursanci').select('id, imie, nazwisko, email, telefon, grupa_id, user_id, certyfikat_url, notatki, dofinansowanie, folder_prywatny, data_urodzenia, miejsce_urodzenia, adres_wysylka, dane_fv');
+        const { data: refreshed } = await supabase.from('kursanci').select('id, imie, nazwisko, email, telefon, grupa_id, user_id, certyfikat_url, nr_certyfikatu, notatki, dofinansowanie, folder_prywatny, data_urodzenia, miejsce_urodzenia, adres_wysylka, dane_fv');
         setKursanci((refreshed || []) as unknown as KursantAdmin[]);
         setKomunikat(`Zapisano — ${k.imie} ${k.nazwisko}`);
       }
@@ -4487,7 +4487,7 @@ const [zwinieteZadania, setZwinieteZadania] = useState<Set<number>>(() => new Se
     onBlur={async e => {
       if (e.target.value !== ((k as any).miejsce_urodzenia || '')) {
         await supabase.from('kursanci').update({ miejsce_urodzenia: e.target.value || null } as any).eq('id', k.id);
-        const { data: refreshed } = await supabase.from('kursanci').select('id, imie, nazwisko, email, telefon, grupa_id, user_id, certyfikat_url, notatki, dofinansowanie, folder_prywatny, data_urodzenia, miejsce_urodzenia, adres_wysylka, dane_fv');
+        const { data: refreshed } = await supabase.from('kursanci').select('id, imie, nazwisko, email, telefon, grupa_id, user_id, certyfikat_url, nr_certyfikatu, notatki, dofinansowanie, folder_prywatny, data_urodzenia, miejsce_urodzenia, adres_wysylka, dane_fv');
         setKursanci((refreshed || []) as unknown as KursantAdmin[]);
         setKomunikat(`Zapisano — ${k.imie} ${k.nazwisko}`);
       }
@@ -4502,7 +4502,7 @@ const [zwinieteZadania, setZwinieteZadania] = useState<Set<number>>(() => new Se
       const val = e.target.value.trim();
       if (val !== ((k as any).adres_wysylka || '').trim()) {
         await supabase.from('kursanci').update({ adres_wysylka: val || null } as any).eq('id', k.id);
-        const { data: refreshed } = await supabase.from('kursanci').select('id, imie, nazwisko, email, telefon, grupa_id, user_id, certyfikat_url, notatki, dofinansowanie, folder_prywatny, data_urodzenia, miejsce_urodzenia, adres_wysylka, dane_fv');
+        const { data: refreshed } = await supabase.from('kursanci').select('id, imie, nazwisko, email, telefon, grupa_id, user_id, certyfikat_url, nr_certyfikatu, notatki, dofinansowanie, folder_prywatny, data_urodzenia, miejsce_urodzenia, adres_wysylka, dane_fv');
         setKursanci((refreshed || []) as unknown as KursantAdmin[]);
         setKomunikat(`Zapisano — ${k.imie} ${k.nazwisko}`);
       }
@@ -4517,7 +4517,7 @@ const [zwinieteZadania, setZwinieteZadania] = useState<Set<number>>(() => new Se
       const val = e.target.value.trim();
       if (val !== ((k as any).dane_fv || '').trim()) {
         await supabase.from('kursanci').update({ dane_fv: val || null } as any).eq('id', k.id);
-        const { data: refreshed } = await supabase.from('kursanci').select('id, imie, nazwisko, email, telefon, grupa_id, user_id, certyfikat_url, notatki, dofinansowanie, folder_prywatny, data_urodzenia, miejsce_urodzenia, adres_wysylka, dane_fv');
+        const { data: refreshed } = await supabase.from('kursanci').select('id, imie, nazwisko, email, telefon, grupa_id, user_id, certyfikat_url, nr_certyfikatu, notatki, dofinansowanie, folder_prywatny, data_urodzenia, miejsce_urodzenia, adres_wysylka, dane_fv');
         setKursanci((refreshed || []) as unknown as KursantAdmin[]);
         setKomunikat(`Zapisano — ${k.imie} ${k.nazwisko}`);
       }
@@ -4532,7 +4532,7 @@ const [zwinieteZadania, setZwinieteZadania] = useState<Set<number>>(() => new Se
                                         const val = e.target.value.trim();
                                         if (val !== ((k as any).notatki || '').trim()) {
                                           await supabase.from('kursanci').update({ notatki: val || null } as any).eq('id', k.id);
-const { data: refreshed } = await supabase.from('kursanci').select('id, imie, nazwisko, email, telefon, grupa_id, user_id, certyfikat_url, notatki, dofinansowanie, folder_prywatny, data_urodzenia, miejsce_urodzenia, adres_wysylka, dane_fv');
+const { data: refreshed } = await supabase.from('kursanci').select('id, imie, nazwisko, email, telefon, grupa_id, user_id, certyfikat_url, nr_certyfikatu, notatki, dofinansowanie, folder_prywatny, data_urodzenia, miejsce_urodzenia, adres_wysylka, dane_fv');
 setKursanci((refreshed || []) as unknown as KursantAdmin[]);
 setKomunikat(`Notatka zapisana — ${k.imie} ${k.nazwisko}`);
                                         }
@@ -4544,7 +4544,7 @@ setKomunikat(`Notatka zapisana — ${k.imie} ${k.nazwisko}`);
                                     <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '12px', fontWeight: 500, color: dofinansowanie ? '#1565c0' : 'var(--text)' }}>
                                       <input type="checkbox" checked={!!dofinansowanie} onChange={async e => {
                                         await supabase.from('kursanci').update({ dofinansowanie: e.target.checked } as any).eq('id', k.id);
-                                        const { data } = await supabase.from('kursanci').select('id, imie, nazwisko, email, telefon, grupa_id, user_id, certyfikat_url, notatki, dofinansowanie, folder_prywatny, data_urodzenia, miejsce_urodzenia, adres_wysylka, dane_fv');
+                                        const { data } = await supabase.from('kursanci').select('id, imie, nazwisko, email, telefon, grupa_id, user_id, certyfikat_url, nr_certyfikatu, notatki, dofinansowanie, folder_prywatny, data_urodzenia, miejsce_urodzenia, adres_wysylka, dane_fv');
                                         setKursanci((data || []) as unknown as KursantAdmin[]);
                                         setKomunikat(e.target.checked ? `${k.imie} ${k.nazwisko} — dofinansowanie zaznaczone` : `${k.imie} ${k.nazwisko} — dofinansowanie odznaczone`);
                                       }} style={{ width: '16px', height: '16px', accentColor: '#1565c0', cursor: 'pointer' }} />
@@ -4558,7 +4558,7 @@ setKomunikat(`Notatka zapisana — ${k.imie} ${k.nazwisko}`);
                                       <button onClick={async () => {
                                         if (window.confirm(`Usunąć ${k.imie} ${k.nazwisko} z grupy?`)) {
                                           await supabase.from('kursanci').update({ grupa_id: null }).eq('id', k.id);
-                                          const { data } = await supabase.from('kursanci').select('id, imie, nazwisko, email, telefon, grupa_id, user_id, certyfikat_url, notatki, dofinansowanie, folder_prywatny, data_urodzenia, miejsce_urodzenia, adres_wysylka, dane_fv');
+                                          const { data } = await supabase.from('kursanci').select('id, imie, nazwisko, email, telefon, grupa_id, user_id, certyfikat_url, nr_certyfikatu, notatki, dofinansowanie, folder_prywatny, data_urodzenia, miejsce_urodzenia, adres_wysylka, dane_fv');
                                           setKursanci((data || []) as unknown as KursantAdmin[]);
                                           setKomunikat('Usunięto z grupy.');
                                         }
