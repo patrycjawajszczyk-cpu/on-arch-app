@@ -7202,6 +7202,27 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
               </div>
             </a>
           )}
+          {/* Certyfikat */}
+          {kursant?.certyfikat_url ? (
+            <a href={kursant.certyfikat_url} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
+              <div style={{ background: 'linear-gradient(135deg, #fdf8f0 0%, #faf3e8 100%)', borderRadius: '16px', padding: '14px 16px', border: '0.5px solid #e8d9b8', display: 'flex', alignItems: 'center', gap: '14px' }}>
+                <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: 'rgba(201,168,76,0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: '22px' }}>📜</div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: '14px', fontWeight: 600, color: '#2a1f1f', marginBottom: '1px' }}>Certyfikat ukończenia</div>
+                  <div style={{ fontSize: '11px', color: '#a08850' }}>Kliknij aby pobrać</div>
+                </div>
+                <span style={{ color: '#c9a84c', fontSize: '18px' }}>›</span>
+              </div>
+            </a>
+          ) : (
+            <div style={{ background: '#fafafa', borderRadius: '16px', padding: '14px 16px', border: '0.5px dashed #d0d0d0', display: 'flex', alignItems: 'center', gap: '14px', opacity: 0.6 }}>
+              <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: '#eee', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: '22px', filter: 'grayscale(1)', opacity: 0.5 }}>📜</div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: '14px', fontWeight: 600, color: '#aaa', marginBottom: '1px' }}>Certyfikat ukończenia</div>
+                <div style={{ fontSize: '11px', color: '#bbb' }}>Pojawi się po ukończeniu kursu</div>
+              </div>
+            </div>
+          )}
 
   
           {/* Ankieta */}
