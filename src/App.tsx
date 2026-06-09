@@ -177,6 +177,8 @@ function urlBase64ToUint8Array(base64String: string) {
     drive_link: string | null;
     numer_uslugi: string | null;
     tryb: 'stacjonarny' | 'online' | 'hybrydowy' | null;
+    liczba_godzin: number | null;
+  
   };
 
   type User = {
@@ -2942,7 +2944,7 @@ const [zwinieteZadania, setZwinieteZadania] = useState<Set<number>>(() => new Se
       if (nowe.length > 0) setTabelaZjazdow(nowe);
     }
     const [nowyKursant, setNowyKursant] = useState({ imie: '', nazwisko: '', email: '', grupa_id: '' });
-    const [nowaGrupa, setNowaGrupa] = useState({ nazwa: '', miasto: '', edycja: '', drive_link: '', numer_uslugi: '', tryb: 'stacjonarny' });
+    const [nowaGrupa, setNowaGrupa] = useState({ nazwa: '', miasto: '', edycja: '', drive_link: '', numer_uslugi: '', tryb: 'stacjonarny', liczba_godzin: '' });
     const [nowyProwadzacy, setNowyProwadzacy] = useState({ imie: '', nazwisko: '', bio: '', avatar_url: '', email: '', telefon: '', notatki: '', miasto: '', user_id: '' });
     const [edytowaneZadanie, setEdytowaneZadanie] = useState<Zadanie | null>(null);
     const [noweZadanie, setNoweZadanie] = useState({ tytul: '', opis: '', termin: '', link_materialow: '', grupa_id: '', typ: 'zadanie', zdjecie_url: '' });
@@ -3162,7 +3164,7 @@ const [zwinieteZadania, setZwinieteZadania] = useState<Set<number>>(() => new Se
 
     async function dodajGrupe(e: React.FormEvent) {
       e.preventDefault();
-      const { error } = await supabase.from('grupy').insert([{ nazwa: nowaGrupa.nazwa, miasto: nowaGrupa.miasto, edycja: nowaGrupa.edycja, drive_link: nowaGrupa.drive_link || null, numer_uslugi: nowaGrupa.numer_uslugi || null, tryb: nowaGrupa.tryb }]);
+      const { error } = await supabase.from('grupy').insert([{ nazwa: nowaGrupa.nazwa, miasto: nowaGrupa.miasto, edycja: nowaGrupa.edycja, drive_link: nowaGrupa.drive_link || null, numer_uslugi: nowaGrupa.numer_uslugi || null, tryb: nowaGrupa.tryb, liczba_godzin: nowaGrupa.liczba_godzin ? parseInt(nowaGrupa.liczba_godzin) : null }]);
       if (error) { setKomunikat('Blad: ' + error.message); } else { setKomunikat('Grupa dodana!'); setNowaGrupa({ nazwa: '', miasto: '', edycja: '', drive_link: '', numer_uslugi: '', tryb: 'stacjonarny' }); pobierzGrupy(); }
     }
 
