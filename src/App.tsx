@@ -3165,7 +3165,7 @@ const [zwinieteZadania, setZwinieteZadania] = useState<Set<number>>(() => new Se
     async function dodajGrupe(e: React.FormEvent) {
       e.preventDefault();
       const { error } = await supabase.from('grupy').insert([{ nazwa: nowaGrupa.nazwa, miasto: nowaGrupa.miasto, edycja: nowaGrupa.edycja, drive_link: nowaGrupa.drive_link || null, numer_uslugi: nowaGrupa.numer_uslugi || null, tryb: nowaGrupa.tryb, liczba_godzin: nowaGrupa.liczba_godzin ? parseInt(nowaGrupa.liczba_godzin) : null }]);
-      if (error) { setKomunikat('Blad: ' + error.message); } else { setKomunikat('Grupa dodana!'); setNowaGrupa({ nazwa: '', miasto: '', edycja: '', drive_link: '', numer_uslugi: '', tryb: 'stacjonarny' }); pobierzGrupy(); }
+      if (error) { setKomunikat('Blad: ' + error.message); } else { setKomunikat('Grupa dodana!'); setNowaGrupa({ nazwa: '', miasto: '', edycja: '', drive_link: '', numer_uslugi: '', tryb: 'stacjonarny', liczba_godzin: '' }); pobierzGrupy(); }
     }
 
     async function dodajZadanie(e: React.FormEvent) {
@@ -4962,7 +4962,7 @@ setKomunikat(`Notatka zapisana — ${k.imie} ${k.nazwisko}`);
                         <div className="login-field"><label>Tryb zajęć</label><select value={nowaGrupa.tryb} onChange={e => setNowaGrupa({ ...nowaGrupa, tryb: e.target.value })}><option value="stacjonarny">Stacjonarny</option><option value="online">Online</option><option value="hybrydowy">Hybrydowy</option></select></div>
                         <div className="login-field"><label>Liczba godzin szkoleniowych</label><input type="number" value={(nowaGrupa as any).liczba_godzin || ''} onChange={e => setNowaGrupa({ ...nowaGrupa, ...(nowaGrupa as any), liczba_godzin: e.target.value })} placeholder="np. 120" /></div>
                         <button className="login-btn" type="submit">Dodaj grupę</button>
-            
+                        <button className="login-btn" type="submit">Dodaj grupę</button>
                       </form>
                     </div>
                   )}
