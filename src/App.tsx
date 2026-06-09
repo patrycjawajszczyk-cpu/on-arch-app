@@ -4336,7 +4336,7 @@ const [zwinieteZadania, setZwinieteZadania] = useState<Set<number>>(() => new Se
                                   {grupy.map(g => <option key={g.id} value={g.id}>{g.nazwa}</option>)}
                                 </select>
                               ) : <span
-                              onClick={k.grupa_id ? e => { e.stopPropagation(); setAktywnaZakladka('grupy'); } : undefined}
+                              onClick={k.grupa_id ? e => { e.stopPropagation(); setAktywnaZakladka('grupy'); setWybranaGrupaDetail(k.grupa_id); setZakladkaGrupy('kursanci'); } : undefined}
                               style={{ fontSize: '10px', padding: '2px 7px', borderRadius: '6px', background: k.grupa_id ? (dofinansowanie ? '#bbdefb' : 'var(--brand-light)') : '#f5f5f5', color: k.grupa_id ? (dofinansowanie ? '#1565c0' : 'var(--brand-dark)') : '#999', cursor: k.grupa_id ? 'pointer' : 'default', textDecoration: k.grupa_id ? 'underline dotted' : 'none' }}>{grupaName}</span>}
                             </td>
                             {/* Akcje */}
