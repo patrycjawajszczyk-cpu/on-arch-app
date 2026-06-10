@@ -5713,6 +5713,7 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
     const [countdown, setCountdown] = useState({ dni: 0, godz: 0, min: 0 });
     const [obecnosciNajblizszy, setObecnosciNajblizszy] = useState<Obecnosc[]>([]);
     const [frekwencja, setFrekwencja] = useState(0);
+    const [seria, setSeria] = useState(0);
     const [heroPhoto, setHeroPhoto] = useState('/wnetrze.jpg');
   
 
@@ -5764,17 +5765,23 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
           .then(({ data }) => setObecnosciNajblizszy(data || []));
       }, [najblizszy?.id, user?.id]);
 
-    useEffect(() => {
-      if (!user?.id || zakonczone === 0) return;
-      const zakonczone_ids = zjazdy.filter(z => z.status === 'zakonczony').map(z => z.id);
-      supabase.from('obecnosci').select('*')
-        .in('zjazd_id', zakonczone_ids).eq('user_id', user.id)
-        .then(({ data }) => {
-          const obecne = (data || []).filter(o => o.status === 'potwierdzono').length;
-          const wszystkie = (data || []).length;
-          setFrekwencja(wszystkie > 0 ? Math.round(obecne / wszystkie * 100) : 0);
-        });
-    }, [zakonczone, user?.id]);
+      useEffect(() => {
+        if (!user?.id || zakonczone === 0) return;
+        const zakonczoneZjazdy = zjazdy.filter(z => z.status === 'zakonczony');
+        supabase.from('obecnosci').select('*')
+          .in('zjazd_id', zakonczoneZjazdy.map(z => z.id)).eq('user_id', user.id)
+          .then(({ data }) => {
+            const obecne = (data || []).filter(o => o.status === 'potwierdzono').length;
+            const wszystkie = (data || []).length;
+            setFrekwencja(wszystkie > 0 ? Math.round(obecne / wszystkie * 100) : 0);
+            let s = 0;
+            for (let i = zakonczoneZjazdy.length - 1; i >= 0; i--) {
+              const wpisy = (data || []).filter(o => o.zjazd_id === zakonczoneZjazdy[i].id);
+              if (wpisy.length > 0 && wpisy.every(o => o.status === 'potwierdzono')) s++; else break;
+            }
+            setSeria(s);
+          });
+      }, [zakonczone, user?.id]);
 
     const wpis_d1 = obecnosciNajblizszy.find(o => o.dzien === 1);
     const wpis_d2 = obecnosciNajblizszy.find(o => o.dzien === 2);
@@ -5798,9 +5805,8 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
     const miesiace = ['STY','LUT','MAR','KWI','MAJ','CZE','LIP','SIE','WRZ','PAŹ','LIS','GRU'];
     const dataHeader = `${dniTygodnia[teraz.getDay()]} · ${teraz.getDate()} ${miesiace[teraz.getMonth()]}`;
     const SERIF = "'Cormorant Garamond', Georgia, serif";
-    background: `url(${heroPhoto}) center/cover`
+    
 
-    const frekwencjaBars = Array.from({ length: 10 }, (_, i) => i < Math.round(frekwencja / 10));
 
     const dniLiczba = countdown.dni > 0 ? String(countdown.dni) : countdown.godz > 0 ? String(countdown.godz) : String(countdown.min);
     const dniLabel = countdown.dni > 0 ? 'dni' : countdown.godz > 0 ? 'godz' : 'min';
@@ -5874,7 +5880,7 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
         </div>
 
         {/* ── ZJAZD + POSTĘP ── */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: '10px', marginBottom: '12px' }}>
+        <div style={{ display: 'grid', marginBottom: '12px' }}>
           {/* Karta zjazdu */}
           {najblizszy ? (
   <div onClick={() => onNavigate('zjazdy')} style={{
@@ -5883,7 +5889,7 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
     boxShadow: '0 30px 60px -25px rgba(0,0,0,0.35)',
   }}>
     <div style={{ position: 'absolute', inset: 0, background: `url(${heroPhoto}) center/cover`, filter: 'brightness(0.72) saturate(0.92)' }} />
-    <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.65) 100%)' }} />
+    <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.78) 100%)' }} />
     <div style={{ position: 'absolute', top: 14, left: 14, width: 16, height: 16, borderTop: '1px solid rgba(255,255,255,0.5)', borderLeft: '1px solid rgba(255,255,255,0.5)' }}/>
     <div style={{ position: 'absolute', top: 14, right: 14, width: 16, height: 16, borderTop: '1px solid rgba(255,255,255,0.5)', borderRight: '1px solid rgba(255,255,255,0.5)' }}/>
     <div style={{ position: 'absolute', bottom: 14, left: 14, width: 16, height: 16, borderBottom: '1px solid rgba(255,255,255,0.5)', borderLeft: '1px solid rgba(255,255,255,0.5)' }}/>
@@ -5904,7 +5910,7 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
       </div>
 
       <div style={{
-        marginTop: '24px', background: 'rgba(0,0,0,0.32)',
+        marginTop: '24px', background: 'rgba(0,0,0,0.45)',
         backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)',
         borderRadius: '6px', padding: '14px 16px',
         display: 'flex', flexDirection: 'column', gap: '8px',
@@ -5923,17 +5929,41 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
         {najblizszy.prowadzacy && najblizszy.prowadzacy.length > 0 && (
           <DetailRowDark label="Prowadzi" value={najblizszy.prowadzacy.map(p => `${p.imie} ${p.nazwisko}`).join(', ')}/>
         )}
-        {najblizszy.typ === 'online' && najblizszy.link_online && (
-          <a href={najblizszy.link_online} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}
-            style={{
-              marginTop: '6px', display: 'inline-flex', alignItems: 'center', gap: '10px',
-              background: 'white', color: '#1a1614', padding: '11px 16px', borderRadius: '4px',
-              fontSize: '11px', letterSpacing: '0.22em', textTransform: 'uppercase',
-              fontWeight: 600, textDecoration: 'none', alignSelf: 'flex-start',
-            }}>
-            Dołącz do zajęć →
-          </a>
-        )}
+        {najblizszy.typ === 'online' && najblizszy.link_online && (() => {
+          const dzisStr = new Date().toLocaleDateString('sv-SE');
+          const startD2 = najblizszy.data_dzien2 && dzisStr === najblizszy.data_dzien2
+            ? new Date(`${najblizszy.data_dzien2}T${(najblizszy.godzina_start_d2 || najblizszy.godzina_start_d1 || '09:00').slice(0, 5)}:00`)
+            : null;
+          const start = startD2 || new Date(`${najblizszy.data_dzien1}T${(najblizszy.godzina_start_d1 || '09:00').slice(0, 5)}:00`);
+          const minutDo = Math.round((start.getTime() - Date.now()) / 60000);
+          const dzisZjazd = dzisStr === najblizszy.data_dzien1 || dzisStr === najblizszy.data_dzien2;
+          if (dzisZjazd && minutDo <= 15) return (
+            <a href={najblizszy.link_online} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}
+              style={{
+                marginTop: '6px', display: 'inline-flex', alignItems: 'center', gap: '10px',
+                background: '#AD6B68', color: 'white', padding: '11px 16px', borderRadius: '4px',
+                fontSize: '11px', letterSpacing: '0.22em', textTransform: 'uppercase',
+                fontWeight: 600, textDecoration: 'none', alignSelf: 'flex-start',
+              }}>
+              Dołącz do zajęć →
+            </a>
+          );
+          return (
+            <div onClick={e => e.stopPropagation()} style={{ marginTop: '6px', display: 'flex', flexDirection: 'column', gap: '5px' }}>
+              <div style={{
+                display: 'inline-flex', alignItems: 'center', gap: '8px',
+                background: 'rgba(255,255,255,0.14)', color: 'rgba(255,255,255,0.65)',
+                padding: '11px 16px', borderRadius: '4px', fontSize: '11px',
+                letterSpacing: '0.22em', textTransform: 'uppercase', fontWeight: 600,
+                alignSelf: 'flex-start', cursor: 'default',
+              }}>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+                {dzisZjazd ? `Dostępne za ${Math.max(minutDo - 15, 1)} min` : countdown.dni === 1 ? 'Dostępne jutro' : `Dostępne za ${countdown.dni} dni`}
+              </div>
+              <span style={{ fontSize: '9px', color: 'rgba(255,255,255,0.45)' }}>Przycisk aktywuje się 15 minut przed startem zajęć</span>
+            </div>
+          );
+        })()}
       </div>
     </div>
   </div>
@@ -5943,35 +5973,20 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
             </div>
           )}
 
-          {/* Postęp + frekwencja */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            <div style={{ background: 'white', borderRadius: '14px', border: '0.5px solid var(--border)', padding: '14px', display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1 }}>
-              <div style={{ fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '8px', fontWeight: 600 }}>Postęp</div>
-              <div style={{ position: 'relative', width: '80px', height: '80px' }}>
-                <svg width="80" height="80" viewBox="0 0 80 80">
-                  <circle cx="40" cy="40" r={r} fill="none" stroke="#f0ece7" strokeWidth="6" />
-                  <circle cx="40" cy="40" r={r} fill="none" stroke="var(--brand)" strokeWidth="6"
-                    strokeDasharray={circ} strokeDashoffset={dash} strokeLinecap="round" transform="rotate(-90 40 40)" />
-                </svg>
-                <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                  <div style={{ fontFamily: SERIF, fontSize: '20px', color: 'var(--brand)', lineHeight: 1 }}>{procent}</div>
-                  <div style={{ fontSize: '9px', color: 'var(--text-muted)' }}>%</div>
-                </div>
-              </div>
-              <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '6px', textAlign: 'center' }}>{zakonczone} z {wszystkieZjazdy} zjazdów</div>
+          {/* Postęp — jeden wskaźnik */}
+          <div style={{ background: 'white', borderRadius: '14px', border: '0.5px solid var(--border)', padding: '12px 16px', marginTop: '10px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <span style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: '16px', color: 'var(--text)', whiteSpace: 'nowrap' }}>Zjazd {Math.min(zakonczone + 1, wszystkieZjazdy)} z {wszystkieZjazdy}</span>
+            <div style={{ flex: 1, height: '5px', borderRadius: '999px', background: '#f0ece7', overflow: 'hidden' }}>
+              <div style={{ height: '100%', width: `${procent}%`, background: 'linear-gradient(90deg, #AD6B68, #C9A84C)', borderRadius: '999px', transition: 'width 0.6s ease' }} />
             </div>
-            <div style={{ background: 'white', borderRadius: '14px', border: '0.5px solid var(--border)', padding: '14px', flex: 1 }}>
-              <div style={{ fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '6px', fontWeight: 600 }}>Frekwencja</div>
-              <div style={{ fontFamily: SERIF, fontSize: '26px', fontWeight: 300, color: 'var(--text)', lineHeight: 1, marginBottom: '8px' }}>
-                {frekwencja}<span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>%</span>
-              </div>
-              <div style={{ display: 'flex', gap: '2px', alignItems: 'flex-end' }}>
-                {frekwencjaBars.map((active, i) => (
-                  <div key={i} style={{ width: '8px', height: active ? '14px' : '7px', background: active ? '#1C2B3A' : '#e0dbd6', borderRadius: '2px' }} />
-                ))}
-              </div>
-            </div>
+            <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)' }}>{procent}%</span>
           </div>
+          {seria >= 2 && (
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', marginTop: '8px', background: '#fef9ec', border: '0.5px solid #e8d4a0', color: '#a07830', fontSize: '11px', fontWeight: 600, padding: '5px 11px', borderRadius: '999px' }}>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="#c8a84b"><path d="M12 2s1 3-1 6c-1.4 2.1-3 3.4-3 6a4 4 0 0 0 8 0c0-1.2-.4-2.2-1-3 0 0 3 .5 3 4a6 6 0 0 1-12 0c0-4.5 4-6.5 4-10 0-1.5-.5-3 2-3Z"/></svg>
+              {seria} {seria < 5 ? 'zjazdy' : 'zjazdów'} z rzędu — frekwencja {frekwencja}%
+            </div>
+          )}
         </div>
 
         {/* ── POTWIERDZENIE OBECNOŚCI ── */}
@@ -6049,7 +6064,19 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{z.tytul}</div>
                       <div style={{ display: 'flex', gap: '5px', marginTop: '2px', alignItems: 'center' }}>
-                        {z.termin && <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>do {new Date(z.termin).toLocaleDateString('pl-PL', { day: 'numeric', month: 'numeric' })}</span>}
+                        {z.termin && (() => {
+                          const dataTerminu = new Date(z.termin).toLocaleDateString('pl-PL', { day: 'numeric', month: 'numeric' });
+                          if (odpowiedzi.some(o => o.zadanie_id === z.id)) return <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>do {dataTerminu}</span>;
+                          const iloscDni = Math.ceil((new Date(z.termin + 'T23:59:59').getTime() - Date.now()) / 86400000);
+                          const pilne = iloscDni <= 3;
+                          return (
+                            <span style={{ fontSize: '9px', fontWeight: 700, padding: '2px 7px', borderRadius: '999px', letterSpacing: '0.04em',
+                              background: pilne ? '#f7eceb' : '#fef9ec', color: pilne ? '#96544f' : '#a07830',
+                              border: pilne ? '0.5px solid #e7cfcd' : '0.5px solid #e8d4a0' }}>
+                              do {dataTerminu}{iloscDni < 0 ? ' · po terminie' : ` · ${iloscDni === 0 ? 'dziś' : iloscDni === 1 ? 'jutro' : iloscDni + ' dni'}`}
+                            </span>
+                          );
+                        })()}
                       </div>
                     </div>
                     {(() => {
@@ -7087,7 +7114,7 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
     );
   }
 
-  function EkranProfil({ user, kursant, zjazdy, onWyloguj, onAvatarZmieniony, grupaInfo, onOtworzAnkiete, zadania, odpowiedziZadan, pushAktywny, onWlaczPush, onWylaczPush }: { user: User; kursant: Kursant | null; zjazdy: Zjazd[]; onWyloguj: () => void; onAvatarZmieniony: (url: string) => void; grupaInfo: Grupa | null; onOtworzAnkiete: () => void; zadania?: Zadanie[]; odpowiedziZadan?: ZadanieOdpowiedz[]; pushAktywny: boolean; onWlaczPush: () => void; onWylaczPush: () => void }) {
+  function EkranProfil({ user, kursant, zjazdy, onWyloguj, onAvatarZmieniony, grupaInfo, onOtworzAnkiete, onNavigate, zadania, odpowiedziZadan, pushAktywny, onWlaczPush, onWylaczPush }: { user: User; kursant: Kursant | null; zjazdy: Zjazd[]; onWyloguj: () => void; onAvatarZmieniony: (url: string) => void; grupaInfo: Grupa | null; onOtworzAnkiete: () => void; onNavigate: (zakl: string) => void; zadania?: Zadanie[]; odpowiedziZadan?: ZadanieOdpowiedz[]; pushAktywny: boolean; onWlaczPush: () => void; onWylaczPush: () => void }) {
     const [uploadowanie, setUploadowanie] = useState(false);
     const [pokazKalendarz, setPokazKalendarz] = useState(false);
     const fileRef = useRef<HTMLInputElement>(null);
@@ -7100,6 +7127,8 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
     const wszystkieZjazdy = zjazdy.length;
     const zakonczone = zjazdy.filter(z => z.status === 'zakonczony').length;
     const procent = wszystkieZjazdy > 0 ? Math.round((zakonczone / wszystkieZjazdy) * 100) : 0;
+    const pozostaloZjazdow = wszystkieZjazdy - zakonczone;
+    const odmianaZjazd = pozostaloZjazdow === 1 ? 'zjazd' : ([2, 3, 4].includes(pozostaloZjazdow % 10) && ![12, 13, 14].includes(pozostaloZjazdow % 100)) ? 'zjazdy' : 'zjazdów';
     const ostatniZjazd = zjazdy.length > 0 ? zjazdy[zjazdy.length - 1] : null;
     const ankietaDostepna = ostatniZjazd?.status === 'zakonczony';
     const zadaniaDomowe = (zadania || []).filter(z => z.typ !== 'praca_zaliczeniowa');
@@ -7161,13 +7190,13 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
           {/* Statystyki */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', marginTop: '22px' }}>
             {[
-              { label: 'Zjazdy', value: `${zakonczone}/${wszystkieZjazdy}`, sub: 'ukończone' },
-              { label: 'Postęp', value: `${procent}%`, sub: 'kursu' },
-              { label: 'Zadania', value: `${wyslaneZadania}/${zadaniaDomowe.length}`, sub: 'przesłane' },
+              { label: 'Zjazdy', value: `${zakonczone}/${wszystkieZjazdy}`, sub: 'ukończone', klik: null as string | null },
+              { label: 'Postęp', value: `${procent}%`, sub: 'kursu', klik: null as string | null },
+              { label: 'Zadania', value: `${wyslaneZadania}/${zadaniaDomowe.length}`, sub: wyslaneZadania < zadaniaDomowe.length ? 'prześlij →' : 'przesłane', klik: wyslaneZadania < zadaniaDomowe.length ? 'zadania' : null },
             ].map(s => (
-              <div key={s.label} style={{ background: 'rgba(255,255,255,0.08)', borderRadius: '12px', padding: '10px 8px', textAlign: 'center', border: '0.5px solid rgba(255,255,255,0.1)' }}>
+              <div key={s.label} onClick={() => s.klik && onNavigate(s.klik)} style={{ background: 'rgba(255,255,255,0.08)', borderRadius: '12px', padding: '10px 8px', textAlign: 'center', border: s.klik ? '0.5px solid rgba(201,168,76,0.5)' : '0.5px solid rgba(255,255,255,0.1)', cursor: s.klik ? 'pointer' : 'default' }}>
                 <div style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: '22px', color: 'white', lineHeight: 1 }}>{s.value}</div>
-                <div style={{ fontSize: '8.5px', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.5)', marginTop: '4px' }}>{s.sub}</div>
+                <div style={{ fontSize: '8.5px', letterSpacing: '0.18em', textTransform: 'uppercase', color: s.klik ? '#c8a84b' : 'rgba(255,255,255,0.5)', marginTop: '4px' }}>{s.sub}</div>
               </div>
             ))}
           </div>
@@ -7235,11 +7264,21 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
               </div>
             </div>
           ) : (
-            <div style={{ background: '#fafafa', borderRadius: '16px', padding: '14px 16px', border: '0.5px dashed #d0d0d0', display: 'flex', alignItems: 'center', gap: '14px', opacity: 0.6 }}>
-              <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: '#eee', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: '22px', filter: 'grayscale(1)', opacity: 0.5 }}>📜</div>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: '14px', fontWeight: 600, color: '#aaa', marginBottom: '1px' }}>Certyfikat ukończenia</div>
-                <div style={{ fontSize: '11px', color: '#bbb' }}>Pojawi się po ukończeniu kursu</div>
+            <div style={{ background: 'white', borderRadius: '16px', padding: '14px 16px', border: '0.5px solid var(--border)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: '#fef9ec', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#c8a84b" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="9" r="6"/><path d="m8.5 14-2 7 5.5-3 5.5 3-2-7"/></svg>
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text)', marginBottom: '1px' }}>Certyfikat ukończenia</div>
+                  <div style={{ fontSize: '11px', color: '#a07830', fontWeight: 500 }}>Jeszcze {pozostaloZjazdow} {odmianaZjazd} do certyfikatu</div>
+                </div>
+              </div>
+              <div style={{ height: '5px', background: '#f0ece7', borderRadius: '999px', overflow: 'hidden', marginTop: '12px' }}>
+                <div style={{ height: '100%', width: `${procent}%`, background: 'linear-gradient(90deg, #AD6B68, #C9A84C)', borderRadius: '999px', transition: 'width 0.6s ease' }} />
+              </div>
+              <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '8px', lineHeight: 1.5 }}>
+                Po zdobyciu pobierzesz go tutaj i udostępnisz na LinkedIn jednym kliknięciem.{!ankietaDostepna ? ' Ankieta oceny kursu pojawi się po ostatnim zjeździe.' : ''}
               </div>
             </div>
           )}
@@ -7257,17 +7296,7 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
               </div>
               <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: '18px' }}>›</span>
             </div>
-          ) : (
-            <div style={{ background: '#fafafa', borderRadius: '16px', padding: '14px 16px', border: '0.5px dashed #d0d0d0', display: 'flex', alignItems: 'center', gap: '14px', opacity: 0.6 }}>
-              <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: '#eee', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="1.8" strokeLinecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-              </div>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: '14px', fontWeight: 600, color: '#aaa', marginBottom: '1px' }}>Ankieta oceny kursu</div>
-                <div style={{ fontSize: '11px', color: '#bbb' }}>Odblokuje się po ostatnim zjeździe</div>
-              </div>
-            </div>
-          )}
+          ) : null}
   
           {/* Push */}
           <div onClick={pushAktywny ? onWylaczPush : onWlaczPush} style={{ background: 'white', borderRadius: '16px', padding: '14px 16px', border: '0.5px solid var(--border)', display: 'flex', alignItems: 'center', gap: '14px', cursor: 'pointer' }}>
@@ -7593,6 +7622,7 @@ async function wylaczPush() {
                   zadania={zadania}
                   odpowiedziZadan={odpowiedziZadan}
                   onOtworzAnkiete={() => setPokazAnkiete(true)}
+                  onNavigate={nawiguj}
                   pushAktywny={pushAktywny}
                   onWlaczPush={wlaczPush}
                   onWylaczPush={wylaczPush}
