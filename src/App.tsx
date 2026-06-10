@@ -4676,9 +4676,9 @@ setKomunikat(`Notatka zapisana — ${k.imie} ${k.nazwisko}`);
                                     }
                                   </td>
                                   <td style={{ padding: '10px 14px' }}>
-                                    <button onClick={() => { setAktywnaZakladka('kursanci'); }}
+                                  <button onClick={() => { setAktywnaZakladka('kursanci'); setRozwinietaKursant(k.id); setWybranaGrupaDetail(null); }}
                                       style={{ fontSize: '11px', padding: '3px 9px', border: '0.5px solid var(--border)', borderRadius: '6px', background: 'white', cursor: 'pointer', color: 'var(--brand)', fontFamily: 'Jost, sans-serif' }}>
-                                      Edytuj
+                                      Otwórz →
                                     </button>
                                   </td>
                                 </tr>
