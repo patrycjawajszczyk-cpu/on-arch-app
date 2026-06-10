@@ -673,7 +673,7 @@ function urlBase64ToUint8Array(base64String: string) {
           <label>Grupa</label>
           <select value={wybranaGrupa} onChange={e => { setWybranaGrupa(e.target.value); setWybranyZjazd(''); setLista([]); }}>
             <option value="">Wybierz grupę</option>
-            {grupy.map(g => <option key={g.id} value={g.id}>{g.nazwa}</option>)}
+            {grupy.map(g => <option key={g.id} value={g.id}>{g.nazwa}{g.edycja ? ` · ${g.edycja}` : ''}</option>)}
           </select>
         </div>
         {wybranaGrupa && (
@@ -1918,7 +1918,7 @@ function urlBase64ToUint8Array(base64String: string) {
                           <select value={noweZadanie.grupa_id} onChange={e => setNoweZadanie({ ...noweZadanie, grupa_id: e.target.value })} required
                             style={{ width: '100%', fontSize: '12px', padding: '7px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif', background: 'white', marginBottom: '8px' }}>
                             <option value="">Wybierz grupę *</option>
-                            {mojeGrupy.map(g => <option key={g.id} value={g.id}>{g.nazwa}</option>)}
+                            {mojeGrupy.map(g => <option key={g.id} value={g.id}>{g.nazwa}{g.edycja ? ` · ${g.edycja}` : ''}</option>)}
                           </select>
                           <input type="text" value={noweZadanie.tytul} onChange={e => setNoweZadanie({ ...noweZadanie, tytul: e.target.value })} placeholder="Tytuł zadania *" required
                             style={{ width: '100%', fontSize: '12px', padding: '7px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif', marginBottom: '8px' }} />
@@ -2118,7 +2118,7 @@ function urlBase64ToUint8Array(base64String: string) {
                                 <select value={noweOglProw.grupa_id} onChange={e => setNoweOglProw(v => ({ ...v, grupa_id: e.target.value }))} required
                                   style={{ flex: 2, fontSize: '12px', padding: '7px 8px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif', background: 'white' }}>
                                   <option value="">Wybierz grupę *</option>
-                                  {mojeGrupy.map(g => <option key={g.id} value={g.id}>{g.nazwa}</option>)}
+                                  {mojeGrupy.map(g => <option key={g.id} value={g.id}>{g.nazwa}{g.edycja ? ` · ${g.edycja}` : ''}</option>)}
                                 </select>
                               )}
                             </div>
@@ -3505,7 +3505,7 @@ const [zwinieteZadania, setZwinieteZadania] = useState<Set<number>>(() => new Se
                   <form className="admin-form" onSubmit={zapiszEdycje}>
                     <div style={{ display: 'flex', gap: '10px' }}>
                       <div className="login-field" style={{ flex: 1 }}><label>Typ</label><select value={edytowane.typ} onChange={e => setEdytowane({ ...edytowane, typ: e.target.value })}><option>Informacja</option><option>Pilne</option><option>Zmiana</option></select></div>
-                      <div className="login-field" style={{ flex: 2 }}><label>Dla kogo</label><select value={edytowane.grupa_id ?? ''} onChange={e => setEdytowane({ ...edytowane, grupa_id: e.target.value ? parseInt(e.target.value) : null })}><option value="">Wszystkie grupy</option>{grupy.map(g => <option key={g.id} value={g.id}>{g.nazwa}</option>)}</select></div>
+                      <div className="login-field" style={{ flex: 2 }}><label>Dla kogo</label><select value={edytowane.grupa_id ?? ''} onChange={e => setEdytowane({ ...edytowane, grupa_id: e.target.value ? parseInt(e.target.value) : null })}><option value="">Wszystkie grupy</option>{grupy.map(g => <option key={g.id} value={g.id}>{g.nazwa}{g.edycja ? ` · ${g.edycja}` : ''}</option>)}</select></div>
                     </div>
                     <div className="login-field"><label>Tytuł</label><input type="text" value={edytowane.tytul} onChange={e => setEdytowane({ ...edytowane, tytul: e.target.value })} required /></div>
                     <div className="login-field"><label>Krótki opis</label><input type="text" value={edytowane.tresc} onChange={e => setEdytowane({ ...edytowane, tresc: e.target.value })} required /></div>
@@ -3533,7 +3533,7 @@ const [zwinieteZadania, setZwinieteZadania] = useState<Set<number>>(() => new Se
                           <select value={noweOgl.grupa_id} onChange={e => setNoweOgl({ ...noweOgl, grupa_id: e.target.value })}
                             style={{ flex: 2, fontSize: '12px', padding: '7px 8px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif', background: 'white' }}>
                             <option value="">Wszystkie grupy</option>
-                            {grupy.map(g => <option key={g.id} value={g.id}>{g.nazwa}</option>)}
+                            {grupy.map(g => <option key={g.id} value={g.id}>{g.nazwa}{g.edycja ? ` · ${g.edycja}` : ''}</option>)}
                           </select>
                         </div>
                         <input type="text" value={noweOgl.tytul} onChange={e => setNoweOgl({ ...noweOgl, tytul: e.target.value })} placeholder="Tytuł *" required
@@ -3615,7 +3615,7 @@ const [zwinieteZadania, setZwinieteZadania] = useState<Set<number>>(() => new Se
                 <>
                   <h2 className="page-title">Edytuj zjazd</h2>
                   <form className="admin-form" onSubmit={zapiszEdycjeZjazdu}>
-                    <div className="login-field"><label>Grupa</label><select value={edytowanyZjazd.grupa_id} onChange={e => setEdytowanyZjazd({ ...edytowanyZjazd, grupa_id: parseInt(e.target.value) })}>{grupy.map(g => <option key={g.id} value={g.id}>{g.nazwa}</option>)}</select></div>
+                    <div className="login-field"><label>Grupa</label><select value={edytowanyZjazd.grupa_id} onChange={e => setEdytowanyZjazd({ ...edytowanyZjazd, grupa_id: parseInt(e.target.value) })}>{grupy.map(g => <option key={g.id} value={g.id}>{g.nazwa}{g.edycja ? ` · ${g.edycja}` : ''}</option>)}</select></div>
                     <div className="login-field"><label>Numer zjazdu</label><input type="number" value={edytowanyZjazd.nr} onChange={e => setEdytowanyZjazd({ ...edytowanyZjazd, nr: parseInt(e.target.value) })} required /></div>
                     <div className="login-field"><label>Daty</label><input type="text" value={edytowanyZjazd.daty} onChange={e => setEdytowanyZjazd({ ...edytowanyZjazd, daty: e.target.value })} required /></div>
                     <div className="login-field"><label>Data zjazdu</label><input type="date" value={edytowanyZjazd.data_zjazdu} onChange={e => setEdytowanyZjazd({ ...edytowanyZjazd, data_zjazdu: e.target.value })} required /></div>
@@ -3722,7 +3722,7 @@ const [zwinieteZadania, setZwinieteZadania] = useState<Set<number>>(() => new Se
                         <select value={kalFiltrGrupa} onChange={e => setKalFiltrGrupa(e.target.value)}
                           style={{ fontSize: '12px', padding: '6px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif', background: 'white' }}>
                           <option value="">Wszystkie grupy</option>
-                          {grupy.map(g => <option key={g.id} value={g.id}>{g.nazwa}</option>)}
+                          {grupy.map(g => <option key={g.id} value={g.id}>{g.nazwa}{g.edycja ? ` · ${g.edycja}` : ''}</option>)}
                         </select>
                         <select value={kalFiltrProwadzacy} onChange={e => setKalFiltrProwadzacy(e.target.value)}
                           style={{ fontSize: '12px', padding: '6px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif', background: 'white' }}>
@@ -3866,7 +3866,7 @@ const [zwinieteZadania, setZwinieteZadania] = useState<Set<number>>(() => new Se
                       }}
                         style={{ fontSize: '13px', padding: '7px 12px', border: '0.5px solid var(--border)', borderRadius: '10px', fontFamily: 'Jost, sans-serif', background: 'white' }}>
                         <option value="">Wybierz grupę…</option>
-                        {grupy.map(g => <option key={g.id} value={g.id}>{g.nazwa}</option>)}
+                        {grupy.map(g => <option key={g.id} value={g.id}>{g.nazwa}{g.edycja ? ` · ${g.edycja}` : ''}</option>)}
                       </select>
                       <button onClick={() => {
                         const g = grupy.find(g => g.id === parseInt(tabelaGrupa));
@@ -4008,7 +4008,7 @@ const [zwinieteZadania, setZwinieteZadania] = useState<Set<number>>(() => new Se
                           onChange={e => setNowyZjazd({ ...nowyZjazd, ...(nowyZjazd as any), _filterGrupa: e.target.value })}
                           style={{ fontSize: '12px', padding: '6px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif', background: 'white', width: '100%' }}>
                           <option value="">Wszystkie grupy</option>
-                          {grupy.map(g => <option key={g.id} value={g.id}>{g.nazwa}</option>)}
+                          {grupy.map(g => <option key={g.id} value={g.id}>{g.nazwa}{g.edycja ? ` · ${g.edycja}` : ''}</option>)}
                         </select>
                       </div>
                       <button onClick={() => setZwinieteZjazdy(new Set(grupy.map(g => g.id)))}
@@ -4188,7 +4188,7 @@ const [zwinieteZadania, setZwinieteZadania] = useState<Set<number>>(() => new Se
                       </select>
                      <select value={nowyKursant.grupa_id} onChange={e => setNowyKursant({ ...nowyKursant, grupa_id: e.target.value })} required style={{ flex: 1, fontSize: '12px', padding: '7px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif', background: 'white' }}>
                         <option value="">Wybierz grupę</option>
-                        {grupy.map(g => <option key={g.id} value={g.id}>{g.nazwa}</option>)}
+                        {grupy.map(g => <option key={g.id} value={g.id}>{g.nazwa}{g.edycja ? ` · ${g.edycja}` : ''}</option>)}
                       </select>
                       <button type="submit" style={{ padding: '7px 16px', background: 'var(--brand)', color: 'white', border: 'none', borderRadius: '8px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', fontFamily: 'Jost, sans-serif', whiteSpace: 'nowrap' }}>+ Dodaj</button>
                     </div>
@@ -4238,7 +4238,7 @@ const [zwinieteZadania, setZwinieteZadania] = useState<Set<number>>(() => new Se
                   <select value={filtrGrupaKursant} onChange={e => setFiltrGrupaKursant(e.target.value)}
                     style={{ fontSize: '12px', padding: '7px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif', background: 'white' }}>
                     <option value="">Wszystkie grupy</option>
-                    {grupy.map(g => <option key={g.id} value={g.id}>{g.nazwa}</option>)}
+                    {grupy.map(g => <option key={g.id} value={g.id}>{g.nazwa}{g.edycja ? ` · ${g.edycja}` : ''}</option>)}
                   </select>
                   <button onClick={async () => {
   let key = sessionStorage.getItem('sb_service_key') || '';
@@ -4333,7 +4333,7 @@ const [zwinieteZadania, setZwinieteZadania] = useState<Set<number>>(() => new Se
                                 <select value={(edytowanyKursant as any).grupa_id || ''} onChange={e => setEdytowanyKursant({ ...edytowanyKursant, ...(edytowanyKursant as any), grupa_id: e.target.value ? parseInt(e.target.value) : null })}
                                   style={{ fontSize: '11px', padding: '3px 6px', border: '0.5px solid var(--brand-mid)', borderRadius: '6px', fontFamily: 'Jost, sans-serif', background: 'white' }}>
                                   <option value="">Brak grupy</option>
-                                  {grupy.map(g => <option key={g.id} value={g.id}>{g.nazwa}</option>)}
+                                  {grupy.map(g => <option key={g.id} value={g.id}>{g.nazwa}{g.edycja ? ` · ${g.edycja}` : ''}</option>)}
                                 </select>
                               ) : <span
                               onClick={k.grupa_id ? e => { e.stopPropagation(); setAktywnaZakladka('grupy'); setWybranaGrupaDetail(k.grupa_id); setZakladkaGrupy('kursanci'); } : undefined}
@@ -5198,7 +5198,7 @@ setKomunikat(`Notatka zapisana — ${k.imie} ${k.nazwisko}`);
                     <select value={noweZadanie.grupa_id} onChange={e => { setNoweZadanie({ ...noweZadanie, grupa_id: e.target.value }); setWybranaGrupaZadan(e.target.value); }} required
                       style={{ width: '100%', fontSize: '12px', padding: '7px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif', background: 'white', marginBottom: '8px' }}>
                       <option value="">Wybierz grupę *</option>
-                      {grupy.map(g => <option key={g.id} value={g.id}>{g.nazwa}</option>)}
+                      {grupy.map(g => <option key={g.id} value={g.id}>{g.nazwa}{g.edycja ? ` · ${g.edycja}` : ''}</option>)}
                     </select>
                     <input type="text" value={noweZadanie.tytul} onChange={e => setNoweZadanie({ ...noweZadanie, tytul: e.target.value })} placeholder="Tytuł zadania *" required
                       style={{ width: '100%', fontSize: '12px', padding: '7px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif', marginBottom: '8px' }} />
@@ -5245,7 +5245,7 @@ setKomunikat(`Notatka zapisana — ${k.imie} ${k.nazwisko}`);
                       <select value={wybranaGrupaZadan} onChange={e => setWybranaGrupaZadan(e.target.value)}
                         style={{ fontSize: '11px', padding: '5px 8px', border: '0.5px solid var(--border)', borderRadius: '7px', fontFamily: 'Jost, sans-serif', background: 'white' }}>
                         <option value="">Wszystkie grupy</option>
-                        {grupy.map(g => <option key={g.id} value={g.id}>{g.nazwa}</option>)}
+                        {grupy.map(g => <option key={g.id} value={g.id}>{g.nazwa}{g.edycja ? ` · ${g.edycja}` : ''}</option>)}
                       </select>
                       <button onClick={() => setZwinieteZadania(new Set(grupy.map(g => g.id)))}
                         style={{ fontSize: '10px', color: 'var(--text-muted)', background: 'none', border: '0.5px solid var(--border)', borderRadius: '6px', padding: '4px 8px', cursor: 'pointer', fontFamily: 'Jost, sans-serif', whiteSpace: 'nowrap' }}>Zwiń</button>
