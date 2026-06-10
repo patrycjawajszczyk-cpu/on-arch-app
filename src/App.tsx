@@ -4416,9 +4416,8 @@ const [zwinieteZadania, setZwinieteZadania] = useState<Set<number>>(() => new Se
         const zjazdyGrupy = zjazdy
           .filter(z => z.grupa_id === k.grupa_id)
           .sort((a, b) => (a.data_dzien1 || '').localeCompare(b.data_dzien1 || ''));
-        const pierwszyZjazd = zjazdyGrupy[0]?.data_dzien1 || '';
         const ostatniZjazdData = zjazdyGrupy[zjazdyGrupy.length - 1]?.data_dzien1 || '';
-        const dataUkonczenia = ostatniZjazdData || new Date().toISOString().split('T')[0];;
+        const dataUkonczenia = ostatniZjazdData || new Date().toISOString().split('T')[0];
         setKomunikat(`Generuję certyfikat dla ${k.imie} ${k.nazwisko}…`);
         try {
           fetch(CERTYFIKAT_SCRIPT_URL, {
