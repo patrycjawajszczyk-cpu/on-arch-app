@@ -5731,9 +5731,6 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
     const wszystkieZjazdy = zjazdy.length;
     const zakonczone = zjazdy.filter(z => z.status === 'zakonczony').length;
     const procent = wszystkieZjazdy > 0 ? Math.round((zakonczone / wszystkieZjazdy) * 100) : 0;
-    const r = 36;
-    const circ = 2 * Math.PI * r;
-    const dash = circ * (1 - procent / 100);
     const noweOgl = ogloszenia.filter(o => o.nowe);
     
 
