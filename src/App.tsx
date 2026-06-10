@@ -4413,10 +4413,12 @@ const [zwinieteZadania, setZwinieteZadania] = useState<Set<number>>(() => new Se
         e.currentTarget.textContent = 'Generuję…';
         const grupa = grupy.find(g => g.id === k.grupa_id);
         if (!grupa) { setKomunikat('Brak danych grupy.'); return; }
-        const ostatniZjazd = zjazdy
-          .filter(z => z.grupa_id === k.grupa_id && z.status === 'zakonczony')
-          .sort((a, b) => (b.data_dzien1 || '').localeCompare(a.data_dzien1 || ''))[0];
-        const dataUkonczenia = ostatniZjazd?.data_dzien1 || new Date().toISOString().split('T')[0];
+        const zjazdyGrupy = zjazdy
+          .filter(z => z.grupa_id === k.grupa_id)
+          .sort((a, b) => (a.data_dzien1 || '').localeCompare(b.data_dzien1 || ''));
+        const pierwszyZjazd = zjazdyGrupy[0]?.data_dzien1 || '';
+        const ostatniZjazdData = zjazdyGrupy[zjazdyGrupy.length - 1]?.data_dzien1 || '';
+        const dataUkonczenia = ostatniZjazdData || new Date().toISOString().split('T')[0];;
         setKomunikat(`Generuję certyfikat dla ${k.imie} ${k.nazwisko}…`);
         try {
           fetch(CERTYFIKAT_SCRIPT_URL, {
@@ -4431,6 +4433,7 @@ const [zwinieteZadania, setZwinieteZadania] = useState<Set<number>>(() => new Se
               nazwa_kursu: grupa.nazwa,
               godziny: (grupa as any).liczba_godzin || '',
               data_ukonczenia: dataUkonczenia,
+              daty_kursu: grupa.edycja || '',
               tryb_kursu: grupa.tryb || 'online',
               miasto_kursu: grupa.miasto || 'Łódź',
             })
@@ -4903,7 +4906,7 @@ setKomunikat(`Notatka zapisana — ${k.imie} ${k.nazwisko}`);
                         {[
                             { label: 'Nazwa grupy', field: 'nazwa', placeholder: 'np. Projektowanie Wnętrz' },
                             { label: 'Miasto', field: 'miasto', placeholder: 'np. Łódź' },
-                            { label: 'Edycja', field: 'edycja', placeholder: 'np. 09.03' },
+                            { label: 'Edycja (daty startu i zakończenia)', field: 'edycja', placeholder: 'np. 30.05.2026 – 09.08.2026' },
                             { label: 'Numer usługi BUR', field: 'numer_uslugi', placeholder: 'np. 2025/09/...' },
                           ].map(({ label, field, placeholder }) => (
                             <div key={field}>
@@ -4986,7 +4989,7 @@ setKomunikat(`Notatka zapisana — ${k.imie} ${k.nazwisko}`);
                       <form className="admin-form" onSubmit={async e => { await dodajGrupe(e); setPokazFormGrupy(false); }}>
                         <div className="login-field"><label>Nazwa grupy</label><input type="text" value={nowaGrupa.nazwa} onChange={e => setNowaGrupa({ ...nowaGrupa, nazwa: e.target.value })} required /></div>
                         <div className="login-field"><label>Miasto</label><input type="text" value={nowaGrupa.miasto} onChange={e => setNowaGrupa({ ...nowaGrupa, miasto: e.target.value })} required /></div>
-                        <div className="login-field"><label>Edycja</label><input type="text" value={nowaGrupa.edycja} onChange={e => setNowaGrupa({ ...nowaGrupa, edycja: e.target.value })} required /></div>
+                        <div className="login-field"><label>Edycja (dodaj daty startu i zakończenia)</label><input type="text" value={nowaGrupa.edycja} onChange={e => setNowaGrupa({ ...nowaGrupa, edycja: e.target.value })} placeholder="np. 30.05.2026 – 09.08.2026" required /></div>
                         <div className="login-field"><label>Strefa Wiedzy — link Google Drive</label><input type="url" value={nowaGrupa.drive_link} onChange={e => setNowaGrupa({ ...nowaGrupa, drive_link: e.target.value })} placeholder="https://drive.google.com/..." /></div>
                         <div className="login-field"><label>Link do materiałów online</label><input type="url" value={(nowaGrupa as any).link_materialow || ''} onChange={e => setNowaGrupa({ ...nowaGrupa, ...(nowaGrupa as any), link_materialow: e.target.value })} placeholder="https://..." /></div>
                         <div className="login-field"><label>Link do nagrań z zajęć</label><input type="url" value={(nowaGrupa as any).link_nagran || ''} onChange={e => setNowaGrupa({ ...nowaGrupa, ...(nowaGrupa as any), link_nagran: e.target.value })} placeholder="https://..." /></div>
