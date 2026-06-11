@@ -442,7 +442,7 @@ function urlBase64ToUint8Array(base64String: string) {
                   </button>
                 )}
               </div>
-              {rozwinięte && {FormPrzeslania({ zadanie: z })}}
+              {rozwinięte && FormPrzeslania({ zadanie: z })}
             </div>
           );
         })}
