@@ -4,7 +4,7 @@
    Palette: warm cream bg, dusty rose brand, slate text
    ===================================================== */
 
-   @import url('https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600&family=Cormorant+Garamond:wght@400;500;600&display=swap');
+   @import url('https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,300;0,400;0,700;1,400&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600&display=swap');
 
    * {
      margin: 0;
@@ -407,7 +407,7 @@
   
   .nav-item.active {
     background: none;
-    color: var(--brand-dark);
+    color: var(--brand);
   }
   
   .nav-label {
@@ -418,7 +418,7 @@
   }
   
   .nav-item.active .nav-label {
-    color: var(--brand-dark);
+    color: var(--brand);
     font-weight: 700;
   }
    

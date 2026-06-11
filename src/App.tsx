@@ -266,7 +266,7 @@ function urlBase64ToUint8Array(base64String: string) {
     const [wysylanie, setWysylanie] = useState(false);
     const [pokazWyslane, setPokazWyslane] = useState(false);
   
-    const SERIF = "'Cormorant Garamond', Georgia, serif";
+    const SERIF = "'Playfair Display', Georgia, serif";
     const [dbPhotos, setDbPhotos] = useState<string[]>([]);
   const PHOTOS_FALLBACK = [
     'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=900&q=80',
@@ -331,20 +331,20 @@ function urlBase64ToUint8Array(base64String: string) {
           <div style={{ marginBottom: '8px' }}>
             <div style={{ fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '6px' }}>Link do pracy</div>
             <input type="url" value={linkPracy} onChange={e => setLinkPracy(e.target.value)} placeholder="https://drive.google.com/..."
-              style={{ width: '100%', fontSize: '13px', padding: '10px 12px', border: '0.5px solid var(--border)', borderRadius: '10px', fontFamily: 'Jost, sans-serif', background: 'white', boxSizing: 'border-box' }} />
+              style={{ width: '100%', fontSize: '13px', padding: '10px 12px', border: '0.5px solid var(--border)', borderRadius: '10px', fontFamily: 'Lato, sans-serif', background: 'white', boxSizing: 'border-box' }} />
           </div>
           <div style={{ marginBottom: '12px' }}>
             <div style={{ fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '6px' }}>Komentarz <span style={{ fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>(opcjonalnie)</span></div>
             <textarea value={komentarz} onChange={e => setKomentarz(e.target.value)} rows={2} placeholder="np. wersja robocza, czeka na poprawki..."
-              style={{ width: '100%', fontSize: '13px', padding: '10px 12px', border: '0.5px solid var(--border)', borderRadius: '10px', fontFamily: 'Jost, sans-serif', resize: 'none', background: 'white', boxSizing: 'border-box' }} />
+              style={{ width: '100%', fontSize: '13px', padding: '10px 12px', border: '0.5px solid var(--border)', borderRadius: '10px', fontFamily: 'Lato, sans-serif', resize: 'none', background: 'white', boxSizing: 'border-box' }} />
           </div>
           <div style={{ display: 'flex', gap: '8px' }}>
             <button onClick={() => wyslij(zadanie)} disabled={wysylanie || !linkPracy.trim()}
-              style={{ flex: 1, padding: '12px', borderRadius: '12px', border: 'none', background: linkPracy.trim() ? 'var(--brand)' : '#ddd', color: 'white', fontSize: '13px', fontWeight: 600, cursor: linkPracy.trim() ? 'pointer' : 'default', fontFamily: 'Jost, sans-serif' }}>
+              style={{ flex: 1, padding: '12px', borderRadius: '12px', border: 'none', background: linkPracy.trim() ? 'var(--brand)' : '#ddd', color: 'white', fontSize: '13px', fontWeight: 600, cursor: linkPracy.trim() ? 'pointer' : 'default', fontFamily: 'Lato, sans-serif' }}>
               {wysylanie ? 'Wysyłanie...' : 'Prześlij pracę'}
             </button>
             <button onClick={() => { setAktywneZadanie(null); setLinkPracy(''); setKomentarz(''); }}
-              style={{ padding: '12px 16px', borderRadius: '12px', border: '0.5px solid var(--border)', background: 'white', cursor: 'pointer', fontSize: '13px', color: 'var(--text-muted)', fontFamily: 'Jost, sans-serif' }}>
+              style={{ padding: '12px 16px', borderRadius: '12px', border: '0.5px solid var(--border)', background: 'white', cursor: 'pointer', fontSize: '13px', color: 'var(--text-muted)', fontFamily: 'Lato, sans-serif' }}>
               Anuluj
             </button>
           </div>
@@ -430,14 +430,14 @@ function urlBase64ToUint8Array(base64String: string) {
                       </div>
                     )}
                     <button onClick={() => { setAktywneZadanie(z); setLinkPracy(odp!.link_pracy); setKomentarz(odp!.komentarz || ''); }}
-                      style={{ marginTop: '8px', fontSize: '12px', color: 'var(--brand)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Jost, sans-serif', padding: 0 }}>
+                      style={{ marginTop: '8px', fontSize: '12px', color: 'var(--brand)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Lato, sans-serif', padding: 0 }}>
                       Edytuj odpowiedź
                     </button>
                   </div>
                 )}
                 {!wyslano && !rozwinięte && (
                   <button onClick={() => setAktywneZadanie(z)}
-                    style={{ width: '100%', padding: '12px', borderRadius: '12px', border: 'none', background: '#c8a84b', color: 'white', fontSize: '13px', fontWeight: 600, cursor: 'pointer', fontFamily: 'Jost, sans-serif' }}>
+                    style={{ width: '100%', padding: '12px', borderRadius: '12px', border: 'none', background: '#c8a84b', color: 'white', fontSize: '13px', fontWeight: 600, cursor: 'pointer', fontFamily: 'Lato, sans-serif' }}>
                     Prześlij pracę zaliczeniową
                   </button>
                 )}
@@ -534,11 +534,11 @@ function urlBase64ToUint8Array(base64String: string) {
                               </div>
                             )}
                             <button onClick={() => { setLinkPracy(odp.link_pracy); setKomentarz(odp.komentarz || ''); }}
-                              style={{ fontSize: '12px', color: 'var(--brand)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Jost, sans-serif', padding: 0, marginBottom: '4px' }}>
+                              style={{ fontSize: '12px', color: 'var(--brand)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Lato, sans-serif', padding: 0, marginBottom: '4px' }}>
                               Edytuj odpowiedź
                             </button>
                             <button onClick={() => { setAktywneZadanie(null); setLinkPracy(''); setKomentarz(''); }}
-                              style={{ fontSize: '12px', color: 'var(--text-muted)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Jost, sans-serif', padding: 0, marginLeft: '12px' }}>
+                              style={{ fontSize: '12px', color: 'var(--text-muted)', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Lato, sans-serif', padding: 0, marginLeft: '12px' }}>
                               Zamknij
                             </button>
                           </div>
@@ -705,10 +705,10 @@ function urlBase64ToUint8Array(base64String: string) {
               {lista.length > 0 && (
                 <div style={{ display: 'flex', gap: '8px' }}>
                   
-                  <button onClick={eksportujCSV} style={{ fontSize: '12px', color: 'var(--brand)', background: 'none', border: '0.5px solid var(--brand-mid)', borderRadius: '8px', padding: '5px 10px', cursor: 'pointer', fontFamily: 'Jost, sans-serif' }}>
+                  <button onClick={eksportujCSV} style={{ fontSize: '12px', color: 'var(--brand)', background: 'none', border: '0.5px solid var(--brand-mid)', borderRadius: '8px', padding: '5px 10px', cursor: 'pointer', fontFamily: 'Lato, sans-serif' }}>
                     ⬇ CSV
                   </button>
-                  <button onClick={eksportujXML} style={{ fontSize: '12px', color: '#1565c0', background: 'none', border: '0.5px solid #9ab0d8', borderRadius: '8px', padding: '5px 10px', cursor: 'pointer', fontFamily: 'Jost, sans-serif' }}>
+                  <button onClick={eksportujXML} style={{ fontSize: '12px', color: '#1565c0', background: 'none', border: '0.5px solid #9ab0d8', borderRadius: '8px', padding: '5px 10px', cursor: 'pointer', fontFamily: 'Lato, sans-serif' }}>
                     ⬇ XML
                   </button>
                 </div>
@@ -866,7 +866,7 @@ function urlBase64ToUint8Array(base64String: string) {
       return (
         <div style={{ padding: '24px', textAlign: 'center' }}>
           <div style={{ fontSize: '48px', marginBottom: '16px' }}>🔒</div>
-          <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '22px', marginBottom: '12px' }}>Ankieta niedostępna</h2>
+          <h2 style={{ fontFamily: 'Playfair Display, serif', fontSize: '22px', marginBottom: '12px' }}>Ankieta niedostępna</h2>
           <p style={{ color: 'var(--text-muted)', fontSize: '14px', lineHeight: '1.6' }}>
             Ankieta oceniająca kurs zostanie odblokowana po zakończeniu ostatniego zjazdu Twojej grupy.
           </p>
@@ -886,7 +886,7 @@ function urlBase64ToUint8Array(base64String: string) {
       return (
         <div style={{ padding: '24px', textAlign: 'center' }}>
           <div style={{ fontSize: '56px', marginBottom: '16px' }}>🎉</div>
-          <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '24px', marginBottom: '12px' }}>Dziękujemy!</h2>
+          <h2 style={{ fontFamily: 'Playfair Display, serif', fontSize: '24px', marginBottom: '12px' }}>Dziękujemy!</h2>
           <p style={{ color: 'var(--text-muted)', fontSize: '14px', lineHeight: '1.6' }}>
             Twoja opinia została zapisana. Dziękujemy za udział w kursie i za poświęcony czas.
           </p>
@@ -899,7 +899,7 @@ function urlBase64ToUint8Array(base64String: string) {
     }
 
     const sekcjaTytul = (t: string) => (
-      <h3 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '18px', color: 'var(--brand)', margin: '20px 0 8px' }}>{t}</h3>
+      <h3 style={{ fontFamily: 'Playfair Display, serif', fontSize: '18px', color: 'var(--brand)', margin: '20px 0 8px' }}>{t}</h3>
     );
 
     const pytanieGwiazdki = (label: string, pole: keyof OdpowiedziAnkiety) => (
@@ -936,7 +936,7 @@ function urlBase64ToUint8Array(base64String: string) {
     return (
       <div style={{ paddingBottom: '16px' }}>
         <div style={{ background: 'var(--brand)', color: 'white', padding: '16px 20px', borderRadius: '0 0 16px 16px', marginBottom: '4px' }}>
-          <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '22px', marginBottom: '4px' }}>Ankieta oceny kursu</h2>
+          <h2 style={{ fontFamily: 'Playfair Display, serif', fontSize: '22px', marginBottom: '4px' }}>Ankieta oceny kursu</h2>
           <p style={{ fontSize: '12px', opacity: 0.85 }}>Odpowiedzi są anonimowe • Krok {krok} z {krokowLacznie}</p>
           <div style={{ display: 'flex', gap: '4px', marginTop: '10px' }}>
             {Array.from({ length: krokowLacznie }).map((_, i) => (
@@ -1099,7 +1099,7 @@ function urlBase64ToUint8Array(base64String: string) {
     return (
       <div className="login-screen" style={{ overflowY: 'auto', alignItems: 'flex-start', padding: '24px' }}>
         <button className="btn-wroc" onClick={onWroc} style={{ marginBottom: '16px' }}>← Wróć</button>
-        <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '22px', marginBottom: '16px' }}>Polityka Prywatności</h2>
+        <h2 style={{ fontFamily: 'Playfair Display, serif', fontSize: '22px', marginBottom: '16px' }}>Polityka Prywatności</h2>
         <div style={{ fontSize: '13px', lineHeight: '1.7', color: 'var(--text)' }}>
           <p style={{ marginBottom: '12px' }}><strong>Administrator danych osobowych:</strong><br />On-Arch Barbara Szczęsna-Dyńska<br />ul. Tymienieckiego 25D/53, 90-350 Łódź<br />Email: info@on-arch.pl</p>
           <p style={{ marginBottom: '8px' }}><strong>1. Jakie dane zbieramy?</strong></p>
@@ -1123,7 +1123,7 @@ function urlBase64ToUint8Array(base64String: string) {
     return (
       <div className="login-screen" style={{ overflowY: 'auto', alignItems: 'flex-start', padding: '24px' }}>
         <button className="btn-wroc" onClick={onWroc} style={{ marginBottom: '16px' }}>← Wróć</button>
-        <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '22px', marginBottom: '16px' }}>Regulamin aplikacji</h2>
+        <h2 style={{ fontFamily: 'Playfair Display, serif', fontSize: '22px', marginBottom: '16px' }}>Regulamin aplikacji</h2>
         <div style={{ fontSize: '13px', lineHeight: '1.7', color: 'var(--text)' }}>
           <p style={{ marginBottom: '12px' }}><strong>Aplikacja On-Arch</strong> — regulamin korzystania z aplikacji mobilnej dla kursantów.</p>
           <p style={{ marginBottom: '8px' }}><strong>1. Postanowienia ogólne</strong></p>
@@ -1162,7 +1162,7 @@ function urlBase64ToUint8Array(base64String: string) {
 
         {/* Powitanie */}
         <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-          <div style={{ fontSize: '24px', fontWeight: 300, color: 'white', marginBottom: '12px', fontFamily: 'Cormorant Garamond, serif' }}>
+          <div style={{ fontSize: '24px', fontWeight: 300, color: 'white', marginBottom: '12px', fontFamily: 'Playfair Display, serif' }}>
             Witaj, {kursant.imie}! 👋
           </div>
           <div style={{ fontSize: '14px', color: 'rgba(255,255,255,0.75)', lineHeight: '1.7', maxWidth: '300px' }}>
@@ -1202,7 +1202,7 @@ function urlBase64ToUint8Array(base64String: string) {
           width: '100%', maxWidth: '320px', padding: '16px',
           background: 'white', color: 'var(--brand-dark)',
           border: 'none', borderRadius: '16px', cursor: 'pointer',
-          fontSize: '16px', fontWeight: 600, fontFamily: 'Jost, sans-serif',
+          fontSize: '16px', fontWeight: 600, fontFamily: 'Lato, sans-serif',
           letterSpacing: '0.3px',
         }}>
           {ladowanie ? 'Ładowanie...' : 'Zaczynamy! →'}
@@ -1837,7 +1837,7 @@ function urlBase64ToUint8Array(base64String: string) {
               <>
                 <div style={{ marginBottom: '28px' }}>
                   <div style={{ fontSize: '10px', letterSpacing: '0.28em', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '8px' }}>Witaj z powrotem</div>
-                  <div style={{ fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic', fontSize: '32px', color: 'var(--brand-dark)', lineHeight: 1.1, marginBottom: '4px' }}>
+                  <div style={{ fontFamily: 'Playfair Display, serif', fontStyle: 'italic', fontSize: '32px', color: 'var(--brand-dark)', lineHeight: 1.1, marginBottom: '4px' }}>
                   {ladowanie ? 'Ładowanie...' : (mojeImieNazwisko || user.email.split('@')[0])}
                   </div>
                   <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
@@ -1872,7 +1872,7 @@ function urlBase64ToUint8Array(base64String: string) {
                         <div key={z.id} onClick={() => setAktywnaZakladka('zjazdy')}
                           style={{ background: 'white', borderRadius: '12px', border: '0.5px solid var(--border)', padding: '12px 16px', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '14px', cursor: 'pointer' }}>
                           <div style={{ width: '42px', height: '42px', borderRadius: '10px', background: 'var(--brand-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                            <span style={{ fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic', fontSize: '16px', fontWeight: 500, color: 'var(--brand)' }}>{z.nr}</span>
+                            <span style={{ fontFamily: 'Playfair Display, serif', fontStyle: 'italic', fontSize: '16px', fontWeight: 500, color: 'var(--brand)' }}>{z.nr}</span>
                           </div>
                           <div style={{ flex: 1 }}>
                             <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text)', marginBottom: '2px' }}>{z.daty}</div>
@@ -1899,12 +1899,12 @@ function urlBase64ToUint8Array(base64String: string) {
                     {mojeGrupy.length > 1 && (
                       <div style={{ display: 'flex', gap: '8px', marginBottom: '20px', flexWrap: 'wrap' }}>
                         <button onClick={() => setWybranaGrupa('')}
-                          style={{ padding: '6px 14px', borderRadius: '20px', border: '0.5px solid var(--border)', background: !wybranaGrupa ? 'var(--brand)' : 'white', color: !wybranaGrupa ? 'white' : 'var(--text)', fontSize: '12px', cursor: 'pointer', fontFamily: 'Jost, sans-serif' }}>
+                          style={{ padding: '6px 14px', borderRadius: '20px', border: '0.5px solid var(--border)', background: !wybranaGrupa ? 'var(--brand)' : 'white', color: !wybranaGrupa ? 'white' : 'var(--text)', fontSize: '12px', cursor: 'pointer', fontFamily: 'Lato, sans-serif' }}>
                           Wszystkie
                         </button>
                         {mojeGrupy.map(g => (
                           <button key={g.id} onClick={() => setWybranaGrupa(String(g.id))}
-                            style={{ padding: '6px 14px', borderRadius: '20px', border: '0.5px solid var(--border)', background: wybranaGrupa === String(g.id) ? 'var(--brand)' : 'white', color: wybranaGrupa === String(g.id) ? 'white' : 'var(--text)', fontSize: '12px', cursor: 'pointer', fontFamily: 'Jost, sans-serif' }}>
+                            style={{ padding: '6px 14px', borderRadius: '20px', border: '0.5px solid var(--border)', background: wybranaGrupa === String(g.id) ? 'var(--brand)' : 'white', color: wybranaGrupa === String(g.id) ? 'white' : 'var(--text)', fontSize: '12px', cursor: 'pointer', fontFamily: 'Lato, sans-serif' }}>
                             {g.nazwa}
                           </button>
                         ))}
@@ -1916,26 +1916,26 @@ function urlBase64ToUint8Array(base64String: string) {
                         <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text)', marginBottom: '12px' }}>Nowe zadanie</div>
                         <form onSubmit={dodajZadanie}>
                           <select value={noweZadanie.grupa_id} onChange={e => setNoweZadanie({ ...noweZadanie, grupa_id: e.target.value })} required
-                            style={{ width: '100%', fontSize: '12px', padding: '7px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif', background: 'white', marginBottom: '8px' }}>
+                            style={{ width: '100%', fontSize: '12px', padding: '7px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Lato, sans-serif', background: 'white', marginBottom: '8px' }}>
                             <option value="">Wybierz grupę *</option>
                             {mojeGrupy.map(g => <option key={g.id} value={g.id}>{g.nazwa}{g.edycja ? ` · ${g.edycja}` : ''}</option>)}
                           </select>
                           <input type="text" value={noweZadanie.tytul} onChange={e => setNoweZadanie({ ...noweZadanie, tytul: e.target.value })} placeholder="Tytuł zadania *" required
-                            style={{ width: '100%', fontSize: '12px', padding: '7px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif', marginBottom: '8px' }} />
+                            style={{ width: '100%', fontSize: '12px', padding: '7px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Lato, sans-serif', marginBottom: '8px' }} />
                           <textarea value={noweZadanie.opis} onChange={e => setNoweZadanie({ ...noweZadanie, opis: e.target.value })} placeholder="Opis / instrukcja" rows={3}
-                            style={{ width: '100%', fontSize: '12px', padding: '7px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif', resize: 'vertical', marginBottom: '8px' }} />
+                            style={{ width: '100%', fontSize: '12px', padding: '7px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Lato, sans-serif', resize: 'vertical', marginBottom: '8px' }} />
                           <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
                             <input type="date" value={noweZadanie.termin} onChange={e => setNoweZadanie({ ...noweZadanie, termin: e.target.value })}
-                              style={{ flex: 1, fontSize: '12px', padding: '7px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif' }} />
+                              style={{ flex: 1, fontSize: '12px', padding: '7px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Lato, sans-serif' }} />
                             <select value={noweZadanie.typ} onChange={e => setNoweZadanie({ ...noweZadanie, typ: e.target.value })}
-                              style={{ flex: 1, fontSize: '12px', padding: '7px 8px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif', background: 'white' }}>
+                              style={{ flex: 1, fontSize: '12px', padding: '7px 8px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Lato, sans-serif', background: 'white' }}>
                               <option value="zadanie">Zadanie domowe</option>
                               <option value="praca_zaliczeniowa">Praca zaliczeniowa</option>
                             </select>
                           </div>
                           <input type="url" value={noweZadanie.link_materialow} onChange={e => setNoweZadanie({ ...noweZadanie, link_materialow: e.target.value })} placeholder="Link do materiałów (opcjonalnie)"
-                            style={{ width: '100%', fontSize: '12px', padding: '7px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif', marginBottom: '8px' }} />
-                          <button type="submit" style={{ width: '100%', padding: '8px', background: 'var(--brand)', color: 'white', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 600, cursor: 'pointer', fontFamily: 'Jost, sans-serif' }}>
+                            style={{ width: '100%', fontSize: '12px', padding: '7px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Lato, sans-serif', marginBottom: '8px' }} />
+                          <button type="submit" style={{ width: '100%', padding: '8px', background: 'var(--brand)', color: 'white', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 600, cursor: 'pointer', fontFamily: 'Lato, sans-serif' }}>
                             + Dodaj zadanie
                           </button>
                         </form>
@@ -1992,7 +1992,7 @@ function urlBase64ToUint8Array(base64String: string) {
                                           const { data } = await supabase.from('zadania_odpowiedzi').select('*').in('zadanie_id', zadania.map(zz => zz.id));
                                           setOdpowiedziZadan(data || []);
                                           setKomunikat(o.sprawdzona ? 'Oznaczono jako: do sprawdzenia' : 'Oznaczono jako: sprawdzona ✓');
-                                        }} style={{ fontSize: '10px', fontWeight: 700, padding: '2px 8px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontFamily: 'Jost, sans-serif',
+                                        }} style={{ fontSize: '10px', fontWeight: 700, padding: '2px 8px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontFamily: 'Lato, sans-serif',
                                           background: o.sprawdzona ? '#e8f5e9' : '#fff8e1',
                                           color: o.sprawdzona ? '#2e7d32' : '#c8a84b' }}>
                                           {o.sprawdzona ? '✓ Sprawdzona' : '· Do sprawdzenia'}
@@ -2013,7 +2013,7 @@ function urlBase64ToUint8Array(base64String: string) {
                                               setKomunikat('Uwagi zapisane');
                                             }
                                           }}
-                                          style={{ flex: 1, fontSize: '11px', padding: '5px 8px', border: '0.5px solid var(--border)', borderRadius: '7px', fontFamily: 'Jost, sans-serif', background: 'white' }} />
+                                          style={{ flex: 1, fontSize: '11px', padding: '5px 8px', border: '0.5px solid var(--border)', borderRadius: '7px', fontFamily: 'Lato, sans-serif', background: 'white' }} />
                                       </div>
                                       {o.uwagi_prowadzacego && <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '2px' }}>💬 {o.uwagi_prowadzacego}</div>}
                                     </div>
@@ -2036,7 +2036,7 @@ function urlBase64ToUint8Array(base64String: string) {
                     <h2 className="page-title">Kursanci</h2>
                     {mojeGrupy.map(g => (
                       <div key={g.id} style={{ marginBottom: '20px' }}>
-                        <h3 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '18px', color: 'var(--brand)', marginBottom: '10px' }}>{g.nazwa}</h3>
+                        <h3 style={{ fontFamily: 'Playfair Display, serif', fontSize: '18px', color: 'var(--brand)', marginBottom: '10px' }}>{g.nazwa}</h3>
                         {kursanci.filter(k => k.grupa_id === g.id).map(k => {
                           const notatka = notatki.find(n => n.kursant_user_id === k.user_id);
                           const otwarta = aktywnaNotatkaKursant === k.user_id;
@@ -2053,7 +2053,7 @@ function urlBase64ToUint8Array(base64String: string) {
                                 <div style={{ padding: '8px 16px 12px' }}>
                                   <label style={{ fontSize: '11px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.4px', fontWeight: 600, display: 'block', marginBottom: '6px' }}>Notatka prywatna 🔒</label>
                                   <textarea value={trescNotatki} onChange={e => setTrescNotatki(e.target.value)} rows={3} placeholder="Notatka widoczna tylko dla Ciebie…"
-                                    style={{ width: '100%', fontSize: '13px', padding: '8px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif', resize: 'vertical' }} />
+                                    style={{ width: '100%', fontSize: '13px', padding: '8px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Lato, sans-serif', resize: 'vertical' }} />
                                   <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
                                     <button onClick={() => zapiszNotatke(k.user_id)} className="login-btn" style={{ flex: 1, padding: '8px' }}>Zapisz notatkę</button>
                                     {notatka && <button onClick={() => usunNotatke(k.user_id)} className="btn-wyloguj" style={{ flex: 1, padding: '8px', marginTop: 0 }}>Usuń notatkę</button>}
@@ -2076,7 +2076,7 @@ function urlBase64ToUint8Array(base64String: string) {
                       return (
                       <div key={z.id} className="profil-card" style={{ marginBottom: '8px' }}>
                         <div className="profil-row">
-                          <span className="profil-lbl" style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '16px' }}>Zjazd {z.nr} — {z.daty}</span>
+                          <span className="profil-lbl" style={{ fontFamily: 'Playfair Display, serif', fontSize: '16px' }}>Zjazd {z.nr} — {z.daty}</span>
                           <span className={`s-badge s-${z.status}`}>{z.status === 'nadchodzacy' ? 'Nadchodzący' : 'Zakończony'}</span>
                         </div>
                         <div className="profil-row"><span className="profil-lbl">Grupa</span><span className="profil-val">{grupa?.nazwa || '-'}</span></div>
@@ -2111,12 +2111,12 @@ function urlBase64ToUint8Array(base64String: string) {
                             <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
                               <select value={edytowaneOglProw ? edytowaneOglProw.typ : noweOglProw.typ}
                                 onChange={e => edytowaneOglProw ? setEdytowaneOglProw({ ...edytowaneOglProw, typ: e.target.value }) : setNoweOglProw(v => ({ ...v, typ: e.target.value }))}
-                                style={{ flex: 1, fontSize: '12px', padding: '7px 8px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif', background: 'white' }}>
+                                style={{ flex: 1, fontSize: '12px', padding: '7px 8px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Lato, sans-serif', background: 'white' }}>
                                 <option>Informacja</option><option>Pilne</option><option>Zmiana</option>
                               </select>
                               {!edytowaneOglProw && (
                                 <select value={noweOglProw.grupa_id} onChange={e => setNoweOglProw(v => ({ ...v, grupa_id: e.target.value }))} required
-                                  style={{ flex: 2, fontSize: '12px', padding: '7px 8px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif', background: 'white' }}>
+                                  style={{ flex: 2, fontSize: '12px', padding: '7px 8px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Lato, sans-serif', background: 'white' }}>
                                   <option value="">Wybierz grupę *</option>
                                   {mojeGrupy.map(g => <option key={g.id} value={g.id}>{g.nazwa}{g.edycja ? ` · ${g.edycja}` : ''}</option>)}
                                 </select>
@@ -2126,25 +2126,25 @@ function urlBase64ToUint8Array(base64String: string) {
                               value={edytowaneOglProw ? edytowaneOglProw.tytul : noweOglProw.tytul}
                               onChange={e => edytowaneOglProw ? setEdytowaneOglProw({ ...edytowaneOglProw, tytul: e.target.value }) : setNoweOglProw(v => ({ ...v, tytul: e.target.value }))}
                               placeholder="Tytuł *" required
-                              style={{ width: '100%', fontSize: '12px', padding: '7px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif', marginBottom: '8px' }} />
+                              style={{ width: '100%', fontSize: '12px', padding: '7px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Lato, sans-serif', marginBottom: '8px' }} />
                             <input type="text"
                               value={edytowaneOglProw ? edytowaneOglProw.tresc : noweOglProw.tresc}
                               onChange={e => edytowaneOglProw ? setEdytowaneOglProw({ ...edytowaneOglProw, tresc: e.target.value }) : setNoweOglProw(v => ({ ...v, tresc: e.target.value }))}
                               placeholder="Krótki opis *" required
-                              style={{ width: '100%', fontSize: '12px', padding: '7px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif', marginBottom: '8px' }} />
+                              style={{ width: '100%', fontSize: '12px', padding: '7px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Lato, sans-serif', marginBottom: '8px' }} />
                             <textarea
                               value={edytowaneOglProw ? (edytowaneOglProw.szczegoly || '') : noweOglProw.szczegoly}
                               onChange={e => edytowaneOglProw ? setEdytowaneOglProw({ ...edytowaneOglProw, szczegoly: e.target.value }) : setNoweOglProw(v => ({ ...v, szczegoly: e.target.value }))}
                               placeholder="Pełna treść (opcjonalnie)" rows={3}
-                              style={{ width: '100%', fontSize: '12px', padding: '7px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif', resize: 'vertical', marginBottom: '4px' }} />
+                              style={{ width: '100%', fontSize: '12px', padding: '7px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Lato, sans-serif', resize: 'vertical', marginBottom: '4px' }} />
                             <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginBottom: '8px' }}>💡 Linki wklejone w treści będą automatycznie klikalne</div>
                             <div style={{ display: 'flex', gap: '8px' }}>
-                              <button type="submit" style={{ flex: 1, padding: '8px', background: 'var(--brand)', color: 'white', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 600, cursor: 'pointer', fontFamily: 'Jost, sans-serif' }}>
+                              <button type="submit" style={{ flex: 1, padding: '8px', background: 'var(--brand)', color: 'white', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 600, cursor: 'pointer', fontFamily: 'Lato, sans-serif' }}>
                                 {edytowaneOglProw ? 'Zapisz zmiany' : '+ Dodaj ogłoszenie'}
                               </button>
                               {edytowaneOglProw && (
                                 <button type="button" onClick={() => setEdytowaneOglProw(null)}
-                                  style={{ padding: '8px 14px', background: 'none', border: '0.5px solid var(--border)', borderRadius: '8px', fontSize: '12px', cursor: 'pointer', color: 'var(--text-muted)', fontFamily: 'Jost, sans-serif' }}>
+                                  style={{ padding: '8px 14px', background: 'none', border: '0.5px solid var(--border)', borderRadius: '8px', fontSize: '12px', cursor: 'pointer', color: 'var(--text-muted)', fontFamily: 'Lato, sans-serif' }}>
                                   Anuluj
                                 </button>
                               )}
@@ -2161,7 +2161,7 @@ function urlBase64ToUint8Array(base64String: string) {
                                 {(o.autor_user_id === user.id || (!o.autor_user_id && o.grupa_id && mojeGrupyIds.includes(Number(o.grupa_id)))) && (
                                   <div style={{ position: 'absolute', top: '10px', right: '10px', display: 'flex', gap: '4px' }}>
                                     <button onClick={e => { e.stopPropagation(); setEdytowaneOglProw(o); setAktywneOgloszenie(null); }}
-                                      style={{ fontSize: '11px', padding: '2px 10px', border: '0.5px solid var(--border)', borderRadius: '6px', background: 'white', cursor: 'pointer', color: 'var(--brand)', fontFamily: 'Jost, sans-serif' }}>
+                                      style={{ fontSize: '11px', padding: '2px 10px', border: '0.5px solid var(--border)', borderRadius: '6px', background: 'white', cursor: 'pointer', color: 'var(--brand)', fontFamily: 'Lato, sans-serif' }}>
                                       Edytuj
                                     </button>
                                     <button onClick={e => { e.stopPropagation(); usunOgloszenieProw(o.id); }}
@@ -2273,7 +2273,7 @@ function urlBase64ToUint8Array(base64String: string) {
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
           <h2 className="page-title" style={{ margin: 0 }}>Weryfikacja obecności</h2>
           <select value={wybranyZjazd} onChange={e => setWybranyZjazd(e.target.value)}
-            style={{ fontSize: '13px', padding: '8px 14px', border: '0.5px solid var(--border)', borderRadius: '10px', fontFamily: 'Jost, sans-serif', background: 'white', minWidth: '220px' }}>
+            style={{ fontSize: '13px', padding: '8px 14px', border: '0.5px solid var(--border)', borderRadius: '10px', fontFamily: 'Lato, sans-serif', background: 'white', minWidth: '220px' }}>
             <option value="">Wybierz zjazd…</option>
             {zjazdy.map(z => {
               const g = grupy.find(gr => gr.id === z.grupa_id);
@@ -2283,7 +2283,7 @@ function urlBase64ToUint8Array(base64String: string) {
         </div>
   
         {!wybranyZjazd && (
-          <div style={{ textAlign: 'center', padding: '60px 24px', color: 'var(--text-muted)', fontFamily: 'Cormorant Garamond, serif', fontStyle: 'italic', fontSize: '18px' }}>
+          <div style={{ textAlign: 'center', padding: '60px 24px', color: 'var(--text-muted)', fontFamily: 'Playfair Display, serif', fontStyle: 'italic', fontSize: '18px' }}>
             Wybierz zjazd aby zobaczyć listę kursantów
           </div>
         )}
@@ -2355,7 +2355,7 @@ function urlBase64ToUint8Array(base64String: string) {
                             <div style={{ display: 'flex', gap: '6px' }}>
                               {/* Obecny */}
                               <button onClick={() => ustawStatus(k, dzien, 'potwierdzono')} disabled={isSaving}
-                                style={{ padding: '6px 14px', borderRadius: '8px', border: 'none', cursor: isSaving ? 'default' : 'pointer', fontFamily: 'Jost, sans-serif', fontSize: '12px', fontWeight: 600, transition: 'all 0.15s',
+                                style={{ padding: '6px 14px', borderRadius: '8px', border: 'none', cursor: isSaving ? 'default' : 'pointer', fontFamily: 'Lato, sans-serif', fontSize: '12px', fontWeight: 600, transition: 'all 0.15s',
                                   background: status === 'potwierdzono' ? '#2e7d32' : '#f0faf4',
                                   color: status === 'potwierdzono' ? 'white' : '#2e7d32',
                                   opacity: isSaving ? 0.6 : 1,
@@ -2364,7 +2364,7 @@ function urlBase64ToUint8Array(base64String: string) {
                               </button>
                               {/* Nieobecny */}
                               <button onClick={() => ustawStatus(k, dzien, 'nieobecnosc')} disabled={isSaving}
-                                style={{ padding: '6px 14px', borderRadius: '8px', border: 'none', cursor: isSaving ? 'default' : 'pointer', fontFamily: 'Jost, sans-serif', fontSize: '12px', fontWeight: 600, transition: 'all 0.15s',
+                                style={{ padding: '6px 14px', borderRadius: '8px', border: 'none', cursor: isSaving ? 'default' : 'pointer', fontFamily: 'Lato, sans-serif', fontSize: '12px', fontWeight: 600, transition: 'all 0.15s',
                                   background: status === 'nieobecnosc' ? '#c62828' : '#fff5f5',
                                   color: status === 'nieobecnosc' ? 'white' : '#c62828',
                                   opacity: isSaving ? 0.6 : 1,
@@ -2373,7 +2373,7 @@ function urlBase64ToUint8Array(base64String: string) {
                               </button>
                               {/* Spóźniony */}
                               <button onClick={() => { ustawStatus(k, dzien, 'spozniony'); setAktywneGodziny(aktywneGodziny === key ? null : key); }} disabled={isSaving}
-                                style={{ padding: '6px 10px', borderRadius: '8px', border: 'none', cursor: isSaving ? 'default' : 'pointer', fontFamily: 'Jost, sans-serif', fontSize: '12px', fontWeight: 600, transition: 'all 0.15s',
+                                style={{ padding: '6px 10px', borderRadius: '8px', border: 'none', cursor: isSaving ? 'default' : 'pointer', fontFamily: 'Lato, sans-serif', fontSize: '12px', fontWeight: 600, transition: 'all 0.15s',
                                   background: status === 'spozniony' ? '#e65100' : '#fff8f0',
                                   color: status === 'spozniony' ? 'white' : '#e65100',
                                   opacity: isSaving ? 0.6 : 1,
@@ -2550,7 +2550,7 @@ function urlBase64ToUint8Array(base64String: string) {
         )}
 
         <button onClick={startBackup} disabled={laduje}
-          style={{ width: '100%', padding: '12px', background: laduje ? '#ccc' : 'var(--brand)', color: 'white', border: 'none', borderRadius: '10px', fontSize: '14px', fontWeight: 600, cursor: laduje ? 'default' : 'pointer', fontFamily: 'Jost, sans-serif' }}>
+          style={{ width: '100%', padding: '12px', background: laduje ? '#ccc' : 'var(--brand)', color: 'white', border: 'none', borderRadius: '10px', fontSize: '14px', fontWeight: 600, cursor: laduje ? 'default' : 'pointer', fontFamily: 'Lato, sans-serif' }}>
           {laduje ? 'Pobieranie...' : '⬇ Pobierz backup wszystkich tabel'}
         </button>
 
@@ -2588,12 +2588,12 @@ function urlBase64ToUint8Array(base64String: string) {
           </div>
           <div style={{ padding: '12px 20px', borderBottom: '0.5px solid var(--border)', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
             <button onClick={() => setFiltrTag('')}
-              style={{ padding: '5px 12px', borderRadius: '999px', border: 'none', cursor: 'pointer', fontSize: '11px', fontWeight: 600, fontFamily: 'Jost, sans-serif', background: !filtrTag ? 'var(--brand-dark)' : '#f0ece7', color: !filtrTag ? 'white' : 'var(--text-muted)' }}>
+              style={{ padding: '5px 12px', borderRadius: '999px', border: 'none', cursor: 'pointer', fontSize: '11px', fontWeight: 600, fontFamily: 'Lato, sans-serif', background: !filtrTag ? 'var(--brand-dark)' : '#f0ece7', color: !filtrTag ? 'white' : 'var(--text-muted)' }}>
               Wszystkie
             </button>
             {tagi.map(tag => (
               <button key={tag} onClick={() => setFiltrTag(tag)}
-                style={{ padding: '5px 12px', borderRadius: '999px', border: 'none', cursor: 'pointer', fontSize: '11px', fontWeight: 600, fontFamily: 'Jost, sans-serif', background: filtrTag === tag ? 'var(--brand-dark)' : '#f0ece7', color: filtrTag === tag ? 'white' : 'var(--text-muted)' }}>
+                style={{ padding: '5px 12px', borderRadius: '999px', border: 'none', cursor: 'pointer', fontSize: '11px', fontWeight: 600, fontFamily: 'Lato, sans-serif', background: filtrTag === tag ? 'var(--brand-dark)' : '#f0ece7', color: filtrTag === tag ? 'white' : 'var(--text-muted)' }}>
                 {tag}
               </button>
             ))}
@@ -2685,7 +2685,7 @@ function urlBase64ToUint8Array(base64String: string) {
           <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '12px' }}>
             {KATEGORIE.map(k => (
               <button key={k.id} onClick={() => setKategoria(k.id)}
-                style={{ padding: '7px 14px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontFamily: 'Jost, sans-serif', fontSize: '12px', fontWeight: 600,
+                style={{ padding: '7px 14px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontFamily: 'Lato, sans-serif', fontSize: '12px', fontWeight: 600,
                   background: kategoria === k.id ? 'var(--brand)' : 'var(--bg)', color: kategoria === k.id ? 'white' : 'var(--text-muted)' }}>
                 {k.label}
               </button>
@@ -2699,7 +2699,7 @@ function urlBase64ToUint8Array(base64String: string) {
           <label style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 600, display: 'block', marginBottom: '5px', textTransform: 'uppercase', letterSpacing: '0.2em' }}>Tag tematyczny (opcjonalnie)</label>
           <input type="text" value={tag} onChange={e => setTag(e.target.value)}
             placeholder="np. teoria, rysunek, sketchup, autocad, ogrody"
-            style={{ width: '100%', fontSize: '13px', padding: '8px 12px', border: '0.5px solid var(--border)', borderRadius: '9px', fontFamily: 'Jost, sans-serif' }} />
+            style={{ width: '100%', fontSize: '13px', padding: '8px 12px', border: '0.5px solid var(--border)', borderRadius: '9px', fontFamily: 'Lato, sans-serif' }} />
           <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '4px' }}>Tagi pozwalają przypisywać zdjęcia do konkretnych tematów zajęć</div>
         </div>
             <input ref={fileRef} type="file" accept="image/*" onChange={wgrajZdjecie} disabled={uploading} style={{ fontSize: '13px', flex: 1 }} />
@@ -2786,16 +2786,16 @@ function urlBase64ToUint8Array(base64String: string) {
             <div style={{ fontSize: '13px', fontWeight: 600, marginBottom: '12px' }}>Dodaj produkt</div>
             <form onSubmit={dodaj}>
               <input type="text" value={nowy.nazwa} onChange={e => setNowy({ ...nowy, nazwa: e.target.value })} placeholder="Nazwa produktu *" required
-                style={{ width: '100%', fontSize: '12px', padding: '7px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif', marginBottom: '8px' }} />
+                style={{ width: '100%', fontSize: '12px', padding: '7px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Lato, sans-serif', marginBottom: '8px' }} />
               <input type="text" value={nowy.opis} onChange={e => setNowy({ ...nowy, opis: e.target.value })} placeholder="Opis (opcjonalnie)"
-                style={{ width: '100%', fontSize: '12px', padding: '7px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif', marginBottom: '8px' }} />
+                style={{ width: '100%', fontSize: '12px', padding: '7px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Lato, sans-serif', marginBottom: '8px' }} />
               <input type="text" value={nowy.cena} onChange={e => setNowy({ ...nowy, cena: e.target.value })} placeholder="Cena np. ok. 25 zł"
-                style={{ width: '100%', fontSize: '12px', padding: '7px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif', marginBottom: '8px' }} />
+                style={{ width: '100%', fontSize: '12px', padding: '7px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Lato, sans-serif', marginBottom: '8px' }} />
               <input type="url" value={nowy.zdjecie_url} onChange={e => setNowy({ ...nowy, zdjecie_url: e.target.value })} placeholder="Link do zdjęcia (opcjonalnie)"
-                style={{ width: '100%', fontSize: '12px', padding: '7px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif', marginBottom: '8px' }} />
+                style={{ width: '100%', fontSize: '12px', padding: '7px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Lato, sans-serif', marginBottom: '8px' }} />
               <input type="url" value={nowy.link_sklepu} onChange={e => setNowy({ ...nowy, link_sklepu: e.target.value })} placeholder="Link do sklepu (opcjonalnie)"
-                style={{ width: '100%', fontSize: '12px', padding: '7px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif', marginBottom: '8px' }} />
-              <button type="submit" style={{ width: '100%', padding: '8px', background: 'var(--brand)', color: 'white', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 600, cursor: 'pointer', fontFamily: 'Jost, sans-serif' }}>
+                style={{ width: '100%', fontSize: '12px', padding: '7px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Lato, sans-serif', marginBottom: '8px' }} />
+              <button type="submit" style={{ width: '100%', padding: '8px', background: 'var(--brand)', color: 'white', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 600, cursor: 'pointer', fontFamily: 'Lato, sans-serif' }}>
                 + Dodaj produkt
               </button>
             </form>
@@ -3462,7 +3462,7 @@ const [zwinieteZadania, setZwinieteZadania] = useState<Set<number>>(() => new Se
             {aktywnaZakladka === 'home' && (
               <>
                 <div className="biuro-welcome">
-                  <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '28px', fontWeight: 400, color: 'var(--brand-dark)' }}>Witaj w panelu biura</div>
+                  <div style={{ fontFamily: 'Playfair Display, serif', fontSize: '28px', fontWeight: 400, color: 'var(--brand-dark)' }}>Witaj w panelu biura</div>
                   <div style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '4px' }}>On-Arch Akademia</div>
                 </div>
                 <div className="biuro-kafelki">
@@ -3527,23 +3527,23 @@ const [zwinieteZadania, setZwinieteZadania] = useState<Set<number>>(() => new Se
                       <form onSubmit={dodajOgloszenie}>
                         <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
                           <select value={noweOgl.typ} onChange={e => setNoweOgl({ ...noweOgl, typ: e.target.value })}
-                            style={{ flex: 1, fontSize: '12px', padding: '7px 8px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif', background: 'white' }}>
+                            style={{ flex: 1, fontSize: '12px', padding: '7px 8px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Lato, sans-serif', background: 'white' }}>
                             <option>Informacja</option><option>Pilne</option><option>Zmiana</option>
                           </select>
                           <select value={noweOgl.grupa_id} onChange={e => setNoweOgl({ ...noweOgl, grupa_id: e.target.value })}
-                            style={{ flex: 2, fontSize: '12px', padding: '7px 8px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif', background: 'white' }}>
+                            style={{ flex: 2, fontSize: '12px', padding: '7px 8px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Lato, sans-serif', background: 'white' }}>
                             <option value="">Wszystkie grupy</option>
                             {grupy.map(g => <option key={g.id} value={g.id}>{g.nazwa}{g.edycja ? ` · ${g.edycja}` : ''}</option>)}
                           </select>
                         </div>
                         <input type="text" value={noweOgl.tytul} onChange={e => setNoweOgl({ ...noweOgl, tytul: e.target.value })} placeholder="Tytuł *" required
-                          style={{ width: '100%', fontSize: '12px', padding: '7px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif', marginBottom: '8px' }} />
+                          style={{ width: '100%', fontSize: '12px', padding: '7px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Lato, sans-serif', marginBottom: '8px' }} />
                         <input type="text" value={noweOgl.tresc} onChange={e => setNoweOgl({ ...noweOgl, tresc: e.target.value })} placeholder="Krótki opis *" required
-                          style={{ width: '100%', fontSize: '12px', padding: '7px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif', marginBottom: '8px' }} />
+                          style={{ width: '100%', fontSize: '12px', padding: '7px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Lato, sans-serif', marginBottom: '8px' }} />
                         <textarea value={noweOgl.szczegoly} onChange={e => setNoweOgl({ ...noweOgl, szczegoly: e.target.value })} placeholder="Pełna treść (opcjonalnie)" rows={3}
-                          style={{ width: '100%', fontSize: '12px', padding: '7px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif', resize: 'vertical', marginBottom: '4px' }} />
+                          style={{ width: '100%', fontSize: '12px', padding: '7px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Lato, sans-serif', resize: 'vertical', marginBottom: '4px' }} />
                         <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginBottom: '8px' }}>💡 Linki wklejone w treści będą automatycznie klikalne</div>
-                        <button type="submit" style={{ width: '100%', padding: '8px', background: 'var(--brand)', color: 'white', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 600, cursor: 'pointer', fontFamily: 'Jost, sans-serif' }}>
+                        <button type="submit" style={{ width: '100%', padding: '8px', background: 'var(--brand)', color: 'white', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 600, cursor: 'pointer', fontFamily: 'Lato, sans-serif' }}>
                           + Dodaj ogłoszenie
                         </button>
                       </form>
@@ -3590,7 +3590,7 @@ const [zwinieteZadania, setZwinieteZadania] = useState<Set<number>>(() => new Se
                                   </td>
                                   <td style={{ padding: '9px 12px', whiteSpace: 'nowrap', width: '120px', minWidth: '120px' }}>
                                     <button onClick={() => { setEdytowane(o); setKomunikat(''); }}
-                                      style={{ fontSize: '11px', padding: '3px 10px', border: '0.5px solid var(--border)', borderRadius: '6px', background: 'white', cursor: 'pointer', color: 'var(--brand)', fontFamily: 'Jost, sans-serif', marginRight: '4px' }}>
+                                      style={{ fontSize: '11px', padding: '3px 10px', border: '0.5px solid var(--border)', borderRadius: '6px', background: 'white', cursor: 'pointer', color: 'var(--brand)', fontFamily: 'Lato, sans-serif', marginRight: '4px' }}>
                                       Edytuj
                                     </button>
                                     <button onClick={() => usunOgloszenie(o.id)}
@@ -3663,7 +3663,7 @@ const [zwinieteZadania, setZwinieteZadania] = useState<Set<number>>(() => new Se
                           const nowy = prowadzacy.find(p => p.id === pid);
                           if (nowy) setEdytowanyZjazd({ ...edytowanyZjazd, prowadzacy: [...(edytowanyZjazd.prowadzacy || []), nowy] });
                           e.target.value = '';
-                        }} style={{ fontSize: '13px', padding: '7px 12px', border: '0.5px solid var(--border)', borderRadius: '10px', fontFamily: 'Jost, sans-serif', background: 'white', width: '100%' }}>
+                        }} style={{ fontSize: '13px', padding: '7px 12px', border: '0.5px solid var(--border)', borderRadius: '10px', fontFamily: 'Lato, sans-serif', background: 'white', width: '100%' }}>
                           <option value="">+ Dodaj prowadzącego…</option>
                           {prowadzacy.filter(p => !(edytowanyZjazd.prowadzacy || []).some(ep => ep.id === p.id)).map(p => (
                             <option key={p.id} value={p.id}>{p.imie} {p.nazwisko}</option>
@@ -3689,7 +3689,7 @@ const [zwinieteZadania, setZwinieteZadania] = useState<Set<number>>(() => new Se
                           <img src={edytowanyZjazd.zdjecie_url} alt="zdjęcie" style={{ width: '80px', height: '50px', objectFit: 'cover', borderRadius: '8px', border: '0.5px solid var(--border)' }} />
                         )}
                         <button type="button" onClick={() => setPokazGalerieZjazd(true)}
-                          style={{ padding: '7px 14px', borderRadius: '9px', border: '0.5px solid var(--border)', background: 'white', fontSize: '12px', cursor: 'pointer', fontFamily: 'Jost, sans-serif', color: 'var(--brand)' }}>
+                          style={{ padding: '7px 14px', borderRadius: '9px', border: '0.5px solid var(--border)', background: 'white', fontSize: '12px', cursor: 'pointer', fontFamily: 'Lato, sans-serif', color: 'var(--brand)' }}>
                           {edytowanyZjazd.zdjecie_url ? '🖼 Zmień zdjęcie' : '🖼 Wybierz zdjęcie'}
                         </button>
                         {edytowanyZjazd.zdjecie_url && (
@@ -3709,7 +3709,7 @@ const [zwinieteZadania, setZwinieteZadania] = useState<Set<number>>(() => new Se
                     <div style={{ display: 'flex', background: 'white', border: '0.5px solid var(--border)', borderRadius: '10px', overflow: 'hidden' }}>
                       {(['tabela', 'kalendarz'] as const).map(w => (
                         <button key={w} onClick={() => setWidokZjazdow(w)}
-                          style={{ padding: '7px 18px', border: 'none', background: widokZjazdow === w ? 'var(--brand)' : 'white', color: widokZjazdow === w ? 'white' : 'var(--text-muted)', fontSize: '12px', fontWeight: 500, cursor: 'pointer', fontFamily: 'Jost, sans-serif', transition: 'all 0.15s' }}>
+                          style={{ padding: '7px 18px', border: 'none', background: widokZjazdow === w ? 'var(--brand)' : 'white', color: widokZjazdow === w ? 'white' : 'var(--text-muted)', fontSize: '12px', fontWeight: 500, cursor: 'pointer', fontFamily: 'Lato, sans-serif', transition: 'all 0.15s' }}>
                           {w === 'tabela' ? '☰ Tabela' : '📅 Kalendarz'}
                         </button>
                       ))}
@@ -3718,14 +3718,14 @@ const [zwinieteZadania, setZwinieteZadania] = useState<Set<number>>(() => new Se
                     {widokZjazdow === 'kalendarz' && (
                       <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
                         <input type="month" value={kalMiesiac} onChange={e => setKalMiesiac(e.target.value)}
-                          style={{ fontSize: '12px', padding: '6px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif' }} />
+                          style={{ fontSize: '12px', padding: '6px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Lato, sans-serif' }} />
                         <select value={kalFiltrGrupa} onChange={e => setKalFiltrGrupa(e.target.value)}
-                          style={{ fontSize: '12px', padding: '6px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif', background: 'white' }}>
+                          style={{ fontSize: '12px', padding: '6px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Lato, sans-serif', background: 'white' }}>
                           <option value="">Wszystkie grupy</option>
                           {grupy.map(g => <option key={g.id} value={g.id}>{g.nazwa}{g.edycja ? ` · ${g.edycja}` : ''}</option>)}
                         </select>
                         <select value={kalFiltrProwadzacy} onChange={e => setKalFiltrProwadzacy(e.target.value)}
-                          style={{ fontSize: '12px', padding: '6px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif', background: 'white' }}>
+                          style={{ fontSize: '12px', padding: '6px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Lato, sans-serif', background: 'white' }}>
                           <option value="">Wszyscy prowadzący</option>
                           {prowadzacy.map(p => <option key={p.id} value={p.id}>{p.imie} {p.nazwisko}</option>)}
                         </select>
@@ -3782,7 +3782,7 @@ const [zwinieteZadania, setZwinieteZadania] = useState<Set<number>>(() => new Se
                         <div style={{ padding: '14px 20px', borderBottom: '0.5px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                           <button onClick={() => { const d = new Date(rok, miesiac - 2, 1); setKalMiesiac(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`); }}
                             style={{ background: 'none', border: '0.5px solid var(--border)', borderRadius: '8px', width: '28px', height: '28px', cursor: 'pointer', fontSize: '14px', color: 'var(--text-muted)' }}>‹</button>
-                          <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '20px', fontWeight: 400, color: 'var(--brand-dark)' }}>
+                          <span style={{ fontFamily: 'Playfair Display, serif', fontSize: '20px', fontWeight: 400, color: 'var(--brand-dark)' }}>
                             {nazwyMiesiecy[miesiac - 1]} {rok}
                           </span>
                           <button onClick={() => { const d = new Date(rok, miesiac, 1); setKalMiesiac(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`); }}
@@ -3864,7 +3864,7 @@ const [zwinieteZadania, setZwinieteZadania] = useState<Set<number>>(() => new Se
                           setTabelaZjazdow(t => t.map(w => ({ ...w, typ })));
                         }
                       }}
-                        style={{ fontSize: '13px', padding: '7px 12px', border: '0.5px solid var(--border)', borderRadius: '10px', fontFamily: 'Jost, sans-serif', background: 'white' }}>
+                        style={{ fontSize: '13px', padding: '7px 12px', border: '0.5px solid var(--border)', borderRadius: '10px', fontFamily: 'Lato, sans-serif', background: 'white' }}>
                         <option value="">Wybierz grupę…</option>
                         {grupy.map(g => <option key={g.id} value={g.id}>{g.nazwa}{g.edycja ? ` · ${g.edycja}` : ''}</option>)}
                       </select>
@@ -3873,15 +3873,15 @@ const [zwinieteZadania, setZwinieteZadania] = useState<Set<number>>(() => new Se
                         const typ = g?.tryb === 'online' ? 'online' : 'stacjonarny';
                         setTabelaZjazdow(t => [...t, pustyWiersz(typ)]);
                       }}
-                        style={{ fontSize: '12px', padding: '7px 14px', border: '0.5px solid var(--border)', borderRadius: '10px', background: 'white', cursor: 'pointer', fontFamily: 'Jost, sans-serif', color: 'var(--text-muted)' }}>
+                        style={{ fontSize: '12px', padding: '7px 14px', border: '0.5px solid var(--border)', borderRadius: '10px', background: 'white', cursor: 'pointer', fontFamily: 'Lato, sans-serif', color: 'var(--text-muted)' }}>
                         + Dodaj wiersz
                       </button>
                       <button onClick={() => setPokazInstrukcjePaste(v => !v)}
-                        style={{ fontSize: '12px', padding: '7px 14px', border: '0.5px solid var(--brand-mid)', borderRadius: '10px', background: 'var(--brand-light)', cursor: 'pointer', fontFamily: 'Jost, sans-serif', color: 'var(--brand-dark)' }}>
+                        style={{ fontSize: '12px', padding: '7px 14px', border: '0.5px solid var(--brand-mid)', borderRadius: '10px', background: 'var(--brand-light)', cursor: 'pointer', fontFamily: 'Lato, sans-serif', color: 'var(--brand-dark)' }}>
                         📋 Wklej z Excela
                       </button>
                       <button onClick={zapiszTabelaZjazdow} disabled={tabelaZapis || !tabelaGrupa}
-                        style={{ fontSize: '13px', padding: '7px 20px', border: 'none', borderRadius: '10px', background: tabelaGrupa ? 'var(--brand)' : '#ccc', color: 'white', cursor: tabelaGrupa ? 'pointer' : 'not-allowed', fontFamily: 'Jost, sans-serif', fontWeight: 600 }}>
+                        style={{ fontSize: '13px', padding: '7px 20px', border: 'none', borderRadius: '10px', background: tabelaGrupa ? 'var(--brand)' : '#ccc', color: 'white', cursor: tabelaGrupa ? 'pointer' : 'not-allowed', fontFamily: 'Lato, sans-serif', fontWeight: 600 }}>
                         {tabelaZapis ? 'Zapisywanie…' : '💾 Zapisz wszystkie'}
                       </button>
                     </div>
@@ -3906,7 +3906,7 @@ const [zwinieteZadania, setZwinieteZadania] = useState<Set<number>>(() => new Se
                         style={{ width: '100%', fontSize: '12px', padding: '8px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'monospace', resize: 'vertical', color: 'var(--text)' }}
                       />
                       <button onClick={() => setPokazInstrukcjePaste(false)}
-                        style={{ marginTop: '8px', fontSize: '12px', padding: '6px 14px', border: '0.5px solid var(--border)', borderRadius: '8px', background: 'white', cursor: 'pointer', fontFamily: 'Jost, sans-serif', color: 'var(--text-muted)' }}>
+                        style={{ marginTop: '8px', fontSize: '12px', padding: '6px 14px', border: '0.5px solid var(--border)', borderRadius: '8px', background: 'white', cursor: 'pointer', fontFamily: 'Lato, sans-serif', color: 'var(--text-muted)' }}>
                         Anuluj
                       </button>
                     </div>
@@ -3941,7 +3941,7 @@ const [zwinieteZadania, setZwinieteZadania] = useState<Set<number>>(() => new Se
                             setTabelaZjazdow(t => [...t.slice(0, idx + 1), { ...w, _id: Math.random().toString(36).slice(2), nr: String(parseInt(w.nr || '0') + 1) }, ...t.slice(idx + 1)]);
                           const usunWiersz = () =>
                             setTabelaZjazdow(t => t.filter((_, i) => i !== idx));
-                          const inputStyle = { width: '100%', border: 'none', outline: 'none', fontSize: '12px', fontFamily: 'Jost, sans-serif', background: 'transparent', padding: '2px 0' };
+                          const inputStyle = { width: '100%', border: 'none', outline: 'none', fontSize: '12px', fontFamily: 'Lato, sans-serif', background: 'transparent', padding: '2px 0' };
                           const tdStyle = { padding: '6px 10px', borderBottom: '0.5px solid var(--border-soft)', verticalAlign: 'middle' as const };
                           return (
                             <tr key={w._id} style={{ background: idx % 2 === 0 ? 'white' : '#fdf9f8' }}>
@@ -4006,17 +4006,17 @@ const [zwinieteZadania, setZwinieteZadania] = useState<Set<number>>(() => new Se
                         <select
                           value={(nowyZjazd as any)._filterGrupa || ''}
                           onChange={e => setNowyZjazd({ ...nowyZjazd, ...(nowyZjazd as any), _filterGrupa: e.target.value })}
-                          style={{ fontSize: '12px', padding: '6px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif', background: 'white', width: '100%' }}>
+                          style={{ fontSize: '12px', padding: '6px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Lato, sans-serif', background: 'white', width: '100%' }}>
                           <option value="">Wszystkie grupy</option>
                           {grupy.map(g => <option key={g.id} value={g.id}>{g.nazwa}{g.edycja ? ` · ${g.edycja}` : ''}</option>)}
                         </select>
                       </div>
                       <button onClick={() => setZwinieteZjazdy(new Set(grupy.map(g => g.id)))}
-                        style={{ fontSize: '11px', color: 'var(--text-muted)', background: 'none', border: '0.5px solid var(--border)', borderRadius: '6px', padding: '6px 10px', cursor: 'pointer', fontFamily: 'Jost, sans-serif', whiteSpace: 'nowrap' }}>
+                        style={{ fontSize: '11px', color: 'var(--text-muted)', background: 'none', border: '0.5px solid var(--border)', borderRadius: '6px', padding: '6px 10px', cursor: 'pointer', fontFamily: 'Lato, sans-serif', whiteSpace: 'nowrap' }}>
                         Zwiń wszystkie
                       </button>
                       <button onClick={() => setZwinieteZjazdy(new Set())}
-                        style={{ fontSize: '11px', color: 'var(--text-muted)', background: 'none', border: '0.5px solid var(--border)', borderRadius: '6px', padding: '6px 10px', cursor: 'pointer', fontFamily: 'Jost, sans-serif', whiteSpace: 'nowrap' }}>
+                        style={{ fontSize: '11px', color: 'var(--text-muted)', background: 'none', border: '0.5px solid var(--border)', borderRadius: '6px', padding: '6px 10px', cursor: 'pointer', fontFamily: 'Lato, sans-serif', whiteSpace: 'nowrap' }}>
                         Rozwiń wszystkie
                       </button>
                     </div>
@@ -4041,7 +4041,7 @@ const [zwinieteZadania, setZwinieteZadania] = useState<Set<number>>(() => new Se
                           <div onClick={() => setZwinieteZjazdy(prev => { const next = new Set(prev); next.has(g.id) ? next.delete(g.id) : next.add(g.id); return next; })}
                             style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 14px', background: zakonczona ? '#fafafa' : 'white', borderRadius: zwinieta ? '12px' : '12px 12px 0 0', border: '0.5px solid var(--border)', cursor: 'pointer', userSelect: 'none' as const, opacity: zakonczona ? 0.6 : 1 }}>
                             <span style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'inline-block', transform: zwinieta ? 'rotate(-90deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}>▾</span>
-                            <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '17px', fontWeight: 400, color: 'var(--brand-dark)', flex: 1 }}>{g.nazwa}</span>
+                            <span style={{ fontFamily: 'Playfair Display, serif', fontSize: '17px', fontWeight: 400, color: 'var(--brand-dark)', flex: 1 }}>{g.nazwa}</span>
                             <span style={{ fontSize: '11px', color: 'var(--text-muted)', background: 'var(--bg)', padding: '2px 8px', borderRadius: '10px', border: '0.5px solid var(--border)' }}>
                               {zjazdyGrupy.length} zjazdów
                             </span>
@@ -4076,7 +4076,7 @@ const [zwinieteZadania, setZwinieteZadania] = useState<Set<number>>(() => new Se
                                     </td>
                                     <td style={{ padding: '9px 12px', whiteSpace: 'nowrap' }}>
                                       <button onClick={() => { setEdytowanyZjazd(z); setKomunikat(''); }}
-                                        style={{ fontSize: '11px', padding: '3px 10px', border: '0.5px solid var(--border)', borderRadius: '6px', background: 'white', cursor: 'pointer', color: 'var(--brand)', fontFamily: 'Jost, sans-serif', marginRight: '4px' }}>
+                                        style={{ fontSize: '11px', padding: '3px 10px', border: '0.5px solid var(--border)', borderRadius: '6px', background: 'white', cursor: 'pointer', color: 'var(--brand)', fontFamily: 'Lato, sans-serif', marginRight: '4px' }}>
                                         Edytuj
                                       </button>
                                       <button onClick={() => usunZjazd(z.id)}
@@ -4138,11 +4138,11 @@ const [zwinieteZadania, setZwinieteZadania] = useState<Set<number>>(() => new Se
               </div>
               <form onSubmit={zapiszEdycjeZadania} style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 <div className="login-field"><label>Tytuł</label><input value={edytowaneZadanie.tytul} onChange={e => setEdytowaneZadanie({ ...edytowaneZadanie, tytul: e.target.value })} required /></div>
-                <div className="login-field"><label>Opis</label><textarea value={edytowaneZadanie.opis || ''} onChange={e => setEdytowaneZadanie({ ...edytowaneZadanie, opis: e.target.value })} rows={3} style={{ padding: '8px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif', fontSize: '13px', resize: 'vertical' }} /></div>
+                <div className="login-field"><label>Opis</label><textarea value={edytowaneZadanie.opis || ''} onChange={e => setEdytowaneZadanie({ ...edytowaneZadanie, opis: e.target.value })} rows={3} style={{ padding: '8px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Lato, sans-serif', fontSize: '13px', resize: 'vertical' }} /></div>
                 <div className="login-field"><label>Termin</label><input type="date" value={edytowaneZadanie.termin || ''} onChange={e => setEdytowaneZadanie({ ...edytowaneZadanie, termin: e.target.value })} /></div>
                 <div className="login-field"><label>Link do materiałów</label><input type="url" value={edytowaneZadanie.link_materialow || ''} onChange={e => setEdytowaneZadanie({ ...edytowaneZadanie, link_materialow: e.target.value })} /></div>
                 <div className="login-field"><label>Typ</label>
-                  <select value={edytowaneZadanie.typ} onChange={e => setEdytowaneZadanie({ ...edytowaneZadanie, typ: e.target.value })} style={{ padding: '8px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif' }}>
+                  <select value={edytowaneZadanie.typ} onChange={e => setEdytowaneZadanie({ ...edytowaneZadanie, typ: e.target.value })} style={{ padding: '8px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Lato, sans-serif' }}>
                     <option value="zadanie">Zadanie domowe</option>
                     <option value="praca_zaliczeniowa">Praca zaliczeniowa</option>
                   </select>
@@ -4152,15 +4152,15 @@ const [zwinieteZadania, setZwinieteZadania] = useState<Set<number>>(() => new Se
                   <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                     {edytowaneZadanie.zdjecie_url && <img src={edytowaneZadanie.zdjecie_url} alt="zdjęcie" style={{ width: '80px', height: '50px', objectFit: 'cover', borderRadius: '8px', border: '0.5px solid var(--border)' }} />}
                     <button type="button" onClick={() => setPokazGalerieZadanie(true)}
-                      style={{ padding: '7px 14px', borderRadius: '9px', border: '0.5px solid var(--border)', background: 'white', fontSize: '12px', cursor: 'pointer', fontFamily: 'Jost, sans-serif', color: 'var(--brand)' }}>
+                      style={{ padding: '7px 14px', borderRadius: '9px', border: '0.5px solid var(--border)', background: 'white', fontSize: '12px', cursor: 'pointer', fontFamily: 'Lato, sans-serif', color: 'var(--brand)' }}>
                       {edytowaneZadanie.zdjecie_url ? '🖼 Zmień' : '🖼 Wybierz zdjęcie'}
                     </button>
                     {edytowaneZadanie.zdjecie_url && <button type="button" onClick={() => setEdytowaneZadanie({ ...edytowaneZadanie, zdjecie_url: null })} style={{ background: 'none', border: 'none', color: '#e57373', cursor: 'pointer', fontSize: '16px' }}>×</button>}
                   </div>
                 </div>
                 <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
-                  <button type="submit" style={{ flex: 1, padding: '10px', borderRadius: '10px', background: 'var(--brand-dark)', color: 'white', border: 'none', fontSize: '13px', fontWeight: 600, cursor: 'pointer', fontFamily: 'Jost, sans-serif' }}>Zapisz zmiany</button>
-                  <button type="button" onClick={() => setEdytowaneZadanie(null)} style={{ padding: '10px 16px', borderRadius: '10px', border: '0.5px solid var(--border)', background: 'white', fontSize: '13px', cursor: 'pointer', fontFamily: 'Jost, sans-serif' }}>Anuluj</button>
+                  <button type="submit" style={{ flex: 1, padding: '10px', borderRadius: '10px', background: 'var(--brand-dark)', color: 'white', border: 'none', fontSize: '13px', fontWeight: 600, cursor: 'pointer', fontFamily: 'Lato, sans-serif' }}>Zapisz zmiany</button>
+                  <button type="button" onClick={() => setEdytowaneZadanie(null)} style={{ padding: '10px 16px', borderRadius: '10px', border: '0.5px solid var(--border)', background: 'white', fontSize: '13px', cursor: 'pointer', fontFamily: 'Lato, sans-serif' }}>Anuluj</button>
                 </div>
               </form>
             </div>
@@ -4175,22 +4175,22 @@ const [zwinieteZadania, setZwinieteZadania] = useState<Set<number>>(() => new Se
                   <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text)', marginBottom: '12px' }}>Dodaj kursanta</div>
                   <form onSubmit={dodajKursanta}>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '8px' }}>
-                      <input type="text" value={nowyKursant.imie} onChange={e => setNowyKursant({ ...nowyKursant, imie: e.target.value })} placeholder="Imię" required style={{ fontSize: '12px', padding: '7px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif' }} />
-                      <input type="text" value={nowyKursant.nazwisko} onChange={e => setNowyKursant({ ...nowyKursant, nazwisko: e.target.value })} placeholder="Nazwisko" required style={{ fontSize: '12px', padding: '7px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif' }} />
+                      <input type="text" value={nowyKursant.imie} onChange={e => setNowyKursant({ ...nowyKursant, imie: e.target.value })} placeholder="Imię" required style={{ fontSize: '12px', padding: '7px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Lato, sans-serif' }} />
+                      <input type="text" value={nowyKursant.nazwisko} onChange={e => setNowyKursant({ ...nowyKursant, nazwisko: e.target.value })} placeholder="Nazwisko" required style={{ fontSize: '12px', padding: '7px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Lato, sans-serif' }} />
                     </div>
-                    <input type="email" value={nowyKursant.email} onChange={e => setNowyKursant({ ...nowyKursant, email: e.target.value })} placeholder="Email" required style={{ width: '100%', fontSize: '12px', padding: '7px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif', marginBottom: '8px' }} />
+                    <input type="email" value={nowyKursant.email} onChange={e => setNowyKursant({ ...nowyKursant, email: e.target.value })} placeholder="Email" required style={{ width: '100%', fontSize: '12px', padding: '7px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Lato, sans-serif', marginBottom: '8px' }} />
                     <div style={{ display: 'flex', gap: '8px' }}>
                     <select value={(nowyKursant as any).rola || 'kursant'} onChange={e => setNowyKursant({ ...nowyKursant, ...(nowyKursant as any), rola: e.target.value })}
-                        style={{ fontSize: '12px', padding: '7px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif', background: 'white', marginBottom: '8px', width: '100%' }}>
+                        style={{ fontSize: '12px', padding: '7px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Lato, sans-serif', background: 'white', marginBottom: '8px', width: '100%' }}>
                         <option value="kursant">Kursant</option>
                         <option value="admin">Admin (biuro)</option>
                         <option value="prowadzacy">Prowadzący</option>
                       </select>
-                     <select value={nowyKursant.grupa_id} onChange={e => setNowyKursant({ ...nowyKursant, grupa_id: e.target.value })} required style={{ flex: 1, fontSize: '12px', padding: '7px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif', background: 'white' }}>
+                     <select value={nowyKursant.grupa_id} onChange={e => setNowyKursant({ ...nowyKursant, grupa_id: e.target.value })} required style={{ flex: 1, fontSize: '12px', padding: '7px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Lato, sans-serif', background: 'white' }}>
                         <option value="">Wybierz grupę</option>
                         {grupy.map(g => <option key={g.id} value={g.id}>{g.nazwa}{g.edycja ? ` · ${g.edycja}` : ''}</option>)}
                       </select>
-                      <button type="submit" style={{ padding: '7px 16px', background: 'var(--brand)', color: 'white', border: 'none', borderRadius: '8px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', fontFamily: 'Jost, sans-serif', whiteSpace: 'nowrap' }}>+ Dodaj</button>
+                      <button type="submit" style={{ padding: '7px 16px', background: 'var(--brand)', color: 'white', border: 'none', borderRadius: '8px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', fontFamily: 'Lato, sans-serif', whiteSpace: 'nowrap' }}>+ Dodaj</button>
                     </div>
                   </form>
                 </div>
@@ -4233,10 +4233,10 @@ const [zwinieteZadania, setZwinieteZadania] = useState<Set<number>>(() => new Se
                   <div style={{ position: 'relative' }}>
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ position: 'absolute', left: '9px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                     <input type="text" value={szukajKursant} onChange={e => setSzukajKursant(e.target.value)} placeholder="Szukaj..."
-                      style={{ paddingLeft: '28px', fontSize: '12px', padding: '7px 10px 7px 28px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif', width: '180px' }} />
+                      style={{ paddingLeft: '28px', fontSize: '12px', padding: '7px 10px 7px 28px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Lato, sans-serif', width: '180px' }} />
                   </div>
                   <select value={filtrGrupaKursant} onChange={e => setFiltrGrupaKursant(e.target.value)}
-                    style={{ fontSize: '12px', padding: '7px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif', background: 'white' }}>
+                    style={{ fontSize: '12px', padding: '7px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Lato, sans-serif', background: 'white' }}>
                     <option value="">Wszystkie grupy</option>
                     {grupy.map(g => <option key={g.id} value={g.id}>{g.nazwa}{g.edycja ? ` · ${g.edycja}` : ''}</option>)}
                   </select>
@@ -4257,7 +4257,7 @@ const [zwinieteZadania, setZwinieteZadania] = useState<Set<number>>(() => new Se
   const { data } = await supabase.from('kursanci').select('id, imie, nazwisko, email, telefon, grupa_id, user_id, certyfikat_url, nr_certyfikatu, notatki, dofinansowanie, folder_prywatny, data_urodzenia, miejsce_urodzenia, adres_wysylka, dane_fv');
   setKursanci((data || []) as unknown as KursantAdmin[]);
   setKomunikat('✓ Wszyscy kursanci naprawieni');
-}} style={{ fontSize: '12px', color: '#4338ca', background: '#eef2ff', border: '0.5px solid #6366f1', borderRadius: '8px', padding: '6px 12px', cursor: 'pointer', fontFamily: 'Jost, sans-serif', whiteSpace: 'nowrap' }}>
+}} style={{ fontSize: '12px', color: '#4338ca', background: '#eef2ff', border: '0.5px solid #6366f1', borderRadius: '8px', padding: '6px 12px', cursor: 'pointer', fontFamily: 'Lato, sans-serif', whiteSpace: 'nowrap' }}>
   ⚙ Napraw wszystkich
 </button>
                   <button onClick={() => {
@@ -4267,7 +4267,7 @@ const [zwinieteZadania, setZwinieteZadania] = useState<Set<number>>(() => new Se
                     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
                     const url = URL.createObjectURL(blob);
                     const a = document.createElement('a'); a.href = url; a.download = 'kursanci.csv'; a.click();
-                  }} style={{ fontSize: '12px', color: 'var(--brand)', background: 'none', border: '0.5px solid var(--border)', borderRadius: '8px', padding: '6px 12px', cursor: 'pointer', fontFamily: 'Jost, sans-serif', whiteSpace: 'nowrap' }}>
+                  }} style={{ fontSize: '12px', color: 'var(--brand)', background: 'none', border: '0.5px solid var(--border)', borderRadius: '8px', padding: '6px 12px', cursor: 'pointer', fontFamily: 'Lato, sans-serif', whiteSpace: 'nowrap' }}>
                     ⬇ CSV
                   </button>
                 </div>
@@ -4307,9 +4307,9 @@ const [zwinieteZadania, setZwinieteZadania] = useState<Set<number>>(() => new Se
                               {edytuje ? (
                                 <div style={{ display: 'flex', gap: '4px' }}>
                                   <input value={edytowanyKursant.imie} onChange={e => setEdytowanyKursant({ ...edytowanyKursant, imie: e.target.value })}
-                                    style={{ width: '80px', fontSize: '11px', padding: '3px 6px', border: '0.5px solid var(--brand-mid)', borderRadius: '6px', fontFamily: 'Jost, sans-serif' }} />
+                                    style={{ width: '80px', fontSize: '11px', padding: '3px 6px', border: '0.5px solid var(--brand-mid)', borderRadius: '6px', fontFamily: 'Lato, sans-serif' }} />
                                   <input value={edytowanyKursant.nazwisko} onChange={e => setEdytowanyKursant({ ...edytowanyKursant, nazwisko: e.target.value })}
-                                    style={{ width: '100px', fontSize: '11px', padding: '3px 6px', border: '0.5px solid var(--brand-mid)', borderRadius: '6px', fontFamily: 'Jost, sans-serif' }} />
+                                    style={{ width: '100px', fontSize: '11px', padding: '3px 6px', border: '0.5px solid var(--brand-mid)', borderRadius: '6px', fontFamily: 'Lato, sans-serif' }} />
                                 </div>
                               ) : <span style={{ fontWeight: 500, color: dofinansowanie ? '#1565c0' : 'var(--text)' }}>{k.imie} {k.nazwisko}{k.certyfikat_url && <span title="Certyfikat wydany" style={{ marginLeft: '6px', fontSize: '13px' }}>📜</span>}</span>}
                             </td>
@@ -4317,21 +4317,21 @@ const [zwinieteZadania, setZwinieteZadania] = useState<Set<number>>(() => new Se
                             <td style={{ padding: '6px 10px' }} onClick={() => !edytuje && setRozwinietaKursant(rozwiniety ? null : k.id)}>
                               {edytuje ? (
                                 <input value={edytowanyKursant.email} onChange={e => setEdytowanyKursant({ ...edytowanyKursant, email: e.target.value })}
-                                  style={{ width: '160px', fontSize: '11px', padding: '3px 6px', border: '0.5px solid var(--brand-mid)', borderRadius: '6px', fontFamily: 'Jost, sans-serif' }} />
+                                  style={{ width: '160px', fontSize: '11px', padding: '3px 6px', border: '0.5px solid var(--brand-mid)', borderRadius: '6px', fontFamily: 'Lato, sans-serif' }} />
                               ) : <span style={{ color: k.email ? 'var(--text-muted)' : '#ccc' }}>{k.email || '—'}</span>}
                             </td>
                             {/* Telefon */}
                             <td style={{ padding: '6px 10px' }} onClick={() => !edytuje && setRozwinietaKursant(rozwiniety ? null : k.id)}>
                               {edytuje ? (
                                 <input value={edytowanyKursant.telefon} onChange={e => setEdytowanyKursant({ ...edytowanyKursant, telefon: e.target.value })} placeholder="+48..."
-                                  style={{ width: '110px', fontSize: '11px', padding: '3px 6px', border: '0.5px solid var(--brand-mid)', borderRadius: '6px', fontFamily: 'Jost, sans-serif' }} />
+                                  style={{ width: '110px', fontSize: '11px', padding: '3px 6px', border: '0.5px solid var(--brand-mid)', borderRadius: '6px', fontFamily: 'Lato, sans-serif' }} />
                               ) : k.telefon ? <span style={{ color: 'var(--text-muted)' }}>{k.telefon}</span> : <span style={{ color: '#ccc' }}>—</span>}
                             </td>
                             {/* Grupa */}
                             <td style={{ padding: '6px 10px' }} onClick={() => !edytuje && setRozwinietaKursant(rozwiniety ? null : k.id)}>
                               {edytuje ? (
                                 <select value={(edytowanyKursant as any).grupa_id || ''} onChange={e => setEdytowanyKursant({ ...edytowanyKursant, ...(edytowanyKursant as any), grupa_id: e.target.value ? parseInt(e.target.value) : null })}
-                                  style={{ fontSize: '11px', padding: '3px 6px', border: '0.5px solid var(--brand-mid)', borderRadius: '6px', fontFamily: 'Jost, sans-serif', background: 'white' }}>
+                                  style={{ fontSize: '11px', padding: '3px 6px', border: '0.5px solid var(--brand-mid)', borderRadius: '6px', fontFamily: 'Lato, sans-serif', background: 'white' }}>
                                   <option value="">Brak grupy</option>
                                   {grupy.map(g => <option key={g.id} value={g.id}>{g.nazwa}{g.edycja ? ` · ${g.edycja}` : ''}</option>)}
                                 </select>
@@ -4348,7 +4348,7 @@ const [zwinieteZadania, setZwinieteZadania] = useState<Set<number>>(() => new Se
                                     const { data } = await supabase.from('kursanci').select('id, imie, nazwisko, email, telefon, grupa_id, user_id, certyfikat_url, nr_certyfikatu, notatki, dofinansowanie, folder_prywatny, data_urodzenia, miejsce_urodzenia, adres_wysylka, dane_fv');
                                     setKursanci((data || []) as unknown as KursantAdmin[]);
                                     setEdytowanyKursant(null); setKomunikat('Zapisano!');
-                                  }} style={{ fontSize: '11px', padding: '3px 9px', background: 'var(--brand)', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontFamily: 'Jost, sans-serif' }}>✓</button>
+                                  }} style={{ fontSize: '11px', padding: '3px 9px', background: 'var(--brand)', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontFamily: 'Lato, sans-serif' }}>✓</button>
                                   <button onClick={() => setEdytowanyKursant(null)}
                                     style={{ fontSize: '11px', padding: '3px 7px', background: 'none', border: '0.5px solid var(--border)', borderRadius: '6px', cursor: 'pointer', color: 'var(--text-muted)' }}>✕</button>
                                 </div>
@@ -4358,12 +4358,12 @@ const [zwinieteZadania, setZwinieteZadania] = useState<Set<number>>(() => new Se
                                     <button
                                     onClick={e => { e.stopPropagation(); wyslijZaproszenie(k); }}
                                     disabled={wysylanieZaproszenia === k.id}
-                                    style={{ fontSize: '11px', padding: '3px 9px', border: '0.5px solid #6366f1', borderRadius: '6px', background: wysylanieZaproszenia === k.id ? '#e0e7ff' : '#eef2ff', cursor: wysylanieZaproszenia === k.id ? 'wait' : 'pointer', color: '#4338ca', fontFamily: 'Jost, sans-serif' }}>
+                                    style={{ fontSize: '11px', padding: '3px 9px', border: '0.5px solid #6366f1', borderRadius: '6px', background: wysylanieZaproszenia === k.id ? '#e0e7ff' : '#eef2ff', cursor: wysylanieZaproszenia === k.id ? 'wait' : 'pointer', color: '#4338ca', fontFamily: 'Lato, sans-serif' }}>
                                     {wysylanieZaproszenia === k.id ? '...' : '✉ Zaproś'}
                                   </button>
                                   )}
                                   <button onClick={e => { e.stopPropagation(); setEdytowanyKursant({ id: k.id, imie: k.imie, nazwisko: k.nazwisko, email: k.email || '', telefon: k.telefon || '', ...(k as any) }); }}
-                                    style={{ fontSize: '11px', padding: '3px 9px', border: '0.5px solid var(--border)', borderRadius: '6px', background: 'white', cursor: 'pointer', color: 'var(--brand)', fontFamily: 'Jost, sans-serif' }}>Edytuj</button>
+                                    style={{ fontSize: '11px', padding: '3px 9px', border: '0.5px solid var(--border)', borderRadius: '6px', background: 'white', cursor: 'pointer', color: 'var(--brand)', fontFamily: 'Lato, sans-serif' }}>Edytuj</button>
                               
                                   <button onClick={async e => { e.stopPropagation(); if (window.confirm(`Usunąć ${k.imie} ${k.nazwisko}?`)) {
                                     await supabase.from('kursanci').delete().eq('id', k.id);
@@ -4448,7 +4448,7 @@ const [zwinieteZadania, setZwinieteZadania] = useState<Set<number>>(() => new Se
       }}
       onMouseDown={e => (e.currentTarget.style.opacity = '0.6')}
       onMouseUp={e => (e.currentTarget.style.opacity = '1')}
-      style={{ fontSize: '11px', fontWeight: 600, letterSpacing: '0.1em', padding: '6px 14px', borderRadius: '7px', cursor: 'pointer', background: '#1C2B3A', color: 'white', border: 'none', fontFamily: 'Jost, sans-serif', width: '100%', transition: 'opacity 0.15s' }}>
+      style={{ fontSize: '11px', fontWeight: 600, letterSpacing: '0.1em', padding: '6px 14px', borderRadius: '7px', cursor: 'pointer', background: '#1C2B3A', color: 'white', border: 'none', fontFamily: 'Lato, sans-serif', width: '100%', transition: 'opacity 0.15s' }}>
       🎓 Wydaj certyfikat
     </button>
   )}
@@ -4466,7 +4466,7 @@ const [zwinieteZadania, setZwinieteZadania] = useState<Set<number>>(() => new Se
                                             setKomunikat(`Folder prywatny zapisany — ${k.imie} ${k.nazwisko}`);
                                           }
                                         }}
-                                        style={{ flex: 1, fontSize: '11px', padding: '5px 8px', borderRadius: '7px', border: '0.5px solid var(--border)', fontFamily: 'Jost, sans-serif', background: (k as any).folder_prywatny ? '#f3e8ff' : 'white' }} />
+                                        style={{ flex: 1, fontSize: '11px', padding: '5px 8px', borderRadius: '7px', border: '0.5px solid var(--border)', fontFamily: 'Lato, sans-serif', background: (k as any).folder_prywatny ? '#f3e8ff' : 'white' }} />
                                       {(k as any).folder_prywatny && <a href={(k as any).folder_prywatny} target="_blank" rel="noopener noreferrer" style={{ fontSize: '14px', textDecoration: 'none' }}>🔒</a>}
                                     </div>
                                   </div>
@@ -4482,7 +4482,7 @@ const [zwinieteZadania, setZwinieteZadania] = useState<Set<number>>(() => new Se
         setKomunikat(`Zapisano — ${k.imie} ${k.nazwisko}`);
       }
     }}
-    style={{ width: '100%', fontSize: '11px', padding: '5px 8px', borderRadius: '7px', border: '0.5px solid var(--border)', fontFamily: 'Jost, sans-serif' }} />
+    style={{ width: '100%', fontSize: '11px', padding: '5px 8px', borderRadius: '7px', border: '0.5px solid var(--border)', fontFamily: 'Lato, sans-serif' }} />
 </div>
 {/* Miejsce urodzenia */}
 <div>
@@ -4496,7 +4496,7 @@ const [zwinieteZadania, setZwinieteZadania] = useState<Set<number>>(() => new Se
         setKomunikat(`Zapisano — ${k.imie} ${k.nazwisko}`);
       }
     }}
-    style={{ width: '100%', fontSize: '11px', padding: '5px 8px', borderRadius: '7px', border: '0.5px solid var(--border)', fontFamily: 'Jost, sans-serif' }} />
+    style={{ width: '100%', fontSize: '11px', padding: '5px 8px', borderRadius: '7px', border: '0.5px solid var(--border)', fontFamily: 'Lato, sans-serif' }} />
 </div>
 {/* Adres do wysyłek */}
 <div>
@@ -4511,7 +4511,7 @@ const [zwinieteZadania, setZwinieteZadania] = useState<Set<number>>(() => new Se
         setKomunikat(`Zapisano — ${k.imie} ${k.nazwisko}`);
       }
     }}
-    style={{ width: '100%', fontSize: '11px', padding: '5px 8px', borderRadius: '7px', border: '0.5px solid var(--border)', fontFamily: 'Jost, sans-serif', resize: 'vertical' }} />
+    style={{ width: '100%', fontSize: '11px', padding: '5px 8px', borderRadius: '7px', border: '0.5px solid var(--border)', fontFamily: 'Lato, sans-serif', resize: 'vertical' }} />
 </div>
 {/* Dane do faktury */}
 <div>
@@ -4526,7 +4526,7 @@ const [zwinieteZadania, setZwinieteZadania] = useState<Set<number>>(() => new Se
         setKomunikat(`Zapisano — ${k.imie} ${k.nazwisko}`);
       }
     }}
-    style={{ width: '100%', fontSize: '11px', padding: '5px 8px', borderRadius: '7px', border: '0.5px solid var(--border)', fontFamily: 'Jost, sans-serif', resize: 'vertical' }} />
+    style={{ width: '100%', fontSize: '11px', padding: '5px 8px', borderRadius: '7px', border: '0.5px solid var(--border)', fontFamily: 'Lato, sans-serif', resize: 'vertical' }} />
 </div>
                                   {/* Notatki */}
                                   <div>
@@ -4541,7 +4541,7 @@ setKursanci((refreshed || []) as unknown as KursantAdmin[]);
 setKomunikat(`Notatka zapisana — ${k.imie} ${k.nazwisko}`);
                                         }
                                       }}
-                                      style={{ width: '100%', fontSize: '11px', padding: '5px 8px', borderRadius: '7px', border: '0.5px solid var(--border)', fontFamily: 'Jost, sans-serif', resize: 'vertical' }} />
+                                      style={{ width: '100%', fontSize: '11px', padding: '5px 8px', borderRadius: '7px', border: '0.5px solid var(--border)', fontFamily: 'Lato, sans-serif', resize: 'vertical' }} />
                                   </div>
                                   {/* Dofinansowanie */}
                                   <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', paddingTop: '20px' }}>
@@ -4566,7 +4566,7 @@ setKomunikat(`Notatka zapisana — ${k.imie} ${k.nazwisko}`);
                                           setKursanci((data || []) as unknown as KursantAdmin[]);
                                           setKomunikat('Usunięto z grupy.');
                                         }
-                                      }} style={{ fontSize: '11px', padding: '5px 12px', border: '0.5px solid #fbbf24', borderRadius: '8px', background: '#fffbeb', cursor: 'pointer', color: '#92400e', fontFamily: 'Jost, sans-serif' }}>
+                                      }} style={{ fontSize: '11px', padding: '5px 12px', border: '0.5px solid #fbbf24', borderRadius: '8px', background: '#fffbeb', cursor: 'pointer', color: '#92400e', fontFamily: 'Lato, sans-serif' }}>
                                         Usuń z grupy
                                       </button>
                                     </div>
@@ -4610,12 +4610,12 @@ setKomunikat(`Notatka zapisana — ${k.imie} ${k.nazwisko}`);
                     {/* Nagłówek grupy */}
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px', flexWrap: 'wrap' }}>
                       <button onClick={() => { setWybranaGrupaDetail(null); setZakladkaGrupy('kursanci'); }}
-                        style={{ fontSize: '13px', padding: '6px 14px', border: '0.5px solid var(--border)', borderRadius: '8px', background: 'white', cursor: 'pointer', color: 'var(--text-muted)', fontFamily: 'Jost, sans-serif', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        style={{ fontSize: '13px', padding: '6px 14px', border: '0.5px solid var(--border)', borderRadius: '8px', background: 'white', cursor: 'pointer', color: 'var(--text-muted)', fontFamily: 'Lato, sans-serif', display: 'flex', alignItems: 'center', gap: '6px' }}>
                         ← Grupy
                       </button>
                       <div style={{ flex: 1 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-                          <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '22px', fontWeight: 400, color: 'var(--brand-dark)', margin: 0 }}>{g.nazwa}</h2>
+                          <h2 style={{ fontFamily: 'Playfair Display, serif', fontSize: '22px', fontWeight: 400, color: 'var(--brand-dark)', margin: 0 }}>{g.nazwa}</h2>
                           <span style={{ fontSize: '10px', fontWeight: 700, padding: '3px 10px', borderRadius: '20px', background: statusKolor.bg, color: statusKolor.color, letterSpacing: '0.08em' }}>{statusLabel}</span>
                         </div>
                         <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '3px' }}>
@@ -4643,7 +4643,7 @@ setKomunikat(`Notatka zapisana — ${k.imie} ${k.nazwisko}`);
                     <div style={{ display: 'flex', background: 'white', border: '0.5px solid var(--border)', borderRadius: '10px', overflow: 'hidden', marginBottom: '16px', width: 'fit-content' }}>
                     {(['kursanci', 'zjazdy', 'ogloszenia', 'obecnosci', 'ustawienia'] as const).map(tab => (
                         <button key={tab} onClick={() => setZakladkaGrupy(tab)}
-                          style={{ padding: '8px 20px', border: 'none', background: zakladkaGrupy === tab ? 'var(--brand)' : 'white', color: zakladkaGrupy === tab ? 'white' : 'var(--text-muted)', fontSize: '12px', fontWeight: 500, cursor: 'pointer', fontFamily: 'Jost, sans-serif', transition: 'all 0.15s' }}>
+                          style={{ padding: '8px 20px', border: 'none', background: zakladkaGrupy === tab ? 'var(--brand)' : 'white', color: zakladkaGrupy === tab ? 'white' : 'var(--text-muted)', fontSize: '12px', fontWeight: 500, cursor: 'pointer', fontFamily: 'Lato, sans-serif', transition: 'all 0.15s' }}>
                           {tab === 'kursanci' ? `Kursanci (${kursanciGrupy.length})` : tab === 'zjazdy' ? `Zjazdy (${zjazdyGrupy.length})` : tab === 'ogloszenia' ? `Ogłoszenia (${ogloszeniaGrupyOnly.length})` : tab === 'obecnosci' ? '📋 Obecności' : '⚙ Ustawienia'}
                         </button>
                       ))}
@@ -4677,7 +4677,7 @@ setKomunikat(`Notatka zapisana — ${k.imie} ${k.nazwisko}`);
                                   </td>
                                   <td style={{ padding: '10px 14px' }}>
                                   <button onClick={() => { setAktywnaZakladka('kursanci'); setRozwinietaKursant(k.id); setWybranaGrupaDetail(null); }}
-                                      style={{ fontSize: '11px', padding: '3px 9px', border: '0.5px solid var(--border)', borderRadius: '6px', background: 'white', cursor: 'pointer', color: 'var(--brand)', fontFamily: 'Jost, sans-serif' }}>
+                                      style={{ fontSize: '11px', padding: '3px 9px', border: '0.5px solid var(--border)', borderRadius: '6px', background: 'white', cursor: 'pointer', color: 'var(--brand)', fontFamily: 'Lato, sans-serif' }}>
                                       Otwórz →
                                     </button>
                                   </td>
@@ -4694,7 +4694,7 @@ setKomunikat(`Notatka zapisana — ${k.imie} ${k.nazwisko}`);
                       <>
                         <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '10px' }}>
                           <button onClick={() => { setAktywnaZakladka('zjazdy'); setTabelaGrupa(String(g.id)); }}
-                            style={{ fontSize: '12px', padding: '7px 16px', border: 'none', borderRadius: '9px', background: 'var(--brand)', color: 'white', cursor: 'pointer', fontFamily: 'Jost, sans-serif', fontWeight: 600 }}>
+                            style={{ fontSize: '12px', padding: '7px 16px', border: 'none', borderRadius: '9px', background: 'var(--brand)', color: 'white', cursor: 'pointer', fontFamily: 'Lato, sans-serif', fontWeight: 600 }}>
                             + Dodaj zjazdy dla tej grupy →
                           </button>
                         </div>
@@ -4727,7 +4727,7 @@ setKomunikat(`Notatka zapisana — ${k.imie} ${k.nazwisko}`);
                                     </td>
                                     <td style={{ padding: '9px 14px', whiteSpace: 'nowrap' }}>
                                       <button onClick={() => { setEdytowanyZjazd(z); setAktywnaZakladka('zjazdy'); }}
-                                        style={{ fontSize: '11px', padding: '3px 10px', border: '0.5px solid var(--border)', borderRadius: '6px', background: 'white', cursor: 'pointer', color: 'var(--brand)', fontFamily: 'Jost, sans-serif', marginRight: '4px' }}>
+                                        style={{ fontSize: '11px', padding: '3px 10px', border: '0.5px solid var(--border)', borderRadius: '6px', background: 'white', cursor: 'pointer', color: 'var(--brand)', fontFamily: 'Lato, sans-serif', marginRight: '4px' }}>
                                         Edytuj
                                       </button>
                                       <button onClick={() => usunZjazd(z.id)}
@@ -4761,14 +4761,14 @@ setKomunikat(`Notatka zapisana — ${k.imie} ${k.nazwisko}`);
                             setKomunikat('Ogłoszenie dodane!');
                           }}>
                             <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
-                              <select name="typ" style={{ flex: 1, fontSize: '12px', padding: '7px 8px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif' }}>
+                              <select name="typ" style={{ flex: 1, fontSize: '12px', padding: '7px 8px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Lato, sans-serif' }}>
                                 <option>Informacja</option><option>Pilne</option><option>Zmiana</option>
                               </select>
                             </div>
-                            <input name="tytul" type="text" placeholder="Tytuł *" required style={{ width: '100%', fontSize: '12px', padding: '7px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif', marginBottom: '8px' }} />
-                            <input name="tresc" type="text" placeholder="Krótki opis *" required style={{ width: '100%', fontSize: '12px', padding: '7px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif', marginBottom: '8px' }} />
-                            <textarea name="szczegoly" placeholder="Pełna treść (opcjonalnie)" rows={3} style={{ width: '100%', fontSize: '12px', padding: '7px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif', resize: 'vertical', marginBottom: '8px' }} />
-                            <button type="submit" style={{ width: '100%', padding: '8px', background: 'var(--brand)', color: 'white', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 600, cursor: 'pointer', fontFamily: 'Jost, sans-serif' }}>+ Dodaj ogłoszenie</button>
+                            <input name="tytul" type="text" placeholder="Tytuł *" required style={{ width: '100%', fontSize: '12px', padding: '7px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Lato, sans-serif', marginBottom: '8px' }} />
+                            <input name="tresc" type="text" placeholder="Krótki opis *" required style={{ width: '100%', fontSize: '12px', padding: '7px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Lato, sans-serif', marginBottom: '8px' }} />
+                            <textarea name="szczegoly" placeholder="Pełna treść (opcjonalnie)" rows={3} style={{ width: '100%', fontSize: '12px', padding: '7px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Lato, sans-serif', resize: 'vertical', marginBottom: '8px' }} />
+                            <button type="submit" style={{ width: '100%', padding: '8px', background: 'var(--brand)', color: 'white', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 600, cursor: 'pointer', fontFamily: 'Lato, sans-serif' }}>+ Dodaj ogłoszenie</button>
                           </form>
                         </div>
                         {/* Lista ogłoszeń grupy */}
@@ -4784,7 +4784,7 @@ setKomunikat(`Notatka zapisana — ${k.imie} ${k.nazwisko}`);
                               </div>
                               <div style={{ display: 'flex', gap: '4px', flexShrink: 0 }}>
                                 <button onClick={() => { setEdytowane(o); setAktywnaZakladka('ogloszenia'); }}
-                                  style={{ fontSize: '11px', padding: '3px 9px', border: '0.5px solid var(--border)', borderRadius: '6px', background: 'white', cursor: 'pointer', color: 'var(--brand)', fontFamily: 'Jost, sans-serif' }}>Edytuj</button>
+                                  style={{ fontSize: '11px', padding: '3px 9px', border: '0.5px solid var(--border)', borderRadius: '6px', background: 'white', cursor: 'pointer', color: 'var(--brand)', fontFamily: 'Lato, sans-serif' }}>Edytuj</button>
                                 <button onClick={() => usunOgloszenie(o.id)}
                                   style={{ fontSize: '11px', padding: '3px 6px', border: 'none', background: 'none', cursor: 'pointer', color: '#e57373' }}>×</button>
                               </div>
@@ -4918,7 +4918,7 @@ setKomunikat(`Notatka zapisana — ${k.imie} ${k.nazwisko}`);
                                     setKomunikat(`Zapisano — ${label}`);
                                   }
                                 }}
-                                style={{ width: '100%', fontSize: '13px', padding: '9px 12px', border: '0.5px solid var(--border)', borderRadius: '10px', fontFamily: 'Jost, sans-serif', background: 'white' }} />
+                                style={{ width: '100%', fontSize: '13px', padding: '9px 12px', border: '0.5px solid var(--border)', borderRadius: '10px', fontFamily: 'Lato, sans-serif', background: 'white' }} />
                             </div>
                           ))}
                           <div>
@@ -4932,7 +4932,7 @@ setKomunikat(`Notatka zapisana — ${k.imie} ${k.nazwisko}`);
                                   setKomunikat('Zapisano — liczba godzin');
                                 }
                               }}
-                              style={{ width: '100%', fontSize: '13px', padding: '9px 12px', border: '0.5px solid var(--border)', borderRadius: '10px', fontFamily: 'Jost, sans-serif', background: 'white' }} />
+                              style={{ width: '100%', fontSize: '13px', padding: '9px 12px', border: '0.5px solid var(--border)', borderRadius: '10px', fontFamily: 'Lato, sans-serif', background: 'white' }} />
                           </div>
                           {[
                             { label: 'Folder grupy (Google Drive)', field: 'drive_link', placeholder: 'https://drive.google.com/...' },
@@ -4949,14 +4949,14 @@ setKomunikat(`Notatka zapisana — ${k.imie} ${k.nazwisko}`);
                                     setKomunikat(`Zapisano — ${label}`);
                                   }
                                 }}
-                                style={{ width: '100%', fontSize: '13px', padding: '9px 12px', border: '0.5px solid var(--border)', borderRadius: '10px', fontFamily: 'Jost, sans-serif', background: (g as any)[field] ? '#f0faf4' : 'white' }} />
+                                style={{ width: '100%', fontSize: '13px', padding: '9px 12px', border: '0.5px solid var(--border)', borderRadius: '10px', fontFamily: 'Lato, sans-serif', background: (g as any)[field] ? '#f0faf4' : 'white' }} />
                             </div>
                           ))}
                           <div>
                             <div style={{ fontSize: '10px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.2em', marginBottom: '5px' }}>Tryb zajęć</div>
                             <select defaultValue={g.tryb || 'stacjonarny'}
                               onChange={async e => { await supabase.from('grupy').update({ tryb: e.target.value }).eq('id', g.id); pobierzGrupy(); setKomunikat('Tryb zapisany'); }}
-                              style={{ fontSize: '13px', padding: '9px 12px', border: '0.5px solid var(--border)', borderRadius: '10px', fontFamily: 'Jost, sans-serif', background: 'white', width: '100%' }}>
+                              style={{ fontSize: '13px', padding: '9px 12px', border: '0.5px solid var(--border)', borderRadius: '10px', fontFamily: 'Lato, sans-serif', background: 'white', width: '100%' }}>
                               <option value="stacjonarny">📍 Stacjonarny</option>
                               <option value="online">🌐 Online</option>
                               <option value="hybrydowy">⚡ Hybrydowy</option>
@@ -4972,11 +4972,11 @@ setKomunikat(`Notatka zapisana — ${k.imie} ${k.nazwisko}`);
                 <>
                   {/* Nagłówek + przycisk dodaj */}
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
-                    <h2 style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '22px', fontWeight: 400, color: 'var(--brand-dark)', margin: 0 }}>
-                      Grupy <span style={{ fontSize: '14px', color: 'var(--text-muted)', fontFamily: 'Jost, sans-serif' }}>({grupy.length})</span>
+                    <h2 style={{ fontFamily: 'Playfair Display, serif', fontSize: '22px', fontWeight: 400, color: 'var(--brand-dark)', margin: 0 }}>
+                      Grupy <span style={{ fontSize: '14px', color: 'var(--text-muted)', fontFamily: 'Lato, sans-serif' }}>({grupy.length})</span>
                     </h2>
                     <button onClick={() => setPokazFormGrupy(v => !v)}
-                      style={{ fontSize: '13px', padding: '8px 20px', border: pokazFormGrupy ? '0.5px solid var(--brand-mid)' : 'none', borderRadius: '10px', background: pokazFormGrupy ? 'white' : 'var(--brand)', color: pokazFormGrupy ? 'var(--brand)' : 'white', cursor: 'pointer', fontFamily: 'Jost, sans-serif', fontWeight: 600, transition: 'all 0.15s' }}>
+                      style={{ fontSize: '13px', padding: '8px 20px', border: pokazFormGrupy ? '0.5px solid var(--brand-mid)' : 'none', borderRadius: '10px', background: pokazFormGrupy ? 'white' : 'var(--brand)', color: pokazFormGrupy ? 'var(--brand)' : 'white', cursor: 'pointer', fontFamily: 'Lato, sans-serif', fontWeight: 600, transition: 'all 0.15s' }}>
                       {pokazFormGrupy ? '✕ Anuluj' : '+ Dodaj grupę'}
                     </button>
                   </div>
@@ -5020,7 +5020,7 @@ setKomunikat(`Notatka zapisana — ${k.imie} ${k.nazwisko}`);
                               onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.boxShadow = 'none'; (e.currentTarget as HTMLDivElement).style.transform = 'none'; }}>
                               <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '3px', background: 'var(--brand)' }} />
                               <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '8px', marginBottom: '10px' }}>
-                                <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '17px', fontWeight: 500, color: 'var(--brand-dark)', lineHeight: 1.3 }}>{g.nazwa}</div>
+                                <div style={{ fontFamily: 'Playfair Display, serif', fontSize: '17px', fontWeight: 500, color: 'var(--brand-dark)', lineHeight: 1.3 }}>{g.nazwa}</div>
                                 <span style={{ fontSize: '9px', fontWeight: 700, padding: '3px 8px', borderRadius: '20px', background: '#e8f5e9', color: '#2e7d32', whiteSpace: 'nowrap', flexShrink: 0 }}>AKTYWNA</span>
                               </div>
                               <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '12px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
@@ -5058,7 +5058,7 @@ setKomunikat(`Notatka zapisana — ${k.imie} ${k.nazwisko}`);
                               onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.boxShadow = '0 4px 16px rgba(0,0,0,0.08)'; }}
                               onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.boxShadow = 'none'; }}>
                               <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '8px', marginBottom: '10px' }}>
-                                <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '17px', fontWeight: 500, color: 'var(--brand-dark)', lineHeight: 1.3 }}>{g.nazwa}</div>
+                                <div style={{ fontFamily: 'Playfair Display, serif', fontSize: '17px', fontWeight: 500, color: 'var(--brand-dark)', lineHeight: 1.3 }}>{g.nazwa}</div>
                                 <span style={{ fontSize: '9px', fontWeight: 700, padding: '3px 8px', borderRadius: '20px', background: '#f5f5f5', color: '#9e9e9e', whiteSpace: 'nowrap', flexShrink: 0 }}>ZAKOŃCZONA</span>
                               </div>
                               <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '12px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
@@ -5093,7 +5093,7 @@ setKomunikat(`Notatka zapisana — ${k.imie} ${k.nazwisko}`);
                 <div className="profil-card"><div className="profil-row"><p style={{ color: 'var(--text-muted)', fontSize: '14px' }}>Brak ankiet.</p></div></div>
               ) : (
                 <div className="profil-card">
-                  <div className="profil-row"><span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '17px', color: 'var(--brand)' }}>Średnie ({ankietyFiltrowane.length} ankiet)</span></div>
+                  <div className="profil-row"><span style={{ fontFamily: 'Playfair Display, serif', fontSize: '17px', color: 'var(--brand)' }}>Średnie ({ankietyFiltrowane.length} ankiet)</span></div>
                   {[['Zadowolenie', 'zadowolenie'], ['Zajęcia teoretyczne', 'zajecia_teoretyczne'], ['Rysunek techniczny', 'zajecia_rysunek'], ['Programy komputerowe', 'zajecia_programy'], ['Zakres tematyczny', 'zakres_tematyczny'], ['Czas trwania', 'org_czas'], ['Miejsce', 'org_miejsce'], ['Baza dydaktyczna', 'org_baza'], ['Materiały', 'org_materialy'], ['Kadra', 'org_kadra'], ['Dostosowanie', 'org_dostosowanie'], ['Spełnienie oczekiwań', 'stopien_oczekiwan'], ['Ocena ogólna', 'ocena_ogolna']].map(([label, pole]) => (
                     <div key={pole} className="profil-row">
                       <span className="profil-lbl">{label}</span>
@@ -5157,7 +5157,7 @@ setKomunikat(`Notatka zapisana — ${k.imie} ${k.nazwisko}`);
 
             return (
               <div>
-                <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '14px', color: 'var(--text-muted)', marginBottom: '20px', lineHeight: 1.6 }}>
+                <div style={{ fontFamily: 'Playfair Display, serif', fontSize: '14px', color: 'var(--text-muted)', marginBottom: '20px', lineHeight: 1.6 }}>
                   Zewnętrzne narzędzia i portale używane w procesie dydaktycznym. Kliknij kartę aby otworzyć portal w nowej zakładce.
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '12px' }}>
@@ -5196,25 +5196,25 @@ setKomunikat(`Notatka zapisana — ${k.imie} ${k.nazwisko}`);
                   <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text)', marginBottom: '12px' }}>Nowe zadanie</div>
                   <form onSubmit={dodajZadanie}>
                     <select value={noweZadanie.grupa_id} onChange={e => { setNoweZadanie({ ...noweZadanie, grupa_id: e.target.value }); setWybranaGrupaZadan(e.target.value); }} required
-                      style={{ width: '100%', fontSize: '12px', padding: '7px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif', background: 'white', marginBottom: '8px' }}>
+                      style={{ width: '100%', fontSize: '12px', padding: '7px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Lato, sans-serif', background: 'white', marginBottom: '8px' }}>
                       <option value="">Wybierz grupę *</option>
                       {grupy.map(g => <option key={g.id} value={g.id}>{g.nazwa}{g.edycja ? ` · ${g.edycja}` : ''}</option>)}
                     </select>
                     <input type="text" value={noweZadanie.tytul} onChange={e => setNoweZadanie({ ...noweZadanie, tytul: e.target.value })} placeholder="Tytuł zadania *" required
-                      style={{ width: '100%', fontSize: '12px', padding: '7px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif', marginBottom: '8px' }} />
+                      style={{ width: '100%', fontSize: '12px', padding: '7px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Lato, sans-serif', marginBottom: '8px' }} />
                     <textarea value={noweZadanie.opis} onChange={e => setNoweZadanie({ ...noweZadanie, opis: e.target.value })} placeholder="Opis / instrukcja" rows={3}
-                      style={{ width: '100%', fontSize: '12px', padding: '7px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif', resize: 'vertical', marginBottom: '8px' }} />
+                      style={{ width: '100%', fontSize: '12px', padding: '7px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Lato, sans-serif', resize: 'vertical', marginBottom: '8px' }} />
                     <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
                       <input type="date" value={noweZadanie.termin} onChange={e => setNoweZadanie({ ...noweZadanie, termin: e.target.value })}
-                        style={{ flex: 1, fontSize: '12px', padding: '7px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif' }} />
+                        style={{ flex: 1, fontSize: '12px', padding: '7px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Lato, sans-serif' }} />
                       <select value={noweZadanie.typ} onChange={e => setNoweZadanie({ ...noweZadanie, typ: e.target.value })}
-                        style={{ flex: 1, fontSize: '12px', padding: '7px 8px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif', background: 'white' }}>
+                        style={{ flex: 1, fontSize: '12px', padding: '7px 8px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Lato, sans-serif', background: 'white' }}>
                         <option value="zadanie">Zadanie domowe</option>
                         <option value="praca_zaliczeniowa">Praca zaliczeniowa</option>
                       </select>
                     </div>
                     <input type="url" value={noweZadanie.link_materialow} onChange={e => setNoweZadanie({ ...noweZadanie, link_materialow: e.target.value })} placeholder="Link do materiałów (opcjonalnie)"
-                      style={{ width: '100%', fontSize: '12px', padding: '7px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif', marginBottom: '8px' }} />
+                      style={{ width: '100%', fontSize: '12px', padding: '7px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Lato, sans-serif', marginBottom: '8px' }} />
                       <div style={{ marginBottom: '8px' }}>
                   <label style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.2em', display: 'block', marginBottom: '6px' }}>Zdjęcie zadania</label>
                   <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
@@ -5222,7 +5222,7 @@ setKomunikat(`Notatka zapisana — ${k.imie} ${k.nazwisko}`);
                       <img src={noweZadanie.zdjecie_url} alt="zdjęcie" style={{ width: '80px', height: '50px', objectFit: 'cover', borderRadius: '8px', border: '0.5px solid var(--border)' }} />
                     )}
                     <button type="button" onClick={() => setPokazGalerieZadanie(true)}
-                      style={{ padding: '7px 14px', borderRadius: '9px', border: '0.5px solid var(--border)', background: 'white', fontSize: '12px', cursor: 'pointer', fontFamily: 'Jost, sans-serif', color: 'var(--brand)' }}>
+                      style={{ padding: '7px 14px', borderRadius: '9px', border: '0.5px solid var(--border)', background: 'white', fontSize: '12px', cursor: 'pointer', fontFamily: 'Lato, sans-serif', color: 'var(--brand)' }}>
                       {noweZadanie.zdjecie_url ? '🖼 Zmień zdjęcie' : '🖼 Wybierz zdjęcie'}
                     </button>
                     {noweZadanie.zdjecie_url && (
@@ -5231,7 +5231,7 @@ setKomunikat(`Notatka zapisana — ${k.imie} ${k.nazwisko}`);
                     )}
                   </div>
                 </div>
-                    <button type="submit" style={{ width: '100%', padding: '8px', background: 'var(--brand)', color: 'white', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 600, cursor: 'pointer', fontFamily: 'Jost, sans-serif' }}>
+                    <button type="submit" style={{ width: '100%', padding: '8px', background: 'var(--brand)', color: 'white', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 600, cursor: 'pointer', fontFamily: 'Lato, sans-serif' }}>
                       + Dodaj zadanie
                     </button>
                   </form>
@@ -5243,14 +5243,14 @@ setKomunikat(`Notatka zapisana — ${k.imie} ${k.nazwisko}`);
                     <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text)' }}>Lista zadań ({zadania.length})</div>
                     <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
                       <select value={wybranaGrupaZadan} onChange={e => setWybranaGrupaZadan(e.target.value)}
-                        style={{ fontSize: '11px', padding: '5px 8px', border: '0.5px solid var(--border)', borderRadius: '7px', fontFamily: 'Jost, sans-serif', background: 'white' }}>
+                        style={{ fontSize: '11px', padding: '5px 8px', border: '0.5px solid var(--border)', borderRadius: '7px', fontFamily: 'Lato, sans-serif', background: 'white' }}>
                         <option value="">Wszystkie grupy</option>
                         {grupy.map(g => <option key={g.id} value={g.id}>{g.nazwa}{g.edycja ? ` · ${g.edycja}` : ''}</option>)}
                       </select>
                       <button onClick={() => setZwinieteZadania(new Set(grupy.map(g => g.id)))}
-                        style={{ fontSize: '10px', color: 'var(--text-muted)', background: 'none', border: '0.5px solid var(--border)', borderRadius: '6px', padding: '4px 8px', cursor: 'pointer', fontFamily: 'Jost, sans-serif', whiteSpace: 'nowrap' }}>Zwiń</button>
+                        style={{ fontSize: '10px', color: 'var(--text-muted)', background: 'none', border: '0.5px solid var(--border)', borderRadius: '6px', padding: '4px 8px', cursor: 'pointer', fontFamily: 'Lato, sans-serif', whiteSpace: 'nowrap' }}>Zwiń</button>
                       <button onClick={() => setZwinieteZadania(new Set())}
-                        style={{ fontSize: '10px', color: 'var(--text-muted)', background: 'none', border: '0.5px solid var(--border)', borderRadius: '6px', padding: '4px 8px', cursor: 'pointer', fontFamily: 'Jost, sans-serif', whiteSpace: 'nowrap' }}>Rozwiń</button>
+                        style={{ fontSize: '10px', color: 'var(--text-muted)', background: 'none', border: '0.5px solid var(--border)', borderRadius: '6px', padding: '4px 8px', cursor: 'pointer', fontFamily: 'Lato, sans-serif', whiteSpace: 'nowrap' }}>Rozwiń</button>
                     </div>
                   </div>
 
@@ -5272,7 +5272,7 @@ setKomunikat(`Notatka zapisana — ${k.imie} ${k.nazwisko}`);
                           <div onClick={() => setZwinieteZadania(prev => { const next = new Set(prev); next.has(g.id) ? next.delete(g.id) : next.add(g.id); return next; })}
                             style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '9px 14px', background: zakonczona ? '#fafafa' : 'white', borderRadius: zwinieta ? '12px' : '12px 12px 0 0', border: '0.5px solid var(--border)', cursor: 'pointer', userSelect: 'none' as const, opacity: zakonczona ? 0.6 : 1 }}>
                             <span style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'inline-block', transform: zwinieta ? 'rotate(-90deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}>▾</span>
-                            <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '16px', fontWeight: 400, color: 'var(--brand-dark)', flex: 1 }}>{g.nazwa}</span>
+                            <span style={{ fontFamily: 'Playfair Display, serif', fontSize: '16px', fontWeight: 400, color: 'var(--brand-dark)', flex: 1 }}>{g.nazwa}</span>
                             <span style={{ fontSize: '11px', color: 'var(--text-muted)', background: 'var(--bg)', padding: '2px 8px', borderRadius: '10px', border: '0.5px solid var(--border)' }}>
                               {zadaniaGrupy.length} {zadaniaGrupy.length === 1 ? 'zadanie' : 'zadań'}
                             </span>
@@ -5323,7 +5323,7 @@ setKomunikat(`Notatka zapisana — ${k.imie} ${k.nazwisko}`);
                                         {odp.length === 0 && <span style={{ fontSize: '11px', color: '#ccc', marginTop: '4px', display: 'block' }}>Brak przesłanych prac</span>}
                                       </div>
                                       <button onClick={() => setEdytowaneZadanie(z)}
-                                        style={{ fontSize: '11px', padding: '4px 10px', border: '0.5px solid var(--border)', borderRadius: '7px', background: 'white', cursor: 'pointer', color: 'var(--brand)', fontFamily: 'Jost, sans-serif', marginRight: '4px' }}>Edytuj</button>
+                                        style={{ fontSize: '11px', padding: '4px 10px', border: '0.5px solid var(--border)', borderRadius: '7px', background: 'white', cursor: 'pointer', color: 'var(--brand)', fontFamily: 'Lato, sans-serif', marginRight: '4px' }}>Edytuj</button>
                                       <button onClick={() => usunZadanie(z.id)}
                                         style={{ background: 'none', border: 'none', color: '#e57373', cursor: 'pointer', fontSize: '16px', padding: '0 2px', flexShrink: 0 }}>×</button>
                                     </div>
@@ -5350,11 +5350,11 @@ setKomunikat(`Notatka zapisana — ${k.imie} ${k.nazwisko}`);
             <>
               {/* ── NARZĘDZIE DOSTĘPNOŚCI ── */}
               <div style={{ background: 'white', border: '0.5px solid var(--border)', borderRadius: '14px', padding: '18px 20px', marginBottom: '24px' }}>
-                <div style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '18px', color: 'var(--brand-dark)', marginBottom: '4px' }}>Kto ma wolne w danym dniu?</div>
+                <div style={{ fontFamily: 'Playfair Display, serif', fontSize: '18px', color: 'var(--brand-dark)', marginBottom: '4px' }}>Kto ma wolne w danym dniu?</div>
                 <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '14px' }}>Wpisz datę — zobaczysz którzy prowadzący nie mają w tym dniu zajęć</div>
                 <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
                   <input type="date" value={dostepnoscData} onChange={e => setDostepnoscData(e.target.value)}
-                    style={{ fontSize: '13px', padding: '8px 12px', border: '0.5px solid var(--border)', borderRadius: '10px', fontFamily: 'Jost, sans-serif' }} />
+                    style={{ fontSize: '13px', padding: '8px 12px', border: '0.5px solid var(--border)', borderRadius: '10px', fontFamily: 'Lato, sans-serif' }} />
                   {dostepnoscData && <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
                     {new Date(dostepnoscData + 'T12:00:00').toLocaleDateString('pl-PL', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
                   </span>}
@@ -5450,8 +5450,8 @@ setKomunikat(`Notatka zapisana — ${k.imie} ${k.nazwisko}`);
                   <div className="login-field" style={{ flex: 1 }}><label>Miasto</label><input type="text" value={nowyProwadzacy.miasto} onChange={e => setNowyProwadzacy({ ...nowyProwadzacy, miasto: e.target.value })} placeholder="Warszawa" /></div>
                 </div>
                 <div className="login-field"><label>Link do zdjęcia (URL)</label><input type="url" value={nowyProwadzacy.avatar_url} onChange={e => setNowyProwadzacy({ ...nowyProwadzacy, avatar_url: e.target.value })} placeholder="https://..." /></div>
-                <div className="login-field"><label>Opis / biogram</label><textarea value={nowyProwadzacy.bio} onChange={e => setNowyProwadzacy({ ...nowyProwadzacy, bio: e.target.value })} rows={2} placeholder="Krótki opis widoczny dla kursantów…" style={{ width: '100%', fontSize: '13px', padding: '8px 12px', border: '0.5px solid var(--border)', borderRadius: '10px', fontFamily: 'Jost, sans-serif', resize: 'vertical' }} /></div>
-                <div className="login-field"><label>Notatki wewnętrzne</label><textarea value={nowyProwadzacy.notatki} onChange={e => setNowyProwadzacy({ ...nowyProwadzacy, notatki: e.target.value })} rows={2} placeholder="Np. nie może weekendowo, dostępny od września…" style={{ width: '100%', fontSize: '13px', padding: '8px 12px', border: '0.5px solid var(--border)', borderRadius: '10px', fontFamily: 'Jost, sans-serif', resize: 'vertical' }} /></div>
+                <div className="login-field"><label>Opis / biogram</label><textarea value={nowyProwadzacy.bio} onChange={e => setNowyProwadzacy({ ...nowyProwadzacy, bio: e.target.value })} rows={2} placeholder="Krótki opis widoczny dla kursantów…" style={{ width: '100%', fontSize: '13px', padding: '8px 12px', border: '0.5px solid var(--border)', borderRadius: '10px', fontFamily: 'Lato, sans-serif', resize: 'vertical' }} /></div>
+                <div className="login-field"><label>Notatki wewnętrzne</label><textarea value={nowyProwadzacy.notatki} onChange={e => setNowyProwadzacy({ ...nowyProwadzacy, notatki: e.target.value })} rows={2} placeholder="Np. nie może weekendowo, dostępny od września…" style={{ width: '100%', fontSize: '13px', padding: '8px 12px', border: '0.5px solid var(--border)', borderRadius: '10px', fontFamily: 'Lato, sans-serif', resize: 'vertical' }} /></div>
                 <button className="login-btn" type="submit">Dodaj prowadzącego</button>
               </form>
 
@@ -5461,7 +5461,7 @@ setKomunikat(`Notatka zapisana — ${k.imie} ${k.nazwisko}`);
                 <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                   {/* Filtr miasto */}
                   <select value={filtrMiastoProw} onChange={e => setFiltrMiastoProw(e.target.value)}
-                    style={{ fontSize: '12px', padding: '6px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif', background: 'white' }}>
+                    style={{ fontSize: '12px', padding: '6px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Lato, sans-serif', background: 'white' }}>
                     <option value="">Wszystkie miasta</option>
                     {[...new Set(prowadzacy.map(p => p.miasto).filter(Boolean))].sort().map(m => (
                       <option key={m} value={m as string}>{m}</option>
@@ -5469,7 +5469,7 @@ setKomunikat(`Notatka zapisana — ${k.imie} ${k.nazwisko}`);
                   </select>
                   {/* Filtr dostępność */}
                   <select value={filtrDostepnoscProw} onChange={e => setFiltrDostepnoscProw(e.target.value)}
-                    style={{ fontSize: '12px', padding: '6px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Jost, sans-serif', background: 'white' }}>
+                    style={{ fontSize: '12px', padding: '6px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Lato, sans-serif', background: 'white' }}>
                     <option value="">Wszyscy</option>
                     <option value="wolni">Wolni dziś</option>
                     <option value="zajeci">Zajęci dziś</option>
@@ -5552,19 +5552,19 @@ setKomunikat(`Notatka zapisana — ${k.imie} ${k.nazwisko}`);
                               <label style={{ fontSize: '10px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.4px', display: 'block', marginBottom: '4px' }}>Email</label>
                               <input type="email" defaultValue={p.email || ''} placeholder="architekt@email.pl"
                                 onBlur={async e => { if (e.target.value.trim() !== (p.email || '').trim()) { await supabase.from('prowadzacy').update({ email: e.target.value.trim() || null }).eq('id', p.id); pobierzProwadzacy(); }}}
-                                style={{ width: '100%', fontSize: '12px', padding: '5px 8px', border: '0.5px solid var(--border)', borderRadius: '7px', fontFamily: 'Jost, sans-serif' }} />
+                                style={{ width: '100%', fontSize: '12px', padding: '5px 8px', border: '0.5px solid var(--border)', borderRadius: '7px', fontFamily: 'Lato, sans-serif' }} />
                             </div>
                             <div style={{ flex: 1, minWidth: '130px' }}>
                               <label style={{ fontSize: '10px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.4px', display: 'block', marginBottom: '4px' }}>Telefon</label>
                               <input type="text" defaultValue={p.telefon || ''} placeholder="+48 600 000 000"
                                 onBlur={async e => { if (e.target.value.trim() !== (p.telefon || '').trim()) { await supabase.from('prowadzacy').update({ telefon: e.target.value.trim() || null }).eq('id', p.id); pobierzProwadzacy(); }}}
-                                style={{ width: '100%', fontSize: '12px', padding: '5px 8px', border: '0.5px solid var(--border)', borderRadius: '7px', fontFamily: 'Jost, sans-serif' }} />
+                                style={{ width: '100%', fontSize: '12px', padding: '5px 8px', border: '0.5px solid var(--border)', borderRadius: '7px', fontFamily: 'Lato, sans-serif' }} />
                             </div>
                             <div style={{ flex: 1, minWidth: '110px' }}>
                               <label style={{ fontSize: '10px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.4px', display: 'block', marginBottom: '4px' }}>Miasto</label>
                               <input type="text" defaultValue={p.miasto || ''} placeholder="Warszawa"
                                 onBlur={async e => { if (e.target.value.trim() !== (p.miasto || '').trim()) { await supabase.from('prowadzacy').update({ miasto: e.target.value.trim() || null }).eq('id', p.id); pobierzProwadzacy(); }}}
-                                style={{ width: '100%', fontSize: '12px', padding: '5px 8px', border: '0.5px solid var(--border)', borderRadius: '7px', fontFamily: 'Jost, sans-serif' }} />
+                                style={{ width: '100%', fontSize: '12px', padding: '5px 8px', border: '0.5px solid var(--border)', borderRadius: '7px', fontFamily: 'Lato, sans-serif' }} />
                             </div>
                           </div>
                           {/* Opis */}
@@ -5572,7 +5572,7 @@ setKomunikat(`Notatka zapisana — ${k.imie} ${k.nazwisko}`);
                             <label style={{ fontSize: '10px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.4px', display: 'block', marginBottom: '4px' }}>Opis (widoczny dla kursantów)</label>
                             <textarea defaultValue={p.bio || ''} rows={2} placeholder="Krótki opis…"
                               onBlur={async e => { const nowe = e.target.value.trim(); if (nowe !== (p.bio || '').trim()) { await supabase.from('prowadzacy').update({ bio: nowe || null }).eq('id', p.id); pobierzProwadzacy(); }}}
-                              style={{ width: '100%', fontSize: '12px', padding: '6px 8px', border: '0.5px solid var(--border)', borderRadius: '7px', fontFamily: 'Jost, sans-serif', resize: 'vertical' }} />
+                              style={{ width: '100%', fontSize: '12px', padding: '6px 8px', border: '0.5px solid var(--border)', borderRadius: '7px', fontFamily: 'Lato, sans-serif', resize: 'vertical' }} />
                           </div>
                         
                           {/* Notatki */}
@@ -5580,14 +5580,14 @@ setKomunikat(`Notatka zapisana — ${k.imie} ${k.nazwisko}`);
                             <label style={{ fontSize: '10px', fontWeight: 600, color: '#c8a84b', textTransform: 'uppercase', letterSpacing: '0.4px', display: 'block', marginBottom: '4px' }}>🔒 Notatki wewnętrzne</label>
                             <textarea defaultValue={p.notatki || ''} rows={2} placeholder="Np. nie może weekendowo, dostępny od września…"
                               onBlur={async e => { const nowe = e.target.value.trim(); if (nowe !== (p.notatki || '').trim()) { await supabase.from('prowadzacy').update({ notatki: nowe || null }).eq('id', p.id); pobierzProwadzacy(); }}}
-                              style={{ width: '100%', fontSize: '12px', padding: '6px 8px', border: '0.5px solid #fef3c7', borderRadius: '7px', fontFamily: 'Jost, sans-serif', resize: 'vertical', background: '#fffbeb' }} />
+                              style={{ width: '100%', fontSize: '12px', padding: '6px 8px', border: '0.5px solid #fef3c7', borderRadius: '7px', fontFamily: 'Lato, sans-serif', resize: 'vertical', background: '#fffbeb' }} />
                           </div>
                           {/* Link do zdjęcia */}
                           <div style={{ marginTop: '10px' }}>
                             <label style={{ fontSize: '10px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.4px', display: 'block', marginBottom: '4px' }}>Link do zdjęcia</label>
                             <input type="url" defaultValue={p.avatar_url || ''} placeholder="https://..."
                               onBlur={async e => { const nowe = e.target.value.trim(); if (nowe !== (p.avatar_url || '').trim()) { await supabase.from('prowadzacy').update({ avatar_url: nowe || null }).eq('id', p.id); pobierzProwadzacy(); }}}
-                              style={{ width: '100%', fontSize: '12px', padding: '5px 8px', border: '0.5px solid var(--border)', borderRadius: '7px', fontFamily: 'Jost, sans-serif' }} />
+                              style={{ width: '100%', fontSize: '12px', padding: '5px 8px', border: '0.5px solid var(--border)', borderRadius: '7px', fontFamily: 'Lato, sans-serif' }} />
                           </div>
                           {/* Zjazdy */}
                           {przypisaneZjazdy.length > 0 && (
@@ -5801,7 +5801,7 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
     const dniTygodnia = ['ND','PN','WT','ŚR','CZW','PT','SOB'];
     const miesiace = ['STY','LUT','MAR','KWI','MAJ','CZE','LIP','SIE','WRZ','PAŹ','LIS','GRU'];
     const dataHeader = `${dniTygodnia[teraz.getDay()]} · ${teraz.getDate()} ${miesiace[teraz.getMonth()]}`;
-    const SERIF = "'Cormorant Garamond', Georgia, serif";
+    const SERIF = "'Playfair Display', Georgia, serif";
     
 
 
@@ -6034,7 +6034,7 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
               <span style={{ fontSize: '10.5px', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600 }}>Zadania</span>
               {zadania.length > 0 && <span style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: '20px', color: 'var(--text)' }}>{zadania.length} aktywne</span>}
             </div>
-            <button onClick={() => onNavigate('zadania')} style={{ background: 'none', border: '0.5px solid var(--border)', borderRadius: '20px', padding: '4px 12px', fontSize: '11px', cursor: 'pointer', color: 'var(--text-muted)', fontFamily: 'Jost, sans-serif' }}>
+            <button onClick={() => onNavigate('zadania')} style={{ background: 'none', border: '0.5px solid var(--border)', borderRadius: '20px', padding: '4px 12px', fontSize: '11px', cursor: 'pointer', color: 'var(--text-muted)', fontFamily: 'Lato, sans-serif' }}>
               Wszystkie →
             </button>
           </div>
@@ -6100,7 +6100,7 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
           <div style={{ marginBottom: '12px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
               <span style={{ fontSize: '10.5px', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600 }}>Ogłoszenia</span>
-              <button onClick={() => onNavigate('ogloszenia')} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '11px', color: 'var(--brand)', fontFamily: 'Jost, sans-serif' }}>
+              <button onClick={() => onNavigate('ogloszenia')} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '11px', color: 'var(--brand)', fontFamily: 'Lato, sans-serif' }}>
                 {noweOgl.length > 0 ? `${noweOgl.length} nowe →` : 'Wszystkie →'}
               </button>
             </div>
@@ -6235,13 +6235,13 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
                 fontSize: '36px', fontWeight: 600,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 margin: '0 auto 14px',
-                fontFamily: 'Cormorant Garamond, serif',
+                fontFamily: 'Playfair Display, serif',
               }}>
                 {p.imie[0]}
               </div>
             )}
             <div style={{
-              fontFamily: 'Cormorant Garamond, serif',
+              fontFamily: 'Playfair Display, serif',
               fontSize: '24px', fontWeight: 500, color: 'var(--text)',
               marginBottom: '4px',
             }}>
@@ -6270,7 +6270,7 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
               background: 'var(--brand-light)', color: 'var(--brand)',
               border: 'none', borderRadius: '14px',
               fontSize: '14px', fontWeight: 600, cursor: 'pointer',
-              fontFamily: 'Jost, sans-serif',
+              fontFamily: 'Lato, sans-serif',
             }}
           >
             Zamknij
@@ -6331,11 +6331,11 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
               onChange={e => setAktywnyFormularz({ ...aktywnyFormularz, powod: e.target.value })}
               placeholder="Powód nieobecności..."
               rows={2}
-              style={{ width: '100%', fontSize: '12px', padding: '6px 8px', borderRadius: '8px', border: '0.5px solid var(--border)', fontFamily: 'Jost, sans-serif', resize: 'none' }}
+              style={{ width: '100%', fontSize: '12px', padding: '6px 8px', borderRadius: '8px', border: '0.5px solid var(--border)', fontFamily: 'Lato, sans-serif', resize: 'none' }}
             />
             <div style={{ display: 'flex', gap: '6px', marginTop: '6px' }}>
               <button onClick={() => zapiszObecnosc(zjazd, dzien, 'nieobecnosc')} disabled={wysylanie}
-                style={{ flex: 1, padding: '7px', borderRadius: '8px', background: '#c62828', color: 'white', border: 'none', fontSize: '11px', cursor: 'pointer', fontFamily: 'Jost, sans-serif', fontWeight: 500 }}>
+                style={{ flex: 1, padding: '7px', borderRadius: '8px', background: '#c62828', color: 'white', border: 'none', fontSize: '11px', cursor: 'pointer', fontFamily: 'Lato, sans-serif', fontWeight: 500 }}>
                 {wysylanie ? '...' : 'Wyślij'}
               </button>
               <button onClick={() => setAktywnyFormularz(null)}
@@ -6373,7 +6373,7 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
                   await odswiezObecnosci();
                 }
                 setAktywnyFormularz(null);
-              }} style={{ flex: 1, padding: '7px', borderRadius: '8px', background: 'var(--brand)', color: 'white', border: 'none', fontSize: '11px', cursor: 'pointer', fontFamily: 'Jost, sans-serif' }}>
+              }} style={{ flex: 1, padding: '7px', borderRadius: '8px', background: 'var(--brand)', color: 'white', border: 'none', fontSize: '11px', cursor: 'pointer', fontFamily: 'Lato, sans-serif' }}>
                 Zapisz
               </button>
               <button onClick={() => setAktywnyFormularz(null)}
@@ -6388,19 +6388,19 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
           <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
             {(!wpis || wpis.status === 'nieobecnosc') && (
               <button onClick={() => zapiszObecnosc(zjazd, dzien, 'potwierdzono')} disabled={wysylanie}
-                style={{ flex: 1, padding: '6px 4px', borderRadius: '8px', background: '#e8f5e9', color: '#2e7d32', border: '0.5px solid #c8e6c9', fontSize: '11px', cursor: 'pointer', fontWeight: 500, fontFamily: 'Jost, sans-serif', whiteSpace: 'nowrap' }}>
+                style={{ flex: 1, padding: '6px 4px', borderRadius: '8px', background: '#e8f5e9', color: '#2e7d32', border: '0.5px solid #c8e6c9', fontSize: '11px', cursor: 'pointer', fontWeight: 500, fontFamily: 'Lato, sans-serif', whiteSpace: 'nowrap' }}>
                 ✓ Będę
               </button>
             )}
             {(!wpis || wpis.status === 'potwierdzono') && (
               <button onClick={() => setAktywnyFormularz({ zjazdId: zjazd.id, dzien, typ: 'nieobecnosc', powod: '' })}
-                style={{ flex: 1, padding: '6px 4px', borderRadius: '8px', background: '#fff8f8', color: '#c62828', border: '0.5px solid #ffcdd2', fontSize: '11px', cursor: 'pointer', fontWeight: 500, fontFamily: 'Jost, sans-serif', whiteSpace: 'nowrap' }}>
+                style={{ flex: 1, padding: '6px 4px', borderRadius: '8px', background: '#fff8f8', color: '#c62828', border: '0.5px solid #ffcdd2', fontSize: '11px', cursor: 'pointer', fontWeight: 500, fontFamily: 'Lato, sans-serif', whiteSpace: 'nowrap' }}>
                 ✕ Nie będę
               </button>
             )}
             {wpis && wpis.status === 'potwierdzono' && (
               <button onClick={() => setAktywnyFormularz({ zjazdId: zjazd.id, dzien, typ: 'godziny', godzPrzyb: wpis.godzina_przybycia || '', godzWyj: wpis.godzina_wyjscia || '' })}
-                style={{ padding: '6px 8px', borderRadius: '8px', background: '#fef9ec', color: '#c8a84b', border: '0.5px solid #f0d080', fontSize: '11px', cursor: 'pointer', fontFamily: 'Jost, sans-serif', whiteSpace: 'nowrap' }}>
+                style={{ padding: '6px 8px', borderRadius: '8px', background: '#fef9ec', color: '#c8a84b', border: '0.5px solid #f0d080', fontSize: '11px', cursor: 'pointer', fontFamily: 'Lato, sans-serif', whiteSpace: 'nowrap' }}>
                 🕐 Spóźnienie
               </button>
             )}
@@ -6425,7 +6425,7 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
     const [wybranyZjazd, setWybranyZjazd] = useState<Zjazd | null>(null);
     const [countdown, setCountdown] = useState({ dni: 0, godz: 0, min: 0 });
   
-    const SERIF = "'Cormorant Garamond', Georgia, serif";
+    const SERIF = "'Playfair Display', Georgia, serif";
     const [dbPhotos, setDbPhotos] = useState<string[]>([]);
   const PHOTOS_FALLBACK = [
     'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=900&q=80',
@@ -6611,7 +6611,7 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
   
             {/* Dodaj do kalendarza */}
             {z.status === 'nadchodzacy' && (
-              <button onClick={() => pobierzICS(z)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', width: '100%', background: 'none', border: '0.5px solid var(--border)', borderRadius: '12px', padding: '11px 16px', fontSize: '12px', color: 'var(--brand)', cursor: 'pointer', fontFamily: 'Jost, sans-serif', marginBottom: '10px' }}>
+              <button onClick={() => pobierzICS(z)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', width: '100%', background: 'none', border: '0.5px solid var(--border)', borderRadius: '12px', padding: '11px 16px', fontSize: '12px', color: 'var(--brand)', cursor: 'pointer', fontFamily: 'Lato, sans-serif', marginBottom: '10px' }}>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
                 Dodaj do kalendarza (.ics)
               </button>
@@ -6641,7 +6641,7 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
         {/* Filtry */}
         <div style={{ display: 'flex', gap: '6px', marginBottom: '16px', overflowX: 'auto', scrollbarWidth: 'none' as any }}>
           {([['all', 'Wszystkie'], ['upcoming', 'Najbliższe'], ['past', 'Minione']] as const).map(([id, label]) => (
-            <button key={id} onClick={() => setFilter(id)} style={{ padding: '7px 14px', borderRadius: 999, background: filter === id ? '#1A1715' : 'transparent', color: filter === id ? '#fff' : 'var(--text)', border: filter === id ? 'none' : '0.5px solid var(--border)', fontSize: '11px', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap', fontFamily: 'Jost, sans-serif' }}>{label}</button>
+            <button key={id} onClick={() => setFilter(id)} style={{ padding: '7px 14px', borderRadius: 999, background: filter === id ? '#1A1715' : 'transparent', color: filter === id ? '#fff' : 'var(--text)', border: filter === id ? 'none' : '0.5px solid var(--border)', fontSize: '11px', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap', fontFamily: 'Lato, sans-serif' }}>{label}</button>
           ))}
         </div>
   
@@ -6845,13 +6845,13 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
               <input type="text" value={nowyMat.tytul} onChange={e => setNowyMat(v => ({ ...v, tytul: e.target.value }))}
                 placeholder="Tytuł materiału *"
                 onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); dodajMaterial(e as any); } }}
-                style={{ flex: 2, minWidth: '140px', fontSize: '12px', padding: '6px 8px', border: '0.5px solid #c5d8f7', borderRadius: '7px', fontFamily: 'Jost, sans-serif' }} />
+                style={{ flex: 2, minWidth: '140px', fontSize: '12px', padding: '6px 8px', border: '0.5px solid #c5d8f7', borderRadius: '7px', fontFamily: 'Lato, sans-serif' }} />
               <input type="url" value={nowyMat.link} onChange={e => setNowyMat(v => ({ ...v, link: e.target.value }))}
                 placeholder="Link (opcjonalnie)"
                 onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); dodajMaterial(e as any); } }}
-                style={{ flex: 2, minWidth: '140px', fontSize: '12px', padding: '6px 8px', border: '0.5px solid #c5d8f7', borderRadius: '7px', fontFamily: 'Jost, sans-serif' }} />
+                style={{ flex: 2, minWidth: '140px', fontSize: '12px', padding: '6px 8px', border: '0.5px solid #c5d8f7', borderRadius: '7px', fontFamily: 'Lato, sans-serif' }} />
               <button type="button" onClick={dodajMaterial as any} disabled={!nowyMat.tytul.trim()}
-                style={{ padding: '6px 12px', background: nowyMat.tytul.trim() ? '#1565c0' : '#ccc', color: 'white', border: 'none', borderRadius: '7px', fontSize: '12px', fontWeight: 600, cursor: nowyMat.tytul.trim() ? 'pointer' : 'default', fontFamily: 'Jost, sans-serif', whiteSpace: 'nowrap' }}>
+                style={{ padding: '6px 12px', background: nowyMat.tytul.trim() ? '#1565c0' : '#ccc', color: 'white', border: 'none', borderRadius: '7px', fontSize: '12px', fontWeight: 600, cursor: nowyMat.tytul.trim() ? 'pointer' : 'default', fontFamily: 'Lato, sans-serif', whiteSpace: 'nowrap' }}>
                 + Dodaj
               </button>
             </div>
@@ -6874,10 +6874,10 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
                 {edytowanePytanie === p.id ? (
                   <div style={{ display: 'flex', gap: '6px' }}>
                     <textarea value={edytowanaTresc} onChange={e => setEdytowanaTresc(e.target.value)} rows={2}
-                      style={{ flex: 1, fontSize: '12px', padding: '5px 8px', border: '0.5px solid #fde68a', borderRadius: '7px', fontFamily: 'Jost, sans-serif', resize: 'vertical' }} />
+                      style={{ flex: 1, fontSize: '12px', padding: '5px 8px', border: '0.5px solid #fde68a', borderRadius: '7px', fontFamily: 'Lato, sans-serif', resize: 'vertical' }} />
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                       <button onClick={() => zapiszEdycje(p.id)}
-                        style={{ padding: '4px 10px', background: 'var(--brand)', color: 'white', border: 'none', borderRadius: '6px', fontSize: '11px', cursor: 'pointer', fontFamily: 'Jost, sans-serif' }}>✓</button>
+                        style={{ padding: '4px 10px', background: 'var(--brand)', color: 'white', border: 'none', borderRadius: '6px', fontSize: '11px', cursor: 'pointer', fontFamily: 'Lato, sans-serif' }}>✓</button>
                       <button onClick={() => setEdytowanePytanie(null)}
                         style={{ padding: '4px 10px', background: 'none', border: '0.5px solid var(--border)', borderRadius: '6px', fontSize: '11px', cursor: 'pointer', color: 'var(--text-muted)' }}>✕</button>
                     </div>
@@ -6891,7 +6891,7 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
                     {!p.omowione && (
                       <div style={{ display: 'flex', gap: '4px', flexShrink: 0 }}>
                         <button onClick={() => { setEdytowanePytanie(p.id); setEdytowanaTresc(p.tresc); }}
-                          style={{ fontSize: '10px', padding: '2px 7px', border: '0.5px solid var(--border)', borderRadius: '6px', background: 'white', cursor: 'pointer', color: 'var(--brand)', fontFamily: 'Jost, sans-serif' }}>Edytuj</button>
+                          style={{ fontSize: '10px', padding: '2px 7px', border: '0.5px solid var(--border)', borderRadius: '6px', background: 'white', cursor: 'pointer', color: 'var(--brand)', fontFamily: 'Lato, sans-serif' }}>Edytuj</button>
                         <button onClick={() => usunPytanie(p.id)}
                           style={{ fontSize: '10px', padding: '2px 6px', border: 'none', background: 'none', cursor: 'pointer', color: '#e57373' }}>×</button>
                       </div>
@@ -6905,9 +6905,9 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
               <form onSubmit={dodajPytanie} style={{ display: 'flex', gap: '6px', marginTop: '4px' }}>
                 <textarea value={nowePytanie} onChange={e => setNowePytanie(e.target.value)}
                   placeholder="Wpisz pytanie do prowadzącego…" rows={2} required
-                  style={{ flex: 1, fontSize: '12px', padding: '6px 8px', border: '0.5px solid #fde68a', borderRadius: '8px', fontFamily: 'Jost, sans-serif', resize: 'vertical' }} />
+                  style={{ flex: 1, fontSize: '12px', padding: '6px 8px', border: '0.5px solid #fde68a', borderRadius: '8px', fontFamily: 'Lato, sans-serif', resize: 'vertical' }} />
                 <button type="submit" disabled={!nowePytanie.trim()}
-                  style={{ padding: '6px 12px', background: nowePytanie.trim() ? '#c8a84b' : '#ddd', color: 'white', border: 'none', borderRadius: '8px', fontSize: '12px', fontWeight: 600, cursor: nowePytanie.trim() ? 'pointer' : 'default', fontFamily: 'Jost, sans-serif', alignSelf: 'flex-end', whiteSpace: 'nowrap' }}>
+                  style={{ padding: '6px 12px', background: nowePytanie.trim() ? '#c8a84b' : '#ddd', color: 'white', border: 'none', borderRadius: '8px', fontSize: '12px', fontWeight: 600, cursor: nowePytanie.trim() ? 'pointer' : 'default', fontFamily: 'Lato, sans-serif', alignSelf: 'flex-end', whiteSpace: 'nowrap' }}>
                   Wyślij
                 </button>
               </form>
@@ -6928,7 +6928,7 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
                   <div style={{ fontSize: '12px', color: 'var(--text)', lineHeight: 1.5 }}>{p.tresc}</div>
                 </div>
                 <button onClick={() => toggleOmowione(p.id, p.omowione)}
-                  style={{ fontSize: '10px', padding: '4px 10px', background: '#e8f5e9', color: '#2e7d32', border: '0.5px solid #c8e6c9', borderRadius: '6px', cursor: 'pointer', fontFamily: 'Jost, sans-serif', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                  style={{ fontSize: '10px', padding: '4px 10px', background: '#e8f5e9', color: '#2e7d32', border: '0.5px solid #c8e6c9', borderRadius: '6px', cursor: 'pointer', fontFamily: 'Lato, sans-serif', whiteSpace: 'nowrap', flexShrink: 0 }}>
                   ✓ Omówione
                 </button>
               </div>
@@ -6945,7 +6945,7 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
                       <div style={{ fontSize: '12px', color: 'var(--text-muted)', lineHeight: 1.5 }}>{p.tresc}</div>
                     </div>
                     <button onClick={() => toggleOmowione(p.id, p.omowione)}
-                      style={{ fontSize: '10px', padding: '3px 8px', background: 'none', color: 'var(--text-muted)', border: '0.5px solid var(--border)', borderRadius: '6px', cursor: 'pointer', fontFamily: 'Jost, sans-serif', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                      style={{ fontSize: '10px', padding: '3px 8px', background: 'none', color: 'var(--text-muted)', border: '0.5px solid var(--border)', borderRadius: '6px', cursor: 'pointer', fontFamily: 'Lato, sans-serif', whiteSpace: 'nowrap', flexShrink: 0 }}>
                       ↩ Cofnij
                     </button>
                   </div>
@@ -7013,7 +7013,7 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderBottom: '0.5px solid var(--border)' }}>
           <button onClick={() => { const d = new Date(rok, mies - 2, 1); setMiesiac(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`); }}
             style={{ background: 'none', border: '0.5px solid var(--border)', borderRadius: '8px', width: '28px', height: '28px', cursor: 'pointer', fontSize: '14px', color: 'var(--text-muted)' }}>‹</button>
-          <span style={{ fontFamily: 'Cormorant Garamond, serif', fontSize: '17px', fontWeight: 400, color: 'var(--brand-dark)' }}>
+          <span style={{ fontFamily: 'Playfair Display, serif', fontSize: '17px', fontWeight: 400, color: 'var(--brand-dark)' }}>
             {nazwyMiesiecy[mies - 1]} {rok}
           </span>
           <button onClick={() => { const d = new Date(rok, mies, 1); setMiesiac(`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`); }}
@@ -7117,7 +7117,7 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
     const [pokazKalendarz, setPokazKalendarz] = useState(false);
     const fileRef = useRef<HTMLInputElement>(null);
   
-    const SERIF = "'Cormorant Garamond', Georgia, serif";
+    const SERIF = "'Playfair Display', Georgia, serif";
     const inicjal = kursant ? kursant.imie[0] : user.email[0].toUpperCase();
     const nazwaGrupy = kursant?.grupy?.nazwa || '—';
     const miasto = kursant?.grupy?.miasto || '';
@@ -7248,14 +7248,14 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
                 <a
                   href={`https://www.linkedin.com/profile/add?startTask=CERTIFICATION_NAME&name=${encodeURIComponent('Certyfikat ukończenia kursu — ' + (kursant?.grupy?.nazwa || 'ON-ARCH'))}&organizationName=ON-ARCH&certUrl=${encodeURIComponent('https://on-arch.pl/weryfikacja-certyfikatu/?nr=' + ((kursant as any)?.nr_certyfikatu || ''))}`}
                   target="_blank" rel="noopener noreferrer"
-                  style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '9px', borderRadius: '10px', background: '#0a66c2', color: 'white', fontSize: '12px', fontWeight: 600, textDecoration: 'none', fontFamily: 'Jost, sans-serif' }}>
+                  style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '9px', borderRadius: '10px', background: '#0a66c2', color: 'white', fontSize: '12px', fontWeight: 600, textDecoration: 'none', fontFamily: 'Lato, sans-serif' }}>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/></svg>
                   LinkedIn
                   </a>
                 <a
                href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent('https://on-arch.pl/weryfikacja-certyfikatu/?nr=' + ((kursant as any)?.nr_certyfikatu || ''))}`}
                   target="_blank" rel="noopener noreferrer"
-                  style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '9px', borderRadius: '10px', background: '#1877f2', color: 'white', fontSize: '12px', fontWeight: 600, textDecoration: 'none', fontFamily: 'Jost, sans-serif' }}>
+                  style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '9px', borderRadius: '10px', background: '#1877f2', color: 'white', fontSize: '12px', fontWeight: 600, textDecoration: 'none', fontFamily: 'Lato, sans-serif' }}>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
                   Facebook
                 </a>
@@ -7334,7 +7334,7 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
         )}
   
         {/* ── WYLOGUJ ── */}
-        <button onClick={onWyloguj} style={{ width: '100%', padding: '14px', borderRadius: '14px', border: '0.5px solid var(--border)', background: 'white', color: 'var(--text-muted)', fontSize: '14px', fontWeight: 500, cursor: 'pointer', fontFamily: 'Jost, sans-serif', marginBottom: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+        <button onClick={onWyloguj} style={{ width: '100%', padding: '14px', borderRadius: '14px', border: '0.5px solid var(--border)', background: 'white', color: 'var(--text-muted)', fontSize: '14px', fontWeight: 500, cursor: 'pointer', fontFamily: 'Lato, sans-serif', marginBottom: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
           Wyloguj się
         </button>
