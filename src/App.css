@@ -407,18 +407,18 @@
   
   .nav-item.active {
     background: none;
-    color: var(--brand);
+    color: #AD6B68;
   }
   
   .nav-label {
     font-size: 10px;
-    font-weight: 600;
+    font-weight: 700;
     color: inherit;
-    letter-spacing: 0.03em;
+    letter-spacing: 0.04em;
   }
   
   .nav-item.active .nav-label {
-    color: var(--brand);
+    color: #AD6B68;
     font-weight: 700;
   }
    

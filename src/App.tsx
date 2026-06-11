@@ -359,7 +359,7 @@ function urlBase64ToUint8Array(base64String: string) {
           <div style={{ fontSize: '9.5px', letterSpacing: '0.28em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '8px', fontWeight: 600 }}>
             {aktywne.length > 0 ? `${aktywne.length} do przesłania` : pracaZaliczeniowa.length > 0 ? 'Zadania domowe' : 'Brak zadań'}
           </div>
-          <div style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: '38px', lineHeight: 1, letterSpacing: '-0.02em', color: 'var(--text)' }}>Zadania</div>
+          <div style={{ fontFamily: SERIF, fontStyle: 'normal', fontSize: '38px', lineHeight: 1, letterSpacing: '-0.02em', color: 'var(--text)' }}>Zadania</div>
         </div>
   
         {/* Skeleton */}
@@ -375,7 +375,7 @@ function urlBase64ToUint8Array(base64String: string) {
   
         {!ladowanie && zadania.length === 0 && (
           <div style={{ textAlign: 'center', padding: '60px 24px', color: 'var(--text-muted)' }}>
-            <div style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: '22px', marginBottom: '8px' }}>Brak zadań</div>
+            <div style={{ fontFamily: SERIF, fontStyle: 'normal', fontSize: '22px', marginBottom: '8px' }}>Brak zadań</div>
             <div style={{ fontSize: '13px' }}>Pojawią się tutaj gdy prowadzący doda nowe.</div>
           </div>
         )}
@@ -762,7 +762,7 @@ function urlBase64ToUint8Array(base64String: string) {
                             {o.status === 'potwierdzono' ? '✓ Obecny/a' : '✕ Nieobecny/a'}
                           </span>
                         </div>
-                        {o.powod_nieobecnosci && <div className="profil-row"><span className="profil-lbl">Powód</span><span className="profil-val" style={{ fontSize: '11px', fontStyle: 'italic' }}>{o.powod_nieobecnosci}</span></div>}
+                        {o.powod_nieobecnosci && <div className="profil-row"><span className="profil-lbl">Powód</span><span className="profil-val" style={{ fontSize: '11px', fontStyle: 'normal' }}>{o.powod_nieobecnosci}</span></div>}
                         {(o.godzina_przybycia || o.godzina_wyjscia) && (
                           <div className="profil-row">
                             {o.godzina_przybycia && <span style={{ fontSize: '11px', color: '#c8a84b' }}>⏰ przybycie: {o.godzina_przybycia}</span>}
@@ -981,7 +981,7 @@ function urlBase64ToUint8Array(base64String: string) {
               {pytanieGwiazdki('5a. Czas trwania szkolenia', 'org_czas')}
               <div style={{ marginBottom: '16px' }}>
                 <p style={{ fontSize: '13px', color: 'var(--text)', lineHeight: '1.5', marginBottom: '4px' }}>
-                  5b. Miejsce szkolenia <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontStyle: 'italic' }}>(nie dotyczy kursu online)</span>
+                  5b. Miejsce szkolenia <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontStyle: 'normal' }}>(nie dotyczy kursu online)</span>
                 </p>
                 <GwiazdkiOcena wartosc={odpowiedzi.org_miejsce} onChange={v => ustaw('org_miejsce', v)} />
               </div>
@@ -1837,7 +1837,7 @@ function urlBase64ToUint8Array(base64String: string) {
               <>
                 <div style={{ marginBottom: '28px' }}>
                   <div style={{ fontSize: '10px', letterSpacing: '0.28em', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '8px' }}>Witaj z powrotem</div>
-                  <div style={{ fontFamily: 'Playfair Display, serif', fontStyle: 'italic', fontSize: '32px', color: 'var(--brand-dark)', lineHeight: 1.1, marginBottom: '4px' }}>
+                  <div style={{ fontFamily: 'Playfair Display, serif', fontStyle: 'normal', fontSize: '32px', color: 'var(--brand-dark)', lineHeight: 1.1, marginBottom: '4px' }}>
                   {ladowanie ? 'Ładowanie...' : (mojeImieNazwisko || user.email.split('@')[0])}
                   </div>
                   <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
@@ -1872,7 +1872,7 @@ function urlBase64ToUint8Array(base64String: string) {
                         <div key={z.id} onClick={() => setAktywnaZakladka('zjazdy')}
                           style={{ background: 'white', borderRadius: '12px', border: '0.5px solid var(--border)', padding: '12px 16px', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '14px', cursor: 'pointer' }}>
                           <div style={{ width: '42px', height: '42px', borderRadius: '10px', background: 'var(--brand-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                            <span style={{ fontFamily: 'Playfair Display, serif', fontStyle: 'italic', fontSize: '16px', fontWeight: 500, color: 'var(--brand)' }}>{z.nr}</span>
+                            <span style={{ fontFamily: 'Playfair Display, serif', fontStyle: 'normal', fontSize: '16px', fontWeight: 500, color: 'var(--brand)' }}>{z.nr}</span>
                           </div>
                           <div style={{ flex: 1 }}>
                             <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text)', marginBottom: '2px' }}>{z.daty}</div>
@@ -1984,7 +1984,7 @@ function urlBase64ToUint8Array(base64String: string) {
                                       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
                                         <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text)', minWidth: '120px' }}>{o.imie} {o.nazwisko}</span>
                                         <a href={o.link_pracy} target="_blank" rel="noopener noreferrer" style={{ fontSize: '11px', color: 'var(--brand)', textDecoration: 'none', fontWeight: 500 }}>→ Otwórz pracę</a>
-                                        {o.komentarz && <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontStyle: 'italic' }}>{o.komentarz}</span>}
+                                        {o.komentarz && <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontStyle: 'normal' }}>{o.komentarz}</span>}
                                         {/* Status sprawdzenia */}
                                         <button onClick={async () => {
                                           const { error } = await supabase.from('zadania_odpowiedzi').update({ sprawdzona: !o.sprawdzona }).eq('id', o.id);
@@ -2283,7 +2283,7 @@ function urlBase64ToUint8Array(base64String: string) {
         </div>
   
         {!wybranyZjazd && (
-          <div style={{ textAlign: 'center', padding: '60px 24px', color: 'var(--text-muted)', fontFamily: 'Playfair Display, serif', fontStyle: 'italic', fontSize: '18px' }}>
+          <div style={{ textAlign: 'center', padding: '60px 24px', color: 'var(--text-muted)', fontFamily: 'Playfair Display, serif', fontStyle: 'normal', fontSize: '18px' }}>
             Wybierz zjazd aby zobaczyć listę kursantów
           </div>
         )}
@@ -2399,7 +2399,7 @@ function urlBase64ToUint8Array(base64String: string) {
   
                             {/* Powód nieobecności */}
                             {status === 'nieobecnosc' && wpis?.powod_nieobecnosci && (
-                              <div style={{ fontSize: '10px', color: 'var(--text-muted)', fontStyle: 'italic' }}>{wpis.powod_nieobecnosci}</div>
+                              <div style={{ fontSize: '10px', color: 'var(--text-muted)', fontStyle: 'normal' }}>{wpis.powod_nieobecnosci}</div>
                             )}
                           </div>
                         );
@@ -2691,7 +2691,7 @@ function urlBase64ToUint8Array(base64String: string) {
               </button>
             ))}
           </div>
-          <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '12px', fontStyle: 'italic' }}>
+          <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '12px', fontStyle: 'normal' }}>
             {KATEGORIE.find(k => k.id === kategoria)?.opis}
           </div>
           <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
@@ -5308,14 +5308,14 @@ setKomunikat(`Notatka zapisana — ${k.imie} ${k.nazwisko}`);
                                                   <span style={{ fontSize: '12px', fontWeight: 500, color: 'var(--text)', whiteSpace: 'nowrap' }}>{o.imie} {o.nazwisko}</span>
                                                   <a href={o.link_pracy} target="_blank" rel="noopener noreferrer"
                                                     style={{ fontSize: '11px', color: 'var(--brand)', textDecoration: 'none' }}>→ Otwórz pracę</a>
-                                                  {o.komentarz && <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontStyle: 'italic' }}>{o.komentarz}</span>}
+                                                  {o.komentarz && <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontStyle: 'normal' }}>{o.komentarz}</span>}
                                                   <span style={{ fontSize: '10px', fontWeight: 700, padding: '1px 7px', borderRadius: '8px',
                                                     background: o.sprawdzona ? '#e8f5e9' : '#fff8e1',
                                                     color: o.sprawdzona ? '#2e7d32' : '#c8a84b' }}>
                                                    {o.sprawdzona ? '✓ Sprawdzona' : '· Do sprawdzenia'}
                                                   </span>
                                                 </div>
-                                                {o.uwagi_prowadzacego && <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '3px', fontStyle: 'italic' }}>💬 {o.uwagi_prowadzacego}</div>}
+                                                {o.uwagi_prowadzacego && <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '3px', fontStyle: 'normal' }}>💬 {o.uwagi_prowadzacego}</div>}
                                               </div>
                                             ))}
                                           </div>
@@ -5381,7 +5381,7 @@ setKomunikat(`Notatka zapisana — ${k.imie} ${k.nazwisko}`);
                           ✓ Wolni ({wolni.length})
                         </div>
                         {wolni.length === 0
-                          ? <div style={{ fontSize: '12px', color: 'var(--text-muted)', fontStyle: 'italic' }}>Wszyscy zajęci</div>
+                          ? <div style={{ fontSize: '12px', color: 'var(--text-muted)', fontStyle: 'normal' }}>Wszyscy zajęci</div>
                           : wolni.map(p => (
                             <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 10px', background: '#f0faf4', borderRadius: '8px', marginBottom: '4px', border: '0.5px solid #c8e6c9' }}>
                               {p.avatar_url
@@ -5396,7 +5396,7 @@ setKomunikat(`Notatka zapisana — ${k.imie} ${k.nazwisko}`);
                                     {p.telefon && <a href={`tel:${p.telefon}`} style={{ fontSize: '10px', color: '#2e7d32', textDecoration: 'none' }}>📞 {p.telefon}</a>}
                                   </div>
                                 )}
-                                {p.notatki && <div style={{ fontSize: '10px', color: '#c8a84b', marginTop: '2px', fontStyle: 'italic' }}>⚠ {p.notatki}</div>}
+                                {p.notatki && <div style={{ fontSize: '10px', color: '#c8a84b', marginTop: '2px', fontStyle: 'normal' }}>⚠ {p.notatki}</div>}
                               </div>
                             </div>
                           ))
@@ -5408,7 +5408,7 @@ setKomunikat(`Notatka zapisana — ${k.imie} ${k.nazwisko}`);
                           ✕ Zajęci ({zajeci.length})
                         </div>
                         {zajeci.length === 0
-                          ? <div style={{ fontSize: '12px', color: 'var(--text-muted)', fontStyle: 'italic' }}>Nikt nie ma zajęć</div>
+                          ? <div style={{ fontSize: '12px', color: 'var(--text-muted)', fontStyle: 'normal' }}>Nikt nie ma zajęć</div>
                           : zajeci.map(p => {
                             // Pokaż w jakich grupach ma zajęcia tego dnia
                             const grupeNazwy = zjazdy
@@ -5528,7 +5528,7 @@ setKomunikat(`Notatka zapisana — ${k.imie} ${k.nazwisko}`);
                             {p.email && <a href={`mailto:${p.email}`} onClick={e => e.stopPropagation()} style={{ fontSize: '11px', color: 'var(--brand)', textDecoration: 'none' }}>✉ {p.email}</a>}
                             {p.telefon && <a href={`tel:${p.telefon}`} onClick={e => e.stopPropagation()} style={{ fontSize: '11px', color: '#2e7d32', textDecoration: 'none' }}>📞 {p.telefon}</a>}
                           </div>
-                          {p.notatki && <div style={{ fontSize: '10px', color: '#c8a84b', marginTop: '2px', fontStyle: 'italic' }}>⚠ {p.notatki}</div>}
+                          {p.notatki && <div style={{ fontSize: '10px', color: '#c8a84b', marginTop: '2px', fontStyle: 'normal' }}>⚠ {p.notatki}</div>}
                           {przypisaneZjazdy.length > 0 && (
                             <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '2px' }}>
                               {przypisaneZjazdy.length} {przypisaneZjazdy.length === 1 ? 'zjazd' : 'zjazdów'} · {[...new Set(przypisaneZjazdy.map(z => grupy.find(g => g.id === z.grupa_id)?.nazwa).filter(Boolean))].join(', ')}
@@ -5860,7 +5860,7 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
           <div style={{ fontSize: '10px', letterSpacing: '0.3em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '8px', fontWeight: 500 }}>
             {dataHeader}
           </div>
-          <div style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: '36px', lineHeight: 1.05, color: 'var(--text)', marginBottom: '6px' }}>
+          <div style={{ fontFamily: SERIF, fontStyle: 'normal', fontSize: '36px', lineHeight: 1.05, color: 'var(--text)', marginBottom: '6px' }}>
             Cześć, {imie}.
           </div>
           {kursant?.grupy?.nazwa && (
@@ -5896,11 +5896,11 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '16px' }}>
         <div>
           <div style={{ fontSize: '10px', letterSpacing: '0.28em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.7)', marginBottom: '6px' }}>Zjazd nr {najblizszy.nr}</div>
-          <div style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: '20px', lineHeight: 1.2, color: 'white', maxWidth: '120px' }}>{najblizszy.daty}</div>
+          <div style={{ fontFamily: SERIF, fontStyle: 'normal', fontSize: '20px', lineHeight: 1.2, color: 'white', maxWidth: '120px' }}>{najblizszy.daty}</div>
         </div>
         {dniLiczba !== '' && (
           <div style={{ textAlign: 'right', flexShrink: 0 }}>
-            <div style={{ fontFamily: SERIF, fontStyle: 'italic', fontWeight: 400, fontSize: '64px', lineHeight: 0.9, color: 'white', letterSpacing: '-0.02em' }}>{dniLiczba}</div>
+            <div style={{ fontFamily: SERIF, fontStyle: 'normal', fontWeight: 400, fontSize: '64px', lineHeight: 0.9, color: 'white', letterSpacing: '-0.02em' }}>{dniLiczba}</div>
             <div style={{ fontSize: '10px', letterSpacing: '0.28em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.8)', marginTop: '4px' }}>{dniLabel}</div>
           </div>
         )}
@@ -5966,13 +5966,13 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
   </div>
 ) : (
             <div style={{ background: '#1C2B3A', borderRadius: '14px', padding: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '190px' }}>
-              <span style={{ fontFamily: SERIF, fontStyle: 'italic', color: 'rgba(255,255,255,0.4)', fontSize: '15px' }}>Brak zjazdu</span>
+              <span style={{ fontFamily: SERIF, fontStyle: 'normal', color: 'rgba(255,255,255,0.4)', fontSize: '15px' }}>Brak zjazdu</span>
             </div>
           )}
 
           {/* Postęp — jeden wskaźnik */}
           <div style={{ background: 'white', borderRadius: '14px', border: '0.5px solid var(--border)', padding: '12px 16px', marginTop: '10px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <span style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: '16px', color: 'var(--text)', whiteSpace: 'nowrap' }}>Zjazd {Math.min(zakonczone + 1, wszystkieZjazdy)} z {wszystkieZjazdy}</span>
+            <span style={{ fontFamily: SERIF, fontStyle: 'normal', fontSize: '16px', color: 'var(--text)', whiteSpace: 'nowrap' }}>Zjazd {Math.min(zakonczone + 1, wszystkieZjazdy)} z {wszystkieZjazdy}</span>
             <div style={{ flex: 1, height: '5px', borderRadius: '999px', background: '#f0ece7', overflow: 'hidden' }}>
               <div style={{ height: '100%', width: `${procent}%`, background: 'linear-gradient(90deg, #AD6B68, #C9A84C)', borderRadius: '999px', transition: 'width 0.6s ease' }} />
             </div>
@@ -6032,14 +6032,14 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '10px' }}>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
               <span style={{ fontSize: '10.5px', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600 }}>Zadania</span>
-              {zadania.length > 0 && <span style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: '20px', color: 'var(--text)' }}>{zadania.length} aktywne</span>}
+              {zadania.length > 0 && <span style={{ fontFamily: SERIF, fontStyle: 'normal', fontSize: '20px', color: 'var(--text)' }}>{zadania.length} aktywne</span>}
             </div>
             <button onClick={() => onNavigate('zadania')} style={{ background: 'none', border: '0.5px solid var(--border)', borderRadius: '20px', padding: '4px 12px', fontSize: '11px', cursor: 'pointer', color: 'var(--text-muted)', fontFamily: 'Lato, sans-serif' }}>
               Wszystkie →
             </button>
           </div>
           {zadania.length === 0 ? (
-            <div style={{ fontSize: '12px', color: 'var(--text-muted)', fontStyle: 'italic', textAlign: 'center', padding: '10px 0' }}>Brak aktywnych zadań</div>
+            <div style={{ fontSize: '12px', color: 'var(--text-muted)', fontStyle: 'normal', textAlign: 'center', padding: '10px 0' }}>Brak aktywnych zadań</div>
           ) : (() => {
             const ZDJECIA = [
               'https://images.unsplash.com/photo-1631679706909-1844bbd07221?auto=format&fit=crop&w=200&q=70',
@@ -6152,7 +6152,7 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
         {/* ── SEPARATOR + DODATKOWE ── */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', margin: '20px 0 14px' }}>
           <div style={{ flex: 1, height: '0.5px', background: 'var(--border)' }} />
-          <span style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: '13px', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>dodatkowo</span>
+          <span style={{ fontFamily: SERIF, fontStyle: 'normal', fontSize: '13px', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>dodatkowo</span>
           <div style={{ flex: 1, height: '0.5px', background: 'var(--border)' }} />
         </div>
 
@@ -6177,7 +6177,7 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
 
         <div style={{ marginTop: '16px', padding: '20px', background: '#FBF8F3', border: '0.5px solid rgba(0,0,0,0.06)', borderRadius: '14px', textAlign: 'center' }}>
           <div style={{ fontSize: '10.5px', letterSpacing: '0.24em', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '8px' }}>Kontakt z biurem</div>
-          <a href="tel:+48533718412" style={{ display: 'block', fontFamily: SERIF, fontStyle: 'italic', fontSize: '22px', color: 'var(--brand-dark)', textDecoration: 'none', marginBottom: '4px' }}>+48 533 718 412</a>
+          <a href="tel:+48533718412" style={{ display: 'block', fontFamily: SERIF, fontStyle: 'normal', fontSize: '22px', color: 'var(--brand-dark)', textDecoration: 'none', marginBottom: '4px' }}>+48 533 718 412</a>
           <a href="mailto:info@on-arch.pl" style={{ fontSize: '12px', color: 'var(--text-muted)', textDecoration: 'none' }}>info@on-arch.pl</a>
         </div>
 
@@ -6304,7 +6304,7 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
             {wpis?.status === 'nieobecnosc' && (
               <div>
                 <span style={{ fontSize: '12px', color: '#b06060', fontWeight: 500 }}>✕ Nieobecny/a{wpis.zweryfikowano ? ' · zweryfikowano' : ''}</span>
-                {wpis.powod_nieobecnosci && <p style={{ fontSize: '11px', color: '#aaa', marginTop: '2px', fontStyle: 'italic' }}>{wpis.powod_nieobecnosci}</p>}
+                {wpis.powod_nieobecnosci && <p style={{ fontSize: '11px', color: '#aaa', marginTop: '2px', fontStyle: 'normal' }}>{wpis.powod_nieobecnosci}</p>}
               </div>
             )}
             {!wpis && <span style={{ fontSize: '12px', color: '#bbb' }}>Brak zgłoszenia</span>}
@@ -6318,7 +6318,7 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
             ) : (
               <div>
                 <span style={{ fontSize: '11px', color: '#c62828', fontWeight: 600 }}>✕ Nieobecność{wpis.zweryfikowano ? ' · ✓ zweryfikowano' : ''}</span>
-                {wpis.powod_nieobecnosci && <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px', fontStyle: 'italic' }}>{wpis.powod_nieobecnosci}</p>}
+                {wpis.powod_nieobecnosci && <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px', fontStyle: 'normal' }}>{wpis.powod_nieobecnosci}</p>}
               </div>
             )}
           </div>
@@ -6540,24 +6540,24 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
               <div style={{ fontSize: '10px', letterSpacing: '0.28em', textTransform: 'uppercase', opacity: 0.8, marginBottom: '6px' }}>
                 Zjazd {z.nr}{z.status === 'nadchodzacy' && countdown.dni > 0 ? ` · za ${countdown.dni} dni` : z.status === 'zakonczony' ? ' · Zakończony' : ''}
               </div>
-              <div style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: '26px', lineHeight: 1.1 }}>{z.daty}</div>
+              <div style={{ fontFamily: SERIF, fontStyle: 'normal', fontSize: '26px', lineHeight: 1.1 }}>{z.daty}</div>
             </div>
           </div>
   
           <div style={{ paddingTop: '16px' }}>
-            {z.tematy && <div style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: '20px', color: 'var(--text)', marginBottom: '14px', lineHeight: 1.3 }}>{z.tematy}</div>}
+            {z.tematy && <div style={{ fontFamily: SERIF, fontStyle: 'normal', fontSize: '20px', color: 'var(--text)', marginBottom: '14px', lineHeight: 1.3 }}>{z.tematy}</div>}
   
             {/* Info grid */}
             <div style={{ background: 'white', borderRadius: '16px', padding: '16px', marginBottom: '10px', border: '0.5px solid var(--border)' }}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
                 <div>
                   <div style={{ fontSize: '9px', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '4px' }}>Data</div>
-                  <div style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: '20px', color: 'var(--text)' }}>{z.daty}</div>
+                  <div style={{ fontFamily: SERIF, fontStyle: 'normal', fontSize: '20px', color: 'var(--text)' }}>{z.daty}</div>
                   {z.godzina_start_d1 && <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>{z.godzina_start_d1}–{z.godzina_end_d1}</div>}
                 </div>
                 <div>
                   <div style={{ fontSize: '9px', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '4px' }}>Tryb</div>
-                  <div style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: '20px', color: 'var(--text)' }}>{z.typ === 'online' ? 'Online' : 'Stacjonarnie'}</div>
+                  <div style={{ fontFamily: SERIF, fontStyle: 'normal', fontSize: '20px', color: 'var(--text)' }}>{z.typ === 'online' ? 'Online' : 'Stacjonarnie'}</div>
                   {z.typ !== 'online' && z.sala && z.sala !== 'Do uzupełnienia' && <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>{z.sala}</div>}
                 </div>
               </div>
@@ -6635,7 +6635,7 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
           <div style={{ fontSize: '9.5px', letterSpacing: '0.28em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '8px', fontWeight: 600 }}>
             {kursant?.grupy?.edycja || ''}{zjazdy.length > 0 ? ` · ${zjazdy.length} zjazdów` : ''}
           </div>
-          <div style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: '38px', lineHeight: 1, letterSpacing: '-0.02em', color: 'var(--text)' }}>Zjazdy</div>
+          <div style={{ fontFamily: SERIF, fontStyle: 'normal', fontSize: '38px', lineHeight: 1, letterSpacing: '-0.02em', color: 'var(--text)' }}>Zjazdy</div>
         </div>
   
         {/* Filtry */}
@@ -6666,11 +6666,11 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
                   </div>
                   <div style={{ position: 'relative' }}>
                     <div style={{ fontSize: '9.5px', letterSpacing: '0.26em', textTransform: 'uppercase', opacity: 0.72, color: 'white', marginBottom: '6px' }}>Zjazd {z.nr} · {z.daty}</div>
-                    {z.tematy && <div style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: '21px', lineHeight: 1.1, color: 'white', marginBottom: '14px' }}>{z.tematy}</div>}
+                    {z.tematy && <div style={{ fontFamily: SERIF, fontStyle: 'normal', fontSize: '21px', lineHeight: 1.1, color: 'white', marginBottom: '14px' }}>{z.tematy}</div>}
                     <div style={{ display: 'flex', gap: '6px', marginBottom: '12px' }}>
                       {[{ n: String(countdown.dni).padStart(2,'0'), l: 'dni' }, { n: String(countdown.godz).padStart(2,'0'), l: 'godz' }, { n: String(countdown.min).padStart(2,'0'), l: 'min' }].map(({ n, l }) => (
                         <div key={l} style={{ flex: 1, padding: '8px 4px', textAlign: 'center', background: 'rgba(255,255,255,0.10)', border: '1px solid rgba(255,255,255,0.14)', borderRadius: '10px' }}>
-                          <div style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: '22px', lineHeight: 1, color: '#fff' }}>{n}</div>
+                          <div style={{ fontFamily: SERIF, fontStyle: 'normal', fontSize: '22px', lineHeight: 1, color: '#fff' }}>{n}</div>
                           <div style={{ fontSize: '9.5px', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.6)', marginTop: '3px' }}>{l}</div>
                         </div>
                       ))}
@@ -6688,7 +6688,7 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
                 <div style={{ width: '56px', height: '70px', borderRadius: '10px', background: `url(${photo}) center/cover`, flexShrink: 0 }} />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontSize: '10.5px', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '4px' }}>Zjazd {z.nr} · {z.daty}</div>
-                  {z.tematy && <div style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: '16px', lineHeight: 1.2, color: 'var(--text)', marginBottom: '5px', overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' as any }}>{z.tematy}</div>}
+                  {z.tematy && <div style={{ fontFamily: SERIF, fontStyle: 'normal', fontSize: '16px', lineHeight: 1.2, color: 'var(--text)', marginBottom: '5px', overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' as any }}>{z.tematy}</div>}
                   <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' }}>
                     <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>{z.typ === 'online' ? '🌐 Online' : '📍 Stacjonarnie'}</span>
                     {z.prowadzacy && z.prowadzacy.length > 0 && <><span style={{ width: 2, height: 2, borderRadius: 99, background: 'var(--text-muted)', display: 'block' }} /><span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>{z.prowadzacy.map(p => p.imie).join(', ')}</span></>}
@@ -6705,7 +6705,7 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
         </div>
   
         {filtered.length === 0 && (
-          <div style={{ textAlign: 'center', padding: '40px 24px', color: 'var(--text-muted)', fontFamily: SERIF, fontStyle: 'italic', fontSize: '18px' }}>Brak zjazdów w tej kategorii</div>
+          <div style={{ textAlign: 'center', padding: '40px 24px', color: 'var(--text-muted)', fontFamily: SERIF, fontStyle: 'normal', fontSize: '18px' }}>Brak zjazdów w tej kategorii</div>
         )}
   
         {modalProwadzacy && <ModalProwadzacy p={modalProwadzacy} onZamknij={() => setModalProwadzacy(null)} />}
@@ -6818,7 +6818,7 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
             📚 Materiały do przyswojenia przed spotkaniem „na żywo"
           </div>
           {materialy.length === 0 && !czyProwadzacy && (
-            <div style={{ fontSize: '12px', color: '#5c85c8', fontStyle: 'italic' }}>Materiały zostaną dodane przez prowadzącego.</div>
+            <div style={{ fontSize: '12px', color: '#5c85c8', fontStyle: 'normal' }}>Materiały zostaną dodane przez prowadzącego.</div>
           )}
           {materialy.map(m => (
             <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
@@ -6865,7 +6865,7 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
               ❓ Twoje pytania do prowadzącego
             </div>
             {mojePytania.length === 0 && (
-              <div style={{ fontSize: '12px', color: '#b48a2a', marginBottom: '8px', fontStyle: 'italic' }}>
+              <div style={{ fontSize: '12px', color: '#b48a2a', marginBottom: '8px', fontStyle: 'normal' }}>
                 Masz pytania do materiału? Zadaj je tutaj — prowadzący odpowie na zajęciach.
               </div>
             )}
@@ -6955,7 +6955,7 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
           </div>
         )}
         {czyProwadzacy && pytania.length === 0 && (
-          <div style={{ fontSize: '12px', color: 'var(--text-muted)', fontStyle: 'italic', padding: '4px 0' }}>Brak pytań od kursantów.</div>
+          <div style={{ fontSize: '12px', color: 'var(--text-muted)', fontStyle: 'normal', padding: '4px 0' }}>Brak pytań od kursantów.</div>
         )}
       </div>
     );
@@ -7129,8 +7129,20 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
     const odmianaZjazd = pozostaloZjazdow === 1 ? 'zjazd' : ([2, 3, 4].includes(pozostaloZjazdow % 10) && ![12, 13, 14].includes(pozostaloZjazdow % 100)) ? 'zjazdy' : 'zjazdów';
     const ostatniZjazd = zjazdy.length > 0 ? zjazdy[zjazdy.length - 1] : null;
     const ankietaDostepna = ostatniZjazd?.status === 'zakonczony';
-    const zadaniaDomowe = (zadania || []).filter(z => z.typ !== 'praca_zaliczeniowa');
-    const wyslaneZadania = (odpowiedziZadan || []).filter(o => zadaniaDomowe.some(z => z.id === o.zadanie_id)).length;
+    const praceZaliczeniowe = (zadania || []).filter(z => z.typ === 'praca_zaliczeniowa');
+    const wyslanePrace = (odpowiedziZadan || []).filter(o => praceZaliczeniowe.some(z => z.id === o.zadanie_id)).length;
+    const pozostalePrace = praceZaliczeniowe.length - wyslanePrace;
+    const odmianaPraca = pozostalePrace === 1 ? 'praca zaliczeniowa' : [2, 3, 4].includes(pozostalePrace) ? 'prace zaliczeniowe' : 'prac zaliczeniowych';
+    const [frekwencjaProfil, setFrekwencjaProfil] = useState(0);
+    useEffect(() => {
+      if (!user?.id || zakonczone === 0) return;
+      const ids = zjazdy.filter(z => z.status === 'zakonczony').map(z => z.id);
+      supabase.from('obecnosci').select('status').in('zjazd_id', ids).eq('user_id', user.id)
+        .then(({ data }) => {
+          const obecne = (data || []).filter(o => o.status === 'potwierdzono').length;
+          setFrekwencjaProfil((data || []).length > 0 ? Math.round(obecne / (data || []).length * 100) : 0);
+        });
+    }, [zakonczone, user?.id]);
     const procent_r = 32;
   const circ_unused = procent_r;
   void circ_unused;
@@ -7151,65 +7163,49 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
     return (
       <>
         {/* ── HERO ── */}
-        <div style={{ margin: '-18px -16px 0', background: 'linear-gradient(180deg, #1C2B3A 0%, #2a3d50 100%)', padding: '32px 24px 28px', position: 'relative', overflow: 'hidden' }}>
-          {/* Dekoracja */}
+        <div style={{ background: 'linear-gradient(180deg, #1C2B3A 0%, #2a3d50 100%)', borderRadius: '20px', padding: '20px 16px', position: 'relative', overflow: 'hidden', marginBottom: '12px' }}>
           <div style={{ position: 'absolute', top: -40, right: -40, width: 160, height: 160, borderRadius: '50%', border: '1px solid rgba(255,255,255,0.08)' }} />
-          <div style={{ position: 'absolute', top: -20, right: -20, width: 100, height: 100, borderRadius: '50%', border: '1px solid rgba(255,255,255,0.06)' }} />
-  
-          <div style={{ display: 'flex', alignItems: 'center', gap: '18px', position: 'relative' }}>
-            {/* Avatar */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '14px', position: 'relative' }}>
             <div style={{ position: 'relative', cursor: 'pointer' }} onClick={() => fileRef.current?.click()}>
               {kursant?.avatar_url
-                ? <img src={kursant.avatar_url} alt="avatar" style={{ width: '72px', height: '72px', borderRadius: '50%', objectFit: 'cover', border: '2px solid rgba(255,255,255,0.3)' }} />
-                : <div style={{ width: '72px', height: '72px', borderRadius: '50%', background: 'rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: SERIF, fontSize: '28px', color: 'white', border: '2px solid rgba(255,255,255,0.2)' }}>{inicjal.toUpperCase()}</div>
+                ? <img src={kursant.avatar_url} alt="avatar" style={{ width: '60px', height: '60px', borderRadius: '50%', objectFit: 'cover', border: '2px solid rgba(255,255,255,0.3)' }} />
+                : <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: 'rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: SERIF, fontSize: '24px', color: 'white', border: '2px solid rgba(255,255,255,0.2)' }}>{inicjal.toUpperCase()}</div>
               }
-              <div style={{ position: 'absolute', bottom: 0, right: 0, width: '24px', height: '24px', borderRadius: '50%', background: '#c8a84b', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid #1C2B3A' }}>
+              <div style={{ position: 'absolute', bottom: 0, right: 0, width: '22px', height: '22px', borderRadius: '50%', background: '#c8a84b', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid #1C2B3A' }}>
                 {uploadowanie
                   ? <div style={{ width: '10px', height: '10px', borderRadius: '50%', border: '1.5px solid white', borderTopColor: 'transparent', animation: 'spin 0.8s linear infinite' }} />
-                  : <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                  : <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
                 }
               </div>
             </div>
             <input ref={fileRef} type="file" accept="image/*" onChange={wgrajZdjecie} style={{ display: 'none' }} />
-  
-            {/* Info */}
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: '26px', color: 'white', lineHeight: 1.1, marginBottom: '4px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              <div style={{ fontFamily: SERIF, fontSize: '20px', fontWeight: 600, color: 'white', lineHeight: 1.15, marginBottom: '3px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {kursant ? `${kursant.imie} ${kursant.nazwisko}` : user.email}
               </div>
-              <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.65)', marginBottom: '6px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{nazwaGrupy}</div>
+              <div style={{ fontSize: '11.5px', color: 'rgba(255,255,255,0.65)', marginBottom: '7px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{nazwaGrupy}</div>
               <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                {miasto && <span style={{ fontSize: '9px', letterSpacing: '0.15em', textTransform: 'uppercase', background: 'rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.8)', padding: '3px 8px', borderRadius: '999px' }}>📍 {miasto}</span>}
-                {edycja && <span style={{ fontSize: '9px', letterSpacing: '0.15em', textTransform: 'uppercase', background: 'rgba(200,168,75,0.25)', color: '#c8a84b', padding: '3px 8px', borderRadius: '999px' }}>{edycja}</span>}
+                {miasto && <span style={{ fontSize: '9.5px', letterSpacing: '0.12em', textTransform: 'uppercase', background: 'rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.8)', padding: '3px 9px', borderRadius: '999px' }}>{miasto}</span>}
+                {edycja && <span style={{ fontSize: '9.5px', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#c8a84b', border: '1px solid rgba(201,168,76,0.5)', padding: '3px 9px', borderRadius: '999px' }}>{edycja}</span>}
               </div>
             </div>
           </div>
-  
-          {/* Statystyki */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', marginTop: '22px' }}>
-            {[
-              { label: 'Zjazdy', value: `${zakonczone}/${wszystkieZjazdy}`, sub: 'ukończone', klik: null as string | null },
-              { label: 'Postęp', value: `${procent}%`, sub: 'kursu', klik: null as string | null },
-              { label: 'Zadania', value: `${wyslaneZadania}/${zadaniaDomowe.length}`, sub: wyslaneZadania < zadaniaDomowe.length ? 'prześlij →' : 'przesłane', klik: wyslaneZadania < zadaniaDomowe.length ? 'zadania' : null },
-            ].map(s => (
-              <div key={s.label} onClick={() => s.klik && onNavigate(s.klik)} style={{ background: 'rgba(255,255,255,0.08)', borderRadius: '12px', padding: '10px 8px', textAlign: 'center', border: s.klik ? '0.5px solid rgba(201,168,76,0.5)' : '0.5px solid rgba(255,255,255,0.1)', cursor: s.klik ? 'pointer' : 'default' }}>
-                <div style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: '22px', color: 'white', lineHeight: 1 }}>{s.value}</div>
-                <div style={{ fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: s.klik ? '#c8a84b' : 'rgba(255,255,255,0.5)', marginTop: '4px' }}>{s.sub}</div>
-              </div>
-            ))}
-          </div>
         </div>
-  
-        {/* ── PASEK POSTĘPU ── */}
-        <div style={{ background: 'white', padding: '14px 18px', borderBottom: '0.5px solid var(--border)', marginBottom: '16px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-            <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 500 }}>
-              {zakonczone === 0 ? 'Kurs jeszcze nie rozpoczęty' : zakonczone === wszystkieZjazdy ? '🎉 Kurs ukończony!' : `${zakonczone} z ${wszystkieZjazdy} zjazdów`}
-            </span>
-            <span style={{ fontSize: '11px', color: 'var(--brand)', fontWeight: 600 }}>{procent}%</span>
+
+        {/* ── STATYSTYKI ── */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', marginBottom: '16px' }}>
+          <div style={{ background: 'white', border: '0.5px solid var(--border)', borderRadius: '14px', padding: '12px 8px', textAlign: 'center' }}>
+            <div style={{ fontFamily: SERIF, fontSize: '19px', color: '#1C2B3A', fontWeight: 600, lineHeight: 1 }}>{zakonczone}/{wszystkieZjazdy}</div>
+            <div style={{ fontSize: '9.5px', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600, marginTop: '5px', lineHeight: 1.4 }}>Zjazdy<br/>ukończone</div>
           </div>
-          <div style={{ height: '4px', background: '#f0ece7', borderRadius: '999px', overflow: 'hidden' }}>
-            <div style={{ height: '100%', width: `${procent}%`, background: 'linear-gradient(90deg, #AD6B68, #B35758)', borderRadius: '999px', transition: 'width 0.6s ease' }} />
+          <div style={{ background: 'white', border: '0.5px solid var(--border)', borderRadius: '14px', padding: '12px 8px', textAlign: 'center' }}>
+            <div style={{ fontFamily: SERIF, fontSize: '19px', color: '#1C2B3A', fontWeight: 600, lineHeight: 1 }}>{frekwencjaProfil}%</div>
+            <div style={{ fontSize: '9.5px', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600, marginTop: '5px', lineHeight: 1.4 }}>Frekwencja</div>
+          </div>
+          <div onClick={() => pozostalePrace > 0 && onNavigate('zadania')} style={{ background: 'white', border: pozostalePrace > 0 ? '0.5px solid rgba(201,168,76,0.6)' : '0.5px solid var(--border)', borderRadius: '14px', padding: '12px 8px', textAlign: 'center', cursor: pozostalePrace > 0 ? 'pointer' : 'default' }}>
+            <div style={{ fontFamily: SERIF, fontSize: '19px', color: '#1C2B3A', fontWeight: 600, lineHeight: 1 }}>{wyslanePrace}/{praceZaliczeniowe.length}</div>
+            <div style={{ fontSize: '9.5px', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600, marginTop: '5px', lineHeight: 1.4 }}>Prace<br/>zaliczeniowe</div>
+            {pozostalePrace > 0 && <div style={{ fontSize: '10px', color: 'var(--brand)', fontWeight: 700, marginTop: '4px' }}>Prześlij →</div>}
           </div>
         </div>
   
@@ -7269,7 +7265,7 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
                 </div>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text)', marginBottom: '1px' }}>Certyfikat ukończenia</div>
-                  <div style={{ fontSize: '11px', color: '#a07830', fontWeight: 500 }}>Jeszcze {pozostaloZjazdow} {odmianaZjazd} do certyfikatu</div>
+                  <div style={{ fontSize: '11px', color: '#a07830', fontWeight: 500 }}>Jeszcze {pozostaloZjazdow} {odmianaZjazd}{pozostalePrace > 0 ? ` i ${pozostalePrace} ${odmianaPraca}` : ''}</div>
                 </div>
               </div>
               <div style={{ height: '5px', background: '#f0ece7', borderRadius: '999px', overflow: 'hidden', marginTop: '12px' }}>
