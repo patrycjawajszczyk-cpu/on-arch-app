@@ -488,7 +488,7 @@ function urlBase64ToUint8Array(base64String: string) {
                         )}
                       </div>
                     )}
-                    {rozwinięte && <FormPrzeslania zadanie={z} />}
+                    {rozwinięte && FormPrzeslania({ zadanie: z })}
                   </div>
                 );
               })}
@@ -542,7 +542,7 @@ function urlBase64ToUint8Array(base64String: string) {
                               Zamknij
                             </button>
                           </div>
-                          {linkPracy && <FormPrzeslania zadanie={z} />}
+                          {linkPracy && FormPrzeslania({ zadanie: z })}
                         </>
                       )}
                     </div>
