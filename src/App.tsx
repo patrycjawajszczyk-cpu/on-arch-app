@@ -1391,7 +1391,8 @@ function urlBase64ToUint8Array(base64String: string) {
         </div>
       </div></div>
     );
-    function EkranMaterialy() {
+  }
+  function EkranMaterialy() {
       const [materialy, setMaterialy] = useState<MaterialZakupu[]>([]);
       const [ladowanie, setLadowanie] = useState(true);
     
@@ -1450,7 +1451,6 @@ function urlBase64ToUint8Array(base64String: string) {
         </>
       );
     }
-  }
   function EkranMaterialyTab({ grupaInfo }: { grupaInfo?: Grupa | null }) {
     return (
       <>
