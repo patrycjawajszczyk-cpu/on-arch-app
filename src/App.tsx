@@ -1392,60 +1392,74 @@ function urlBase64ToUint8Array(base64String: string) {
       </div></div>
     );
   }
-  function EkranMaterialy() {
-    const [materialy, setMaterialy] = useState<MaterialZakupu[]>([]);
-    const [ladowanie, setLadowanie] = useState(true);
-  
-    useEffect(() => {
-      supabase.from('materialy_zakupu').select('*').order('kolejnosc').then(({ data }) => {
-        setMaterialy(data || []);
-        setLadowanie(false);
-      });
-    }, []);
-  
+  function EkranMaterialyTab({ grupaInfo }: { grupaInfo?: Grupa | null }) {
     return (
       <>
-        <h2 className="page-title">Materiały do zakupu</h2>
-        <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '16px', lineHeight: 1.6 }}>
-          Tutaj znajdziesz dodatkowe materiały do nadrobienia zajęć w On-Arch. Kliknij "Kup online" aby przejść do sklepu.
-        </p>
-        {ladowanie && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            {[1,2,3,4].map(i => (
-              <div key={i} style={{ background: 'white', borderRadius: '14px', border: '0.5px solid var(--border)', height: '120px' }}>
-                <div className="skeleton" style={{ width: '100%', height: '100%', borderRadius: '14px' }} />
+        <div style={{ textAlign: 'center', padding: '4px 0 18px' }}>
+          <div style={{ fontSize: '10.5px', letterSpacing: '0.24em', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '6px' }}>Strefa wiedzy</div>
+          <h2 style={{ fontFamily: "'Playfair Display', Georgia, serif", fontSize: '32px', fontWeight: 600, color: 'var(--text)', margin: 0 }}>Materiały</h2>
+        </div>
+
+        <div style={{ background: 'white', borderRadius: '14px', border: '0.5px solid var(--border)', overflow: 'hidden', marginBottom: '20px' }}>
+          {[
+            {
+              title: 'Materiały dodatkowe', sub: 'Kursy i artykuły',
+              href: (grupaInfo as any)?.link_materialow || null, tlo: '#eef1f4',
+              icon: <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#1C2B3A" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V4a2 2 0 0 0-2-2H6.5A2.5 2.5 0 0 0 4 4.5v15Z"/><path d="M4 19.5A2.5 2.5 0 0 0 6.5 22H20v-5"/></svg>,
+            },
+            {
+              title: 'Folder grupy', sub: 'Google Drive',
+              href: grupaInfo?.drive_link || null, tlo: '#f5ebea',
+              icon: <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#AD6B68" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Z"/></svg>,
+            },
+            {
+              title: 'Nagrania z zajęć', sub: 'Dotyczy grup online',
+              href: (grupaInfo as any)?.link_nagran || null, tlo: '#fef9ec',
+              icon: <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#c8a84b" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9"/><polygon points="10 8 16 12 10 16 10 8"/></svg>,
+            },
+          ].map((item, i) => (
+            <div key={i} onClick={() => item.href && window.open(item.href, '_blank')} style={{
+              display: 'flex', alignItems: 'center', gap: '14px', padding: '14px 16px',
+              cursor: item.href ? 'pointer' : 'default', opacity: item.href ? 1 : 0.45,
+              borderTop: i > 0 ? '0.5px solid var(--border-soft)' : 'none',
+            }}>
+              <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: item.tlo, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{item.icon}</div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: '13.5px', fontWeight: 600, color: 'var(--text)' }}>{item.title}</div>
+                <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{item.sub}</div>
               </div>
-            ))}
-          </div>
-        )}
-        {!ladowanie && materialy.length === 0 && (
-          <div style={{ textAlign: 'center', padding: '40px 24px', color: 'var(--text-muted)', fontSize: '14px' }}>
-            Brak materiałów. Biuro wkrótce doda listę.
-          </div>
-        )}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-          {materialy.map(m => (
-            <div key={m.id} className="fade-in" style={{ background: 'white', borderRadius: '14px', border: '0.5px solid var(--border)', overflow: 'hidden' }}>
-              {m.zdjecie_url
-                ? <img src={m.zdjecie_url} alt={m.nazwa} style={{ width: '100%', height: '100px', objectFit: 'cover' }} />
-                : <div style={{ width: '100%', height: '100px', background: '#f0ece7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#c8b8a8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
-                  </div>
-              }
-              <div style={{ padding: '10px' }}>
-                <div style={{ fontSize: '12px', fontWeight: 600, color: '#2a1f1f', marginBottom: '2px', lineHeight: 1.3 }}>{m.nazwa}</div>
-                {m.opis && <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginBottom: '5px' }}>{m.opis}</div>}
-                {m.cena && <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--brand)', marginBottom: '8px' }}>{m.cena}</div>}
-                {m.link_sklepu
-                  ? <a href={m.link_sklepu} target="_blank" rel="noopener noreferrer"
-                      style={{ display: 'block', textAlign: 'center', background: 'var(--brand)', color: 'white', borderRadius: '8px', padding: '6px', fontSize: '10px', fontWeight: 600, textDecoration: 'none' }}>
-                      Kup online →
-                    </a>
-                  : <div style={{ fontSize: '10px', color: 'var(--text-muted)', textAlign: 'center', padding: '6px' }}>Brak linku</div>
-                }
-              </div>
+              <span style={{ color: 'var(--text-muted)', fontSize: '18px' }}>›</span>
             </div>
           ))}
+        </div>
+
+        <EkranMaterialy />
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', margin: '24px 0 14px' }}>
+          <div style={{ flex: 1, height: '0.5px', background: 'var(--border)' }} />
+          <span style={{ fontFamily: "'Playfair Display', Georgia, serif", fontSize: '13px', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>dodatkowo</span>
+          <div style={{ flex: 1, height: '0.5px', background: 'var(--border)' }} />
+        </div>
+
+        <a href="https://on-arch.pl/faq-odpowiedzi-na-najczesciej-zadawane-pytania/" target="_blank" rel="noopener noreferrer" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '16px', background: 'white', border: '0.5px solid var(--border)', borderRadius: '14px', textDecoration: 'none', marginBottom: '8px', gap: '4px' }}>
+          <div style={{ fontSize: '10.5px', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600 }}>FAQ</div>
+          <div style={{ fontSize: '13px', color: 'var(--text)', fontWeight: 500 }}>Najczęściej zadawane pytania</div>
+          <div style={{ fontSize: '11px', color: 'var(--brand)', marginTop: '2px' }}>Czytaj więcej →</div>
+        </a>
+
+        <div style={{ marginTop: '8px', padding: '20px', background: '#FBF8F3', border: '0.5px solid rgba(0,0,0,0.06)', borderRadius: '14px', textAlign: 'center' }}>
+          <div style={{ fontSize: '10.5px', letterSpacing: '0.24em', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '8px' }}>Kontakt z biurem</div>
+          <a href="tel:+48533718412" style={{ display: 'block', fontFamily: "'Playfair Display', Georgia, serif", fontSize: '22px', color: 'var(--brand-dark)', textDecoration: 'none', marginBottom: '4px' }}>+48 533 718 412</a>
+          <a href="mailto:info@on-arch.pl" style={{ fontSize: '12px', color: 'var(--text-muted)', textDecoration: 'none' }}>info@on-arch.pl</a>
+        </div>
+
+        <div style={{ marginTop: '10px', padding: '14px 16px', background: 'white', border: '0.5px solid var(--border)', borderRadius: '14px', marginBottom: '16px' }}>
+          <div style={{ fontSize: '10.5px', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600, textAlign: 'center', marginBottom: '10px' }}>Obserwuj nas</div>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '16px' }}>
+            {[{ href: 'https://www.facebook.com/OnArchKursy/', label: 'Facebook' }, { href: 'https://www.instagram.com/on_arch_/', label: 'Instagram' }, { href: 'https://www.youtube.com/@on-arch', label: 'YouTube' }, { href: 'https://www.tiktok.com/@onarchpl', label: 'TikTok' }].map(({ href, label }) => (
+              <a key={label} href={href} target="_blank" rel="noopener noreferrer" style={{ fontSize: '10px', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--brand)', textDecoration: 'none', fontWeight: 500 }}>{label}</a>
+            ))}
+          </div>
         </div>
       </>
     );
@@ -2779,7 +2793,8 @@ function urlBase64ToUint8Array(base64String: string) {
   
     return (
       <>
-        <h2 className="page-title">Materiały do zakupu</h2>
+        <div style={{ fontSize: '10.5px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#a07830', fontWeight: 700, marginBottom: '6px' }}>Nowość</div>
+        <h2 style={{ fontFamily: "'Playfair Display', Georgia, serif", fontSize: '20px', fontWeight: 600, color: 'var(--text)', margin: '0 0 6px' }}>Materiały do zakupu</h2>
         {komunikat && <div className="login-error" style={{ background: '#e8f5e9', color: '#2e7d32', marginBottom: '12px' }}>{komunikat}</div>}
         <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'flex-start' }}>
           <div style={{ background: 'white', border: '0.5px solid var(--border)', borderRadius: '14px', padding: '16px 20px', minWidth: '280px', flex: '1' }}>
@@ -6109,86 +6124,6 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
             ))}
           </div>
         )}
-
-        {/* ── STREFA WIEDZY ── */}
-        <div style={{ marginBottom: '16px' }}>
-          <div style={{ marginBottom: '10px' }}>
-            <span style={{ fontSize: '10.5px', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600 }}>Strefa Wiedzy</span>
-          </div>
-          <div style={{ background: 'white', borderRadius: '14px', border: '0.5px solid var(--border)', overflow: 'hidden' }}>
-            {[
-              {
-                title: 'Materiały dodatkowe', sub: 'Kursy i artykuły',
-                href: (grupaInfo as any)?.link_materialow || null, tlo: '#eef1f4',
-                icon: <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#1C2B3A" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V4a2 2 0 0 0-2-2H6.5A2.5 2.5 0 0 0 4 4.5v15Z"/><path d="M4 19.5A2.5 2.5 0 0 0 6.5 22H20v-5"/></svg>,
-              },
-              {
-                title: 'Folder grupy', sub: 'Google Drive',
-                href: grupaInfo?.drive_link || null, tlo: '#f5ebea',
-                icon: <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#AD6B68" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Z"/></svg>,
-              },
-              {
-                title: 'Nagrania z zajęć', sub: 'Dotyczy grup online',
-                href: (grupaInfo as any)?.link_nagran || null, tlo: '#fef9ec',
-                icon: <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#c8a84b" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9"/><polygon points="10 8 16 12 10 16 10 8"/></svg>,
-              },
-            ].map((item, i) => (
-              <div key={i} onClick={() => item.href && window.open(item.href, '_blank')} style={{
-                display: 'flex', alignItems: 'center', gap: '14px', padding: '14px 16px',
-                cursor: item.href ? 'pointer' : 'default', opacity: item.href ? 1 : 0.45,
-                borderTop: i > 0 ? '0.5px solid var(--border-soft)' : 'none',
-              }}>
-                <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: item.tlo, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{item.icon}</div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: '13.5px', fontWeight: 600, color: 'var(--text)' }}>{item.title}</div>
-                  <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{item.sub}</div>
-                </div>
-                <span style={{ color: 'var(--text-muted)', fontSize: '18px' }}>›</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* ── SEPARATOR + DODATKOWE ── */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', margin: '20px 0 14px' }}>
-          <div style={{ flex: 1, height: '0.5px', background: 'var(--border)' }} />
-          <span style={{ fontFamily: SERIF, fontStyle: 'normal', fontSize: '13px', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>dodatkowo</span>
-          <div style={{ flex: 1, height: '0.5px', background: 'var(--border)' }} />
-        </div>
-
-        <div onClick={() => onNavigate('materialy')} style={{ cursor: 'pointer', marginBottom: '8px', borderRadius: '14px', overflow: 'hidden', background: 'linear-gradient(135deg, #fdf6e8 0%, #fef9f0 100%)', border: '0.5px solid #e8d4a0' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: '16px' }}>
-            <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: '#c8a84b', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
-            </div>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: '9px', letterSpacing: '0.24em', textTransform: 'uppercase', color: '#a07830', fontWeight: 700, marginBottom: '3px' }}>Nowość</div>
-              <div style={{ fontSize: '13.5px', fontWeight: 600, color: '#2a1f1f', marginBottom: '2px' }}>Materiały do zakupu</div>
-              <div style={{ fontSize: '11px', color: '#a07830' }}>Polecane przez prowadzących →</div>
-            </div>
-          </div>
-        </div>
-
-        <a href="https://on-arch.pl/faq-odpowiedzi-na-najczesciej-zadawane-pytania/" target="_blank" rel="noopener noreferrer" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '16px', background: 'white', border: '0.5px solid var(--border)', borderRadius: '14px', textDecoration: 'none', marginBottom: '8px', gap: '4px' }}>
-          <div style={{ fontSize: '10.5px', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600 }}>FAQ</div>
-          <div style={{ fontSize: '13px', color: 'var(--text)', fontWeight: 500 }}>Najczęściej zadawane pytania</div>
-          <div style={{ fontSize: '11px', color: 'var(--brand)', marginTop: '2px' }}>Czytaj więcej →</div>
-        </a>
-
-        <div style={{ marginTop: '16px', padding: '20px', background: '#FBF8F3', border: '0.5px solid rgba(0,0,0,0.06)', borderRadius: '14px', textAlign: 'center' }}>
-          <div style={{ fontSize: '10.5px', letterSpacing: '0.24em', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '8px' }}>Kontakt z biurem</div>
-          <a href="tel:+48533718412" style={{ display: 'block', fontFamily: SERIF, fontStyle: 'normal', fontSize: '22px', color: 'var(--brand-dark)', textDecoration: 'none', marginBottom: '4px' }}>+48 533 718 412</a>
-          <a href="mailto:info@on-arch.pl" style={{ fontSize: '12px', color: 'var(--text-muted)', textDecoration: 'none' }}>info@on-arch.pl</a>
-        </div>
-
-        <div style={{ marginTop: '10px', padding: '14px 16px', background: 'white', border: '0.5px solid var(--border)', borderRadius: '14px', marginBottom: '16px' }}>
-          <div style={{ fontSize: '10.5px', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600, textAlign: 'center', marginBottom: '10px' }}>Obserwuj nas</div>
-          <div style={{ display: 'flex', justifyContent: 'center', gap: '16px' }}>
-            {[{ href: 'https://www.facebook.com/OnArchKursy/', label: 'Facebook' }, { href: 'https://www.instagram.com/on_arch_/', label: 'Instagram' }, { href: 'https://www.youtube.com/@on-arch', label: 'YouTube' }, { href: 'https://www.tiktok.com/@onarchpl', label: 'TikTok' }].map(({ href, label }) => (
-              <a key={label} href={href} target="_blank" rel="noopener noreferrer" style={{ fontSize: '10px', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--brand)', textDecoration: 'none', fontWeight: 500 }}>{label}</a>
-            ))}
-          </div>
-        </div>
       </>
     );
   }
@@ -7546,13 +7481,8 @@ async function wylaczPush() {
 
     function onAvatarZmieniony(url: string) { setKursant(prev => prev ? { ...prev, avatar_url: url } : prev); }
 
-    const noweCount = ogloszenia.filter((o) => o.nowe).length;
     const avatarUrl = kursant?.avatar_url;
     const inicjal = kursant ? kursant.imie[0] : user?.email?.[0]?.toUpperCase() || '?';
-    const nieprzeslaneZadania = zadania.filter(z =>
-      z.typ !== 'praca_zaliczeniowa' && !odpowiedziZadan.some(o => o.zadanie_id === z.id)
-    ).length;
-
     function nawiguj(zakl: string) {
       setAktywneOgloszenie(null);
       setPokazAnkiete(false);
@@ -7607,7 +7537,7 @@ async function wylaczPush() {
               {aktywnaZakladka === 'ogloszenia' && <EkranOgloszenia ogloszenia={ogloszenia} onOtworzOgloszenie={otworzOgloszenie} />}
               {aktywnaZakladka === 'zadania' && <EkranZadania user={user} kursant={kursant} />}
               {aktywnaZakladka === 'czat' && <EkranCzat user={user} kursant={kursant} />}
-              {aktywnaZakladka === 'materialy' && <EkranMaterialy />}
+              {aktywnaZakladka === 'materialy' && <EkranMaterialyTab grupaInfo={grupaInfo} />}
               {aktywnaZakladka === 'profil' && (
                 <EkranProfil
                   user={user} kursant={kursant} zjazdy={zjazdy}
@@ -7626,19 +7556,12 @@ async function wylaczPush() {
           )}
         </main>
         <nav className="bottom-nav">
-          <button className={`nav-item ${aktywnaZakladka === 'home' ? 'active' : ''}`} onClick={() => nawiguj('home')}><Home size={20} /><span className="nav-label">Główna</span></button>
+          <button className={`nav-item ${aktywnaZakladka === 'home' ? 'active' : ''}`} onClick={() => nawiguj('home')}><Home size={20} /><span className="nav-label">Dziś</span></button>
           <button className={`nav-item ${aktywnaZakladka === 'zjazdy' ? 'active' : ''}`} onClick={() => nawiguj('zjazdy')}><Calendar size={20} /><span className="nav-label">Zjazdy</span></button>
-          <button className={`nav-item ${aktywnaZakladka === 'ogloszenia' ? 'active' : ''}`} onClick={() => nawiguj('ogloszenia')}>
-            <Bell size={20} /><span className="nav-label">Ogłoszenia</span>
-            {noweCount > 0 && <span className="nav-badge">{noweCount}</span>}
-          </button>
-          <button className={`nav-item ${aktywnaZakladka === 'zadania' ? 'active' : ''}`} onClick={() => nawiguj('zadania')}>
-            <BookOpen size={20} /><span className="nav-label">Zadania</span>
-            {nieprzeslaneZadania > 0 && <span className="nav-badge">{nieprzeslaneZadania}</span>}
-          </button>
+          <button className={`nav-item ${aktywnaZakladka === 'materialy' ? 'active' : ''}`} onClick={() => nawiguj('materialy')}><BookOpen size={20} /><span className="nav-label">Materiały</span></button>
           <button className={`nav-item ${aktywnaZakladka === 'czat' ? 'active' : ''}`} onClick={() => nawiguj('czat')}>
             <MessageCircle size={20} /><span className="nav-label">Czat</span>
-            {noweCzat && <span className="nav-badge" style={{ background: '#1976d2' }}>•</span>}
+            {noweCzat && <span className="nav-badge">•</span>}
           </button>
           <button className={`nav-item ${aktywnaZakladka === 'profil' ? 'active' : ''}`} onClick={() => nawiguj('profil')}><User size={20} /><span className="nav-label">Profil</span></button>
         </nav>
