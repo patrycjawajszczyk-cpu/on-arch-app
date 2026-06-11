@@ -1391,6 +1391,65 @@ function urlBase64ToUint8Array(base64String: string) {
         </div>
       </div></div>
     );
+    function EkranMaterialy() {
+      const [materialy, setMaterialy] = useState<MaterialZakupu[]>([]);
+      const [ladowanie, setLadowanie] = useState(true);
+    
+      useEffect(() => {
+        supabase.from('materialy_zakupu').select('*').order('kolejnosc').then(({ data }) => {
+          setMaterialy(data || []);
+          setLadowanie(false);
+        });
+      }, []);
+    
+      return (
+        <>
+          <div style={{ fontSize: '10.5px', letterSpacing: '0.18em', textTransform: 'uppercase', color: '#a07830', fontWeight: 700, marginBottom: '6px' }}>Nowość</div>
+          <h2 style={{ fontFamily: "'Playfair Display', Georgia, serif", fontSize: '20px', fontWeight: 600, color: 'var(--text)', margin: '0 0 6px' }}>Materiały do zakupu</h2>
+          <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '16px', lineHeight: 1.6 }}>
+            Tutaj znajdziesz dodatkowe materiały do nadrobienia zajęć w On-Arch. Kliknij "Kup online" aby przejść do sklepu.
+          </p>
+          {ladowanie && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {[1,2,3,4].map(i => (
+                <div key={i} style={{ background: 'white', borderRadius: '14px', border: '0.5px solid var(--border)', height: '120px' }}>
+                  <div className="skeleton" style={{ width: '100%', height: '100%', borderRadius: '14px' }} />
+                </div>
+              ))}
+            </div>
+          )}
+          {!ladowanie && materialy.length === 0 && (
+            <div style={{ textAlign: 'center', padding: '40px 24px', color: 'var(--text-muted)', fontSize: '14px' }}>
+              Brak materiałów. Biuro wkrótce doda listę.
+            </div>
+          )}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+            {materialy.map(m => (
+              <div key={m.id} className="fade-in" style={{ background: 'white', borderRadius: '14px', border: '0.5px solid var(--border)', overflow: 'hidden' }}>
+                {m.zdjecie_url
+                  ? <img src={m.zdjecie_url} alt={m.nazwa} style={{ width: '100%', height: '100px', objectFit: 'cover' }} />
+                  : <div style={{ width: '100%', height: '100px', background: '#f0ece7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#c8b8a8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+                    </div>
+                }
+                <div style={{ padding: '10px' }}>
+                  <div style={{ fontSize: '12px', fontWeight: 600, color: '#2a1f1f', marginBottom: '2px', lineHeight: 1.3 }}>{m.nazwa}</div>
+                  {m.opis && <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginBottom: '5px' }}>{m.opis}</div>}
+                  {m.cena && <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--brand)', marginBottom: '8px' }}>{m.cena}</div>}
+                  {m.link_sklepu
+                    ? <a href={m.link_sklepu} target="_blank" rel="noopener noreferrer"
+                        style={{ display: 'block', textAlign: 'center', background: 'var(--brand)', color: 'white', borderRadius: '8px', padding: '6px', fontSize: '10px', fontWeight: 600, textDecoration: 'none' }}>
+                        Kup online →
+                      </a>
+                    : <div style={{ fontSize: '10px', color: 'var(--text-muted)', textAlign: 'center', padding: '6px' }}>Brak linku</div>
+                  }
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
+      );
+    }
   }
   function EkranMaterialyTab({ grupaInfo }: { grupaInfo?: Grupa | null }) {
     return (
@@ -5715,7 +5774,7 @@ const ikonaSVG = o.typ === 'Pilne'
   }
  
 //  
-function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, odpowiedzi, grupaInfo }: {
+function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, odpowiedzi }: {
   ogloszenia: Ogloszenie[];
   zjazdy: Zjazd[];
   user: User;
@@ -5723,7 +5782,6 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
   onNavigate: (zakl: string) => void;
   zadania: Zadanie[];
     odpowiedzi: ZadanieOdpowiedz[];
-    grupaInfo?: Grupa | null;
   }) {
     const [countdown, setCountdown] = useState({ dni: 0, godz: 0, min: 0 });
     const [obecnosciNajblizszy, setObecnosciNajblizszy] = useState<Obecnosc[]>([]);
@@ -7530,7 +7588,6 @@ async function wylaczPush() {
                 onNavigate={nawiguj}
                 zadania={zadania}
                 odpowiedzi={odpowiedziZadan}
-                  grupaInfo={grupaInfo}
                 />
               )}
               {aktywnaZakladka === 'zjazdy' && <EkranZjazdy zjazdy={zjazdy} user={user} kursant={kursant} grupaInfo={grupaInfo} />}
