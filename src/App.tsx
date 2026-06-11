@@ -3404,7 +3404,7 @@ const [zwinieteZadania, setZwinieteZadania] = useState<Set<number>>(() => new Se
                   <span style={{ marginLeft: 'auto', width: '8px', height: '8px', borderRadius: '50%', background: '#c62828', flexShrink: 0 }} />
                 )}
                 {item.id === 'aplikacje' && (
-                  <span style={{ marginLeft: 'auto', fontSize: '8px', fontWeight: 700, background: '#5c3d8f', color: 'white', padding: '1px 6px', borderRadius: '999px', letterSpacing: '0.1em' }}>NEW</span>
+                  <span style={{ marginLeft: 'auto', fontSize: '9.5px', fontWeight: 700, background: '#5c3d8f', color: 'white', padding: '1px 6px', borderRadius: '999px', letterSpacing: '0.1em' }}>NEW</span>
                 )}
               </button>
             ))}
@@ -5630,8 +5630,8 @@ setKomunikat(`Notatka zapisana — ${k.imie} ${k.nazwisko}`);
   }          
 
   function KartaOgloszenia({ o, onClick }: { o: Ogloszenie; onClick: () => void; key?: string | number }) {
-    const tloIkony = o.typ === 'Pilne' ? '#fff3cd' : o.typ === 'Zmiana' ? '#f0faf4' : '#e8f4fd';
-const ikonaKolor = o.typ === 'Pilne' ? '#c8a84b' : o.typ === 'Zmiana' ? '#2e7d32' : '#1565c0';
+    const tloIkony = o.typ === 'Pilne' ? '#fff3cd' : o.typ === 'Zmiana' ? '#fef9ec' : '#eef1f4';
+    const ikonaKolor = o.typ === 'Pilne' ? '#c8a84b' : o.typ === 'Zmiana' ? '#c8a84b' : '#1C2B3A';
 const ikonaSVG = o.typ === 'Pilne'
   ? <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={o.typ === 'Pilne' ? 'white' : ikonaKolor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
   : o.typ === 'Zmiana'
@@ -5642,7 +5642,7 @@ const ikonaSVG = o.typ === 'Pilne'
        <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: o.typ === 'Pilne' ? 'rgba(255,255,255,0.15)' : tloIkony, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{ikonaSVG}</div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-            <span style={{ fontSize: '9px', background: o.typ === 'Pilne' ? 'rgba(255,255,255,0.2)' : o.typ === 'Zmiana' ? '#f0faf4' : '#e8f4fd', color: o.typ === 'Pilne' ? 'white' : o.typ === 'Zmiana' ? '#2e7d32' : '#1565c0', padding: '2px 8px', borderRadius: '8px', fontWeight: 600, textTransform: 'uppercase' as const }}>{o.typ}</span>
+            <span style={{ fontSize: '9px', background: o.typ === 'Pilne' ? 'rgba(255,255,255,0.2)' : o.typ === 'Zmiana' ? '#fef9ec' : '#eef1f4', color: o.typ === 'Pilne' ? 'white' : o.typ === 'Zmiana' ? '#a07830' : '#1C2B3A', padding: '2px 8px', borderRadius: '8px', fontWeight: 600, textTransform: 'uppercase' as const }}>{o.typ}</span>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
               {o.nowe && <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: o.typ === 'Pilne' ? 'white' : '#7d3f3f' }} />}
               <span style={{ fontSize: '9px', color: o.typ === 'Pilne' ? 'rgba(255,255,255,0.5)' : '#9a8a80' }}>{new Date(o.data_utworzenia).toLocaleDateString('pl-PL', { day: 'numeric', month: 'short' })}</span>
@@ -5812,7 +5812,7 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
       return (
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <span style={{
-            fontSize: '8px', letterSpacing: '0.24em', textTransform: 'uppercase',
+            fontSize: '9.5px', letterSpacing: '0.24em', textTransform: 'uppercase',
             color: 'rgba(255,255,255,0.55)', fontWeight: 600, minWidth: '48px', flexShrink: 0,
           }}>{label}</span>
           <span style={{
@@ -5881,7 +5881,7 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
           {/* Karta zjazdu */}
           {najblizszy ? (
   <div onClick={() => onNavigate('zjazdy')} style={{
-    position: 'relative', borderRadius: '10px', overflow: 'hidden',
+    position: 'relative', borderRadius: '14px', overflow: 'hidden',
     cursor: 'pointer', minHeight: '320px', background: '#1a1614', color: 'white',
     boxShadow: '0 30px 60px -25px rgba(0,0,0,0.35)',
   }}>
@@ -5990,7 +5990,7 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
         {najblizszy && najblizszy.data_dzien1 && (
           <div style={{ background: 'white', borderRadius: '14px', border: '0.5px solid var(--border)', padding: '14px 16px', marginBottom: '12px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-              <span style={{ fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600 }}>Potwierdź obecność</span>
+              <span style={{ fontSize: '10.5px', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600 }}>Potwierdź obecność</span>
               <span style={{ fontSize: '9px', color: 'var(--brand)', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase' }}>{najblizszy.daty}</span>
             </div>
             <div style={{ display: 'flex', gap: '8px' }}>
@@ -6011,7 +6011,7 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
                     }
                   </div>
                   <div>
-                    <div style={{ fontSize: '8px', color: wpis?.status === 'potwierdzono' ? 'rgba(255,255,255,0.5)' : 'var(--text-muted)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+                    <div style={{ fontSize: '9.5px', color: wpis?.status === 'potwierdzono' ? 'rgba(255,255,255,0.5)' : 'var(--text-muted)', letterSpacing: '0.1em', textTransform: 'uppercase' }}>
                       D{dzien} · {new Date(data).toLocaleDateString('pl-PL', { day: 'numeric', month: 'numeric' })}
                     </div>
                     <div style={{ fontSize: '11px', fontWeight: 600, color: wpis?.status === 'potwierdzono' ? 'white' : 'var(--text)' }}>
@@ -6031,7 +6031,7 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
         <div style={{ background: 'white', borderRadius: '14px', border: '0.5px solid var(--border)', padding: '14px 16px', marginBottom: '12px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '10px' }}>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
-              <span style={{ fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600 }}>Zadania</span>
+              <span style={{ fontSize: '10.5px', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600 }}>Zadania</span>
               {zadania.length > 0 && <span style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: '20px', color: 'var(--text)' }}>{zadania.length} aktywne</span>}
             </div>
             <button onClick={() => onNavigate('zadania')} style={{ background: 'none', border: '0.5px solid var(--border)', borderRadius: '20px', padding: '4px 12px', fontSize: '11px', cursor: 'pointer', color: 'var(--text-muted)', fontFamily: 'Jost, sans-serif' }}>
@@ -6099,7 +6099,7 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
         {ogloszenia.length > 0 && (
           <div style={{ marginBottom: '12px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-              <span style={{ fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600 }}>Ogłoszenia</span>
+              <span style={{ fontSize: '10.5px', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600 }}>Ogłoszenia</span>
               <button onClick={() => onNavigate('ogloszenia')} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '11px', color: 'var(--brand)', fontFamily: 'Jost, sans-serif' }}>
                 {noweOgl.length > 0 ? `${noweOgl.length} nowe →` : 'Wszystkie →'}
               </button>
@@ -6110,39 +6110,40 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
           </div>
         )}
 
-        {/* ──{/* ── STREFA WIEDZY ── */}
+        {/* ── STREFA WIEDZY ── */}
         <div style={{ marginBottom: '16px' }}>
           <div style={{ marginBottom: '10px' }}>
-            <span style={{ fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600 }}>Strefa Wiedzy</span>
+            <span style={{ fontSize: '10.5px', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600 }}>Strefa Wiedzy</span>
           </div>
-          <div style={{ display: 'flex', gap: '10px', overflowX: 'auto', paddingBottom: '4px', scrollbarWidth: 'none' as any }}>
+          <div style={{ background: 'white', borderRadius: '14px', border: '0.5px solid var(--border)', overflow: 'hidden' }}>
             {[
               {
-                kind: 'Online', title: 'Materiały dodatkowe', sub: 'kursy i artykuły',
-                img: '/ikona-materialy-dodatkowe.svg',
-                href: (grupaInfo as any)?.link_materialow || null, dot: '#B35758',
+                title: 'Materiały dodatkowe', sub: 'Kursy i artykuły',
+                href: (grupaInfo as any)?.link_materialow || null, tlo: '#eef1f4',
+                icon: <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#1C2B3A" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V4a2 2 0 0 0-2-2H6.5A2.5 2.5 0 0 0 4 4.5v15Z"/><path d="M4 19.5A2.5 2.5 0 0 0 6.5 22H20v-5"/></svg>,
               },
-            
-              { kind: 'Drive', title: 'Folder grupy', sub: 'Google Drive',
-                img: '/ikona-folder-grupy.svg',
-                href: grupaInfo?.drive_link || null, dot: '#4a7a47',
+              {
+                title: 'Folder grupy', sub: 'Google Drive',
+                href: grupaInfo?.drive_link || null, tlo: '#f5ebea',
+                icon: <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#AD6B68" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Z"/></svg>,
               },
-              { kind: 'Wideo', title: 'Nagrania z zajęć', sub: 'dotyczy grup online',
-                img: '/ikona-nagrania.svg',
-                href: (grupaInfo as any)?.link_nagran || null, dot: '#1565c0',
+              {
+                title: 'Nagrania z zajęć', sub: 'Dotyczy grup online',
+                href: (grupaInfo as any)?.link_nagran || null, tlo: '#fef9ec',
+                icon: <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#c8a84b" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9"/><polygon points="10 8 16 12 10 16 10 8"/></svg>,
               },
             ].map((item, i) => (
-              <div key={i} style={{ width: '155px', flexShrink: 0, cursor: item.href ? 'pointer' : 'default' }}
-                onClick={() => item.href && window.open(item.href, '_blank')}>
-                <div style={{ width: '155px', height: '110px', borderRadius: '14px', background: `url(${item.img}) center/cover`, position: 'relative', marginBottom: '8px', overflow: 'hidden' }}>
-                  <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(160deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.10) 100%)' }} />
-                  <div style={{ position: 'absolute', top: 8, left: 8, display: 'flex', alignItems: 'center', gap: '5px' }}>
-                    <div style={{ width: '7px', height: '7px', borderRadius: '50%', background: item.dot }} />
-                    <span style={{ padding: '2px 7px', background: 'rgba(255,255,255,0.9)', fontSize: '8px', letterSpacing: '0.18em', textTransform: 'uppercase', fontWeight: 700, borderRadius: '999px', color: '#1a1614' }}>{item.kind}</span>
-                  </div>
+              <div key={i} onClick={() => item.href && window.open(item.href, '_blank')} style={{
+                display: 'flex', alignItems: 'center', gap: '14px', padding: '14px 16px',
+                cursor: item.href ? 'pointer' : 'default', opacity: item.href ? 1 : 0.45,
+                borderTop: i > 0 ? '0.5px solid var(--border-soft)' : 'none',
+              }}>
+                <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: item.tlo, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{item.icon}</div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: '13.5px', fontWeight: 600, color: 'var(--text)' }}>{item.title}</div>
+                  <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{item.sub}</div>
                 </div>
-                <div style={{ fontSize: '12.5px', fontWeight: 600, color: 'var(--text)', marginBottom: '2px' }}>{item.title}</div>
-                <div style={{ fontSize: '10px', color: 'var(--text-muted)', fontStyle: 'italic' }}>{item.sub}</div>
+                <span style={{ color: 'var(--text-muted)', fontSize: '18px' }}>›</span>
               </div>
             ))}
           </div>
@@ -6169,19 +6170,19 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
         </div>
 
         <a href="https://on-arch.pl/faq-odpowiedzi-na-najczesciej-zadawane-pytania/" target="_blank" rel="noopener noreferrer" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '16px', background: 'white', border: '0.5px solid var(--border)', borderRadius: '14px', textDecoration: 'none', marginBottom: '8px', gap: '4px' }}>
-          <div style={{ fontSize: '9px', letterSpacing: '0.28em', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600 }}>FAQ</div>
+          <div style={{ fontSize: '10.5px', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600 }}>FAQ</div>
           <div style={{ fontSize: '13px', color: 'var(--text)', fontWeight: 500 }}>Najczęściej zadawane pytania</div>
           <div style={{ fontSize: '11px', color: 'var(--brand)', marginTop: '2px' }}>Czytaj więcej →</div>
         </a>
 
-        <div style={{ marginTop: '16px', padding: '20px', background: '#FBF8F3', border: '0.5px solid rgba(0,0,0,0.06)', borderRadius: '6px', textAlign: 'center' }}>
-          <div style={{ fontSize: '9px', letterSpacing: '0.32em', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '8px' }}>Kontakt z biurem</div>
+        <div style={{ marginTop: '16px', padding: '20px', background: '#FBF8F3', border: '0.5px solid rgba(0,0,0,0.06)', borderRadius: '14px', textAlign: 'center' }}>
+          <div style={{ fontSize: '10.5px', letterSpacing: '0.24em', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '8px' }}>Kontakt z biurem</div>
           <a href="tel:+48533718412" style={{ display: 'block', fontFamily: SERIF, fontStyle: 'italic', fontSize: '22px', color: 'var(--brand-dark)', textDecoration: 'none', marginBottom: '4px' }}>+48 533 718 412</a>
           <a href="mailto:info@on-arch.pl" style={{ fontSize: '12px', color: 'var(--text-muted)', textDecoration: 'none' }}>info@on-arch.pl</a>
         </div>
 
-        <div style={{ marginTop: '10px', padding: '14px 16px', background: 'white', border: '0.5px solid var(--border)', borderRadius: '4px', marginBottom: '16px' }}>
-          <div style={{ fontSize: '9px', letterSpacing: '0.28em', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600, textAlign: 'center', marginBottom: '10px' }}>Obserwuj nas</div>
+        <div style={{ marginTop: '10px', padding: '14px 16px', background: 'white', border: '0.5px solid var(--border)', borderRadius: '14px', marginBottom: '16px' }}>
+          <div style={{ fontSize: '10.5px', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600, textAlign: 'center', marginBottom: '10px' }}>Obserwuj nas</div>
           <div style={{ display: 'flex', justifyContent: 'center', gap: '16px' }}>
             {[{ href: 'https://www.facebook.com/OnArchKursy/', label: 'Facebook' }, { href: 'https://www.instagram.com/on_arch_/', label: 'Instagram' }, { href: 'https://www.youtube.com/@on-arch', label: 'YouTube' }, { href: 'https://www.tiktok.com/@onarchpl', label: 'TikTok' }].map(({ href, label }) => (
               <a key={label} href={href} target="_blank" rel="noopener noreferrer" style={{ fontSize: '10px', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--brand)', textDecoration: 'none', fontWeight: 500 }}>{label}</a>
@@ -6572,7 +6573,7 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
             {z.typ === 'online' && z.link_online && (
               <a href={z.link_online} target="_blank" rel="noopener noreferrer" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#1565c0', borderRadius: '14px', padding: '14px 16px', textDecoration: 'none', marginBottom: '10px' }}>
                 <div>
-                  <div style={{ fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.7)', marginBottom: '2px' }}>Zajęcia online</div>
+                  <div style={{ fontSize: '10.5px', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.7)', marginBottom: '2px' }}>Zajęcia online</div>
                   <div style={{ fontSize: '14px', fontWeight: 600, color: 'white' }}>Dołącz do Google Meet →</div>
                 </div>
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
@@ -6670,7 +6671,7 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
                       {[{ n: String(countdown.dni).padStart(2,'0'), l: 'dni' }, { n: String(countdown.godz).padStart(2,'0'), l: 'godz' }, { n: String(countdown.min).padStart(2,'0'), l: 'min' }].map(({ n, l }) => (
                         <div key={l} style={{ flex: 1, padding: '8px 4px', textAlign: 'center', background: 'rgba(255,255,255,0.10)', border: '1px solid rgba(255,255,255,0.14)', borderRadius: '10px' }}>
                           <div style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: '22px', lineHeight: 1, color: '#fff' }}>{n}</div>
-                          <div style={{ fontSize: '8px', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.6)', marginTop: '3px' }}>{l}</div>
+                          <div style={{ fontSize: '9.5px', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.6)', marginTop: '3px' }}>{l}</div>
                         </div>
                       ))}
                     </div>
@@ -6686,7 +6687,7 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
               <button key={z.id} onClick={() => setWybranyZjazd(z)} style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', background: 'white', borderRadius: '16px', padding: '12px 14px', border: '0.5px solid var(--border)', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit', width: '100%' }}>
                 <div style={{ width: '56px', height: '70px', borderRadius: '10px', background: `url(${photo}) center/cover`, flexShrink: 0 }} />
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '4px' }}>Zjazd {z.nr} · {z.daty}</div>
+                  <div style={{ fontSize: '10.5px', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '4px' }}>Zjazd {z.nr} · {z.daty}</div>
                   {z.tematy && <div style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: '16px', lineHeight: 1.2, color: 'var(--text)', marginBottom: '5px', overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' as any }}>{z.tematy}</div>}
                   <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' }}>
                     <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>{z.typ === 'online' ? '🌐 Online' : '📍 Stacjonarnie'}</span>
@@ -7193,7 +7194,7 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
             ].map(s => (
               <div key={s.label} onClick={() => s.klik && onNavigate(s.klik)} style={{ background: 'rgba(255,255,255,0.08)', borderRadius: '12px', padding: '10px 8px', textAlign: 'center', border: s.klik ? '0.5px solid rgba(201,168,76,0.5)' : '0.5px solid rgba(255,255,255,0.1)', cursor: s.klik ? 'pointer' : 'default' }}>
                 <div style={{ fontFamily: SERIF, fontStyle: 'italic', fontSize: '22px', color: 'white', lineHeight: 1 }}>{s.value}</div>
-                <div style={{ fontSize: '8.5px', letterSpacing: '0.18em', textTransform: 'uppercase', color: s.klik ? '#c8a84b' : 'rgba(255,255,255,0.5)', marginTop: '4px' }}>{s.sub}</div>
+                <div style={{ fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: s.klik ? '#c8a84b' : 'rgba(255,255,255,0.5)', marginTop: '4px' }}>{s.sub}</div>
               </div>
             ))}
           </div>
