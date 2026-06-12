@@ -1576,7 +1576,7 @@ function urlBase64ToUint8Array(base64String: string) {
       if (!nowa.trim() || !kursant) return;
       setWysylanie(true);
       const payload: any = {
-        grupa_id: kanal === 'grupa' ? kursant.grupa_id : null,
+        grupa_id: kursant.grupa_id,
         odbiorca_grupa_id: kanal === 'biuro' ? kursant.grupa_id : null,
         kanal,
         user_id: user.id,
@@ -1679,12 +1679,14 @@ function urlBase64ToUint8Array(base64String: string) {
               ))}
             </div>
           )}
-          <input
+          <textarea
             className="czat-input"
             value={nowa}
             onChange={e => setNowa(e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); wyslij(); } }}
             placeholder={kanal === 'grupa' ? 'Napisz do grupy...' : 'Napisz do biura...'}
+            rows={2}
+            style={{ borderRadius: '12px', resize: 'none', fontFamily: 'Lato, sans-serif' }}
           />
           <button className="czat-send-btn" onClick={wyslij} disabled={wysylanie || !nowa.trim()}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
