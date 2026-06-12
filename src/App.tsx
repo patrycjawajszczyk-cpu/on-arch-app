@@ -1601,7 +1601,7 @@ function urlBase64ToUint8Array(base64String: string) {
         <div style={{ display: 'flex', gap: '8px', marginBottom: '12px', padding: '0 2px' }}>
           {(['grupa', 'biuro'] as const).map(k => (
             <button key={k} onClick={() => setKanal(k)} style={{
-              flex: 1, padding: '10px', borderRadius: '12px', border: 'none', cursor: 'pointer',
+              flex: 1, padding: '10px', borderRadius: '12px', cursor: 'pointer',
               fontFamily: 'Lato, sans-serif', fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em',
               background: kanal === k ? 'var(--navy, #1C2B3A)' : 'white',
               color: kanal === k ? 'white' : 'var(--text-muted)',
