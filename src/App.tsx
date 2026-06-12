@@ -193,6 +193,8 @@ function urlBase64ToUint8Array(base64String: string) {
     imie: string;
     tekst: string;
     created_at: string;
+    kanal?: string;
+    odbiorca_grupa_id?: number | null;
   };
   type MaterialZakupu = {
     id: string;
@@ -1524,6 +1526,7 @@ function urlBase64ToUint8Array(base64String: string) {
     );
   }
   function EkranCzat({ user, kursant }: { user: User; kursant: Kursant | null }) {
+    const [kanal, setKanal] = useState<'grupa' | 'biuro'>('grupa');
     const [wiadomosci, setWiadomosci] = useState<Wiadomosc[]>([]);
     const [avatary, setAvatary] = useState<Record<string, { avatar_url: string | null; imie: string }>>({});
     const [nowa, setNowa] = useState('');
@@ -1533,131 +1536,159 @@ function urlBase64ToUint8Array(base64String: string) {
 
     useEffect(() => {
       if (!kursant?.grupa_id) return;
-
-      // Pobierz avatary wszystkich kursantów grupy
       supabase.from('kursanci').select('user_id, imie, avatar_url').eq('grupa_id', kursant.grupa_id)
         .then(({ data }) => {
           const map: Record<string, { avatar_url: string | null; imie: string }> = {};
           (data || []).forEach((k: any) => { map[k.user_id] = { avatar_url: k.avatar_url, imie: k.imie }; });
           setAvatary(map);
         });
+    }, [kursant?.grupa_id]);
 
-      supabase.from('wiadomosci').select('*').eq('grupa_id', kursant.grupa_id).order('created_at', { ascending: true }).then(({ data }) => {
+    useEffect(() => {
+      if (!kursant?.grupa_id) return;
+      setWiadomosci([]);
+
+      const query = kanal === 'grupa'
+        ? supabase.from('wiadomosci').select('*').eq('grupa_id', kursant.grupa_id).eq('kanal', 'grupa').order('created_at', { ascending: true })
+        : supabase.from('wiadomosci').select('*').eq('kanal', 'biuro').or(`grupa_id.eq.${kursant.grupa_id},odbiorca_grupa_id.eq.${kursant.grupa_id}`).order('created_at', { ascending: true });
+
+      query.then(({ data }) => {
         setWiadomosci(data || []);
         setTimeout(() => doRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
       });
-      const channel = supabase.channel('czat-' + kursant.grupa_id)
-        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'wiadomosci', filter: `grupa_id=eq.${kursant.grupa_id}` }, (payload) => {
-          setWiadomosci(prev => [...prev, payload.new as Wiadomosc]);
+
+      const channelName = `czat-${kanal}-${kursant.grupa_id}`;
+      const filter = kanal === 'grupa'
+        ? `grupa_id=eq.${kursant.grupa_id}`
+        : `odbiorca_grupa_id=eq.${kursant.grupa_id}`;
+      const channel = supabase.channel(channelName)
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'wiadomosci', filter }, (payload) => {
+          const msg = payload.new as Wiadomosc;
+          if (kanal === 'biuro' && msg.kanal !== 'biuro') return;
+          if (kanal === 'grupa' && msg.kanal !== 'grupa') return;
+          setWiadomosci(prev => [...prev, msg]);
           setTimeout(() => doRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
         }).subscribe();
       return () => { supabase.removeChannel(channel); };
-    }, [kursant?.grupa_id]);
+    }, [kursant?.grupa_id, kanal]);
 
-    async function wyslij(e: React.FormEvent) {
-      e.preventDefault();
+    async function wyslij() {
       if (!nowa.trim() || !kursant) return;
       setWysylanie(true);
-      await supabase.from('wiadomosci').insert([{ grupa_id: kursant.grupa_id, user_id: user.id, imie: kursant.imie, tekst: nowa.trim() }]);
-      await wyslijPush(supabase, {
-        grupa_id: kursant.grupa_id,
-        title: `${kursant.imie} na czacie`,
-        body: nowa.trim(),
-        url: '/',
-      });
-      setNowa(''); setWysylanie(false);
+      const payload: any = {
+        grupa_id: kanal === 'grupa' ? kursant.grupa_id : null,
+        odbiorca_grupa_id: kanal === 'biuro' ? kursant.grupa_id : null,
+        kanal,
+        user_id: user.id,
+        imie: kursant.imie,
+        tekst: nowa.trim(),
+      };
+      await supabase.from('wiadomosci').insert([payload]);
+      setNowa('');
+      setWysylanie(false);
     }
 
-    if (!kursant?.grupa_id) return <div style={{ padding: '24px', textAlign: 'center', color: 'var(--text-muted)' }}>Nie jestes przypisany do zadnej grupy.</div>;
+    const pokazAvatar = (idx: number) =>
+      idx === wiadomosci.length - 1 || wiadomosci[idx + 1]?.user_id !== wiadomosci[idx].user_id;
 
-    // Grupuj wiadomości — ukryj avatar jeśli kolejna wiadomość od tej samej osoby
-    const pokazAvatar = (idx: number) => {
-      const w = wiadomosci[idx];
-      const next = wiadomosci[idx + 1];
-      return !next || next.user_id !== w.user_id;
-    };
+    if (!kursant?.grupa_id) return (
+      <div style={{ padding: '24px', textAlign: 'center', color: 'var(--text-muted)' }}>Nie jesteś przypisana do żadnej grupy.</div>
+    );
 
     return (
       <div className="czat-container">
-        <h2 className="page-title">Czat grupy</h2>
-        <div className="czat-nazwa">{kursant.grupy?.nazwa || 'Twoja grupa'}</div>
+        {/* Przełącznik kanałów */}
+        <div style={{ display: 'flex', gap: '8px', marginBottom: '12px', padding: '0 2px' }}>
+          {(['grupa', 'biuro'] as const).map(k => (
+            <button key={k} onClick={() => setKanal(k)} style={{
+              flex: 1, padding: '10px', borderRadius: '12px', border: 'none', cursor: 'pointer',
+              fontFamily: 'Lato, sans-serif', fontSize: '12px', fontWeight: 700, letterSpacing: '0.04em',
+              background: kanal === k ? 'var(--navy, #1C2B3A)' : 'white',
+              color: kanal === k ? 'white' : 'var(--text-muted)',
+              border: kanal === k ? 'none' : '0.5px solid var(--border)',
+              transition: 'all 0.15s',
+            }}>
+              {k === 'grupa' ? '👥 Czat grupy' : '🏢 Biuro ON-ARCH'}
+            </button>
+          ))}
+        </div>
+
+        {kanal === 'biuro' && (
+          <div style={{ fontSize: '11px', color: 'var(--text-muted)', textAlign: 'center', marginBottom: '10px', lineHeight: 1.5 }}>
+            Wiadomości do biura ON-ARCH · odpowiadamy w dni robocze 9:00–17:00
+          </div>
+        )}
+
         <div style={{ flex: 1, overflow: 'hidden', position: 'relative', display: 'flex', flexDirection: 'column' }}>
           <div className="czat-wiadomosci">
-          {wiadomosci.length === 0 && <div className="czat-puste">Brak wiadomosci. Napisz pierwsza!</div>}
-          {wiadomosci.map((w, idx) => {
-            const moja = w.user_id === user.id;
-            const info = avatary[w.user_id];
-            const czyPokazac = pokazAvatar(idx);
-            const poprzedniaTaSama = idx > 0 && wiadomosci[idx - 1].user_id === w.user_id;
+            {wiadomosci.length === 0 && (
+              <div className="czat-puste">
+                {kanal === 'grupa' ? 'Brak wiadomości. Napisz pierwsza!' : 'Brak wiadomości z biurem. Napisz do nas!'}
+              </div>
+            )}
+            {wiadomosci.map((w, idx) => {
+              const moja = w.user_id === user.id;
+              const info = avatary[w.user_id];
+              const czyPokazac = pokazAvatar(idx);
+              const poprzedniaTaSama = idx > 0 && wiadomosci[idx - 1].user_id === w.user_id;
+              const jestBiuro = kanal === 'biuro' && !moja;
 
-            return (
-              <div key={w.id} style={{ marginBottom: czyPokazac ? '10px' : '2px', display: 'flex', flexDirection: 'column', alignItems: moja ? 'flex-end' : 'flex-start' }}>
-                {/* Imię — tylko pierwsza wiadomość z serii */}
-                {!moja && !poprzedniaTaSama && (
-                  <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginBottom: '2px', paddingLeft: '32px' }}>{w.imie}</div>
-                )}
-                <div style={{ display: 'flex', alignItems: 'flex-end', gap: '6px', flexDirection: moja ? 'row-reverse' : 'row' }}>
-                  {/* Avatar — tylko cudze, tylko ostatnia w serii */}
-                  {!moja && (
-                    <div style={{ width: '24px', flexShrink: 0 }}>
-                      {czyPokazac ? (
-                        info?.avatar_url
-                          ? <img src={info.avatar_url} alt={w.imie} style={{ width: '24px', height: '24px', borderRadius: '50%', objectFit: 'cover', border: '1px solid var(--border)' }} />
-                          : <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: 'var(--brand-light)', border: '1px solid var(--brand-mid)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 600, color: 'var(--brand-dark)' }}>{w.imie?.[0]?.toUpperCase()}</div>
-                      ) : <div style={{ width: '24px' }} />}
+              return (
+                <div key={w.id} style={{ marginBottom: czyPokazac ? '10px' : '2px', display: 'flex', flexDirection: 'column', alignItems: moja ? 'flex-end' : 'flex-start' }}>
+                  {!moja && !poprzedniaTaSama && (
+                    <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginBottom: '2px', paddingLeft: '32px' }}>
+                      {jestBiuro ? 'Biuro ON-ARCH' : w.imie}
                     </div>
                   )}
-                  {/* Bąbelka */}
-                  <div style={{
-                    maxWidth: '240px',
-                    padding: '9px 14px',
-                    borderRadius: '18px',
-                    fontSize: '13px',
-                    lineHeight: '1.5',
-                    wordBreak: 'break-word',
-                    background: moja ? 'var(--brand)' : 'var(--surface)',
-                    color: moja ? 'white' : 'var(--text)',
-                    border: moja ? 'none' : '0.5px solid var(--border)',
-                    borderBottomRightRadius: moja ? '4px' : '18px',
-                    borderBottomLeftRadius: moja ? '18px' : '4px',
-                  }}>{w.tekst}</div>
-                </div>
-                {/* Czas — tylko ostatnia w serii */}
-                {czyPokazac && (
-                  <div style={{ fontSize: '9px', color: 'var(--text-muted)', marginTop: '3px', paddingRight: moja ? '2px' : '0', paddingLeft: moja ? '0' : '32px' }}>
-                    {new Date(w.created_at).toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' })}
+                  <div style={{ display: 'flex', alignItems: 'flex-end', gap: '6px', flexDirection: moja ? 'row-reverse' : 'row' }}>
+                    {!moja && (
+                      <div style={{ width: '24px', flexShrink: 0 }}>
+                        {czyPokazac ? (
+                          jestBiuro
+                            ? <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: '#1C2B3A', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px' }}>🏢</div>
+                            : info?.avatar_url
+                              ? <img src={info.avatar_url} alt={w.imie} style={{ width: '24px', height: '24px', borderRadius: '50%', objectFit: 'cover', border: '1px solid var(--border)' }} />
+                              : <div style={{ width: '24px', height: '24px', borderRadius: '50%', background: 'var(--brand-light)', border: '1px solid var(--brand-mid)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: 600, color: 'var(--brand-dark)' }}>{w.imie?.[0]?.toUpperCase()}</div>
+                        ) : <div style={{ width: '24px' }} />}
+                      </div>
+                    )}
+                    <div style={{
+                      maxWidth: '240px', padding: '9px 14px', borderRadius: '18px',
+                      fontSize: '13px', lineHeight: '1.5', wordBreak: 'break-word',
+                      background: moja ? 'var(--brand)' : jestBiuro ? '#1C2B3A' : 'var(--surface)',
+                      color: moja ? 'white' : jestBiuro ? 'white' : 'var(--text)',
+                      border: moja || jestBiuro ? 'none' : '0.5px solid var(--border)',
+                    }}>
+                      {w.tekst}
+                    </div>
                   </div>
-                )}
-              </div>
-            );
-          })}
-          <div ref={doRef} />
+                </div>
+              );
+            })}
+            <div ref={doRef} />
           </div>
         </div>
-        <div style={{ position: 'relative' }}>
+
+        {/* Input */}
+        <div className="czat-input-bar">
+          <button className="czat-emoji-btn" onClick={() => setPokazEmoji(v => !v)}>😊</button>
           {pokazEmoji && (
-            <div style={{
-              position: 'absolute', bottom: '48px', left: 0,
-              background: 'white', borderRadius: '16px', padding: '10px',
-              border: '0.5px solid var(--border)', boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
-              display: 'flex', flexWrap: 'wrap', gap: '4px', width: '240px', zIndex: 100,
-            }}>
-              {['😊','😂','❤️','👍','🙏','😍','🤩','😘','😅','🥹','😭','😤','🤔','💪','🎉','✨','🔥','💡','📝','✅','❌','⭐','🏠','📐','🎨','🖼️','💼','📅','🗓️','📌'].map(e => (
-                <button key={e} type="button" onClick={() => { setNowa(prev => prev + e); setPokazEmoji(false); }}
-                  style={{ background: 'none', border: 'none', fontSize: '22px', cursor: 'pointer', padding: '2px', borderRadius: '6px', lineHeight: 1 }}>
-                  {e}
-                </button>
+            <div className="czat-emoji-picker">
+              {['😊','👍','❤️','🎉','✅','💡','🏠','✏️','📐','🎨','👏','🙏'].map(e => (
+                <button key={e} onClick={() => { setNowa(v => v + e); setPokazEmoji(false); }} className="czat-emoji-item">{e}</button>
               ))}
             </div>
           )}
-          <form className="czat-form" onSubmit={wyslij}>
-            <button type="button" onClick={() => setPokazEmoji(p => !p)}
-              style={{ background: 'none', border: 'none', fontSize: '22px', cursor: 'pointer', padding: '0 4px', flexShrink: 0, opacity: 0.7 }}>
-              😊
-            </button>
-            <input className="czat-input" type="text" value={nowa} onChange={e => setNowa(e.target.value)} placeholder="Napisz wiadomosc..." disabled={wysylanie} maxLength={500} />
-            <button className="czat-btn" type="submit" disabled={wysylanie || !nowa.trim()}>➤</button>
-          </form>
+          <input
+            className="czat-input"
+            value={nowa}
+            onChange={e => setNowa(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); wyslij(); } }}
+            placeholder={kanal === 'grupa' ? 'Napisz do grupy...' : 'Napisz do biura...'}
+          />
+          <button className="czat-send-btn" onClick={wyslij} disabled={wysylanie || !nowa.trim()}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          </button>
         </div>
       </div>
     );
