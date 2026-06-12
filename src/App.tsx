@@ -2942,7 +2942,8 @@ function urlBase64ToUint8Array(base64String: string) {
         </div>
       </>
     );
-    function CzatBiura({ grupy, user }: { grupy: Grupa[]; user: User | null }) {
+  }
+  function CzatBiura({ grupy, user }: { grupy: Grupa[]; user: User | null }) {
       const [wybranaGrupa, setWybranaGrupa] = useState<number | null>(null);
       const [wiadomosci, setWiadomosci] = useState<Wiadomosc[]>([]);
       const [nowa, setNowa] = useState('');
@@ -3102,7 +3103,6 @@ function urlBase64ToUint8Array(base64String: string) {
         </div>
       );
     }
-  }
   function PanelBiura({ onWyloguj, user }: { onWyloguj: () => void; user: User | null }) {
     const [aktywnaZakladka, setAktywnaZakladka] = useState('home');
     const [grupy, setGrupy] = useState<Grupa[]>([]);
