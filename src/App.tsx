@@ -2942,6 +2942,166 @@ function urlBase64ToUint8Array(base64String: string) {
         </div>
       </>
     );
+    function CzatBiura({ grupy, user }: { grupy: Grupa[]; user: User | null }) {
+      const [wybranaGrupa, setWybranaGrupa] = useState<number | null>(null);
+      const [wiadomosci, setWiadomosci] = useState<Wiadomosc[]>([]);
+      const [nowa, setNowa] = useState('');
+      const [wysylanie, setWysylanie] = useState(false);
+      const doRef = useRef<HTMLDivElement>(null);
+  
+      useEffect(() => {
+        if (!wybranaGrupa) return;
+        setWiadomosci([]);
+        supabase.from('wiadomosci').select('*')
+          .eq('kanal', 'biuro')
+          .or(`grupa_id.eq.${wybranaGrupa},odbiorca_grupa_id.eq.${wybranaGrupa}`)
+          .order('created_at', { ascending: true })
+          .then(({ data }) => {
+            setWiadomosci(data || []);
+            setTimeout(() => doRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
+          });
+  
+        const channel = supabase.channel(`biuro-czat-${wybranaGrupa}`)
+          .on('postgres_changes', {
+            event: 'INSERT', schema: 'public', table: 'wiadomosci',
+            filter: `odbiorca_grupa_id=eq.${wybranaGrupa}`,
+          }, (payload) => {
+            const msg = payload.new as Wiadomosc;
+            if (msg.kanal !== 'biuro') return;
+            setWiadomosci(prev => [...prev, msg]);
+            setTimeout(() => doRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
+          }).subscribe();
+        return () => { supabase.removeChannel(channel); };
+      }, [wybranaGrupa]);
+  
+      async function wyslij() {
+        if (!nowa.trim() || !wybranaGrupa || !user) return;
+        setWysylanie(true);
+        await supabase.from('wiadomosci').insert([{
+          kanal: 'biuro',
+          grupa_id: null,
+          odbiorca_grupa_id: wybranaGrupa,
+          user_id: user.id,
+          imie: 'Biuro ON-ARCH',
+          tekst: nowa.trim(),
+        }]);
+        setNowa('');
+        setWysylanie(false);
+      }
+  
+      return (
+        <div style={{ display: 'flex', gap: '16px', height: 'calc(100vh - 140px)', minHeight: '500px' }}>
+  
+          {/* Lista grup */}
+          <div style={{ width: '240px', flexShrink: 0, background: 'white', border: '0.5px solid var(--border)', borderRadius: '14px', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+            <div style={{ padding: '12px 16px', borderBottom: '0.5px solid var(--border)', fontSize: '11px', fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
+              Grupy
+            </div>
+            <div style={{ flex: 1, overflowY: 'auto' }}>
+              {grupy.map(g => (
+                <button key={g.id} onClick={() => setWybranaGrupa(g.id)} style={{
+                  width: '100%', textAlign: 'left', padding: '12px 16px', border: 'none',
+                  background: wybranaGrupa === g.id ? 'var(--brand-light)' : 'white',
+                  borderBottom: '0.5px solid var(--border-soft)',
+                  cursor: 'pointer', fontFamily: 'Lato, sans-serif',
+                  borderLeft: wybranaGrupa === g.id ? '3px solid var(--brand)' : '3px solid transparent',
+                  transition: 'all 0.15s',
+                }}>
+                  <div style={{ fontSize: '13px', fontWeight: wybranaGrupa === g.id ? 700 : 500, color: wybranaGrupa === g.id ? 'var(--brand-dark)' : 'var(--text)' }}>
+                    {g.nazwa}
+                  </div>
+                  {g.edycja && <div style={{ fontSize: '10.5px', color: 'var(--text-muted)', marginTop: '1px' }}>{g.edycja}</div>}
+                </button>
+              ))}
+            </div>
+          </div>
+  
+          {/* Panel wiadomości */}
+          <div style={{ flex: 1, background: 'white', border: '0.5px solid var(--border)', borderRadius: '14px', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+            {!wybranaGrupa ? (
+              <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', flexDirection: 'column', gap: '10px' }}>
+                <MessageCircle size={36} strokeWidth={1.2} />
+                <div style={{ fontSize: '14px' }}>Wybierz grupę, aby zobaczyć wiadomości</div>
+              </div>
+            ) : (
+              <>
+                {/* Nagłówek */}
+                <div style={{ padding: '12px 20px', borderBottom: '0.5px solid var(--border)', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <div>
+                    <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text)' }}>
+                      {grupy.find(g => g.id === wybranaGrupa)?.nazwa}
+                    </div>
+                    <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Kanal: biuro ↔ kursanci</div>
+                  </div>
+                </div>
+  
+                {/* Wiadomości */}
+                <div style={{ flex: 1, overflowY: 'auto', padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  {wiadomosci.length === 0 && (
+                    <div style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '13px', marginTop: '40px' }}>
+                      Brak wiadomości w tym kanale. Napisz pierwsza!
+                    </div>
+                  )}
+                  {wiadomosci.map((w, idx) => {
+                    const odBiura = w.imie === 'Biuro ON-ARCH' || w.user_id === user?.id;
+                    const poprzedni = idx > 0 && wiadomosci[idx - 1].user_id === w.user_id;
+                    return (
+                      <div key={w.id} style={{ display: 'flex', flexDirection: 'column', alignItems: odBiura ? 'flex-end' : 'flex-start', marginBottom: idx < wiadomosci.length - 1 && wiadomosci[idx + 1].user_id !== w.user_id ? '8px' : '2px' }}>
+                        {!odBiura && !poprzedni && (
+                          <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginBottom: '2px', paddingLeft: '4px' }}>{w.imie}</div>
+                        )}
+                        <div style={{
+                          maxWidth: '65%', padding: '9px 14px', borderRadius: '16px',
+                          fontSize: '13px', lineHeight: 1.5, wordBreak: 'break-word',
+                          background: odBiura ? 'var(--brand)' : '#f0ece8',
+                          color: odBiura ? 'white' : 'var(--text)',
+                        }}>
+                          {w.tekst}
+                        </div>
+                        {idx === wiadomosci.length - 1 || wiadomosci[idx + 1].user_id !== w.user_id ? (
+                          <div style={{ fontSize: '9.5px', color: 'var(--text-muted)', marginTop: '3px', paddingLeft: odBiura ? '0' : '4px', paddingRight: odBiura ? '4px' : '0' }}>
+                            {new Date(w.created_at).toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' })}
+                            {' · '}
+                            {new Date(w.created_at).toLocaleDateString('pl-PL', { day: 'numeric', month: 'short' })}
+                          </div>
+                        ) : null}
+                      </div>
+                    );
+                  })}
+                  <div ref={doRef} />
+                </div>
+  
+                {/* Input */}
+                <div style={{ padding: '12px 16px', borderTop: '0.5px solid var(--border)', display: 'flex', gap: '8px', alignItems: 'flex-end' }}>
+                  <textarea
+                    value={nowa}
+                    onChange={e => setNowa(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); wyslij(); } }}
+                    placeholder="Napisz wiadomość do grupy..."
+                    rows={2}
+                    style={{
+                      flex: 1, fontSize: '13px', padding: '10px 14px',
+                      border: '0.5px solid var(--border)', borderRadius: '12px',
+                      fontFamily: 'Lato, sans-serif', resize: 'none',
+                      background: 'white', boxSizing: 'border-box',
+                    }}
+                  />
+                  <button onClick={wyslij} disabled={wysylanie || !nowa.trim()} style={{
+                    padding: '10px 18px', background: nowa.trim() ? 'var(--brand)' : '#ddd',
+                    color: 'white', border: 'none', borderRadius: '12px',
+                    cursor: nowa.trim() ? 'pointer' : 'default',
+                    fontFamily: 'Lato, sans-serif', fontSize: '13px', fontWeight: 600,
+                    flexShrink: 0, alignSelf: 'flex-end',
+                  }}>
+                    {wysylanie ? '...' : 'Wyślij'}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      );
+    }
   }
   function PanelBiura({ onWyloguj, user }: { onWyloguj: () => void; user: User | null }) {
     const [aktywnaZakladka, setAktywnaZakladka] = useState('home');
@@ -3494,6 +3654,7 @@ const [zwinieteZadania, setZwinieteZadania] = useState<Set<number>>(() => new Se
               { id: 'zdjecia', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>, label: 'Zdjęcia' },
               { id: 'materialy', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>, label: 'Materiały' },
               { id: 'aplikacje', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>, label: 'Aplikacje' },
+              { id: 'czat',      icon: <MessageCircle size={18}/>, label: 'Czat z grupami' },
               { id: 'backup',    icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>, label: 'Backup' },
             ].map(item => (
               <button key={item.id}
@@ -3549,6 +3710,7 @@ const [zwinieteZadania, setZwinieteZadania] = useState<Set<number>>(() => new Se
               {aktywnaZakladka === 'ankiety' && 'Ankiety'}
               {aktywnaZakladka === 'aplikacje' && 'Aplikacje zewnętrzne'}
               {aktywnaZakladka === 'backup' && 'Backup'}
+              {aktywnaZakladka === 'czat' && 'Czat z grupami'}
             </div>
             {pokazBackupAlert && (
               <div onClick={() => setAktywnaZakladka('backup')}
@@ -3583,6 +3745,7 @@ const [zwinieteZadania, setZwinieteZadania] = useState<Set<number>>(() => new Se
                     { id: 'zdjecia', label: 'Zdjęcia', opis: 'Zdjęcia w aplikacji', icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg> },
                     { id: 'materialy',  label: 'Materiały', opis: 'Lista produktów',  icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg> },
                     { id: 'aplikacje',  label: 'Aplikacje',  opis: 'Portale i sklepy partnerskie', icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg> },
+                    { id: 'czat',       label: 'Czat z grupami', opis: 'Pisz do kursantów', icon: <MessageCircle size={22}/> },
                     { id: 'backup',     label: 'Backup',     opis: 'Pobierz kopię bazy',                  icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> },
                   ].map(k => (
                     <div key={k.id} onClick={() => setAktywnaZakladka(k.id)}
@@ -3601,7 +3764,9 @@ const [zwinieteZadania, setZwinieteZadania] = useState<Set<number>>(() => new Se
                 </div>
               </>
             )}
-
+{aktywnaZakladka === 'czat' && (
+            <CzatBiura grupy={grupy} user={user} />
+          )}
           {aktywnaZakladka === 'ogloszenia' && (
             <>
               {edytowane ? (
