@@ -2951,6 +2951,7 @@ function urlBase64ToUint8Array(base64String: string) {
     const [nowa, setNowa] = useState('');
     const [wysylanie, setWysylanie] = useState(false);
     const [nieprzeczytane, setNieprzeczytane] = useState<Set<number>>(new Set());
+    const [pokazArchiwum, setPokazArchiwum] = useState(false);
     const doRef = useRef<HTMLDivElement>(null);
 
     // Globalny listener — wykrywa nowe wiadomości ze wszystkich grup
@@ -3026,10 +3027,16 @@ function urlBase64ToUint8Array(base64String: string) {
             Grupy
           </div>
           <div style={{ flex: 1, overflowY: 'auto' }}>
-            {grupy.map(g => {
-              const aktywna = wybranaGrupa === g.id;
-              const maNowe = nieprzeczytane.has(g.id);
-              return (
+          {(() => {
+              const statusGrup = grupy.map(g => ({
+                g,
+                aktywna: wybranaGrupa === g.id,
+                maNowe: nieprzeczytane.has(g.id),
+              }));
+              const aktywne = statusGrup.filter(({ g }) => !g.edycja?.toLowerCase().includes('zakończ') && !g.edycja?.toLowerCase().includes('archiv'));
+              const archiwalne = statusGrup.filter(({ g }) => g.edycja?.toLowerCase().includes('zakończ') || g.edycja?.toLowerCase().includes('archiv'));
+
+              const renderGrupa = ({ g, aktywna, maNowe }: { g: Grupa; aktywna: boolean; maNowe: boolean }) => (
                 <button key={g.id} onClick={() => setWybranaGrupa(g.id)} style={{
                   width: '100%', textAlign: 'left', padding: '12px 16px', border: 'none',
                   background: aktywna ? 'var(--brand-light)' : 'white',
@@ -3042,16 +3049,34 @@ function urlBase64ToUint8Array(base64String: string) {
                     <div style={{ fontSize: '13px', fontWeight: aktywna || maNowe ? 700 : 500, color: aktywna ? 'var(--brand-dark)' : 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {g.nazwa}
                     </div>
-                    {maNowe && (
-                      <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--brand)', flexShrink: 0 }} />
-                    )}
+                    {maNowe && <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--brand)', flexShrink: 0 }} />}
                   </div>
-                  {g.edycja && (
-                    <div style={{ fontSize: '10.5px', color: 'var(--text-muted)', marginTop: '2px' }}>{g.edycja}</div>
-                  )}
+                  {g.edycja && <div style={{ fontSize: '10.5px', color: 'var(--text-muted)', marginTop: '2px' }}>{g.edycja}</div>}
                 </button>
               );
-            })}
+
+              return (
+                <>
+                  {aktywne.map(renderGrupa)}
+                  {archiwalne.length > 0 && (
+                    <>
+                      <button onClick={() => setPokazArchiwum(v => !v)} style={{
+                        width: '100%', padding: '10px 16px', border: 'none', background: '#faf9f8',
+                        borderTop: '0.5px solid var(--border)', borderBottom: '0.5px solid var(--border)',
+                        cursor: 'pointer', fontFamily: 'Lato, sans-serif',
+                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                      }}>
+                        <span style={{ fontSize: '10.5px', fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
+                          Archiwum ({archiwalne.length})
+                        </span>
+                        <span style={{ fontSize: '12px', color: 'var(--text-muted)', display: 'inline-block', transform: pokazArchiwum ? 'rotate(0deg)' : 'rotate(-90deg)', transition: 'transform 0.2s' }}>▾</span>
+                      </button>
+                      {pokazArchiwum && archiwalne.map(renderGrupa)}
+                    </>
+                  )}
+                </>
+              );
+            })()}
           </div>
         </div>
 
