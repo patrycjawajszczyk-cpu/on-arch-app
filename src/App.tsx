@@ -2945,7 +2945,7 @@ function urlBase64ToUint8Array(base64String: string) {
       </>
     );
   }
-  function CzatBiura({ grupy, user }: { grupy: Grupa[]; user: User | null }) {
+  function CzatBiura({ grupy, user, zjazdy }: { grupy: Grupa[]; user: User | null; zjazdy: Zjazd[] }) {
     const [wybranaGrupa, setWybranaGrupa] = useState<number | null>(null);
     const [wiadomosci, setWiadomosci] = useState<Wiadomosc[]>([]);
     const [nowa, setNowa] = useState('');
@@ -3033,8 +3033,10 @@ function urlBase64ToUint8Array(base64String: string) {
                 aktywna: wybranaGrupa === g.id,
                 maNowe: nieprzeczytane.has(g.id),
               }));
-              const aktywne = statusGrup.filter(({ g }) => !g.edycja?.toLowerCase().includes('zakończ') && !g.edycja?.toLowerCase().includes('archiv'));
-              const archiwalne = statusGrup.filter(({ g }) => g.edycja?.toLowerCase().includes('zakończ') || g.edycja?.toLowerCase().includes('archiv'));
+              const maNadchodzace = (grupaId: number) =>
+                zjazdy.some(z => z.grupa_id === grupaId && z.status === 'nadchodzacy');
+              const aktywne = statusGrup.filter(({ g }) => maNadchodzace(g.id));
+              const archiwalne = statusGrup.filter(({ g }) => !maNadchodzace(g.id));
 
               const renderGrupa = ({ g, aktywna, maNowe }: { g: Grupa; aktywna: boolean; maNowe: boolean }) => (
                 <button key={g.id} onClick={() => setWybranaGrupa(g.id)} style={{
@@ -3833,7 +3835,7 @@ const [zwinieteZadania, setZwinieteZadania] = useState<Set<number>>(() => new Se
               </>
             )}
 {aktywnaZakladka === 'czat' && (
-            <CzatBiura grupy={grupy} user={user} />
+            <CzatBiura grupy={grupy} user={user} zjazdy={zjazdy} />
           )}
           {aktywnaZakladka === 'ogloszenia' && (
             <>
