@@ -4381,7 +4381,10 @@ const [zwinieteZadania, setZwinieteZadania] = useState<Set<number>>(() => new Se
                           <div onClick={() => setZwinieteZjazdy(prev => { const next = new Set(prev); next.has(g.id) ? next.delete(g.id) : next.add(g.id); return next; })}
                             style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 14px', background: zakonczona ? '#fafafa' : 'white', borderRadius: zwinieta ? '12px' : '12px 12px 0 0', border: '0.5px solid var(--border)', cursor: 'pointer', userSelect: 'none' as const, opacity: zakonczona ? 0.6 : 1 }}>
                             <span style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'inline-block', transform: zwinieta ? 'rotate(-90deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}>▾</span>
-                            <span style={{ fontFamily: 'Playfair Display, serif', fontSize: '17px', fontWeight: 400, color: 'var(--brand-dark)', flex: 1 }}>{g.nazwa}</span>
+                            <span style={{ flex: 1 }}>
+                            <span style={{ fontFamily: 'Playfair Display, serif', fontSize: '17px', fontWeight: 400, color: 'var(--brand-dark)' }}>{g.nazwa}</span>
+                            {g.edycja && <span style={{ fontSize: '11px', color: 'var(--text-muted)', marginLeft: '8px' }}>{g.edycja}</span>}
+                          </span>
                             <span style={{ fontSize: '11px', color: 'var(--text-muted)', background: 'var(--bg)', padding: '2px 8px', borderRadius: '10px', border: '0.5px solid var(--border)' }}>
                               {zjazdyGrupy.length} zjazdów
                             </span>
