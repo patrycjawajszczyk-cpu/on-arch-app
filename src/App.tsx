@@ -610,8 +610,14 @@ function urlBase64ToUint8Array(base64String: string) {
           imie: k.imie, nazwisko: k.nazwisko, dzien,
           status: 'potwierdzono', zweryfikowano: true, zweryfikowano_przez: user?.id || null,
         };
-        const { data: nowy } = await supabase.from('obecnosci').insert([insertData]).select().single();
-        if (nowy) setObecnosci(prev => [...prev, nowy as Obecnosc]);
+        const { data: nowy, error } = await supabase.from('obecnosci')
+          .upsert([insertData], { onConflict: 'zjazd_id,user_id,dzien' })
+          .select().single();
+        if (error) { console.error('upsert obecnosc:', error); setSaving(null); return; }
+        if (nowy) setObecnosci(prev => {
+          const bez = prev.filter(o => o.id !== nowy.id);
+          return [...bez, nowy as Obecnosc];
+        });
       } else if (existing.status === 'potwierdzono') {
         await supabase.from('obecnosci').update({ status: 'nieobecnosc', zweryfikowano: true, zweryfikowano_przez: user?.id || null }).eq('id', existing.id);
         setObecnosci(prev => prev.map(o => o.id === existing.id ? { ...o, status: 'nieobecnosc' } : o));
