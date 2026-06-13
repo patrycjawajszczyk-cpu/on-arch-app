@@ -563,84 +563,116 @@ function urlBase64ToUint8Array(base64String: string) {
 
   // ─── PANEL BIURA — zakładka OBECNOŚCI ────────────────────────────────────────
 
-  function AdminObecnosci({ grupy, zjazdy }: { grupy: Grupa[]; zjazdy: Zjazd[] }) {
+  function AdminObecnosci({ grupy, zjazdy, kursanci, user }: { grupy: Grupa[]; zjazdy: Zjazd[]; kursanci: KursantAdmin[]; user: User | null }) {
     const [wybranaGrupa, setWybranaGrupa] = useState('');
-    const [wybranyZjazd, setWybranyZjazd] = useState('');
-    const [lista, setLista] = useState<Obecnosc[]>([]);
+    const [obecnosci, setObecnosci] = useState<Obecnosc[]>([]);
     const [ladowanie, setLadowanie] = useState(false);
+    const [saving, setSaving] = useState<string | null>(null);
 
-    const zjazdyGrupy = wybranaGrupa ? zjazdy.filter(z => z.grupa_id === parseInt(wybranaGrupa)) : [];
-    const zjazd = zjazdy.find(z => z.id === parseInt(wybranyZjazd));
     const grupa = grupy.find(g => g.id === parseInt(wybranaGrupa));
+    const zjazdyGrupy = wybranaGrupa
+      ? zjazdy.filter(z => z.grupa_id === parseInt(wybranaGrupa)).sort((a, b) => (a.data_dzien1 || a.data_zjazdu || '').localeCompare(b.data_dzien1 || b.data_zjazdu || ''))
+      : [];
+    const kursanciGrupy = wybranaGrupa
+      ? kursanci.filter(k => k.grupa_id === parseInt(wybranaGrupa)).sort((a, b) => a.nazwisko.localeCompare(b.nazwisko))
+      : [];
+
+    const kolumny = zjazdyGrupy.flatMap(z => {
+      const k: { zjazd: Zjazd; dzien: 1 | 2; data: string | null }[] = [{ zjazd: z, dzien: 1, data: z.data_dzien1 }];
+      if (z.data_dzien2) k.push({ zjazd: z, dzien: 2, data: z.data_dzien2 });
+      return k;
+    });
 
     useEffect(() => {
-      if (!wybranyZjazd) { setLista([]); return; }
+      if (!wybranaGrupa) { setObecnosci([]); return; }
+      const ids = zjazdyGrupy.map(z => z.id);
+      if (ids.length === 0) { setObecnosci([]); return; }
       setLadowanie(true);
-      supabase.from('obecnosci').select('*').eq('zjazd_id', parseInt(wybranyZjazd))
-        .order('dzien', { ascending: true }).order('nazwisko', { ascending: true })
-        .then(({ data }) => { setLista(data || []); setLadowanie(false); });
-    }, [wybranyZjazd]);
+      supabase.from('obecnosci').select('*').in('zjazd_id', ids)
+        .then(({ data }) => { setObecnosci(data || []); setLadowanie(false); });
+    }, [wybranaGrupa]);
+
+    const pobierzWpis = (userId: string, zjazdId: number, dzien: 1 | 2) =>
+      obecnosci.find(o => o.user_id === userId && o.zjazd_id === zjazdId && o.dzien === dzien);
+
+    function getStatus(userId: string, zjazdId: number, dzien: 1 | 2): 'potwierdzono' | 'nieobecnosc' | null {
+      const wpis = pobierzWpis(userId, zjazdId, dzien);
+      return wpis ? (wpis.status as any) : null;
+    }
+
+    async function cyklStatus(k: KursantAdmin, zjazd: Zjazd, dzien: 1 | 2) {
+      const key = `${k.user_id}_${zjazd.id}_${dzien}`;
+      setSaving(key);
+      const existing = pobierzWpis(k.user_id, zjazd.id, dzien);
+      if (!existing) {
+        const insertData: any = {
+          zjazd_id: zjazd.id, user_id: k.user_id, grupa_id: zjazd.grupa_id,
+          imie: k.imie, nazwisko: k.nazwisko, dzien,
+          status: 'potwierdzono', zweryfikowano: true, zweryfikowano_przez: user?.id || null,
+        };
+        const { data: nowy } = await supabase.from('obecnosci').insert([insertData]).select().single();
+        if (nowy) setObecnosci(prev => [...prev, nowy as Obecnosc]);
+      } else if (existing.status === 'potwierdzono') {
+        await supabase.from('obecnosci').update({ status: 'nieobecnosc', zweryfikowano: true, zweryfikowano_przez: user?.id || null }).eq('id', existing.id);
+        setObecnosci(prev => prev.map(o => o.id === existing.id ? { ...o, status: 'nieobecnosc' } : o));
+      } else {
+        await supabase.from('obecnosci').delete().eq('id', existing.id);
+        setObecnosci(prev => prev.filter(o => o.id !== existing.id));
+      }
+      setSaving(null);
+    }
+
+    const fmtData = (d: string | null) => d ? new Date(d).toLocaleDateString('pl-PL', { day: 'numeric', month: 'numeric' }) : '—';
 
     function eksportujCSV() {
-      const naglowki = [
-        'imie', 'nazwisko', 'dzien', 'data', 'godziny_zajec',
-        'temat', 'tytul_uslugi', 'numer_uslugi', 'prowadzacy',
-        'status', 'powod_nieobecnosci', 'godzina_przybycia', 'godzina_wyjscia',
-        'zweryfikowano', 'data_potwierdzenia'
-      ];
-      const wiersze = lista.map(o => {
-        const dzienNr = o.dzien;
-        const data = dzienNr === 1 ? zjazd?.data_dzien1 : zjazd?.data_dzien2;
-        const gStart = dzienNr === 1 ? zjazd?.godzina_start_d1 : zjazd?.godzina_start_d2;
-        const gEnd = dzienNr === 1 ? zjazd?.godzina_end_d1 : zjazd?.godzina_end_d2;
-        const prowadzacy = (zjazd?.prowadzacy || []).map(p => `${p.imie} ${p.nazwisko}`).join('; ');
+      const naglowki = ['imie', 'nazwisko', 'zjazd', 'dzien', 'data', 'godziny_zajec', 'temat', 'tytul_uslugi', 'numer_uslugi', 'prowadzacy', 'status', 'powod_nieobecnosci', 'godzina_przybycia', 'godzina_wyjscia', 'zweryfikowano', 'data_potwierdzenia'];
+      const wiersze = obecnosci.map(o => {
+        const z = zjazdyGrupy.find(zz => zz.id === o.zjazd_id);
+        const data = o.dzien === 1 ? z?.data_dzien1 : z?.data_dzien2;
+        const gStart = o.dzien === 1 ? z?.godzina_start_d1 : z?.godzina_start_d2;
+        const gEnd = o.dzien === 1 ? z?.godzina_end_d1 : z?.godzina_end_d2;
+        const prowadzacy = (z?.prowadzacy || []).map(p => `${p.imie} ${p.nazwisko}`).join('; ');
         return [
-          `"${o.imie}"`, `"${o.nazwisko}"`,
-          `"Dzień ${dzienNr}"`,
+          `"${o.imie}"`, `"${o.nazwisko}"`, `"Zjazd ${z?.nr || ''}"`, `"Dzień ${o.dzien}"`,
           `"${data ? new Date(data).toLocaleDateString('pl-PL') : ''}"`,
           `"${gStart && gEnd ? `${gStart}–${gEnd}` : ''}"`,
-          `"${zjazd?.tematy || ''}"`,
-          `"${grupa?.nazwa || ''}"`,
-          `"${(grupa as any)?.numer_uslugi || ''}"`,
+          `"${z?.tematy || ''}"`, `"${grupa?.nazwa || ''}"`, `"${(grupa as any)?.numer_uslugi || ''}"`,
           `"${prowadzacy}"`,
           `"${o.status === 'potwierdzono' ? 'obecny/a' : 'nieobecny/a'}"`,
-          `"${o.powod_nieobecnosci || ''}"`,
-          `"${o.godzina_przybycia || ''}"`,
-          `"${o.godzina_wyjscia || ''}"`,
+          `"${o.powod_nieobecnosci || ''}"`, `"${o.godzina_przybycia || ''}"`, `"${o.godzina_wyjscia || ''}"`,
           `"${o.zweryfikowano ? 'tak' : 'nie'}"`,
-          `"${new Date(o.confirmed_at).toLocaleString('pl-PL')}"`,
+          `"${o.confirmed_at ? new Date(o.confirmed_at).toLocaleString('pl-PL') : ''}"`,
         ].join(',');
       });
       const csv = '\uFEFF' + [naglowki.join(','), ...wiersze].join('\n');
       const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.href = url; a.download = `lista_obecnosci_zjazd${zjazd?.nr || ''}.csv`; a.click();
+      a.href = url; a.download = `obecnosci_${grupa?.nazwa || 'grupa'}.csv`; a.click();
     }
 
     function eksportujXML() {
-      const prowadzacy = (zjazd?.prowadzacy || []).map(p => `${p.imie} ${p.nazwisko}`).join(', ');
-      const wiersze = lista.map(o => {
-        const dzienNr = o.dzien;
-        const data = dzienNr === 1 ? zjazd?.data_dzien1 : zjazd?.data_dzien2;
-        const gStart = dzienNr === 1 ? zjazd?.godzina_start_d1 : zjazd?.godzina_start_d2;
-        const gEnd = dzienNr === 1 ? zjazd?.godzina_end_d1 : zjazd?.godzina_end_d2;
+      const wiersze = obecnosci.map(o => {
+        const z = zjazdyGrupy.find(zz => zz.id === o.zjazd_id);
+        const data = o.dzien === 1 ? z?.data_dzien1 : z?.data_dzien2;
+        const gStart = o.dzien === 1 ? z?.godzina_start_d1 : z?.godzina_start_d2;
+        const gEnd = o.dzien === 1 ? z?.godzina_end_d1 : z?.godzina_end_d2;
+        const prowadzacy = (z?.prowadzacy || []).map(p => `${p.imie} ${p.nazwisko}`).join(', ');
         return `    <uczestnik>
         <imie>${o.imie}</imie>
         <nazwisko>${o.nazwisko}</nazwisko>
-        <dzien>Dzień ${dzienNr}</dzien>
+        <zjazd>Zjazd ${z?.nr || ''}</zjazd>
+        <dzien>Dzień ${o.dzien}</dzien>
         <data>${data ? new Date(data).toLocaleDateString('pl-PL') : ''}</data>
         <godziny_zajec>${gStart && gEnd ? `${gStart}–${gEnd}` : ''}</godziny_zajec>
-        <temat_zajec>${zjazd?.tematy || ''}</temat_zajec>
-        <tytul_uslugi>${grupa?.nazwa || ''}</tytul_uslugi>
-        <numer_uslugi>${(grupa as any)?.numer_uslugi || ''}</numer_uslugi>
+        <temat_zajec>${z?.tematy || ''}</temat_zajec>
         <osoba_prowadzaca>${prowadzacy}</osoba_prowadzaca>
         <status>${o.status === 'potwierdzono' ? 'obecny/a' : 'nieobecny/a'}</status>
         <powod_nieobecnosci>${o.powod_nieobecnosci || ''}</powod_nieobecnosci>
         <godzina_przybycia>${o.godzina_przybycia || ''}</godzina_przybycia>
         <godzina_wyjscia>${o.godzina_wyjscia || ''}</godzina_wyjscia>
         <zweryfikowano>${o.zweryfikowano ? 'tak' : 'nie'}</zweryfikowano>
-        <data_potwierdzenia>${new Date(o.confirmed_at).toLocaleString('pl-PL')}</data_potwierdzenia>
+        <data_potwierdzenia>${o.confirmed_at ? new Date(o.confirmed_at).toLocaleString('pl-PL') : ''}</data_potwierdzenia>
       </uczestnik>`;
       }).join('\n');
       const xml = `<?xml version="1.0" encoding="UTF-8"?>
@@ -648,11 +680,7 @@ function urlBase64ToUint8Array(base64String: string) {
     <informacje>
       <tytul_uslugi>${grupa?.nazwa || ''}</tytul_uslugi>
       <numer_uslugi>${(grupa as any)?.numer_uslugi || ''}</numer_uslugi>
-      <zjazd>Zjazd ${zjazd?.nr || ''}</zjazd>
-      <daty>${zjazd?.daty || ''}</daty>
-      <sala>${zjazd?.sala || ''}</sala>
-      <adres>${zjazd?.adres || ''}</adres>
-      <osoba_prowadzaca>${prowadzacy}</osoba_prowadzaca>
+      <liczba_zjazdow>${zjazdyGrupy.length}</liczba_zjazdow>
       <data_eksportu>${new Date().toLocaleString('pl-PL')}</data_eksportu>
     </informacje>
     <uczestnicy>
@@ -662,126 +690,87 @@ function urlBase64ToUint8Array(base64String: string) {
       const blob = new Blob([xml], { type: 'application/xml;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.href = url; a.download = `lista_obecnosci_zjazd${zjazd?.nr || ''}.xml`; a.click();
+      a.href = url; a.download = `obecnosci_${grupa?.nazwa || 'grupa'}.xml`; a.click();
     }
-
-    const statusKolor = (status: string) => status === 'potwierdzono'
-      ? { bg: '#e8f5e9', color: '#2e7d32' } : { bg: '#ffebee', color: '#c62828' };
 
     return (
       <>
-        <h2 className="page-title">Lista obecności</h2>
-        <div className="login-field" style={{ marginBottom: '10px' }}>
-          <label>Grupa</label>
-          <select value={wybranaGrupa} onChange={e => { setWybranaGrupa(e.target.value); setWybranyZjazd(''); setLista([]); }}>
-            <option value="">Wybierz grupę</option>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px', flexWrap: 'wrap', gap: '12px' }}>
+          <h2 className="page-title" style={{ margin: 0 }}>Lista obecności</h2>
+          <select value={wybranaGrupa} onChange={e => setWybranaGrupa(e.target.value)}
+            style={{ fontSize: '13px', padding: '8px 14px', border: '0.5px solid var(--border)', borderRadius: '10px', fontFamily: 'Lato, sans-serif', background: 'white', minWidth: '240px' }}>
+            <option value="">Wybierz grupę…</option>
             {grupy.map(g => <option key={g.id} value={g.id}>{g.nazwa}{g.edycja ? ` · ${g.edycja}` : ''}</option>)}
           </select>
         </div>
-        {wybranaGrupa && (
-          <div className="login-field" style={{ marginBottom: '16px' }}>
-            <label>Zjazd</label>
-            <select value={wybranyZjazd} onChange={e => setWybranyZjazd(e.target.value)}>
-              <option value="">Wybierz zjazd</option>
-              {zjazdyGrupy.map(z => <option key={z.id} value={z.id}>Zjazd {z.nr} — {z.daty}</option>)}
-            </select>
+
+        {!wybranaGrupa && (
+          <div style={{ textAlign: 'center', padding: '60px 24px', color: 'var(--text-muted)', fontFamily: 'Playfair Display, serif', fontSize: '18px' }}>
+            Wybierz grupę aby zobaczyć siatkę obecności
           </div>
         )}
 
-        {wybranyZjazd && (
+        {wybranaGrupa && ladowanie && <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>Ładowanie...</div>}
+
+        {wybranaGrupa && !ladowanie && (kursanciGrupy.length === 0 || kolumny.length === 0) && (
+          <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)', fontSize: '13px' }}>
+            {kursanciGrupy.length === 0 ? 'Brak kursantów w tej grupie.' : 'Brak zjazdów w tej grupie.'}
+          </div>
+        )}
+
+        {wybranaGrupa && !ladowanie && kursanciGrupy.length > 0 && kolumny.length > 0 && (
           <>
-            {/* Nagłówek z info o zjeździe */}
-            {zjazd && (
-              <div className="profil-card" style={{ marginBottom: '12px', background: 'var(--brand-light)' }}>
-                <div className="profil-row"><span className="profil-lbl">Usługa</span><span className="profil-val" style={{ fontSize: '11px' }}>{grupa?.nazwa || '—'}</span></div>
-                {(grupa as any)?.numer_uslugi && <div className="profil-row"><span className="profil-lbl">Nr usługi</span><span className="profil-val" style={{ fontSize: '11px' }}>{(grupa as any).numer_uslugi}</span></div>}
-                <div className="profil-row"><span className="profil-lbl">Temat</span><span className="profil-val" style={{ fontSize: '11px' }}>{zjazd.tematy || '—'}</span></div>
-                <div className="profil-row"><span className="profil-lbl">Prowadzący</span><span className="profil-val" style={{ fontSize: '11px' }}>{(zjazd.prowadzacy || []).map(p => `${p.imie} ${p.nazwisko}`).join(', ') || '—'}</span></div>
-              </div>
-            )}
-
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-              <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
-                {ladowanie ? 'Ładowanie...' : `${lista.length} wpisów`}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', flexWrap: 'wrap', gap: '8px' }}>
+              <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                Kliknij komórkę: <span style={{ color: '#2e7d32', fontWeight: 600 }}>✓ obecny</span> → <span style={{ color: '#c62828', fontWeight: 600 }}>✗ nieobecny</span> → puste
               </span>
-              {lista.length > 0 && (
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  
-                  <button onClick={eksportujCSV} style={{ fontSize: '12px', color: 'var(--brand)', background: 'none', border: '0.5px solid var(--brand-mid)', borderRadius: '8px', padding: '5px 10px', cursor: 'pointer', fontFamily: 'Lato, sans-serif' }}>
-                    ⬇ CSV
-                  </button>
-                  <button onClick={eksportujXML} style={{ fontSize: '12px', color: '#1565c0', background: 'none', border: '0.5px solid #9ab0d8', borderRadius: '8px', padding: '5px 10px', cursor: 'pointer', fontFamily: 'Lato, sans-serif' }}>
-                    ⬇ XML
-                  </button>
-                </div>
-              )}
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button onClick={eksportujCSV} style={{ fontSize: '12px', color: 'var(--brand)', background: 'none', border: '0.5px solid var(--brand-mid)', borderRadius: '8px', padding: '5px 10px', cursor: 'pointer', fontFamily: 'Lato, sans-serif' }}>⬇ CSV grupy</button>
+                <button onClick={eksportujXML} style={{ fontSize: '12px', color: '#1565c0', background: 'none', border: '0.5px solid #9ab0d8', borderRadius: '8px', padding: '5px 10px', cursor: 'pointer', fontFamily: 'Lato, sans-serif' }}>⬇ XML grupy</button>
+              </div>
             </div>
-
-            {ladowanie && (
-  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-    {[1,2,3].map(i => (
-      <div key={i} style={{ background: 'white', borderRadius: '14px', border: '0.5px solid var(--border)', overflow: 'hidden' }}>
-        <div style={{ padding: '10px 14px', borderBottom: '0.5px solid var(--border-soft)', display: 'flex', justifyContent: 'space-between' }}>
-          <div className="skeleton" style={{ width: '80px', height: '14px' }} />
-          <div className="skeleton" style={{ width: '60px', height: '14px' }} />
-        </div>
-        <div style={{ padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          <div className="skeleton" style={{ width: '140px', height: '18px' }} />
-          <div className="skeleton" style={{ width: '200px', height: '12px' }} />
-          <div className="skeleton" style={{ width: '160px', height: '12px' }} />
-        </div>
-        <div style={{ display: 'flex', gap: '8px', padding: '8px 14px 14px' }}>
-          <div className="skeleton" style={{ flex: 1, height: '70px', borderRadius: '12px' }} />
-          <div className="skeleton" style={{ flex: 1, height: '70px', borderRadius: '12px' }} />
-        </div>
-      </div>
-    ))}
-  </div>
-)}
-            {!ladowanie && lista.length === 0 && (
-              <div className="profil-card"><div className="profil-row"><span style={{ color: 'var(--text-muted)', fontSize: '13px' }}>Brak wpisów dla tego zjazdu.</span></div></div>
-            )}
-
-            {[1, 2].map(dzienNr => {
-              const wpisDnia = lista.filter(o => o.dzien === dzienNr);
-              if (wpisDnia.length === 0) return null;
-              const data = dzienNr === 1 ? zjazd?.data_dzien1 : zjazd?.data_dzien2;
-              const gStart = dzienNr === 1 ? zjazd?.godzina_start_d1 : zjazd?.godzina_start_d2;
-              const gEnd = dzienNr === 1 ? zjazd?.godzina_end_d1 : zjazd?.godzina_end_d2;
-              return (
-                <div key={dzienNr} style={{ marginBottom: '16px' }}>
-                  <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--brand-dark)', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                    Dzień {dzienNr} {data ? `· ${new Date(data).toLocaleDateString('pl-PL', { weekday: 'long', day: 'numeric', month: 'long' })}` : ''}
-                    {gStart && gEnd && <span style={{ fontWeight: 400, color: 'var(--text-muted)' }}> · {gStart}–{gEnd}</span>}
-                  </div>
-                  {wpisDnia.map(o => {
-                    const kol = statusKolor(o.status);
-                    return (
-                      <div key={o.id} className="profil-card" style={{ marginBottom: '6px' }}>
-                        <div className="profil-row">
-                          <span style={{ fontSize: '13px', fontWeight: 500 }}>{o.imie} {o.nazwisko}</span>
-                          <span style={{ fontSize: '10px', fontWeight: 600, padding: '3px 8px', borderRadius: '20px', background: kol.bg, color: kol.color }}>
-                            {o.status === 'potwierdzono' ? '✓ Obecny/a' : '✕ Nieobecny/a'}
-                          </span>
-                        </div>
-                        {o.powod_nieobecnosci && <div className="profil-row"><span className="profil-lbl">Powód</span><span className="profil-val" style={{ fontSize: '11px', fontStyle: 'normal' }}>{o.powod_nieobecnosci}</span></div>}
-                        {(o.godzina_przybycia || o.godzina_wyjscia) && (
-                          <div className="profil-row">
-                            {o.godzina_przybycia && <span style={{ fontSize: '11px', color: '#c8a84b' }}>⏰ przybycie: {o.godzina_przybycia}</span>}
-                            {o.godzina_wyjscia && <span style={{ fontSize: '11px', color: '#c8a84b' }}>⏰ wyjście: {o.godzina_wyjscia}</span>}
-                          </div>
-                        )}
-                        <div className="profil-row">
-                          <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>
-                            {o.zweryfikowano ? '✓ zweryfikowano' : 'niezweryfikowane'} · {new Date(o.confirmed_at).toLocaleString('pl-PL')}
-                          </span>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              );
-            })}
+            <div style={{ overflowX: 'auto', background: 'white', borderRadius: '14px', border: '0.5px solid var(--border)' }}>
+              <table style={{ borderCollapse: 'collapse', fontSize: '12px', minWidth: '100%' }}>
+                <thead>
+                  <tr style={{ background: 'var(--bg)', borderBottom: '0.5px solid var(--border)' }}>
+                    <th style={{ position: 'sticky', left: 0, zIndex: 2, background: 'var(--bg)', padding: '10px 14px', textAlign: 'left', fontSize: '10px', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.4px', minWidth: '170px', borderRight: '0.5px solid var(--border)' }}>Kursant</th>
+                    {kolumny.map((kol, i) => (
+                      <th key={i} style={{ padding: '8px 6px', textAlign: 'center', fontSize: '10px', fontWeight: 700, color: 'var(--text-muted)', minWidth: '54px', borderRight: '0.5px solid var(--border-soft)' }}>
+                        <div style={{ color: 'var(--brand-dark)', fontSize: '11px' }}>Z{kol.zjazd.nr}</div>
+                        <div style={{ fontWeight: 500 }}>{fmtData(kol.data)}</div>
+                        {kol.zjazd.data_dzien2 && <div style={{ fontSize: '9px', color: 'var(--text-muted)', fontWeight: 400 }}>D{kol.dzien}</div>}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {kursanciGrupy.map((k, idx) => (
+                    <tr key={k.id} style={{ borderBottom: idx < kursanciGrupy.length - 1 ? '0.5px solid var(--border-soft)' : 'none' }}>
+                      <td style={{ position: 'sticky', left: 0, zIndex: 1, background: idx % 2 === 0 ? 'white' : '#fdfcfb', padding: '10px 14px', fontWeight: 600, color: 'var(--text)', borderRight: '0.5px solid var(--border)', whiteSpace: 'nowrap' }}>
+                        {k.nazwisko} {k.imie}
+                      </td>
+                      {kolumny.map((kol, i) => {
+                        const key = `${k.user_id}_${kol.zjazd.id}_${kol.dzien}`;
+                        const status = getStatus(k.user_id, kol.zjazd.id, kol.dzien);
+                        const isSaving = saving === key;
+                        return (
+                          <td key={i} onClick={() => !isSaving && cyklStatus(k, kol.zjazd, kol.dzien)}
+                            style={{
+                              textAlign: 'center', padding: '6px', cursor: isSaving ? 'default' : 'pointer',
+                              background: status === 'potwierdzono' ? '#eaf5ec' : status === 'nieobecnosc' ? '#fbeaea' : (idx % 2 === 0 ? 'white' : '#fdfcfb'),
+                              borderRight: '0.5px solid var(--border-soft)', userSelect: 'none' as const,
+                            }}>
+                            <span style={{ fontSize: '15px', fontWeight: 700, color: status === 'potwierdzono' ? '#2e7d32' : status === 'nieobecnosc' ? '#c62828' : '#d8d2cc' }}>
+                              {isSaving ? '…' : status === 'potwierdzono' ? '✓' : status === 'nieobecnosc' ? '✗' : '·'}
+                            </span>
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </>
         )}
       </>
@@ -5621,7 +5610,7 @@ setKomunikat(`Notatka zapisana — ${k.imie} ${k.nazwisko}`);
 
           {/* ZAKŁADKA: Obecności w panelu biura */}
           {aktywnaZakladka === 'obecnosci' && (
-            <AdminObecnosci grupy={grupy} zjazdy={zjazdy} />
+            <AdminObecnosci grupy={grupy} zjazdy={zjazdy} kursanci={kursanci} user={user} />
           )}
 
           {/* ZAKŁADKA: Prowadzący */}
