@@ -2946,165 +2946,206 @@ function urlBase64ToUint8Array(base64String: string) {
     );
   }
   function CzatBiura({ grupy, user }: { grupy: Grupa[]; user: User | null }) {
-      const [wybranaGrupa, setWybranaGrupa] = useState<number | null>(null);
-      const [wiadomosci, setWiadomosci] = useState<Wiadomosc[]>([]);
-      const [nowa, setNowa] = useState('');
-      const [wysylanie, setWysylanie] = useState(false);
-      const doRef = useRef<HTMLDivElement>(null);
-  
-      useEffect(() => {
-        if (!wybranaGrupa) return;
-        setWiadomosci([]);
-        supabase.from('wiadomosci').select('*')
-          .eq('kanal', 'biuro')
-          .or(`grupa_id.eq.${wybranaGrupa},odbiorca_grupa_id.eq.${wybranaGrupa}`)
-          .order('created_at', { ascending: true })
-          .then(({ data }) => {
-            setWiadomosci(data || []);
-            setTimeout(() => doRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
+    const [wybranaGrupa, setWybranaGrupa] = useState<number | null>(null);
+    const [wiadomosci, setWiadomosci] = useState<Wiadomosc[]>([]);
+    const [nowa, setNowa] = useState('');
+    const [wysylanie, setWysylanie] = useState(false);
+    const [nieprzeczytane, setNieprzeczytane] = useState<Set<number>>(new Set());
+    const doRef = useRef<HTMLDivElement>(null);
+
+    // Globalny listener — wykrywa nowe wiadomości ze wszystkich grup
+    useEffect(() => {
+      const channel = supabase.channel('biuro-nowe-all')
+        .on('postgres_changes', {
+          event: 'INSERT', schema: 'public', table: 'wiadomosci',
+          filter: `kanal=eq.biuro`,
+        }, (payload) => {
+          const msg = payload.new as Wiadomosc;
+          const grupaId = msg.odbiorca_grupa_id || msg.grupa_id;
+          if (!grupaId) return;
+          // Jeśli ta grupa jest aktualnie otwarta — nie dodawaj kropki
+          setWybranaGrupa(current => {
+            if (current !== grupaId) {
+              setNieprzeczytane(prev => new Set([...prev, grupaId]));
+            }
+            return current;
           });
-  
-        const channel = supabase.channel(`biuro-czat-${wybranaGrupa}`)
-          .on('postgres_changes', {
-            event: 'INSERT', schema: 'public', table: 'wiadomosci',
-            filter: `odbiorca_grupa_id=eq.${wybranaGrupa}`,
-          }, (payload) => {
-            const msg = payload.new as Wiadomosc;
-            if (msg.kanal !== 'biuro') return;
-            setWiadomosci(prev => [...prev, msg]);
-            setTimeout(() => doRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
-          }).subscribe();
-        return () => { supabase.removeChannel(channel); };
-      }, [wybranaGrupa]);
-  
-      async function wyslij() {
-        if (!nowa.trim() || !wybranaGrupa || !user) return;
-        setWysylanie(true);
-        await supabase.from('wiadomosci').insert([{
-          kanal: 'biuro',
-          grupa_id: null,
-          odbiorca_grupa_id: wybranaGrupa,
-          user_id: user.id,
-          imie: 'Biuro ON-ARCH',
-          tekst: nowa.trim(),
-        }]);
-        setNowa('');
-        setWysylanie(false);
-      }
-  
-      return (
-        <div style={{ display: 'flex', gap: '16px', height: 'calc(100vh - 140px)', minHeight: '500px' }}>
-  
-          {/* Lista grup */}
-          <div style={{ width: '240px', flexShrink: 0, background: 'white', border: '0.5px solid var(--border)', borderRadius: '14px', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-            <div style={{ padding: '12px 16px', borderBottom: '0.5px solid var(--border)', fontSize: '11px', fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
-              Grupy
-            </div>
-            <div style={{ flex: 1, overflowY: 'auto' }}>
-              {grupy.map(g => (
+        }).subscribe();
+      return () => { supabase.removeChannel(channel); };
+    }, []);
+
+    useEffect(() => {
+      if (!wybranaGrupa) return;
+      // Otworzono grupę — skasuj jej kropkę
+      setNieprzeczytane(prev => { const n = new Set(prev); n.delete(wybranaGrupa); return n; });
+      setWiadomosci([]);
+
+      supabase.from('wiadomosci').select('*')
+        .eq('kanal', 'biuro')
+        .or(`grupa_id.eq.${wybranaGrupa},odbiorca_grupa_id.eq.${wybranaGrupa}`)
+        .order('created_at', { ascending: true })
+        .then(({ data }) => {
+          setWiadomosci(data || []);
+          setTimeout(() => doRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
+        });
+
+      const channel = supabase.channel(`biuro-czat-${wybranaGrupa}`)
+        .on('postgres_changes', {
+          event: 'INSERT', schema: 'public', table: 'wiadomosci',
+          filter: `odbiorca_grupa_id=eq.${wybranaGrupa}`,
+        }, (payload) => {
+          const msg = payload.new as Wiadomosc;
+          if (msg.kanal !== 'biuro') return;
+          setWiadomosci(prev => [...prev, msg]);
+          setTimeout(() => doRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
+        }).subscribe();
+      return () => { supabase.removeChannel(channel); };
+    }, [wybranaGrupa]);
+
+    async function wyslij() {
+      if (!nowa.trim() || !wybranaGrupa || !user) return;
+      setWysylanie(true);
+      await supabase.from('wiadomosci').insert([{
+        kanal: 'biuro',
+        grupa_id: wybranaGrupa,
+        odbiorca_grupa_id: wybranaGrupa,
+        user_id: user.id,
+        imie: 'Biuro ON-ARCH',
+        tekst: nowa.trim(),
+      }]);
+      setNowa('');
+      setWysylanie(false);
+    }
+
+    return (
+      <div style={{ display: 'flex', gap: '16px', height: 'calc(100vh - 140px)', minHeight: '500px' }}>
+
+        {/* Lista grup */}
+        <div style={{ width: '240px', flexShrink: 0, background: 'white', border: '0.5px solid var(--border)', borderRadius: '14px', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+          <div style={{ padding: '12px 16px', borderBottom: '0.5px solid var(--border)', fontSize: '11px', fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--text-muted)' }}>
+            Grupy
+          </div>
+          <div style={{ flex: 1, overflowY: 'auto' }}>
+            {grupy.map(g => {
+              const aktywna = wybranaGrupa === g.id;
+              const maNowe = nieprzeczytane.has(g.id);
+              return (
                 <button key={g.id} onClick={() => setWybranaGrupa(g.id)} style={{
                   width: '100%', textAlign: 'left', padding: '12px 16px', border: 'none',
-                  background: wybranaGrupa === g.id ? 'var(--brand-light)' : 'white',
+                  background: aktywna ? 'var(--brand-light)' : 'white',
                   borderBottom: '0.5px solid var(--border-soft)',
                   cursor: 'pointer', fontFamily: 'Lato, sans-serif',
-                  borderLeft: wybranaGrupa === g.id ? '3px solid var(--brand)' : '3px solid transparent',
+                  borderLeft: aktywna ? '3px solid var(--brand)' : maNowe ? '3px solid var(--brand-mid)' : '3px solid transparent',
                   transition: 'all 0.15s',
                 }}>
-                  <div style={{ fontSize: '13px', fontWeight: wybranaGrupa === g.id ? 700 : 500, color: wybranaGrupa === g.id ? 'var(--brand-dark)' : 'var(--text)' }}>
-                    {g.nazwa}
-                  </div>
-                  {g.edycja && <div style={{ fontSize: '10.5px', color: 'var(--text-muted)', marginTop: '1px' }}>{g.edycja}</div>}
-                </button>
-              ))}
-            </div>
-          </div>
-  
-          {/* Panel wiadomości */}
-          <div style={{ flex: 1, background: 'white', border: '0.5px solid var(--border)', borderRadius: '14px', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-            {!wybranaGrupa ? (
-              <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', flexDirection: 'column', gap: '10px' }}>
-                <MessageCircle size={36} strokeWidth={1.2} />
-                <div style={{ fontSize: '14px' }}>Wybierz grupę, aby zobaczyć wiadomości</div>
-              </div>
-            ) : (
-              <>
-                {/* Nagłówek */}
-                <div style={{ padding: '12px 20px', borderBottom: '0.5px solid var(--border)', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <div>
-                    <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text)' }}>
-                      {grupy.find(g => g.id === wybranaGrupa)?.nazwa}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px' }}>
+                    <div style={{ fontSize: '13px', fontWeight: aktywna || maNowe ? 700 : 500, color: aktywna ? 'var(--brand-dark)' : 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {g.nazwa}
                     </div>
-                    <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Kanal: biuro ↔ kursanci</div>
+                    {maNowe && (
+                      <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--brand)', flexShrink: 0 }} />
+                    )}
                   </div>
-                </div>
-  
-                {/* Wiadomości */}
-                <div style={{ flex: 1, overflowY: 'auto', padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                  {wiadomosci.length === 0 && (
-                    <div style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '13px', marginTop: '40px' }}>
-                      Brak wiadomości w tym kanale. Napisz pierwsza!
-                    </div>
+                  {g.edycja && (
+                    <div style={{ fontSize: '10.5px', color: 'var(--text-muted)', marginTop: '2px' }}>{g.edycja}</div>
                   )}
-                  {wiadomosci.map((w, idx) => {
-                    const odBiura = w.imie === 'Biuro ON-ARCH' || w.user_id === user?.id;
-                    const poprzedni = idx > 0 && wiadomosci[idx - 1].user_id === w.user_id;
-                    return (
-                      <div key={w.id} style={{ display: 'flex', flexDirection: 'column', alignItems: odBiura ? 'flex-end' : 'flex-start', marginBottom: idx < wiadomosci.length - 1 && wiadomosci[idx + 1].user_id !== w.user_id ? '8px' : '2px' }}>
-                        {!odBiura && !poprzedni && (
-                          <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginBottom: '2px', paddingLeft: '4px' }}>{w.imie}</div>
-                        )}
-                        <div style={{
-                          maxWidth: '65%', padding: '9px 14px', borderRadius: '16px',
-                          fontSize: '13px', lineHeight: 1.5, wordBreak: 'break-word',
-                          background: odBiura ? 'var(--brand)' : '#f0ece8',
-                          color: odBiura ? 'white' : 'var(--text)',
-                        }}>
-                          {w.tekst}
-                        </div>
-                        {idx === wiadomosci.length - 1 || wiadomosci[idx + 1].user_id !== w.user_id ? (
-                          <div style={{ fontSize: '9.5px', color: 'var(--text-muted)', marginTop: '3px', paddingLeft: odBiura ? '0' : '4px', paddingRight: odBiura ? '4px' : '0' }}>
-                            {new Date(w.created_at).toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' })}
-                            {' · '}
-                            {new Date(w.created_at).toLocaleDateString('pl-PL', { day: 'numeric', month: 'short' })}
-                          </div>
-                        ) : null}
-                      </div>
-                    );
-                  })}
-                  <div ref={doRef} />
-                </div>
-  
-                {/* Input */}
-                <div style={{ padding: '12px 16px', borderTop: '0.5px solid var(--border)', display: 'flex', gap: '8px', alignItems: 'flex-end' }}>
-                  <textarea
-                    value={nowa}
-                    onChange={e => setNowa(e.target.value)}
-                    onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); wyslij(); } }}
-                    placeholder="Napisz wiadomość do grupy..."
-                    rows={2}
-                    style={{
-                      flex: 1, fontSize: '13px', padding: '10px 14px',
-                      border: '0.5px solid var(--border)', borderRadius: '12px',
-                      fontFamily: 'Lato, sans-serif', resize: 'none',
-                      background: 'white', boxSizing: 'border-box',
-                    }}
-                  />
-                  <button onClick={wyslij} disabled={wysylanie || !nowa.trim()} style={{
-                    padding: '10px 18px', background: nowa.trim() ? 'var(--brand)' : '#ddd',
-                    color: 'white', border: 'none', borderRadius: '12px',
-                    cursor: nowa.trim() ? 'pointer' : 'default',
-                    fontFamily: 'Lato, sans-serif', fontSize: '13px', fontWeight: 600,
-                    flexShrink: 0, alignSelf: 'flex-end',
-                  }}>
-                    {wysylanie ? '...' : 'Wyślij'}
-                  </button>
-                </div>
-              </>
-            )}
+                </button>
+              );
+            })}
           </div>
         </div>
-      );
-    }
+
+        {/* Panel wiadomości */}
+        <div style={{ flex: 1, background: 'white', border: '0.5px solid var(--border)', borderRadius: '14px', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+          {!wybranaGrupa ? (
+            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', flexDirection: 'column', gap: '10px' }}>
+              <MessageCircle size={36} strokeWidth={1.2} />
+              <div style={{ fontSize: '14px' }}>Wybierz grupę, aby zobaczyć wiadomości</div>
+              {nieprzeczytane.size > 0 && (
+                <div style={{ fontSize: '12px', color: 'var(--brand)', fontWeight: 600 }}>
+                  {nieprzeczytane.size === 1 ? '1 grupa czeka na odpowiedź' : `${nieprzeczytane.size} grupy czekają na odpowiedź`}
+                </div>
+              )}
+            </div>
+          ) : (
+            <>
+              <div style={{ padding: '12px 20px', borderBottom: '0.5px solid var(--border)', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div>
+                  <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text)' }}>
+                    {grupy.find(g => g.id === wybranaGrupa)?.nazwa}
+                  </div>
+                  <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                    {grupy.find(g => g.id === wybranaGrupa)?.edycja || 'Kanał biuro ↔ kursanci'}
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ flex: 1, overflowY: 'auto', padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                {wiadomosci.length === 0 && (
+                  <div style={{ textAlign: 'center', color: 'var(--text-muted)', fontSize: '13px', marginTop: '40px' }}>
+                    Brak wiadomości w tym kanale. Napisz pierwsza!
+                  </div>
+                )}
+                {wiadomosci.map((w, idx) => {
+                  const odBiura = w.imie === 'Biuro ON-ARCH' || w.user_id === user?.id;
+                  const poprzedni = idx > 0 && wiadomosci[idx - 1].user_id === w.user_id;
+                  const ostatniWSerii = idx === wiadomosci.length - 1 || wiadomosci[idx + 1].user_id !== w.user_id;
+                  return (
+                    <div key={w.id} style={{ display: 'flex', flexDirection: 'column', alignItems: odBiura ? 'flex-end' : 'flex-start', marginBottom: ostatniWSerii ? '8px' : '2px' }}>
+                      {!odBiura && !poprzedni && (
+                        <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginBottom: '2px', paddingLeft: '4px' }}>{w.imie}</div>
+                      )}
+                      <div style={{
+                        maxWidth: '65%', padding: '9px 14px', borderRadius: '16px',
+                        fontSize: '13px', lineHeight: 1.5, wordBreak: 'break-word',
+                        background: odBiura ? 'var(--brand)' : '#f0ece8',
+                        color: odBiura ? 'white' : 'var(--text)',
+                      }}>
+                        {w.tekst}
+                      </div>
+                      {ostatniWSerii && (
+                        <div style={{ fontSize: '9.5px', color: 'var(--text-muted)', marginTop: '3px', paddingLeft: odBiura ? '0' : '4px', paddingRight: odBiura ? '4px' : '0' }}>
+                          {new Date(w.created_at).toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' })}
+                          {' · '}
+                          {new Date(w.created_at).toLocaleDateString('pl-PL', { day: 'numeric', month: 'short' })}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+                <div ref={doRef} />
+              </div>
+
+              <div style={{ padding: '12px 16px', borderTop: '0.5px solid var(--border)', display: 'flex', gap: '8px', alignItems: 'flex-end' }}>
+                <textarea
+                  value={nowa}
+                  onChange={e => setNowa(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); wyslij(); } }}
+                  placeholder="Napisz wiadomość do grupy..."
+                  rows={2}
+                  style={{
+                    flex: 1, fontSize: '13px', padding: '10px 14px',
+                    border: '0.5px solid var(--border)', borderRadius: '12px',
+                    fontFamily: 'Lato, sans-serif', resize: 'none',
+                    background: 'white', boxSizing: 'border-box',
+                  }}
+                />
+                <button onClick={wyslij} disabled={wysylanie || !nowa.trim()} style={{
+                  padding: '10px 18px', background: nowa.trim() ? 'var(--brand)' : '#ddd',
+                  color: 'white', border: 'none', borderRadius: '12px',
+                  cursor: nowa.trim() ? 'pointer' : 'default',
+                  fontFamily: 'Lato, sans-serif', fontSize: '13px', fontWeight: 600,
+                  flexShrink: 0, alignSelf: 'flex-end',
+                }}>
+                  {wysylanie ? '...' : 'Wyślij'}
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    );
+  }
   function PanelBiura({ onWyloguj, user }: { onWyloguj: () => void; user: User | null }) {
     const [aktywnaZakladka, setAktywnaZakladka] = useState('home');
     const [grupy, setGrupy] = useState<Grupa[]>([]);
