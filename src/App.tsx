@@ -2309,212 +2309,148 @@ function urlBase64ToUint8Array(base64String: string) {
   function WeryfikacjaObecnosci({ zjazdy, grupy, kursanci, prowadzacyUserId }: {
     zjazdy: Zjazd[]; grupy: Grupa[]; kursanci: KursantAdmin[]; prowadzacyUserId: string;
   }) {
-    const [wybranyZjazd, setWybranyZjazd] = useState('');
+    const [wybranaGrupa, setWybranaGrupa] = useState('');
     const [obecnosci, setObecnosci] = useState<Obecnosc[]>([]);
     const [ladowanie, setLadowanie] = useState(false);
     const [saving, setSaving] = useState<string | null>(null);
-    const [pozneGodziny, setPozneGodziny] = useState<Record<string, { przybycie: string; wyjscie: string }>>({});
-    const [aktywneGodziny, setAktywneGodziny] = useState<string | null>(null);
-  
-    const zjazd = zjazdy.find(z => z.id === parseInt(wybranyZjazd));
-    const kursanciZjazdu = zjazd ? kursanci.filter(k => k.grupa_id === zjazd.grupa_id).sort((a, b) => a.nazwisko.localeCompare(b.nazwisko)) : [];
-    const maDzien2 = !!zjazd?.data_dzien2;
-  
+
+    const zjazdyGrupy = wybranaGrupa
+      ? zjazdy.filter(z => z.grupa_id === parseInt(wybranaGrupa)).sort((a, b) => (a.data_dzien1 || a.data_zjazdu || '').localeCompare(b.data_dzien1 || b.data_zjazdu || ''))
+      : [];
+    const kursanciGrupy = wybranaGrupa
+      ? kursanci.filter(k => k.grupa_id === parseInt(wybranaGrupa)).sort((a, b) => a.nazwisko.localeCompare(b.nazwisko))
+      : [];
+
+    // Każdy zjazd rozbijamy na kolumny: dzień 1 i (jeśli jest) dzień 2
+    const kolumny = zjazdyGrupy.flatMap(z => {
+      const k: { zjazd: Zjazd; dzien: 1 | 2; data: string | null }[] = [{ zjazd: z, dzien: 1, data: z.data_dzien1 }];
+      if (z.data_dzien2) k.push({ zjazd: z, dzien: 2, data: z.data_dzien2 });
+      return k;
+    });
+
     useEffect(() => {
-      if (!wybranyZjazd) { setObecnosci([]); return; }
+      if (!wybranaGrupa) { setObecnosci([]); return; }
+      const ids = zjazdyGrupy.map(z => z.id);
+      if (ids.length === 0) { setObecnosci([]); return; }
       setLadowanie(true);
-      supabase.from('obecnosci').select('*').eq('zjazd_id', parseInt(wybranyZjazd))
+      supabase.from('obecnosci').select('*').in('zjazd_id', ids)
         .then(({ data }) => { setObecnosci(data || []); setLadowanie(false); });
-    }, [wybranyZjazd]);
-  
-    const pobierzWpis = (userId: string, dzien: 1 | 2) =>
-      obecnosci.find(o => o.user_id === userId && o.dzien === dzien);
-  
-    async function ustawStatus(k: KursantAdmin, dzien: 1 | 2, nowyStatus: 'potwierdzono' | 'nieobecnosc' | 'spozniony') {
-      if (!zjazd) return;
-      const key = `${k.user_id}_${dzien}`;
+    }, [wybranaGrupa]);
+
+    const pobierzWpis = (userId: string, zjazdId: number, dzien: 1 | 2) =>
+      obecnosci.find(o => o.user_id === userId && o.zjazd_id === zjazdId && o.dzien === dzien);
+
+    function getStatus(userId: string, zjazdId: number, dzien: 1 | 2): 'potwierdzono' | 'nieobecnosc' | null {
+      const wpis = pobierzWpis(userId, zjazdId, dzien);
+      if (!wpis) return null;
+      return wpis.status as any;
+    }
+
+    // Klik cyklicznie: brak → obecny → nieobecny → brak
+    async function cyklStatus(k: KursantAdmin, zjazd: Zjazd, dzien: 1 | 2) {
+      const key = `${k.user_id}_${zjazd.id}_${dzien}`;
       setSaving(key);
-      const existing = pobierzWpis(k.user_id, dzien);
-      const godz = pozneGodziny[key] || { przybycie: '', wyjscie: '' };
-  
-      if (existing && existing.status === nowyStatus) {
-        await supabase.from('obecnosci').delete().eq('id', existing.id);
-        setObecnosci(prev => prev.filter(o => o.id !== existing.id));
-      } else if (existing) {
-        const updateData: any = { status: nowyStatus === 'spozniony' ? 'potwierdzono' : nowyStatus, zweryfikowano: true, zweryfikowano_przez: prowadzacyUserId };
-        if (nowyStatus === 'spozniony') { updateData.godzina_przybycia = godz.przybycie || null; updateData.godzina_wyjscia = godz.wyjscie || null; }
-        else { updateData.godzina_przybycia = null; updateData.godzina_wyjscia = null; }
-        await supabase.from('obecnosci').update(updateData).eq('id', existing.id);
-        setObecnosci(prev => prev.map(o => o.id === existing.id ? { ...o, ...updateData } : o));
-      } else {
+      const existing = pobierzWpis(k.user_id, zjazd.id, dzien);
+      const obecny = existing?.status;
+
+      if (!existing) {
+        // brak → obecny
         const insertData: any = {
           zjazd_id: zjazd.id, user_id: k.user_id, grupa_id: zjazd.grupa_id,
           imie: k.imie, nazwisko: k.nazwisko, dzien,
-          status: nowyStatus === 'spozniony' ? 'potwierdzono' : nowyStatus,
-          zweryfikowano: true, zweryfikowano_przez: prowadzacyUserId,
-          godzina_przybycia: nowyStatus === 'spozniony' ? (godz.przybycie || null) : null,
-          godzina_wyjscia: nowyStatus === 'spozniony' ? (godz.wyjscie || null) : null,
+          status: 'potwierdzono', zweryfikowano: true, zweryfikowano_przez: prowadzacyUserId,
         };
         const { data: nowy } = await supabase.from('obecnosci').insert([insertData]).select().single();
         if (nowy) setObecnosci(prev => [...prev, nowy as Obecnosc]);
+      } else if (obecny === 'potwierdzono') {
+        // obecny → nieobecny
+        await supabase.from('obecnosci').update({ status: 'nieobecnosc', zweryfikowano: true, zweryfikowano_przez: prowadzacyUserId }).eq('id', existing.id);
+        setObecnosci(prev => prev.map(o => o.id === existing.id ? { ...o, status: 'nieobecnosc' } : o));
+      } else {
+        // nieobecny → brak (usuń)
+        await supabase.from('obecnosci').delete().eq('id', existing.id);
+        setObecnosci(prev => prev.filter(o => o.id !== existing.id));
       }
       setSaving(null);
     }
-  
-    function getStatusKursanta(userId: string, dzien: 1 | 2): 'potwierdzono' | 'nieobecnosc' | 'spozniony' | null {
-      const wpis = pobierzWpis(userId, dzien);
-      if (!wpis) return null;
-      if (wpis.status === 'potwierdzono' && (wpis.godzina_przybycia || wpis.godzina_wyjscia)) return 'spozniony';
-      return wpis.status as any;
-    }
-  
-    const stats = (dzien: 1 | 2) => {
-      const obecni = obecnosci.filter(o => o.dzien === dzien && o.status === 'potwierdzono').length;
-      const nieobecni = obecnosci.filter(o => o.dzien === dzien && o.status === 'nieobecnosc').length;
-      return { obecni, nieobecni, brak: kursanciZjazdu.length - obecni - nieobecni };
-    };
-  
+
+    const fmtData = (d: string | null) => d ? new Date(d).toLocaleDateString('pl-PL', { day: 'numeric', month: 'numeric' }) : '—';
+
     return (
       <div>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
-          <h2 className="page-title" style={{ margin: 0 }}>Weryfikacja obecności</h2>
-          <select value={wybranyZjazd} onChange={e => setWybranyZjazd(e.target.value)}
-            style={{ fontSize: '13px', padding: '8px 14px', border: '0.5px solid var(--border)', borderRadius: '10px', fontFamily: 'Lato, sans-serif', background: 'white', minWidth: '220px' }}>
-            <option value="">Wybierz zjazd…</option>
-            {zjazdy.map(z => {
-              const g = grupy.find(gr => gr.id === z.grupa_id);
-              return <option key={z.id} value={z.id}>Zjazd {z.nr} · {z.daty} {g ? `(${g.nazwa})` : ''}</option>;
-            })}
+          <h2 className="page-title" style={{ margin: 0 }}>Obecność</h2>
+          <select value={wybranaGrupa} onChange={e => setWybranaGrupa(e.target.value)}
+            style={{ fontSize: '13px', padding: '8px 14px', border: '0.5px solid var(--border)', borderRadius: '10px', fontFamily: 'Lato, sans-serif', background: 'white', minWidth: '240px' }}>
+            <option value="">Wybierz grupę…</option>
+            {grupy.map(g => <option key={g.id} value={g.id}>{g.nazwa}{g.edycja ? ` · ${g.edycja}` : ''}</option>)}
           </select>
         </div>
-  
-        {!wybranyZjazd && (
-          <div style={{ textAlign: 'center', padding: '60px 24px', color: 'var(--text-muted)', fontFamily: 'Playfair Display, serif', fontStyle: 'normal', fontSize: '18px' }}>
-            Wybierz zjazd aby zobaczyć listę kursantów
+
+        {!wybranaGrupa && (
+          <div style={{ textAlign: 'center', padding: '60px 24px', color: 'var(--text-muted)', fontFamily: 'Playfair Display, serif', fontSize: '18px' }}>
+            Wybierz grupę aby zobaczyć siatkę obecności
           </div>
         )}
-  
-        {wybranyZjazd && zjazd && (
+
+        {wybranaGrupa && ladowanie && <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>Ładowanie...</div>}
+
+        {wybranaGrupa && !ladowanie && (kursanciGrupy.length === 0 || kolumny.length === 0) && (
+          <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)', fontSize: '13px' }}>
+            {kursanciGrupy.length === 0 ? 'Brak kursantów w tej grupie.' : 'Brak zjazdów w tej grupie.'}
+          </div>
+        )}
+
+        {wybranaGrupa && !ladowanie && kursanciGrupy.length > 0 && kolumny.length > 0 && (
           <>
-            {/* Info o zjeździe */}
-            <div style={{ background: 'var(--brand-light)', borderRadius: '12px', padding: '12px 16px', marginBottom: '16px', display: 'flex', gap: '24px', flexWrap: 'wrap' }}>
-              <div><span style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.3px', fontWeight: 600 }}>Zjazd</span><div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--brand-dark)' }}>{zjazd.nr} · {zjazd.daty}</div></div>
-              {zjazd.data_dzien1 && <div><span style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.3px', fontWeight: 600 }}>D1</span><div style={{ fontSize: '13px', color: 'var(--text)' }}>{new Date(zjazd.data_dzien1).toLocaleDateString('pl-PL', { weekday: 'long', day: 'numeric', month: 'long' })}{zjazd.godzina_start_d1 ? ` · ${zjazd.godzina_start_d1}–${zjazd.godzina_end_d1}` : ''}</div></div>}
-              {zjazd.data_dzien2 && <div><span style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.3px', fontWeight: 600 }}>D2</span><div style={{ fontSize: '13px', color: 'var(--text)' }}>{new Date(zjazd.data_dzien2).toLocaleDateString('pl-PL', { weekday: 'long', day: 'numeric', month: 'long' })}{zjazd.godzina_start_d2 ? ` · ${zjazd.godzina_start_d2}–${zjazd.godzina_end_d2}` : ''}</div></div>}
+            <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '10px' }}>
+              Kliknij komórkę aby zmienić: <span style={{ color: '#2e7d32', fontWeight: 600 }}>✓ obecny</span> → <span style={{ color: '#c62828', fontWeight: 600 }}>✗ nieobecny</span> → puste
             </div>
-  
-            {/* Statystyki */}
-            {!ladowanie && kursanciZjazdu.length > 0 && (
-              <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', flexWrap: 'wrap' }}>
-                {[1, maDzien2 ? 2 : null].filter(Boolean).map(d => {
-                  const s = stats(d as 1 | 2);
-                  return (
-                    <div key={d} style={{ background: 'white', border: '0.5px solid var(--border)', borderRadius: '10px', padding: '8px 14px', display: 'flex', gap: '14px', alignItems: 'center' }}>
-                      <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 600 }}>D{d}</span>
-                      <span style={{ fontSize: '12px', color: '#2e7d32', fontWeight: 600 }}>✓ {s.obecni}</span>
-                      <span style={{ fontSize: '12px', color: '#c62828', fontWeight: 600 }}>✗ {s.nieobecni}</span>
-                      <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>— {s.brak}</span>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-  
-            {ladowanie && <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>Ładowanie...</div>}
-  
-            {!ladowanie && kursanciZjazdu.length === 0 && (
-              <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)', fontSize: '13px' }}>Brak kursantów w tej grupie.</div>
-            )}
-  
-            {!ladowanie && kursanciZjazdu.length > 0 && (
-              <div style={{ background: 'white', borderRadius: '14px', border: '0.5px solid var(--border)', overflow: 'hidden' }}>
-                {/* Nagłówek tabeli */}
-                <div style={{ display: 'grid', gridTemplateColumns: maDzien2 ? '1fr 280px 280px' : '1fr 280px', gap: 0, background: 'var(--bg)', borderBottom: '0.5px solid var(--border)', padding: '10px 16px' }}>
-                  <div style={{ fontSize: '10px', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.4px' }}>Kursant</div>
-                  <div style={{ fontSize: '10px', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.4px', textAlign: 'center' }}>
-                    Dzień 1 {zjazd.data_dzien1 ? `· ${new Date(zjazd.data_dzien1).toLocaleDateString('pl-PL', { day: 'numeric', month: 'short' })}` : ''}
-                  </div>
-                  {maDzien2 && <div style={{ fontSize: '10px', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.4px', textAlign: 'center' }}>
-                    Dzień 2 {zjazd.data_dzien2 ? `· ${new Date(zjazd.data_dzien2).toLocaleDateString('pl-PL', { day: 'numeric', month: 'short' })}` : ''}
-                  </div>}
-                </div>
-  
-                {/* Wiersze kursantów */}
-                {kursanciZjazdu.map((k, idx) => (
-                  <div key={k.id} style={{ borderBottom: idx < kursanciZjazdu.length - 1 ? '0.5px solid var(--border-soft)' : 'none' }}>
-                    <div style={{ display: 'grid', gridTemplateColumns: maDzien2 ? '1fr 280px 280px' : '1fr 280px', gap: 0, padding: '12px 16px', alignItems: 'center', background: idx % 2 === 0 ? 'white' : '#fdfcfb' }}>
-                      {/* Imię */}
-                      <div>
-                        <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text)' }}>{k.imie} {k.nazwisko}</div>
-                        {k.email && <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{k.email}</div>}
-                      </div>
-  
-                      {/* D1 */}
-                      {([1, maDzien2 ? 2 : null].filter(Boolean) as (1|2)[]).map(dzien => {
-                        const key = `${k.user_id}_${dzien}`;
-                        const status = getStatusKursanta(k.user_id, dzien);
+            <div style={{ overflowX: 'auto', background: 'white', borderRadius: '14px', border: '0.5px solid var(--border)' }}>
+              <table style={{ borderCollapse: 'collapse', fontSize: '12px', minWidth: '100%' }}>
+                <thead>
+                  <tr style={{ background: 'var(--bg)', borderBottom: '0.5px solid var(--border)' }}>
+                    <th style={{ position: 'sticky', left: 0, zIndex: 2, background: 'var(--bg)', padding: '10px 14px', textAlign: 'left', fontSize: '10px', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.4px', minWidth: '170px', borderRight: '0.5px solid var(--border)' }}>
+                      Kursant
+                    </th>
+                    {kolumny.map((kol, i) => (
+                      <th key={i} style={{ padding: '8px 6px', textAlign: 'center', fontSize: '10px', fontWeight: 700, color: 'var(--text-muted)', minWidth: '54px', borderRight: '0.5px solid var(--border-soft)' }}>
+                        <div style={{ color: 'var(--brand-dark)', fontSize: '11px' }}>Z{kol.zjazd.nr}</div>
+                        <div style={{ fontWeight: 500 }}>{fmtData(kol.data)}</div>
+                        {kol.zjazd.data_dzien2 && <div style={{ fontSize: '9px', color: 'var(--text-muted)', fontWeight: 400 }}>D{kol.dzien}</div>}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {kursanciGrupy.map((k, idx) => (
+                    <tr key={k.id} style={{ borderBottom: idx < kursanciGrupy.length - 1 ? '0.5px solid var(--border-soft)' : 'none' }}>
+                      <td style={{ position: 'sticky', left: 0, zIndex: 1, background: idx % 2 === 0 ? 'white' : '#fdfcfb', padding: '10px 14px', fontWeight: 600, color: 'var(--text)', borderRight: '0.5px solid var(--border)', whiteSpace: 'nowrap' }}>
+                        {k.nazwisko} {k.imie}
+                      </td>
+                      {kolumny.map((kol, i) => {
+                        const key = `${k.user_id}_${kol.zjazd.id}_${kol.dzien}`;
+                        const status = getStatus(k.user_id, kol.zjazd.id, kol.dzien);
                         const isSaving = saving === key;
-                        const wpis = pobierzWpis(k.user_id, dzien);
-  
                         return (
-                          <div key={dzien} style={{ display: 'flex', flexDirection: 'column', gap: '6px', alignItems: 'center' }}>
-                            <div style={{ display: 'flex', gap: '6px' }}>
-                              {/* Obecny */}
-                              <button onClick={() => ustawStatus(k, dzien, 'potwierdzono')} disabled={isSaving}
-                                style={{ padding: '6px 14px', borderRadius: '8px', border: 'none', cursor: isSaving ? 'default' : 'pointer', fontFamily: 'Lato, sans-serif', fontSize: '12px', fontWeight: 600, transition: 'all 0.15s',
-                                  background: status === 'potwierdzono' ? '#2e7d32' : '#f0faf4',
-                                  color: status === 'potwierdzono' ? 'white' : '#2e7d32',
-                                  opacity: isSaving ? 0.6 : 1,
-                                }}>
-                                {isSaving && status !== 'potwierdzono' ? '…' : '✓ Obecny'}
-                              </button>
-                              {/* Nieobecny */}
-                              <button onClick={() => ustawStatus(k, dzien, 'nieobecnosc')} disabled={isSaving}
-                                style={{ padding: '6px 14px', borderRadius: '8px', border: 'none', cursor: isSaving ? 'default' : 'pointer', fontFamily: 'Lato, sans-serif', fontSize: '12px', fontWeight: 600, transition: 'all 0.15s',
-                                  background: status === 'nieobecnosc' ? '#c62828' : '#fff5f5',
-                                  color: status === 'nieobecnosc' ? 'white' : '#c62828',
-                                  opacity: isSaving ? 0.6 : 1,
-                                }}>
-                                {isSaving && status !== 'nieobecnosc' ? '…' : '✗ Nieobecny'}
-                              </button>
-                              {/* Spóźniony */}
-                              <button onClick={() => { ustawStatus(k, dzien, 'spozniony'); setAktywneGodziny(aktywneGodziny === key ? null : key); }} disabled={isSaving}
-                                style={{ padding: '6px 10px', borderRadius: '8px', border: 'none', cursor: isSaving ? 'default' : 'pointer', fontFamily: 'Lato, sans-serif', fontSize: '12px', fontWeight: 600, transition: 'all 0.15s',
-                                  background: status === 'spozniony' ? '#e65100' : '#fff8f0',
-                                  color: status === 'spozniony' ? 'white' : '#e65100',
-                                  opacity: isSaving ? 0.6 : 1,
-                                }}>
-                                ⏰
-                              </button>
-                            </div>
-  
-                            {/* Godziny spóźnienia */}
-                            {(aktywneGodziny === key || status === 'spozniony') && (
-                              <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-                                <input type="time" placeholder="przybycie"
-                                  defaultValue={wpis?.godzina_przybycia || ''}
-                                  onChange={e => setPozneGodziny(prev => ({ ...prev, [key]: { ...prev[key], przybycie: e.target.value } }))}
-                                  style={{ fontSize: '11px', padding: '4px 8px', border: '0.5px solid var(--border)', borderRadius: '7px', width: '100px' }} />
-                                <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>–</span>
-                                <input type="time" placeholder="wyjście"
-                                  defaultValue={wpis?.godzina_wyjscia || ''}
-                                  onChange={e => setPozneGodziny(prev => ({ ...prev, [key]: { ...prev[key], wyjscie: e.target.value } }))}
-                                  style={{ fontSize: '11px', padding: '4px 8px', border: '0.5px solid var(--border)', borderRadius: '7px', width: '100px' }} />
-                              </div>
-                            )}
-  
-                            {/* Powód nieobecności */}
-                            {status === 'nieobecnosc' && wpis?.powod_nieobecnosci && (
-                              <div style={{ fontSize: '10px', color: 'var(--text-muted)', fontStyle: 'normal' }}>{wpis.powod_nieobecnosci}</div>
-                            )}
-                          </div>
+                          <td key={i} onClick={() => !isSaving && cyklStatus(k, kol.zjazd, kol.dzien)}
+                            style={{
+                              textAlign: 'center', padding: '6px', cursor: isSaving ? 'default' : 'pointer',
+                              background: status === 'potwierdzono' ? '#eaf5ec' : status === 'nieobecnosc' ? '#fbeaea' : (idx % 2 === 0 ? 'white' : '#fdfcfb'),
+                              borderRight: '0.5px solid var(--border-soft)',
+                              userSelect: 'none' as const,
+                            }}>
+                            <span style={{ fontSize: '15px', fontWeight: 700, color: status === 'potwierdzono' ? '#2e7d32' : status === 'nieobecnosc' ? '#c62828' : '#d8d2cc' }}>
+                              {isSaving ? '…' : status === 'potwierdzono' ? '✓' : status === 'nieobecnosc' ? '✗' : '·'}
+                            </span>
+                          </td>
                         );
                       })}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </>
         )}
       </div>
