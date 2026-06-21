@@ -1602,17 +1602,27 @@ function urlBase64ToUint8Array(base64String: string) {
         <div style={{ marginBottom: '14px' }}>
           <div style={{ fontSize: '10.5px', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '8px' }}>Temat</div>
           <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', paddingBottom: '4px', scrollbarWidth: 'none' }}>
-            {tematy.map(z => (
-              <button key={z.id} onClick={() => setWybranyTemat(z.tematy)} style={{
-                flexShrink: 0, padding: '7px 14px', borderRadius: '20px', cursor: 'pointer',
-                fontFamily: 'Lato, sans-serif', fontSize: '12px', fontWeight: 600,
-                background: wybranyTemat === z.tematy ? '#1C2B3A' : 'white',
-                color: wybranyTemat === z.tematy ? 'white' : 'var(--text-muted)',
-                border: wybranyTemat === z.tematy ? 'none' : '0.5px solid var(--border)',
-              }}>
-                {z.tematy}
-              </button>
-            ))}
+          {tematy.map((z, idx) => {
+              const KOLORY = [
+                { tlo: '#1C2B3A', border: '#1C2B3A' },
+                { tlo: '#AD6B68', border: '#AD6B68' },
+                { tlo: '#C9A84C', border: '#C9A84C' },
+                { tlo: '#3E7C5B', border: '#3E7C5B' },
+                { tlo: '#7B5EA7', border: '#7B5EA7' },
+              ];
+              const k = KOLORY[idx % KOLORY.length];
+              return (
+                <button key={z.id} onClick={() => setWybranyTemat(z.tematy)} style={{
+                  flexShrink: 0, padding: '7px 14px', borderRadius: '20px', cursor: 'pointer',
+                  fontFamily: 'Lato, sans-serif', fontSize: '12px', fontWeight: 600,
+                  background: wybranyTemat === z.tematy ? k.tlo : 'white',
+                  color: wybranyTemat === z.tematy ? 'white' : k.tlo,
+                  border: `0.5px solid ${k.border}`,
+                }}>
+                  {z.tematy}
+                </button>
+              );
+            })}
           </div>
         </div>
 
