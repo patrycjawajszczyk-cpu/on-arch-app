@@ -3535,6 +3535,216 @@ function urlBase64ToUint8Array(base64String: string) {
       </div>
     );
   }
+  function TablicaPytanBiuro({ grupy, zjazdy, user }: { grupy: Grupa[]; zjazdy: Zjazd[]; user: User | null }) {
+    const [wybranaGrupa, setWybranaGrupa] = useState<number | null>(null);
+    const [pytania, setPytania] = useState<PytanieDoZjazdu[]>([]);
+    const [ladowanie, setLadowanie] = useState(false);
+    const [komentarze, setKomentarze] = useState<Record<number, string>>({});
+    const [rozwinietePytanie, setRozwinietePytanie] = useState<number | null>(null);
+
+    // Grupy aktywne i zakończone
+    const grupyAktywne = grupy.filter(g =>
+      zjazdy.some(z => z.grupa_id === g.id && z.status === 'nadchodzacy')
+    );
+    const grupyZakonczone = grupy.filter(g =>
+      !zjazdy.some(z => z.grupa_id === g.id && z.status === 'nadchodzacy')
+    );
+
+    const zjazdyGrupy = wybranaGrupa
+      ? zjazdy.filter(z => z.grupa_id === wybranaGrupa && z.tematy)
+        .sort((a, b) => (a.data_dzien1 || '').localeCompare(b.data_dzien1 || ''))
+      : [];
+    const tematy = [...new Map(zjazdyGrupy.map(z => [z.tematy, z])).values()];
+
+    useEffect(() => {
+      if (!wybranaGrupa) { setPytania([]); return; }
+      setLadowanie(true);
+      supabase.from('pytania_do_zjazdu').select('*')
+        .eq('grupa_id', wybranaGrupa)
+        .order('created_at', { ascending: true })
+        .then(({ data }) => {
+          setPytania(data || []);
+          const km: Record<number, string> = {};
+          (data || []).forEach(p => { if (p.komentarz_prowadzacego) km[p.id] = p.komentarz_prowadzacego; });
+          setKomentarze(km);
+          setLadowanie(false);
+        });
+
+      const channel = supabase.channel(`tablica-biuro-${wybranaGrupa}`)
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'pytania_do_zjazdu',
+          filter: `grupa_id=eq.${wybranaGrupa}` }, () => {
+          supabase.from('pytania_do_zjazdu').select('*')
+            .eq('grupa_id', wybranaGrupa)
+            .order('created_at', { ascending: true })
+            .then(({ data }) => { setPytania(data || []); });
+        }).subscribe();
+      return () => { supabase.removeChannel(channel); };
+    }, [wybranaGrupa]);
+
+    async function toggleOmowione(p: PytanieDoZjazdu) {
+      await supabase.from('pytania_do_zjazdu').update({ omowione: !p.omowione }).eq('id', p.id);
+      setPytania(prev => prev.map(x => x.id === p.id ? { ...x, omowione: !p.omowione } : x));
+    }
+
+    async function zapiszKomentarz(p: PytanieDoZjazdu) {
+      const km = komentarze[p.id] ?? '';
+      await supabase.from('pytania_do_zjazdu').update({ komentarz_prowadzacego: km || null }).eq('id', p.id);
+    }
+
+    return (
+      <div>
+        {/* Wybór grupy */}
+        <div style={{ marginBottom: '20px' }}>
+          <select value={wybranaGrupa || ''} onChange={e => { setWybranaGrupa(parseInt(e.target.value) || null); setRozwinietePytanie(null); }}
+            style={{ fontSize: '13px', padding: '8px 14px', border: '0.5px solid var(--border)', borderRadius: '10px', fontFamily: 'Lato, sans-serif', background: 'white', minWidth: '260px' }}>
+            <option value="">Wybierz grupę…</option>
+            {grupyAktywne.length > 0 && (
+              <optgroup label="Aktywne">
+                {grupyAktywne.map(g => <option key={g.id} value={g.id}>{g.nazwa}{g.edycja ? ` · ${g.edycja}` : ''}</option>)}
+              </optgroup>
+            )}
+            {grupyZakonczone.length > 0 && (
+              <optgroup label="Zakończone">
+                {grupyZakonczone.map(g => <option key={g.id} value={g.id} style={{ color: '#9aa3ac' }}>{g.nazwa}{g.edycja ? ` · ${g.edycja}` : ''}</option>)}
+              </optgroup>
+            )}
+          </select>
+        </div>
+
+        {!wybranaGrupa && (
+          <div style={{ textAlign: 'center', padding: '60px 24px', color: 'var(--text-muted)', fontFamily: 'Playfair Display, serif', fontSize: '18px' }}>
+            Wybierz grupę aby zobaczyć tablicę pytań
+          </div>
+        )}
+
+        {wybranaGrupa && ladowanie && (
+          <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>Ładowanie...</div>
+        )}
+
+        {wybranaGrupa && !ladowanie && tematy.length === 0 && (
+          <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)', fontSize: '13px' }}>
+            Ta grupa nie ma jeszcze zjazdów z tematami.
+          </div>
+        )}
+
+        {/* Tablica */}
+        {wybranaGrupa && !ladowanie && tematy.length > 0 && (
+          <div style={{ display: 'flex', gap: '14px', overflowX: 'auto', paddingBottom: '16px', alignItems: 'flex-start' }}>
+            {tematy.map(z => {
+              const tematPytania = pytania.filter(p => p.temat === z.tematy);
+              const nieomowione = tematPytania.filter(p => !p.omowione);
+              const omowione = tematPytania.filter(p => p.omowione);
+
+              return (
+                <div key={z.id} style={{
+                  minWidth: '280px', maxWidth: '300px', flexShrink: 0,
+                  background: '#f4f0ed', borderRadius: '16px', padding: '14px',
+                  display: 'flex', flexDirection: 'column', gap: '8px',
+                }}>
+                  <div style={{ marginBottom: '4px' }}>
+                    <div style={{ fontSize: '13px', fontWeight: 700, color: '#1C2B3A', lineHeight: 1.35, marginBottom: '4px' }}>{z.tematy}</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>Zjazd {z.nr}</span>
+                      {nieomowione.length > 0 && (
+                        <span style={{ fontSize: '10px', fontWeight: 700, background: 'var(--brand)', color: 'white', padding: '1px 7px', borderRadius: '999px' }}>
+                          {nieomowione.length}
+                        </span>
+                      )}
+                      {omowione.length > 0 && (
+                        <span style={{ fontSize: '10px', color: '#2e7d32', fontWeight: 600 }}>✓ {omowione.length}</span>
+                      )}
+                    </div>
+                  </div>
+
+                  {nieomowione.map(p => (
+                    <div key={p.id}
+                      onClick={() => setRozwinietePytanie(rozwinietePytanie === p.id ? null : p.id)}
+                      style={{
+                        background: 'white', borderRadius: '12px', padding: '11px 13px',
+                        border: '0.5px solid var(--border)', cursor: 'pointer',
+                        boxShadow: '0 1px 4px rgba(0,0,0,0.06)',
+                        borderLeft: p.rola === 'prowadzacy' ? '3px solid #1C2B3A' : '3px solid var(--brand)',
+                      }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '7px', marginBottom: rozwinietePytanie === p.id ? '8px' : '0' }}>
+                        <div style={{
+                          width: '22px', height: '22px', borderRadius: '50%', flexShrink: 0,
+                          background: p.rola === 'prowadzacy' ? '#1C2B3A' : 'var(--brand-light)',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          fontSize: '10px', fontWeight: 700,
+                          color: p.rola === 'prowadzacy' ? 'white' : 'var(--brand-dark)',
+                        }}>
+                          {p.autor_imie?.[0]?.toUpperCase()}
+                        </div>
+                        <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)' }}>{p.autor_imie}</span>
+                        <span style={{ fontSize: '10px', color: '#b0b8c1', marginLeft: 'auto' }}>
+                          {new Date(p.created_at).toLocaleDateString('pl-PL', { day: 'numeric', month: 'short' })}
+                        </span>
+                      </div>
+                      <div style={{ fontSize: '13px', color: 'var(--text)', lineHeight: 1.55 }}>{p.tresc}</div>
+
+                      {rozwinietePytanie === p.id && (
+                        <div style={{ marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '8px' }} onClick={e => e.stopPropagation()}>
+                          <input type="text"
+                            value={komentarze[p.id] ?? (p.komentarz_prowadzacego || '')}
+                            onChange={e => setKomentarze(prev => ({ ...prev, [p.id]: e.target.value }))}
+                            onBlur={() => zapiszKomentarz(p)}
+                            placeholder="Dodaj komentarz…"
+                            style={{ fontSize: '12px', padding: '6px 9px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Lato, sans-serif', width: '100%', boxSizing: 'border-box' }}
+                          />
+                          <button onClick={() => toggleOmowione(p)} style={{
+                            fontSize: '11px', fontWeight: 700, padding: '6px 12px', border: 'none',
+                            borderRadius: '8px', cursor: 'pointer', fontFamily: 'Lato, sans-serif',
+                            background: '#eaf5ec', color: '#2e7d32', width: '100%',
+                          }}>
+                            ✓ Oznacz jako omówione
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+
+                  {omowione.length > 0 && (
+                    <div style={{ borderTop: nieomowione.length > 0 ? '0.5px solid var(--border)' : 'none', paddingTop: nieomowione.length > 0 ? '8px' : '0' }}>
+                      {omowione.map(p => (
+                        <div key={p.id}
+                          onClick={() => setRozwinietePytanie(rozwinietePytanie === p.id ? null : p.id)}
+                          style={{
+                            background: 'rgba(255,255,255,0.5)', borderRadius: '10px', padding: '9px 11px',
+                            border: '0.5px solid var(--border-soft)', cursor: 'pointer', marginBottom: '6px', opacity: 0.65,
+                          }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <span style={{ fontSize: '10px', color: '#2e7d32', fontWeight: 700 }}>✓</span>
+                            <span style={{ fontSize: '12px', color: 'var(--text-muted)', textDecoration: 'line-through', flex: 1 }}>{p.tresc}</span>
+                          </div>
+                          {rozwinietePytanie === p.id && (
+                            <div style={{ marginTop: '8px' }} onClick={e => e.stopPropagation()}>
+                              <button onClick={() => toggleOmowione(p)} style={{
+                                fontSize: '11px', fontWeight: 700, padding: '5px 12px', border: 'none',
+                                borderRadius: '8px', cursor: 'pointer', fontFamily: 'Lato, sans-serif',
+                                background: 'var(--brand-light)', color: 'var(--brand-dark)', width: '100%',
+                              }}>
+                                ↩ Cofnij omówione
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {tematPytania.length === 0 && (
+                    <div style={{ textAlign: 'center', padding: '16px 8px', color: 'var(--text-muted)', fontSize: '12px' }}>
+                      Brak pytań
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    );
+  }
   function PanelBiura({ onWyloguj, user }: { onWyloguj: () => void; user: User | null }) {
     const [aktywnaZakladka, setAktywnaZakladka] = useState('home');
     const [grupy, setGrupy] = useState<Grupa[]>([]);
@@ -4087,6 +4297,7 @@ const [zwinieteZadania, setZwinieteZadania] = useState<Set<number>>(() => new Se
               { id: 'materialy', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>, label: 'Materiały' },
               { id: 'aplikacje', icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>, label: 'Aplikacje' },
               { id: 'czat',      icon: <MessageCircle size={18}/>, label: 'Czat z grupami' },
+              { id: 'pytania',   icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round"><circle cx="12" cy="12" r="9"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 2.5-3 4"/><path d="M12 17.5h.01"/></svg>, label: 'Tablica pytań' },
               { id: 'backup',    icon: <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>, label: 'Backup' },
             ].map(item => (
               <button key={item.id}
@@ -4144,6 +4355,7 @@ const [zwinieteZadania, setZwinieteZadania] = useState<Set<number>>(() => new Se
               {aktywnaZakladka === 'backup' && 'Backup'}
               {aktywnaZakladka === 'pytania' && 'Pytania do zajęć'}
               {aktywnaZakladka === 'czat' && 'Czat z grupami'}
+              {aktywnaZakladka === 'pytania' && 'Tablica pytań'}
               
             </div>
             {pokazBackupAlert && (
@@ -4180,6 +4392,7 @@ const [zwinieteZadania, setZwinieteZadania] = useState<Set<number>>(() => new Se
                     { id: 'materialy',  label: 'Materiały', opis: 'Lista produktów',  icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg> },
                     { id: 'aplikacje',  label: 'Aplikacje',  opis: 'Portale i sklepy partnerskie', icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg> },
                     { id: 'czat',       label: 'Czat z grupami', opis: 'Pisz do kursantów', icon: <MessageCircle size={22}/> },
+                    { id: 'pytania',    label: 'Tablica pytań', opis: 'Pytania do zajęć', icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round"><circle cx="12" cy="12" r="9"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 2.5-3 4"/><path d="M12 17.5h.01"/></svg> },
                     { id: 'backup',     label: 'Backup',     opis: 'Pobierz kopię bazy',                  icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> },
                   ].map(k => (
                     <div key={k.id} onClick={() => setAktywnaZakladka(k.id)}
@@ -4200,6 +4413,9 @@ const [zwinieteZadania, setZwinieteZadania] = useState<Set<number>>(() => new Se
             )}
 {aktywnaZakladka === 'czat' && (
             <CzatBiura grupy={grupy} user={user} zjazdy={zjazdy} />
+          )}
+          {aktywnaZakladka === 'pytania' && (
+            <TablicaPytanBiuro grupy={grupy} zjazdy={zjazdy} user={user} />
           )}
           {aktywnaZakladka === 'ogloszenia' && (
             <>
