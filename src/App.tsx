@@ -2373,6 +2373,7 @@ function urlBase64ToUint8Array(base64String: string) {
                   {[
                     { id: 'zadania',    label: 'Zadania',    opis: `${zadania.length} zadań · ${odpowiedziZadan.length} odpowiedzi`,   icon: <BookOpen size={22}/> },
                     { id: 'zjazdy',     label: 'Zajęcia',    opis: `${zjazdy.filter(z => z.status === 'nadchodzacy').length} nadchodzących`,  icon: <Calendar size={22}/> },
+                    { id: 'pytania',    label: 'Tablica pytań', opis: 'Pytania do zajęć',                                              icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round"><circle cx="12" cy="12" r="9"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 2.5-3 4"/><path d="M12 17.5h.01"/></svg> },
                     { id: 'obecnosc',   label: 'Obecność',   opis: 'Weryfikacja list',                                                  icon: <CheckSquare size={22}/> },
                     { id: 'kursanci',   label: 'Kursanci',   opis: `${kursanci.length} osób`,                                           icon: <User size={22}/> },
                     { id: 'ogloszenia', label: 'Ogłoszenia', opis: `${ogloszenia.length} ogłoszeń`,                                     icon: <Bell size={22}/> },
@@ -2715,6 +2716,10 @@ function urlBase64ToUint8Array(base64String: string) {
           <button className={`nav-item ${aktywnaZakladka === 'home' ? 'active' : ''}`} onClick={() => setAktywnaZakladka('home')}><Home size={20} /><span className="nav-label">Pulpit</span></button>
             <button className={`nav-item ${aktywnaZakladka === 'zadania' ? 'active' : ''}`} onClick={() => setAktywnaZakladka('zadania')}><BookOpen size={20} /><span className="nav-label">Zadania</span></button>
             <button className={`nav-item ${aktywnaZakladka === 'zjazdy' ? 'active' : ''}`} onClick={() => setAktywnaZakladka('zjazdy')}><Calendar size={20} /><span className="nav-label">Zajęcia</span></button>
+            <button className={`nav-item ${aktywnaZakladka === 'pytania' ? 'active' : ''}`} onClick={() => setAktywnaZakladka('pytania')}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round"><circle cx="12" cy="12" r="9"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 2.5-3 4"/><path d="M12 17.5h.01"/></svg>
+              <span className="nav-label">Pytania</span>
+            </button>
             <button className={`nav-item ${aktywnaZakladka === 'obecnosc' ? 'active' : ''}`} onClick={() => setAktywnaZakladka('obecnosc')}><CheckSquare size={20} /><span className="nav-label">Obecność</span></button>
             <button className={`nav-item ${aktywnaZakladka === 'kursanci' ? 'active' : ''}`} onClick={() => setAktywnaZakladka('kursanci')}><User size={20} /><span className="nav-label">Kursanci</span></button>
             <button className={`nav-item ${aktywnaZakladka === 'ogloszenia' ? 'active' : ''}`} onClick={() => setAktywnaZakladka('ogloszenia')}><Bell size={20} /><span className="nav-label">Ogłoszenia</span></button>
