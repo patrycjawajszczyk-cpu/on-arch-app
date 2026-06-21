@@ -1693,7 +1693,7 @@ function urlBase64ToUint8Array(base64String: string) {
       </div>
     );
   }
-  function PytaniaProwadzacy({ user, zjazdy, grupy, kursant }: { user: User; zjazdy: Zjazd[]; grupy: Grupa[]; kursant: Kursant | null }) {
+  function PytaniaProwadzacy({ user, zjazdy, grupy, kursant, prowadzacyImie }: { user: User; zjazdy: Zjazd[]; grupy: Grupa[]; kursant: Kursant | null; prowadzacyImie: string }) {
     const [wybranaGrupa, setWybranaGrupa] = useState<number | null>(null);
     const [pytania, setPytania] = useState<PytanieDoZjazdu[]>([]);
     const [ladowanie, setLadowanie] = useState(false);
@@ -1743,7 +1743,7 @@ function urlBase64ToUint8Array(base64String: string) {
       const km = komentarze[p.id] ?? '';
       await supabase.from('pytania_do_zjazdu').update({
         komentarz_prowadzacego: km || null,
-        komentarz_autor: km ? kursant?.imie || null : null,
+        komentarz_autor: km ? prowadzacyImie || null : null,
       }).eq('id', p.id);
     }
     async function toggleOmowione(p: PytanieDoZjazdu) {
@@ -2717,7 +2717,7 @@ function urlBase64ToUint8Array(base64String: string) {
                   <WeryfikacjaObecnosci zjazdy={zjazdy} grupy={mojeGrupy} kursanci={kursanci} prowadzacyUserId={user.id} />
                 )}
                 {aktywnaZakladka === 'pytania' && (
-                  <PytaniaProwadzacy user={user} zjazdy={zjazdy} grupy={mojeGrupy} kursant={kursant} />
+                  <PytaniaProwadzacy user={user} zjazdy={zjazdy} grupy={mojeGrupy} kursant={kursant} prowadzacyImie={mojeImieNazwisko} />
                 )}
               </>
             )}
