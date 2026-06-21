@@ -131,6 +131,7 @@ function urlBase64ToUint8Array(base64String: string) {
     tresc: string;
     omowione: boolean;
     komentarz_prowadzacego: string | null;
+    komentarz_autor: string | null;
     temat: string | null;
   };
 
@@ -1740,7 +1741,10 @@ function urlBase64ToUint8Array(base64String: string) {
     }, [wybranaGrupa]);
     async function zapiszKomentarz(p: PytanieDoZjazdu) {
       const km = komentarze[p.id] ?? '';
-      await supabase.from('pytania_do_zjazdu').update({ komentarz_prowadzacego: km || null }).eq('id', p.id);
+      await supabase.from('pytania_do_zjazdu').update({
+        komentarz_prowadzacego: km || null,
+        komentarz_autor: km ? kursant?.imie || null : null,
+      }).eq('id', p.id);
     }
     async function toggleOmowione(p: PytanieDoZjazdu) {
       await supabase.from('pytania_do_zjazdu').update({ omowione: !p.omowione }).eq('id', p.id);
@@ -3684,7 +3688,7 @@ function urlBase64ToUint8Array(base64String: string) {
 
                       {p.komentarz_prowadzacego && (
                         <div style={{ marginTop: '8px', padding: '7px 10px', background: '#fef9ec', borderRadius: '8px', border: '0.5px solid #e8d4a0' }}>
-                          <div style={{ fontSize: '9px', fontWeight: 700, color: '#a07830', textTransform: 'uppercase', letterSpacing: '0.14em', marginBottom: '3px' }}>Odpowiedź prowadzącego</div>
+                          <div style={{ fontSize: '9px', fontWeight: 700, color: '#a07830', textTransform: 'uppercase', letterSpacing: '0.14em', marginBottom: '3px' }}>{p.komentarz_autor || 'Prowadzący'}</div>
                           <div style={{ fontSize: '12px', color: 'var(--text)', lineHeight: 1.55 }}>{p.komentarz_prowadzacego}</div>
                         </div>
                       )}
