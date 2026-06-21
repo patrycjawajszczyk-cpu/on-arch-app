@@ -1679,7 +1679,6 @@ function urlBase64ToUint8Array(base64String: string) {
         </div>
       );
     }
-  }
   function EkranCzat({ user, kursant }: { user: User; kursant: Kursant | null }) {
     const [kanal, setKanal] = useState<'grupa' | 'biuro'>('grupa');
     const [wiadomosci, setWiadomosci] = useState<Wiadomosc[]>([]);
