@@ -1808,10 +1808,19 @@ function urlBase64ToUint8Array(base64String: string) {
               const nieomowione = tematPytania.filter(p => !p.omowione);
               const omowione = tematPytania.filter(p => p.omowione);
 
+              const KOLORY_KOLUMN = [
+                { tlo: '#EEF1F4', akcent: '#1C2B3A' },
+                { tlo: '#F5EBEA', akcent: '#AD6B68' },
+                { tlo: '#FBF6E9', akcent: '#C9A84C' },
+                { tlo: '#EAF3EE', akcent: '#3E7C5B' },
+                { tlo: '#F0EBF5', akcent: '#7B5EA7' },
+              ];
+              const kolor = KOLORY_KOLUMN[tematy.indexOf(z) % KOLORY_KOLUMN.length];
               return (
                 <div key={z.id} style={{
                   minWidth: '280px', maxWidth: '300px', flexShrink: 0,
-                  background: '#f4f0ed', borderRadius: '16px', padding: '14px',
+                  background: kolor.tlo, borderRadius: '16px', padding: '14px',
+                  borderTop: `3px solid ${kolor.akcent}`,
                   display: 'flex', flexDirection: 'column', gap: '8px',
                 }}>
                   {/* Nagłówek kolumny */}
