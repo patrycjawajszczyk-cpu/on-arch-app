@@ -3535,7 +3535,7 @@ function urlBase64ToUint8Array(base64String: string) {
       </div>
     );
   }
-  function TablicaPytanBiuro({ grupy, zjazdy, user }: { grupy: Grupa[]; zjazdy: Zjazd[]; user: User | null }) {
+  function TablicaPytanBiuro({ grupy, zjazdy }: { grupy: Grupa[]; zjazdy: Zjazd[] }) {
     const [wybranaGrupa, setWybranaGrupa] = useState<number | null>(null);
     const [pytania, setPytania] = useState<PytanieDoZjazdu[]>([]);
     const [ladowanie, setLadowanie] = useState(false);
@@ -4415,7 +4415,7 @@ const [zwinieteZadania, setZwinieteZadania] = useState<Set<number>>(() => new Se
             <CzatBiura grupy={grupy} user={user} zjazdy={zjazdy} />
           )}
           {aktywnaZakladka === 'pytania' && (
-            <TablicaPytanBiuro grupy={grupy} zjazdy={zjazdy} user={user} />
+            <TablicaPytanBiuro grupy={grupy} zjazdy={zjazdy} />
           )}
           {aktywnaZakladka === 'ogloszenia' && (
             <>
