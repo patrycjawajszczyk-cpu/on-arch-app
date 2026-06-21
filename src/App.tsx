@@ -1699,6 +1699,7 @@ function urlBase64ToUint8Array(base64String: string) {
     const [rozwinietePytanie, setRozwinietePytanie] = useState<number | null>(null);
     const [nowePerTemat, setNowePerTemat] = useState<Record<string, string>>({});
     const [wysylanie, setWysylanie] = useState<string | null>(null);
+    const [komentarze, setKomentarze] = useState<Record<number, string>>({});
 
     // Tylko grupy aktywne (mają nadchodzące zjazdy)
     const grupyAktywne = grupy.filter(g =>
