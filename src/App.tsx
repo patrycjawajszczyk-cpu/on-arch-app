@@ -8146,11 +8146,9 @@ async function wylaczPush() {
           <button className={`nav-item ${aktywnaZakladka === 'home' ? 'active' : ''}`} onClick={() => nawiguj('home')}><Home size={20} /><span className="nav-label">Dziś</span></button>
           <button className={`nav-item ${aktywnaZakladka === 'zjazdy' ? 'active' : ''}`} onClick={() => nawiguj('zjazdy')}><Calendar size={20} /><span className="nav-label">Zjazdy</span></button>
           <button className={`nav-item ${aktywnaZakladka === 'materialy' ? 'active' : ''}`} onClick={() => nawiguj('materialy')}><BookOpen size={20} /><span className="nav-label">Materiały</span></button>
-          <button className={`tab ${aktywnaZakladka === 'pytania' ? 'active' : ''}`} data-view="pytania" onClick={() => nawiguj('pytania')}>
-            <span className="icon-wrap">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" width="21" height="21"><circle cx="12" cy="12" r="9"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 2.5-3 4"/><path d="M12 17.5h.01"/></svg>
-            </span>
-            Pytania
+          <button className={`nav-item ${aktywnaZakladka === 'pytania' ? 'active' : ''}`} onClick={() => nawiguj('pytania')}>
+            <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 2.5-3 4"/><path d="M12 17.5h.01"/></svg>
+            <span className="nav-label">Pytania</span>
           </button>
           <button className={`nav-item ${aktywnaZakladka === 'czat' ? 'active' : ''}`} onClick={() => nawiguj('czat')}>
             <MessageCircle size={20} /><span className="nav-label">Czat</span>
