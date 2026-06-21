@@ -131,6 +131,7 @@ function urlBase64ToUint8Array(base64String: string) {
     tresc: string;
     omowione: boolean;
     komentarz_prowadzacego: string | null;
+    temat: string | null;
   };
 
   type MaterialZjazdu = {
