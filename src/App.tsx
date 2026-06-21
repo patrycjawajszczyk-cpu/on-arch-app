@@ -1532,153 +1532,217 @@ function urlBase64ToUint8Array(base64String: string) {
       </>
     );
   }
-  function EkranPytania({ user, kursant, zjazdy }: { user: User; kursant: Kursant | null; zjazdy: Zjazd[] }) {
-      const [wybranyZjazd, setWybranyZjazd] = useState<number | null>(null);
-      const [pytania, setPytania] = useState<PytanieDoZjazdu[]>([]);
-      const [nowe, setNowe] = useState('');
-      const [wysylanie, setWysylanie] = useState(false);
-      const [ladowanie, setLadowanie] = useState(false);
-  
-      const zjazdyGrupy = kursant?.grupa_id
-        ? [...zjazdy].filter(z => z.grupa_id === kursant.grupa_id).sort((a, b) => (a.data_dzien1 || '').localeCompare(b.data_dzien1 || ''))
-        : [];
-      const najblizszy = zjazdyGrupy.find(z => z.status === 'nadchodzacy');
-  
-      useEffect(() => {
-        if (najblizszy && !wybranyZjazd) setWybranyZjazd(najblizszy.id);
-      }, [najblizszy?.id]);
-  
-      useEffect(() => {
-        if (!wybranyZjazd) return;
-        setLadowanie(true);
-        supabase.from('pytania_do_zjazdu').select('*').eq('zjazd_id', wybranyZjazd).order('created_at', { ascending: true })
-          .then(({ data }) => { setPytania(data || []); setLadowanie(false); });
-  
-        const channel = supabase.channel(`pytania-${wybranyZjazd}`)
-          .on('postgres_changes', { event: '*', schema: 'public', table: 'pytania_do_zjazdu', filter: `zjazd_id=eq.${wybranyZjazd}` }, () => {
-            supabase.from('pytania_do_zjazdu').select('*').eq('zjazd_id', wybranyZjazd).order('created_at', { ascending: true })
-              .then(({ data }) => setPytania(data || []));
-          }).subscribe();
-        return () => { supabase.removeChannel(channel); };
-      }, [wybranyZjazd]);
-  
-      async function dodajPytanie() {
-        if (!nowe.trim() || !wybranyZjazd || !kursant) return;
-        setWysylanie(true);
-        await supabase.from('pytania_do_zjazdu').insert([{
-          zjazd_id: wybranyZjazd,
-          grupa_id: kursant.grupa_id,
-          user_id: user.id,
-          autor_imie: kursant.imie,
-          rola: 'kursant',
-          tresc: nowe.trim(),
-        }]);
-        setNowe('');
-        setWysylanie(false);
-      }
-  
-      const zjazd = zjazdyGrupy.find(z => z.id === wybranyZjazd);
-  
-      if (!kursant?.grupa_id) return (
-        <div style={{ padding: '24px', textAlign: 'center', color: 'var(--text-muted)' }}>Nie jesteś przypisana do żadnej grupy.</div>
-      );
-  
-      return (
-        <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-          {/* Wybór zjazdu */}
-          <div style={{ marginBottom: '14px' }}>
-            <div style={{ fontSize: '10.5px', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '8px' }}>Zjazd</div>
-            <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', paddingBottom: '4px', scrollbarWidth: 'none' }}>
-              {zjazdyGrupy.map(z => (
-                <button key={z.id} onClick={() => setWybranyZjazd(z.id)} style={{
-                  flexShrink: 0, padding: '7px 14px', borderRadius: '20px', cursor: 'pointer',
-                  fontFamily: 'Lato, sans-serif', fontSize: '12px', fontWeight: 600,
-                  background: wybranyZjazd === z.id ? 'var(--navy, #1C2B3A)' : 'white',
-                  color: wybranyZjazd === z.id ? 'white' : 'var(--text-muted)',
-                  border: wybranyZjazd === z.id ? 'none' : '0.5px solid var(--border)',
-                }}>
-                  Zjazd {z.nr}
-                </button>
-              ))}
-            </div>
+  function PytaniaProwadzacy({ user, zjazdy, grupy, kursant }: { user: User; zjazdy: Zjazd[]; grupy: Grupa[]; kursant: Kursant | null }) {
+    const [wybranaGrupa, setWybranaGrupa] = useState<number | null>(null);
+    const [wybranyTemat, setWybranyTemat] = useState<string | null>(null);
+    const [pytania, setPytania] = useState<PytanieDoZjazdu[]>([]);
+    const [ladowanie, setLadowanie] = useState(false);
+    const [komentarze, setKomentarze] = useState<Record<number, string>>({});
+    const [nowe, setNowe] = useState('');
+    const [wysylanie, setWysylanie] = useState(false);
+
+    const zjazdyGrupy = wybranaGrupa
+      ? zjazdy.filter(z => z.grupa_id === wybranaGrupa && z.tematy)
+        .sort((a, b) => (a.data_dzien1 || '').localeCompare(b.data_dzien1 || ''))
+      : [];
+
+    const tematy = [...new Map(zjazdyGrupy.map(z => [z.tematy, z])).values()];
+    const zjazd = tematy.find(z => z.tematy === wybranyTemat);
+
+    useEffect(() => {
+      setWybranyTemat(null);
+      setPytania([]);
+    }, [wybranaGrupa]);
+
+    useEffect(() => {
+      if (!wybranyTemat || !wybranaGrupa) return;
+      setLadowanie(true);
+      supabase.from('pytania_do_zjazdu').select('*')
+        .eq('temat', wybranyTemat).eq('grupa_id', wybranaGrupa)
+        .order('created_at', { ascending: true })
+        .then(({ data }) => {
+          setPytania(data || []);
+          const km: Record<number, string> = {};
+          (data || []).forEach(p => { if (p.komentarz_prowadzacego) km[p.id] = p.komentarz_prowadzacego; });
+          setKomentarze(km);
+          setLadowanie(false);
+        });
+
+      const channel = supabase.channel(`pytania-prow-${wybranaGrupa}-${wybranyTemat}`)
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'pytania_do_zjazdu',
+          filter: `grupa_id=eq.${wybranaGrupa}` }, () => {
+          supabase.from('pytania_do_zjazdu').select('*')
+            .eq('temat', wybranyTemat).eq('grupa_id', wybranaGrupa)
+            .order('created_at', { ascending: true })
+            .then(({ data }) => { setPytania(data || []); });
+        }).subscribe();
+      return () => { supabase.removeChannel(channel); };
+    }, [wybranyTemat, wybranaGrupa]);
+
+    async function toggleOmowione(p: PytanieDoZjazdu) {
+      await supabase.from('pytania_do_zjazdu').update({ omowione: !p.omowione }).eq('id', p.id);
+      setPytania(prev => prev.map(x => x.id === p.id ? { ...x, omowione: !p.omowione } : x));
+    }
+
+    async function zapiszKomentarz(p: PytanieDoZjazdu) {
+      const km = komentarze[p.id] ?? '';
+      await supabase.from('pytania_do_zjazdu').update({ komentarz_prowadzacego: km || null }).eq('id', p.id);
+    }
+
+    async function dodajPytanie() {
+      if (!nowe.trim() || !wybranyTemat || !wybranaGrupa || !kursant || !zjazd) return;
+      setWysylanie(true);
+      await supabase.from('pytania_do_zjazdu').insert([{
+        zjazd_id: zjazd.id,
+        grupa_id: wybranaGrupa,
+        user_id: user.id,
+        autor_imie: kursant.imie,
+        rola: 'prowadzacy',
+        tresc: nowe.trim(),
+        temat: wybranyTemat,
+      }]);
+      setNowe('');
+      setWysylanie(false);
+    }
+
+    return (
+      <div>
+        {/* Wybór grupy i tematu */}
+        <div style={{ display: 'flex', gap: '12px', marginBottom: '20px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
+          <div>
+            <div style={{ fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '6px' }}>Grupa</div>
+            <select value={wybranaGrupa || ''} onChange={e => setWybranaGrupa(parseInt(e.target.value) || null)}
+              style={{ fontSize: '13px', padding: '8px 14px', border: '0.5px solid var(--border)', borderRadius: '10px', fontFamily: 'Lato, sans-serif', background: 'white', minWidth: '220px' }}>
+              <option value="">Wybierz grupę…</option>
+              {grupy.map(g => <option key={g.id} value={g.id}>{g.nazwa}{g.edycja ? ` · ${g.edycja}` : ''}</option>)}
+            </select>
           </div>
-  
-          {zjazd && (
-            <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '12px', lineHeight: 1.5 }}>
-              <b style={{ color: 'var(--text)' }}>{zjazd.daty}</b>
-              {zjazd.tematy ? ` · ${zjazd.tematy}` : ''}
+          {wybranaGrupa && tematy.length > 0 && (
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 600, marginBottom: '6px' }}>Temat</div>
+              <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', paddingBottom: '2px', scrollbarWidth: 'none' }}>
+                {tematy.map(z => (
+                  <button key={z.id} onClick={() => setWybranyTemat(z.tematy)} style={{
+                    flexShrink: 0, padding: '7px 14px', borderRadius: '20px', cursor: 'pointer',
+                    fontFamily: 'Lato, sans-serif', fontSize: '12px', fontWeight: 600,
+                    background: wybranyTemat === z.tematy ? 'var(--brand)' : 'white',
+                    color: wybranyTemat === z.tematy ? 'white' : 'var(--text-muted)',
+                    border: wybranyTemat === z.tematy ? 'none' : '0.5px solid var(--border)',
+                  }}>
+                    {z.tematy}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
-  
-          {/* Lista pytań */}
-          <div style={{ flex: 1, overflowY: 'auto', marginBottom: '12px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            {ladowanie && <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>Ładowanie...</div>}
-            {!ladowanie && pytania.length === 0 && (
-              <div style={{ textAlign: 'center', padding: '40px 24px', color: 'var(--text-muted)', lineHeight: 1.6 }}>
-                <div style={{ fontSize: '28px', marginBottom: '10px' }}>🙋</div>
-                <div style={{ fontFamily: 'Playfair Display, serif', fontSize: '17px', color: 'var(--text)', marginBottom: '6px' }}>Brak pytań do tego zjazdu</div>
-                <div style={{ fontSize: '12px' }}>Zadaj pierwsze pytanie poniżej</div>
-              </div>
-            )}
-            {pytania.map(p => (
-              <div key={p.id} style={{
-                background: 'white', borderRadius: '14px', border: '0.5px solid var(--border)',
-                padding: '13px 15px', opacity: p.omowione ? 0.6 : 1,
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '7px' }}>
-                  <div style={{
-                    width: '26px', height: '26px', borderRadius: '50%', flexShrink: 0,
-                    background: p.rola === 'prowadzacy' ? 'var(--navy, #1C2B3A)' : 'var(--brand-light)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: '11px', fontWeight: 700,
-                    color: p.rola === 'prowadzacy' ? 'white' : 'var(--brand-dark)',
-                  }}>
-                    {p.autor_imie?.[0]?.toUpperCase()}
-                  </div>
-                  <div>
-                    <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text)' }}>{p.autor_imie}</span>
-                    {p.rola === 'prowadzacy' && <span style={{ fontSize: '10px', color: 'var(--brand)', marginLeft: '6px', fontWeight: 600 }}>prowadzący</span>}
-                  </div>
-                  <span style={{ marginLeft: 'auto', fontSize: '10px', color: 'var(--text-muted)' }}>
-                    {new Date(p.created_at).toLocaleDateString('pl-PL', { day: 'numeric', month: 'short' })}
-                  </span>
-                  {p.omowione && <span style={{ fontSize: '10px', fontWeight: 700, color: '#2e7d32', background: '#eaf5ec', padding: '2px 8px', borderRadius: '999px' }}>✓ Omówione</span>}
-                </div>
-                <div style={{ fontSize: '13px', color: 'var(--text)', lineHeight: 1.6 }}>{p.tresc}</div>
-                {p.komentarz_prowadzacego && (
-                  <div style={{ marginTop: '10px', padding: '9px 12px', background: '#fef9ec', borderRadius: '10px', border: '0.5px solid #e8d4a0' }}>
-                    <div style={{ fontSize: '10px', fontWeight: 700, color: '#a07830', textTransform: 'uppercase', letterSpacing: '0.14em', marginBottom: '4px' }}>Komentarz prowadzącego</div>
-                    <div style={{ fontSize: '12px', color: 'var(--text)', lineHeight: 1.55 }}>{p.komentarz_prowadzacego}</div>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-  
-          {/* Input */}
-          <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-end', paddingBottom: '4px' }}>
-            <textarea
-              value={nowe} onChange={e => setNowe(e.target.value)}
-              onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); dodajPytanie(); } }}
-              placeholder="Zadaj pytanie do tego zjazdu..."
-              rows={2}
-              style={{
-                flex: 1, fontSize: '13px', padding: '10px 14px',
-                border: '0.5px solid var(--border)', borderRadius: '12px',
-                fontFamily: 'Lato, sans-serif', resize: 'none', background: 'white', boxSizing: 'border-box',
-              }}
-            />
-            <button onClick={dodajPytanie} disabled={wysylanie || !nowe.trim()} style={{
-              padding: '10px 16px', background: nowe.trim() ? 'var(--brand)' : '#ddd',
-              color: 'white', border: 'none', borderRadius: '12px', cursor: nowe.trim() ? 'pointer' : 'default',
-              fontFamily: 'Lato, sans-serif', fontSize: '13px', fontWeight: 600, flexShrink: 0, alignSelf: 'flex-end',
-            }}>
-              {wysylanie ? '…' : 'Wyślij'}
-            </button>
-          </div>
         </div>
-      );
-    }
+
+        {!wybranaGrupa && (
+          <div style={{ textAlign: 'center', padding: '60px 24px', color: 'var(--text-muted)', fontFamily: 'Playfair Display, serif', fontSize: '18px' }}>
+            Wybierz grupę aby zobaczyć pytania
+          </div>
+        )}
+
+        {wybranaGrupa && !wybranyTemat && tematy.length > 0 && (
+          <div style={{ textAlign: 'center', padding: '40px 24px', color: 'var(--text-muted)', fontSize: '14px' }}>
+            Wybierz temat aby zobaczyć pytania
+          </div>
+        )}
+
+        {wybranaGrupa && tematy.length === 0 && (
+          <div style={{ textAlign: 'center', padding: '40px 24px', color: 'var(--text-muted)', fontSize: '14px' }}>
+            Ta grupa nie ma jeszcze zjazdów z tematami.
+          </div>
+        )}
+
+        {wybranyTemat && ladowanie && <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>Ładowanie...</div>}
+
+        {wybranyTemat && !ladowanie && (
+          <>
+            <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '14px' }}>
+              {pytania.filter(p => !p.omowione).length} nieomówionych · {pytania.filter(p => p.omowione).length} omówionych
+              {zjazd && <span> · Zjazd {zjazd.nr} · {zjazd.daty}</span>}
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '20px' }}>
+              {pytania.length === 0 && (
+                <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)', fontSize: '13px' }}>Brak pytań do tego tematu.</div>
+              )}
+              {pytania.map(p => (
+                <div key={p.id} style={{
+                  background: 'white', borderRadius: '14px',
+                  border: p.omowione ? '0.5px solid #b8d4b8' : '0.5px solid var(--border)',
+                  padding: '14px 16px', opacity: p.omowione ? 0.7 : 1,
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+                    <div style={{
+                      width: '30px', height: '30px', borderRadius: '50%', flexShrink: 0,
+                      background: p.rola === 'prowadzacy' ? '#1C2B3A' : 'var(--brand-light)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: '12px', fontWeight: 700,
+                      color: p.rola === 'prowadzacy' ? 'white' : 'var(--brand-dark)',
+                    }}>
+                      {p.autor_imie?.[0]?.toUpperCase()}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px', flexWrap: 'wrap' }}>
+                        <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text)' }}>{p.autor_imie}</span>
+                        {p.rola === 'prowadzacy' && <span style={{ fontSize: '10px', color: 'var(--brand)', fontWeight: 600 }}>prowadzący</span>}
+                        <span style={{ fontSize: '10px', color: 'var(--text-muted)', marginLeft: 'auto' }}>
+                          {new Date(p.created_at).toLocaleDateString('pl-PL', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      </div>
+                      <div style={{ fontSize: '13px', color: 'var(--text)', lineHeight: 1.6, marginBottom: '12px' }}>{p.tresc}</div>
+                      <div style={{ marginBottom: '10px' }}>
+                        <input type="text"
+                          value={komentarze[p.id] ?? (p.komentarz_prowadzacego || '')}
+                          onChange={e => setKomentarze(prev => ({ ...prev, [p.id]: e.target.value }))}
+                          onBlur={() => zapiszKomentarz(p)}
+                          placeholder="Dodaj komentarz do pytania…"
+                          style={{ width: '100%', fontSize: '12px', padding: '7px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Lato, sans-serif', boxSizing: 'border-box' }}
+                        />
+                      </div>
+                      <button onClick={() => toggleOmowione(p)} style={{
+                        fontSize: '11px', fontWeight: 700, padding: '5px 12px', border: 'none',
+                        borderRadius: '999px', cursor: 'pointer', fontFamily: 'Lato, sans-serif',
+                        background: p.omowione ? '#eaf5ec' : 'var(--brand-light)',
+                        color: p.omowione ? '#2e7d32' : 'var(--brand-dark)',
+                      }}>
+                        {p.omowione ? '✓ Omówione' : 'Oznacz jako omówione'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div style={{ background: 'white', borderRadius: '14px', border: '0.5px solid var(--border)', padding: '14px 16px' }}>
+              <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-muted)', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: '10px' }}>
+                Dodaj pytanie / zapowiedź
+              </div>
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-end' }}>
+                <textarea value={nowe} onChange={e => setNowe(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); dodajPytanie(); } }}
+                  placeholder="np. Na tym zjeździe omówimy rzut techniczny — macie pytania?"
+                  rows={2}
+                  style={{ flex: 1, fontSize: '13px', padding: '10px 14px', border: '0.5px solid var(--border)', borderRadius: '12px', fontFamily: 'Lato, sans-serif', resize: 'none', background: 'white', boxSizing: 'border-box' }}
+                />
+                <button onClick={dodajPytanie} disabled={wysylanie || !nowe.trim()} style={{
+                  padding: '10px 16px', background: nowe.trim() ? 'var(--brand)' : '#ddd',
+                  color: 'white', border: 'none', borderRadius: '12px',
+                  cursor: nowe.trim() ? 'pointer' : 'default',
+                  fontFamily: 'Lato, sans-serif', fontSize: '13px', fontWeight: 600,
+                  flexShrink: 0, alignSelf: 'flex-end',
+                }}>
+                  {wysylanie ? '…' : 'Wyślij'}
+                </button>
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+    );
+  }
   function EkranCzat({ user, kursant }: { user: User; kursant: Kursant | null }) {
     const [kanal, setKanal] = useState<'grupa' | 'biuro'>('grupa');
     const [wiadomosci, setWiadomosci] = useState<Wiadomosc[]>([]);
