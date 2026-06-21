@@ -1696,7 +1696,6 @@ function urlBase64ToUint8Array(base64String: string) {
     const [wybranaGrupa, setWybranaGrupa] = useState<number | null>(null);
     const [pytania, setPytania] = useState<PytanieDoZjazdu[]>([]);
     const [ladowanie, setLadowanie] = useState(false);
-    const [komentarze, setKomentarze] = useState<Record<number, string>>({});
     const [rozwinietePytanie, setRozwinietePytanie] = useState<number | null>(null);
     const [nowePerTemat, setNowePerTemat] = useState<Record<string, string>>({});
     const [wysylanie, setWysylanie] = useState<string | null>(null);
@@ -3560,9 +3559,7 @@ function urlBase64ToUint8Array(base64String: string) {
         .order('created_at', { ascending: true })
         .then(({ data }) => {
           setPytania(data || []);
-          const km: Record<number, string> = {};
-          (data || []).forEach(p => { if (p.komentarz_prowadzacego) km[p.id] = p.komentarz_prowadzacego; });
-          setKomentarze(km);
+            // brak komentarzy do ustawienia — biuro tylko czyta
           setLadowanie(false);
         });
 
@@ -3582,10 +3579,7 @@ function urlBase64ToUint8Array(base64String: string) {
       setPytania(prev => prev.map(x => x.id === p.id ? { ...x, omowione: !p.omowione } : x));
     }
 
-    async function zapiszKomentarz(p: PytanieDoZjazdu) {
-      const km = komentarze[p.id] ?? '';
-      await supabase.from('pytania_do_zjazdu').update({ komentarz_prowadzacego: km || null }).eq('id', p.id);
-    }
+   
 
     return (
       <div>
