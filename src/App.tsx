@@ -3682,15 +3682,14 @@ function urlBase64ToUint8Array(base64String: string) {
                       </div>
                       <div style={{ fontSize: '13px', color: 'var(--text)', lineHeight: 1.55 }}>{p.tresc}</div>
 
+                      {p.komentarz_prowadzacego && (
+                        <div style={{ marginTop: '8px', padding: '7px 10px', background: '#fef9ec', borderRadius: '8px', border: '0.5px solid #e8d4a0' }}>
+                          <div style={{ fontSize: '9px', fontWeight: 700, color: '#a07830', textTransform: 'uppercase', letterSpacing: '0.14em', marginBottom: '3px' }}>Odpowiedź prowadzącego</div>
+                          <div style={{ fontSize: '12px', color: 'var(--text)', lineHeight: 1.55 }}>{p.komentarz_prowadzacego}</div>
+                        </div>
+                      )}
                       {rozwinietePytanie === p.id && (
-                        <div style={{ marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '8px' }} onClick={e => e.stopPropagation()}>
-                          <input type="text"
-                            value={komentarze[p.id] ?? (p.komentarz_prowadzacego || '')}
-                            onChange={e => setKomentarze(prev => ({ ...prev, [p.id]: e.target.value }))}
-                            onBlur={() => zapiszKomentarz(p)}
-                            placeholder="Dodaj komentarz…"
-                            style={{ fontSize: '12px', padding: '6px 9px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Lato, sans-serif', width: '100%', boxSizing: 'border-box' }}
-                          />
+                        <div style={{ marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '8px' }} onClick={e => e.stopPropagation()}>
                           <button onClick={() => toggleOmowione(p)} style={{
                             fontSize: '11px', fontWeight: 700, padding: '6px 12px', border: 'none',
                             borderRadius: '8px', cursor: 'pointer', fontFamily: 'Lato, sans-serif',
