@@ -1531,7 +1531,8 @@ function urlBase64ToUint8Array(base64String: string) {
         </div>
       </>
     );
-    function EkranPytania({ user, kursant, zjazdy }: { user: User; kursant: Kursant | null; zjazdy: Zjazd[] }) {
+  }
+  function EkranPytania({ user, kursant, zjazdy }: { user: User; kursant: Kursant | null; zjazdy: Zjazd[] }) {
       const [wybranyZjazd, setWybranyZjazd] = useState<number | null>(null);
       const [pytania, setPytania] = useState<PytanieDoZjazdu[]>([]);
       const [nowe, setNowe] = useState('');
@@ -1590,7 +1591,7 @@ function urlBase64ToUint8Array(base64String: string) {
             <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', paddingBottom: '4px', scrollbarWidth: 'none' }}>
               {zjazdyGrupy.map(z => (
                 <button key={z.id} onClick={() => setWybranyZjazd(z.id)} style={{
-                  flexShrink: 0, padding: '7px 14px', borderRadius: '20px', border: 'none', cursor: 'pointer',
+                  flexShrink: 0, padding: '7px 14px', borderRadius: '20px', cursor: 'pointer',
                   fontFamily: 'Lato, sans-serif', fontSize: '12px', fontWeight: 600,
                   background: wybranyZjazd === z.id ? 'var(--navy, #1C2B3A)' : 'white',
                   color: wybranyZjazd === z.id ? 'white' : 'var(--text-muted)',
