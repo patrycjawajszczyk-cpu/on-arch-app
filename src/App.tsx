@@ -1744,10 +1744,7 @@ function urlBase64ToUint8Array(base64String: string) {
       setPytania(prev => prev.map(x => x.id === p.id ? { ...x, omowione: !p.omowione } : x));
     }
 
-    async function zapiszKomentarz(p: PytanieDoZjazdu) {
-      const km = komentarze[p.id] ?? '';
-      await supabase.from('pytania_do_zjazdu').update({ komentarz_prowadzacego: km || null }).eq('id', p.id);
-    }
+   
 
     async function dodajPytanie(temat: string) {
       const tresc = nowePerTemat[temat]?.trim();
@@ -3539,8 +3536,7 @@ function urlBase64ToUint8Array(base64String: string) {
     const [wybranaGrupa, setWybranaGrupa] = useState<number | null>(null);
     const [pytania, setPytania] = useState<PytanieDoZjazdu[]>([]);
     const [ladowanie, setLadowanie] = useState(false);
-    const [komentarze, setKomentarze] = useState<Record<number, string>>({});
-    const [rozwinietePytanie, setRozwinietePytanie] = useState<number | null>(null);
+       const [rozwinietePytanie, setRozwinietePytanie] = useState<number | null>(null);
 
     // Grupy aktywne i zakończone
     const grupyAktywne = grupy.filter(g =>
