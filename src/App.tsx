@@ -1738,7 +1738,10 @@ function urlBase64ToUint8Array(base64String: string) {
         }).subscribe();
       return () => { supabase.removeChannel(channel); };
     }, [wybranaGrupa]);
-
+    async function zapiszKomentarz(p: PytanieDoZjazdu) {
+      const km = komentarze[p.id] ?? '';
+      await supabase.from('pytania_do_zjazdu').update({ komentarz_prowadzacego: km || null }).eq('id', p.id);
+    }
     async function toggleOmowione(p: PytanieDoZjazdu) {
       await supabase.from('pytania_do_zjazdu').update({ omowione: !p.omowione }).eq('id', p.id);
       setPytania(prev => prev.map(x => x.id === p.id ? { ...x, omowione: !p.omowione } : x));
