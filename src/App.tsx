@@ -1816,7 +1816,7 @@ function urlBase64ToUint8Array(base64String: string) {
                 }}>
                   {/* Nagłówek kolumny */}
                   <div style={{ marginBottom: '4px' }}>
-                    <div style={{ fontSize: '13px', fontWeight: 700, color: '#1C2B3A', lineHeight: 1.35, marginBottom: '4px' }}>{z.tematy}</div>
+                  <div style={{ fontSize: '13px', fontWeight: 700, color: kolor.akcent, lineHeight: 1.35, marginBottom: '4px' }}>{z.tematy}</div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                       <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>Zjazd {z.nr}</span>
                       {nieomowione.length > 0 && (
@@ -3639,14 +3639,24 @@ function urlBase64ToUint8Array(base64String: string) {
               const nieomowione = tematPytania.filter(p => !p.omowione);
               const omowione = tematPytania.filter(p => p.omowione);
 
+              const KOLORY_KOLUMN = [
+                { tlo: '#EEF1F4', akcent: '#1C2B3A' },  // granat
+                { tlo: '#F5EBEA', akcent: '#AD6B68' },  // terakota
+                { tlo: '#FBF6E9', akcent: '#C9A84C' },  // złoto
+                { tlo: '#EAF3EE', akcent: '#3E7C5B' },  // zieleń
+                { tlo: '#F0EBF5', akcent: '#7B5EA7' },  // fiolet
+              ];
+              const kolor = KOLORY_KOLUMN[tematy.indexOf(z) % KOLORY_KOLUMN.length];
               return (
                 <div key={z.id} style={{
                   minWidth: '280px', maxWidth: '300px', flexShrink: 0,
-                  background: '#f4f0ed', borderRadius: '16px', padding: '14px',
+                  background: kolor.tlo,
+                  borderRadius: '16px', padding: '14px',
+                  borderTop: `3px solid ${kolor.akcent}`,
                   display: 'flex', flexDirection: 'column', gap: '8px',
                 }}>
                   <div style={{ marginBottom: '4px' }}>
-                    <div style={{ fontSize: '13px', fontWeight: 700, color: '#1C2B3A', lineHeight: 1.35, marginBottom: '4px' }}>{z.tematy}</div>
+                  <div style={{ fontSize: '13px', fontWeight: 700, color: kolor.akcent, lineHeight: 1.35, marginBottom: '4px' }}>{z.tematy}</div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                       <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>Zjazd {z.nr}</span>
                       {nieomowione.length > 0 && (
