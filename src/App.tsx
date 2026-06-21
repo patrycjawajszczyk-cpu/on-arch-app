@@ -1884,16 +1884,22 @@ function urlBase64ToUint8Array(base64String: string) {
                   {omowione.length > 0 && (
                     <div style={{ borderTop: omowione.length > 0 && nieomowione.length > 0 ? '0.5px solid var(--border)' : 'none', paddingTop: nieomowione.length > 0 ? '8px' : '0' }}>
                       {omowione.map(p => (
-                        <div key={p.id}
-                          onClick={() => setRozwinietePytanie(rozwinietePytanie === p.id ? null : p.id)}
-                          style={{
-                            background: 'rgba(255,255,255,0.5)', borderRadius: '10px', padding: '9px 11px',
-                            border: '0.5px solid var(--border-soft)', cursor: 'pointer', marginBottom: '6px', opacity: 0.65,
-                          }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                            <span style={{ fontSize: '10px', color: '#2e7d32', fontWeight: 700 }}>✓</span>
-                            <span style={{ fontSize: '12px', color: 'var(--text-muted)', textDecoration: 'line-through', flex: 1 }}>{p.tresc}</span>
-                          </div>
+                    <div key={p.id}
+                      onClick={() => setRozwinietePytanie(rozwinietePytanie === p.id ? null : p.id)}
+                      style={{
+                        background: 'rgba(255,255,255,0.5)', borderRadius: '10px', padding: '9px 11px',
+                        border: '0.5px solid var(--border-soft)', cursor: 'pointer', marginBottom: '6px', opacity: 0.65,
+                      }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <span style={{ fontSize: '10px', color: '#2e7d32', fontWeight: 700 }}>✓</span>
+                        <span style={{ fontSize: '12px', color: 'var(--text-muted)', textDecoration: 'line-through', flex: 1 }}>{p.tresc}</span>
+                      </div>
+                      {p.komentarz_prowadzacego && (
+                        <div style={{ marginTop: '6px', padding: '6px 9px', background: '#fef9ec', borderRadius: '7px', border: '0.5px solid #e8d4a0' }}>
+                          {p.komentarz_autor && <div style={{ fontSize: '9px', fontWeight: 700, color: '#a07830', marginBottom: '2px' }}>{p.komentarz_autor}</div>}
+                          <div style={{ fontSize: '11px', color: 'var(--text)', lineHeight: 1.5 }}>{p.komentarz_prowadzacego}</div>
+                        </div>
+                      )}
                           {rozwinietePytanie === p.id && (
                             <div style={{ marginTop: '8px' }} onClick={e => e.stopPropagation()}>
                               <button onClick={() => toggleOmowione(p)} style={{
