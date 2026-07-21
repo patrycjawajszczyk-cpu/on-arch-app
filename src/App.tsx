@@ -8021,7 +8021,7 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
 const [pedagogiumZainteresowanie, setPedagogiumZainteresowanie] = useState<'brak'|'wyższe'|'matura'|'wysłane'>('brak');
 const [pedagogiumLadowanie, setPedagogiumLadowanie] = useState(false);
 useEffect(() => {
-  if (!maPedagogium || !user?.id) return;
+  if (!user?.id) return;
   supabase.from('pedagogium_zainteresowanie').select('poziom').eq('user_id', user.id).maybeSingle()
     .then(({ data }) => { if (data) setPedagogiumZainteresowanie(data.poziom as any); });
 }, [user?.id]);
@@ -8180,7 +8180,8 @@ useEffect(() => {
                           <button key={opt.val} disabled={pedagogiumLadowanie}
                             onClick={async () => {
                               setPedagogiumLadowanie(true);
-                              await supabase.from('pedagogium_zainteresowanie').upsert([{
+                              const { error: pedErr } = await supabase.from('pedagogium_zainteresowanie').upsert([{
+                                if (pedErr) { console.error('Pedagogium błąd:', pedErr); }
                                 user_id: user.id,
                                 kursant_id: (kursant as any)?.id ?? null,
                                 imie: kursant?.imie ?? '',
