@@ -8180,14 +8180,15 @@ useEffect(() => {
                           <button key={opt.val} disabled={pedagogiumLadowanie}
                             onClick={async () => {
                               setPedagogiumLadowanie(true);
-                              await supabase.from('pedagogium_zainteresowanie').upsert([{                                user_id: user.id,
+                              await supabase.from('pedagogium_zainteresowanie').insert([{
+                                user_id: user.id,
                                 kursant_id: (kursant as any)?.id ?? null,
                                 imie: kursant?.imie ?? '',
                                 nazwisko: kursant?.nazwisko ?? '',
                                 email: user.email,
                                 grupa_id: kursant?.grupa_id ?? null,
                                 poziom: opt.val,
-                              }], { onConflict: 'user_id' });                              setPedagogiumZainteresowanie('wysłane');
+                              }]);                              setPedagogiumZainteresowanie('wysłane');
                               setPedagogiumLadowanie(false);
                             }}
                             style={{ flex: 1, minWidth: '160px', padding: '10px 14px', border: '0.5px solid var(--border)', borderRadius: '10px', background: 'var(--bg)', cursor: 'pointer', fontFamily: 'Jost, sans-serif', textAlign: 'left' }}>
