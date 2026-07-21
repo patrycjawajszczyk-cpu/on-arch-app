@@ -8187,8 +8187,7 @@ useEffect(() => {
                                 email: user.email,
                                 grupa_id: kursant?.grupa_id ?? null,
                                 poziom: opt.val,
-                              }], { onConflict:}], { onConflict: 'user_id' }).then(({ error }) => { if (error) console.error('Pedagogium błąd:', error); });'user_id' });
-                              setPedagogiumZainteresowanie('wysłane');
+                              }], { onConflict: 'user_id' });                              setPedagogiumZainteresowanie('wysłane');
                               setPedagogiumLadowanie(false);
                             }}
                             style={{ flex: 1, minWidth: '160px', padding: '10px 14px', border: '0.5px solid var(--border)', borderRadius: '10px', background: 'var(--bg)', cursor: 'pointer', fontFamily: 'Jost, sans-serif', textAlign: 'left' }}>
