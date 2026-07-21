@@ -4385,6 +4385,7 @@ const [zwinieteZadania, setZwinieteZadania] = useState<Set<number>>(() => new Se
               {aktywnaZakladka === 'ankiety' && 'Ankiety'}
               {aktywnaZakladka === 'aplikacje' && 'Aplikacje zewnętrzne'}
               {aktywnaZakladka === 'backup' && 'Backup'}
+              {aktywnaZakladka === 'pedagogium' && 'Pedagogium'}
               {aktywnaZakladka === 'pytania' && 'Pytania do zajęć'}
               {aktywnaZakladka === 'czat' && 'Czat z grupami'}
               {aktywnaZakladka === 'pytania' && 'Tablica pytań'}
@@ -4425,6 +4426,7 @@ const [zwinieteZadania, setZwinieteZadania] = useState<Set<number>>(() => new Se
                     { id: 'aplikacje',  label: 'Aplikacje',  opis: 'Portale i sklepy partnerskie', icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg> },
                     { id: 'czat',       label: 'Czat z grupami', opis: 'Pisz do kursantów', icon: <MessageCircle size={22}/> },
                     { id: 'pytania',    label: 'Tablica pytań', opis: 'Pytania do zajęć', icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round"><circle cx="12" cy="12" r="9"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 2.5-3 4"/><path d="M12 17.5h.01"/></svg> },
+                    { id: 'pedagogium', label: 'Pedagogium', opis: 'Zainteresowanie świadectwem', icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg> },
                     { id: 'backup',     label: 'Backup',     opis: 'Pobierz kopię bazy',                  icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> },
                   ].map(k => (
                     <div key={k.id} onClick={() => setAktywnaZakladka(k.id)}
@@ -6045,6 +6047,74 @@ setKomunikat(`Notatka zapisana — ${k.imie} ${k.nazwisko}`);
               )}
             </>
           )}
+          {aktywnaZakladka === 'pedagogium' && (() => {
+  const [pedLista, setPedLista] = useState<any[]>([]);
+  useEffect(() => {
+    supabase.from('pedagogium_zainteresowanie').select('*').order('data_zgloszenia', { ascending: false })
+      .then(({ data }) => setPedLista(data || []));
+  }, []);
+  const wyzsze = pedLista.filter(p => p.poziom === 'wyższe');
+  const matura = pedLista.filter(p => p.poziom === 'matura');
+  return (
+    <>
+      <div style={{ display: 'flex', gap: '12px', marginBottom: '20px' }}>
+        <div style={{ background: 'white', borderRadius: '12px', border: '0.5px solid var(--border)', padding: '16px 20px', flex: 1, textAlign: 'center' }}>
+          <div style={{ fontSize: '28px', fontWeight: 600, color: 'var(--brand-dark)' }}>{pedLista.length}</div>
+          <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Wszystkich zgłoszeń</div>
+        </div>
+        <div style={{ background: 'white', borderRadius: '12px', border: '0.5px solid var(--border)', padding: '16px 20px', flex: 1, textAlign: 'center' }}>
+          <div style={{ fontSize: '28px', fontWeight: 600, color: '#1565c0' }}>{wyzsze.length}</div>
+          <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Studia podyplomowe</div>
+        </div>
+        <div style={{ background: 'white', borderRadius: '12px', border: '0.5px solid var(--border)', padding: '16px 20px', flex: 1, textAlign: 'center' }}>
+          <div style={{ fontSize: '28px', fontWeight: 600, color: '#2e7d32' }}>{matura.length}</div>
+          <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Kształcenie specjalistyczne</div>
+        </div>
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '12px' }}>
+        <button onClick={() => {
+          const csv = '\uFEFF' + ['Imię,Nazwisko,Email,Grupa,Poziom,Data zgłoszenia'].concat(
+            pedLista.map(p => `"${p.imie}","${p.nazwisko}","${p.email}","${grupy.find(g => g.id === p.grupa_id)?.nazwa || ''}","${p.poziom === 'wyższe' ? 'Studia podyplomowe' : 'Kształcenie specjalistyczne'}","${new Date(p.data_zgloszenia).toLocaleDateString('pl-PL')}"`)
+          ).join('\n');
+          const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+          const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'pedagogium.csv'; a.click();
+        }} style={{ fontSize: '12px', padding: '7px 16px', border: '0.5px solid var(--border)', borderRadius: '8px', background: 'white', cursor: 'pointer', color: 'var(--brand)', fontFamily: 'Jost, sans-serif' }}>
+          ⬇ Eksport CSV
+        </button>
+      </div>
+      <div style={{ background: 'white', borderRadius: '12px', border: '0.5px solid var(--border)', overflow: 'auto' }}>
+        {pedLista.length === 0 ? (
+          <div style={{ padding: '32px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '13px' }}>Brak zgłoszeń</div>
+        ) : (
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+            <thead>
+              <tr style={{ background: 'var(--bg)', borderBottom: '0.5px solid var(--border)' }}>
+                {['Imię i Nazwisko', 'Email', 'Grupa', 'Poziom', 'Data zgłoszenia'].map((h, i) => (
+                  <th key={i} style={{ padding: '9px 14px', textAlign: 'left', fontWeight: 600, color: 'var(--text-muted)', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.3px' }}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {pedLista.map((p, idx) => (
+                <tr key={p.id} style={{ borderBottom: idx < pedLista.length - 1 ? '0.5px solid var(--border-soft)' : 'none', background: idx % 2 === 0 ? 'white' : '#fdf9f8' }}>
+                  <td style={{ padding: '10px 14px', fontWeight: 500 }}>{p.imie} {p.nazwisko}</td>
+                  <td style={{ padding: '10px 14px', color: 'var(--text-muted)' }}>{p.email}</td>
+                  <td style={{ padding: '10px 14px', color: 'var(--text-muted)' }}>{grupy.find(g => g.id === p.grupa_id)?.nazwa || '—'}</td>
+                  <td style={{ padding: '10px 14px' }}>
+                    <span style={{ fontSize: '10px', fontWeight: 600, padding: '2px 8px', borderRadius: '20px', background: p.poziom === 'wyższe' ? '#e8f0fe' : '#e8f5e9', color: p.poziom === 'wyższe' ? '#1565c0' : '#2e7d32' }}>
+                      {p.poziom === 'wyższe' ? 'Studia podyplomowe' : 'Kształcenie specjalistyczne'}
+                    </span>
+                  </td>
+                  <td style={{ padding: '10px 14px', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>{new Date(p.data_zgloszenia).toLocaleDateString('pl-PL')}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+    </>
+  );
+})()}
           {aktywnaZakladka === 'ankiety' && (
             <>
               <h2 className="page-title">Wyniki ankiet</h2>
@@ -8180,15 +8250,14 @@ useEffect(() => {
                           <button key={opt.val} disabled={pedagogiumLadowanie}
                             onClick={async () => {
                               setPedagogiumLadowanie(true);
-                              await supabase.from('pedagogium_zainteresowanie').insert([{
-                                user_id: user.id,
+                              await supabase.from('pedagogium_zainteresowanie').upsert([{                                user_id: user.id,
                                 kursant_id: (kursant as any)?.id ?? null,
                                 imie: kursant?.imie ?? '',
                                 nazwisko: kursant?.nazwisko ?? '',
                                 email: user.email,
                                 grupa_id: kursant?.grupa_id ?? null,
                                 poziom: opt.val,
-                              }]);                              setPedagogiumZainteresowanie('wysłane');
+                              }], { onConflict: 'user_id' });                              setPedagogiumZainteresowanie('wysłane');
                               setPedagogiumLadowanie(false);
                             }}
                             style={{ flex: 1, minWidth: '160px', padding: '10px 14px', border: '0.5px solid var(--border)', borderRadius: '10px', background: 'var(--bg)', cursor: 'pointer', fontFamily: 'Jost, sans-serif', textAlign: 'left' }}>
