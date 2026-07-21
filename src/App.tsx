@@ -3888,6 +3888,7 @@ const [zwinieteZadania, setZwinieteZadania] = useState<Set<number>>(() => new Se
     const [edytowaneZadanie, setEdytowaneZadanie] = useState<Zadanie | null>(null);
     const [noweZadanie, setNoweZadanie] = useState({ tytul: '', opis: '', termin: '', link_materialow: '', grupa_id: '', typ: 'zadanie', zdjecie_url: '' });
     const [komunikat, setKomunikat] = useState('');
+    const [pedLista, setPedLista] = useState<any[]>([]);
     const [wysylanieZaproszenia, setWysylanieZaproszenia] = useState<number | null>(null);
     const [importStatus, setImportStatus] = useState<{ imie: string; nazwisko: string; email: string; status: string }[]>([]);
     const [importowanie, setImportowanie] = useState(false);
@@ -3896,7 +3897,11 @@ const [zwinieteZadania, setZwinieteZadania] = useState<Set<number>>(() => new Se
     const [wybranaGrupaDetail, setWybranaGrupaDetail] = useState<number | null>(null);
     const [zakladkaGrupy, setZakladkaGrupy] = useState<'kursanci' | 'zjazdy' | 'ogloszenia' | 'ustawienia' | 'obecnosci'>('kursanci');
     const fileRef = useRef<HTMLInputElement>(null);
-
+    useEffect(() => {
+      if (aktywnaZakladka !== 'pedagogium') return;
+      supabase.from('pedagogium_zainteresowanie').select('*').order('data_zgloszenia', { ascending: false })
+        .then(({ data }) => setPedLista(data || []));
+    }, [aktywnaZakladka]);
     useEffect(() => {
       pobierzGrupy(); pobierzOgloszenia(); pobierzZjazdy(); pobierzProwadzacy(); pobierzZadania();
       supabase.from('kursanci').select('id, imie, nazwisko, email, telefon, grupa_id, user_id, certyfikat_url, nr_certyfikatu, notatki, dofinansowanie, folder_prywatny, data_urodzenia, miejsce_urodzenia, adres_wysylka, dane_fv').then(({ data }) => setKursanci((data || []) as unknown as KursantAdmin[]));
@@ -6048,11 +6053,6 @@ setKomunikat(`Notatka zapisana — ${k.imie} ${k.nazwisko}`);
             </>
           )}
           {aktywnaZakladka === 'pedagogium' && (() => {
-  const [pedLista, setPedLista] = useState<any[]>([]);
-  useEffect(() => {
-    supabase.from('pedagogium_zainteresowanie').select('*').order('data_zgloszenia', { ascending: false })
-      .then(({ data }) => setPedLista(data || []));
-  }, []);
   const wyzsze = pedLista.filter(p => p.poziom === 'wyższe');
   const matura = pedLista.filter(p => p.poziom === 'matura');
   return (
