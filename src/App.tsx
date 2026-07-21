@@ -5908,6 +5908,18 @@ setKomunikat(`Notatka zapisana — ${k.imie} ${k.nazwisko}`);
                             </div>
                           ))}
                           <div>
+  <div style={{ fontSize: '10px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.2em', marginBottom: '5px' }}>Typ kursu</div>
+  <select defaultValue={(g as any).typ_kursu || ''}
+    onChange={async e => { await supabase.from('grupy').update({ typ_kursu: e.target.value || null }).eq('id', g.id); pobierzGrupy(); setKomunikat('Typ kursu zapisany'); }}
+    style={{ fontSize: '13px', padding: '9px 12px', border: '0.5px solid var(--border)', borderRadius: '10px', fontFamily: 'Jost, sans-serif', background: 'white', width: '100%' }}>
+    <option value="">— nie określono —</option>
+    <option value="akademia">Roczna Akademia Projektowania</option>
+    <option value="projektowanie_wnetrz">Kurs Projektowania Wnętrz</option>
+    <option value="ogrody">Kurs Projektowania Ogrodów</option>
+    <option value="meble">Kurs Projektowania Mebli</option>
+  </select>
+</div>
+                          <div>
                             <div style={{ fontSize: '10px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.2em', marginBottom: '5px' }}>Tryb zajęć</div>
                             <select defaultValue={g.tryb || 'stacjonarny'}
                               onChange={async e => { await supabase.from('grupy').update({ tryb: e.target.value }).eq('id', g.id); pobierzGrupy(); setKomunikat('Tryb zapisany'); }}
@@ -8002,6 +8014,18 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
     const pozostaloZjazdow = wszystkieZjazdy - zakonczone;
     const odmianaZjazd = pozostaloZjazdow === 1 ? 'zjazd' : ([2, 3, 4].includes(pozostaloZjazdow % 10) && ![12, 13, 14].includes(pozostaloZjazdow % 100)) ? 'zjazdy' : 'zjazdów';
     const ostatniZjazd = zjazdy.length > 0 ? zjazdy[zjazdy.length - 1] : null;
+    const nazwaGrupyUpper = (grupaInfo?.nazwa || '').toUpperCase();
+    const typKursu = (grupaInfo as any)?.typ_kursu || '';
+
+    const maKislist = ['akademia', 'projektowanie_wnetrz'].includes(typKursu);
+    const maPedagogium = typKursu === 'akademia';
+const [pedagogiumZainteresowanie, setPedagogiumZainteresowanie] = useState<'brak'|'wyższe'|'matura'|'wysłane'>('brak');
+const [pedagogiumLadowanie, setPedagogiumLadowanie] = useState(false);
+useEffect(() => {
+  if (!maPedagogium || !user?.id) return;
+  supabase.from('pedagogium_zainteresowanie').select('poziom').eq('user_id', user.id).maybeSingle()
+    .then(({ data }) => { if (data) setPedagogiumZainteresowanie(data.poziom as any); });
+}, [user?.id]);
     const ankietaDostepna = ostatniZjazd?.status === 'zakonczony';
     const praceZaliczeniowe = (zadania || []).filter(z => z.typ === 'praca_zaliczeniowa');
     const wyslanePrace = (odpowiedziZadan || []).filter(o => praceZaliczeniowe.some(z => z.id === o.zadanie_id)).length;
@@ -8100,6 +8124,90 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
                 <span style={{ color: 'var(--text-muted)', fontSize: '18px' }}>›</span>
               </div>
             </a>
+          )}
+          {/* Kislist */}
+          {maKislist && (
+            <div style={{ background: 'white', borderRadius: '16px', padding: '16px', border: '0.5px solid var(--border)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '10px' }}>
+                <img src="https://on-arch.pl/wp-content/uploads/2024/07/kislist-logo.webp" alt="Kislist" style={{ height: '36px', width: 'auto', borderRadius: '8px' }} />
+                <div>
+                  <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text)' }}>Dostęp studencki Kislist</div>
+                  <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>6 miesięcy bezpłatnego dostępu</div>
+                </div>
+              </div>
+              <div style={{ fontSize: '12px', color: 'var(--text-muted)', lineHeight: 1.7, background: 'var(--bg)', borderRadius: '10px', padding: '10px 12px' }}>
+                🎓 W ramach kursu otrzymujesz <strong style={{ color: 'var(--text)' }}>6-miesięczny dostęp studencki</strong> do serwisu kislist.com — narzędzia do tworzenia profesjonalnych list zakupowych dla klientów.<br/><br/>
+                📩 Link aktywacyjny zostanie wysłany na Twój adres email <strong style={{ color: 'var(--text)' }}>pod koniec modułu SketchUp</strong>. Dostęp jest ważny przez 6 miesięcy od momentu aktywacji.
+              </div>
+              <a href="https://kislist.com" target="_blank" rel="noopener noreferrer"
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', marginTop: '10px', fontSize: '12px', color: 'var(--brand)', fontWeight: 500, textDecoration: 'none' }}>
+                Dowiedz się więcej o Kislist →
+              </a>
+            </div>
+          )}
+
+          {/* Pedagogium */}
+          {maPedagogium && (
+            <div style={{ background: 'white', borderRadius: '16px', padding: '16px', border: '0.5px solid var(--border)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '10px' }}>
+                <img src="https://pedagogium.pl/wp-content/uploads/2024/09/395988c2-7c27-4332-a5ac-56b08366bf9f-300x300.png" alt="WSNS Pedagogium" style={{ height: '40px', width: '40px', borderRadius: '10px', objectFit: 'contain' }} />
+                <div>
+                  <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text)' }}>Świadectwo WSNS Pedagogium</div>
+                  <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Po ukończeniu Akademii Projektowania</div>
+                </div>
+              </div>
+
+              {pedagogiumZainteresowanie === 'wysłane' ? (
+                <div style={{ background: '#e8f5e9', borderRadius: '10px', padding: '12px 14px', fontSize: '12px', color: '#2e7d32', lineHeight: 1.7 }}>
+                  ✓ <strong>Twoje zainteresowanie zostało zgłoszone.</strong><br/>
+                  Skontaktujemy się z Tobą mailowo z dalszymi instrukcjami dotyczącymi rejestracji w WSNS Pedagogium.
+                </div>
+              ) : (
+                <>
+                  <div style={{ fontSize: '12px', color: 'var(--text-muted)', lineHeight: 1.7, background: 'var(--bg)', borderRadius: '10px', padding: '10px 12px', marginBottom: '12px' }}>
+                    Po ukończeniu Rocznej Akademii Projektowania możesz otrzymać oficjalne świadectwo WSNS Pedagogium:<br/><br/>
+                    🎓 <strong style={{ color: 'var(--text)' }}>Świadectwo studiów podyplomowych</strong> — dla osób z wyższym wykształceniem<br/>
+                    📋 <strong style={{ color: 'var(--text)' }}>Świadectwo kształcenia specjalistycznego</strong> — dla osób z maturą lub bez matury
+                  </div>
+
+                  {pedagogiumZainteresowanie === 'brak' ? (
+                    <div>
+                      <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text)', marginBottom: '8px' }}>Jestem zainteresowana/y — wybierz poziom wykształcenia:</div>
+                      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                        {[
+                          { val: 'wyższe', label: '🎓 Wyższe wykształcenie', desc: 'studia podyplomowe' },
+                          { val: 'matura', label: '📋 Matura lub bez matury', desc: 'kształcenie specjalistyczne' },
+                        ].map(opt => (
+                          <button key={opt.val} disabled={pedagogiumLadowanie}
+                            onClick={async () => {
+                              setPedagogiumLadowanie(true);
+                              await supabase.from('pedagogium_zainteresowanie').upsert([{
+                                user_id: user.id,
+                                kursant_id: kursant?.id ?? null,
+                                imie: kursant?.imie ?? '',
+                                nazwisko: kursant?.nazwisko ?? '',
+                                email: user.email,
+                                grupa_id: kursant?.grupa_id ?? null,
+                                poziom: opt.val,
+                              }], { onConflict: 'user_id' });
+                              setPedagogiumZainteresowanie('wysłane');
+                              setPedagogiumLadowanie(false);
+                            }}
+                            style={{ flex: 1, minWidth: '160px', padding: '10px 14px', border: '0.5px solid var(--border)', borderRadius: '10px', background: 'var(--bg)', cursor: 'pointer', fontFamily: 'Jost, sans-serif', textAlign: 'left' }}>
+                            <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text)', marginBottom: '2px' }}>{opt.label}</div>
+                            <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>{opt.desc}</div>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ) : (
+                    <div style={{ background: '#fff3e0', borderRadius: '10px', padding: '12px 14px', fontSize: '12px', color: '#e65100', lineHeight: 1.7 }}>
+                      ⏳ Wysyłanie...
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
           )}
          {/* Certyfikat */}
           {kursant?.certyfikat_url ? (
@@ -8330,7 +8438,7 @@ async function wylaczPush() {
         const { data: kursantData } = await supabase.from('kursanci').select('imie, nazwisko, grupa_id, rola, avatar_url, certyfikat_url, nr_certyfikatu, onboarding_done, folder_prywatny').eq('user_id', user!.id).single();
         let grupaData = null;
         if (kursantData?.grupa_id) {
-          const { data } = await supabase.from('grupy').select('id, nazwa, miasto, edycja, drive_link, link_materialow, link_nagran').eq('id', kursantData.grupa_id).single();
+          const { data } = await supabase.from('grupy').select('id, nazwa, miasto, edycja, drive_link, link_materialow, link_nagran', typ_kursu).eq('id', kursantData.grupa_id).single();
           grupaData = data;
           setGrupaInfo(data as Grupa | null);
         }
