@@ -8239,7 +8239,7 @@ useEffect(() => {
                     📋 <strong style={{ color: 'var(--text)' }}>Świadectwo kształcenia specjalistycznego</strong> — dla osób z maturą lub bez matury
                   </div>
 
-                  {pedagogiumZainteresowanie === 'brak' ? (
+                  {(pedagogiumZainteresowanie === 'brak' && !pedagogiumLadowanie) ? (
                     <div>
                       <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text)', marginBottom: '8px' }}>Jestem zainteresowana/y — wybierz poziom wykształcenia:</div>
                       <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
@@ -8268,8 +8268,9 @@ useEffect(() => {
                       </div>
                     </div>
                   ) : (
-                    <div style={{ background: '#fff3e0', borderRadius: '10px', padding: '12px 14px', fontSize: '12px', color: '#e65100', lineHeight: 1.7 }}>
-                      ⏳ Wysyłanie...
+                    <div style={{ background: '#e8f5e9', borderRadius: '10px', padding: '12px 14px', fontSize: '12px', color: '#2e7d32', lineHeight: 1.7 }}>
+                      ✓ <strong>Twoje zainteresowanie zostało zgłoszone.</strong><br/>
+                      Skontaktujemy się z Tobą mailowo z dalszymi instrukcjami dotyczącymi rejestracji w WSNS Pedagogium.
                     </div>
                   )}
                 </>
