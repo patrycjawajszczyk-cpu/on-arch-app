@@ -8014,7 +8014,6 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
     const pozostaloZjazdow = wszystkieZjazdy - zakonczone;
     const odmianaZjazd = pozostaloZjazdow === 1 ? 'zjazd' : ([2, 3, 4].includes(pozostaloZjazdow % 10) && ![12, 13, 14].includes(pozostaloZjazdow % 100)) ? 'zjazdy' : 'zjazdów';
     const ostatniZjazd = zjazdy.length > 0 ? zjazdy[zjazdy.length - 1] : null;
-    const nazwaGrupyUpper = (grupaInfo?.nazwa || '').toUpperCase();
     const typKursu = (grupaInfo as any)?.typ_kursu || '';
 
     const maKislist = ['akademia', 'projektowanie_wnetrz'].includes(typKursu);
@@ -8183,7 +8182,7 @@ useEffect(() => {
                               setPedagogiumLadowanie(true);
                               await supabase.from('pedagogium_zainteresowanie').upsert([{
                                 user_id: user.id,
-                                kursant_id: kursant?.id ?? null,
+                                kursant_id: (kursant as any)?.id ?? null,
                                 imie: kursant?.imie ?? '',
                                 nazwisko: kursant?.nazwisko ?? '',
                                 email: user.email,
@@ -8438,7 +8437,7 @@ async function wylaczPush() {
         const { data: kursantData } = await supabase.from('kursanci').select('imie, nazwisko, grupa_id, rola, avatar_url, certyfikat_url, nr_certyfikatu, onboarding_done, folder_prywatny').eq('user_id', user!.id).single();
         let grupaData = null;
         if (kursantData?.grupa_id) {
-          const { data } = await supabase.from('grupy').select('id, nazwa, miasto, edycja, drive_link, link_materialow, link_nagran', typ_kursu).eq('id', kursantData.grupa_id).single();
+          const { data } = await supabase.from('grupy').select('id, nazwa, miasto, edycja, drive_link, link_materialow, link_nagran, typ_kursu').eq('id', kursantData.grupa_id).single();
           grupaData = data;
           setGrupaInfo(data as Grupa | null);
         }
