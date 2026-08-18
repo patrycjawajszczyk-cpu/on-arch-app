@@ -4099,13 +4099,53 @@ const [zwinieteZadania, setZwinieteZadania] = useState<Set<number>>(() => new Se
 
     async function dodajKursanta(e: React.FormEvent) {
       e.preventDefault();
-      const { data: authData, error: authError } = await supabase.auth.signUp({ email: nowyKursant.email, password: Math.random().toString(36).slice(-10) });
-      if (authError) { setKomunikat('Blad: ' + authError.message); return; }
       const rola = (nowyKursant as any).rola || 'kursant';
-      const { error } = await supabase.from('kursanci').insert([{ imie: nowyKursant.imie, nazwisko: nowyKursant.nazwisko, grupa_id: rola === 'kursant' ? parseInt(nowyKursant.grupa_id) : null, user_id: authData.user!.id, rola }]);
-      if (error) { setKomunikat('Blad: ' + error.message); } else { setKomunikat('Kursant dodany!'); setNowyKursant({ imie: '', nazwisko: '', email: '', grupa_id: '' }); const { data } = await supabase.from('kursanci').select('id, imie, nazwisko, email, telefon, grupa_id, user_id, certyfikat_url, nr_certyfikatu, notatki, dofinansowanie, folder_prywatny, data_urodzenia, miejsce_urodzenia, adres_wysylka, dane_fv'); setKursanci((data || []) as unknown as KursantAdmin[]); }
+    
+      let key = sessionStorage.getItem('sb_service_key') || '';
+      if (!key) {
+        const input = window.prompt('Wklej klucz service_role (Supabase → Settings → API):');
+        if (!input?.trim()) return;
+        key = input.trim();
+        sessionStorage.setItem('sb_service_key', key);
+      }
+    
+      setKomunikat('Dodaję kursanta i wysyłam zaproszenie...');
+      const SUPABASE_URL = 'https://bksebyxrknubyokwuaby.supabase.co';
+    
+      try {
+        // 1. Zaproś przez invite — tworzy konto + wysyła email z linkiem do hasła
+        const res = await fetch(`${SUPABASE_URL}/auth/v1/invite`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'apikey': key, 'Authorization': `Bearer ${key}` },
+          body: JSON.stringify({ email: nowyKursant.email }),
+        });
+        const authUser = await res.json();
+    
+        if (!res.ok || !authUser.id) {
+          setKomunikat('Błąd: ' + (authUser.msg || authUser.message || res.status));
+          return;
+        }
+    
+        // 2. Dodaj rekord kursanta z prawdziwym UUID
+        const { error } = await supabase.from('kursanci').insert([{
+          imie: nowyKursant.imie,
+          nazwisko: nowyKursant.nazwisko,
+          email: nowyKursant.email,
+          grupa_id: rola === 'kursant' ? parseInt(nowyKursant.grupa_id) : null,
+          user_id: authUser.id,
+          rola,
+        }]);
+    
+        if (error) { setKomunikat('Błąd zapisu: ' + error.message); return; }
+    
+        setKomunikat(`✓ Kursant dodany, zaproszenie wysłane na ${nowyKursant.email}`);
+        setNowyKursant({ imie: '', nazwisko: '', email: '', grupa_id: '' });
+        const { data } = await supabase.from('kursanci').select('id, imie, nazwisko, email, telefon, grupa_id, user_id, certyfikat_url, nr_certyfikatu, notatki, dofinansowanie, folder_prywatny, data_urodzenia, miejsce_urodzenia, adres_wysylka, dane_fv');
+        setKursanci((data || []) as unknown as KursantAdmin[]);
+      } catch (err: any) {
+        setKomunikat('Błąd sieci: ' + err.message);
+      }
     }
-
     async function dodajGrupe(e: React.FormEvent) {
       e.preventDefault();
       const { error } = await supabase.from('grupy').insert([{ nazwa: nowaGrupa.nazwa, miasto: nowaGrupa.miasto, edycja: nowaGrupa.edycja, drive_link: nowaGrupa.drive_link || null, numer_uslugi: nowaGrupa.numer_uslugi || null, tryb: nowaGrupa.tryb, liczba_godzin: nowaGrupa.liczba_godzin ? parseInt(nowaGrupa.liczba_godzin) : null }]);
