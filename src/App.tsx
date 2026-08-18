@@ -4100,48 +4100,26 @@ const [zwinieteZadania, setZwinieteZadania] = useState<Set<number>>(() => new Se
     async function dodajKursanta(e: React.FormEvent) {
       e.preventDefault();
       const rola = (nowyKursant as any).rola || 'kursant';
-    
-      let key = sessionStorage.getItem('sb_service_key') || '';
-      if (!key) {
-        const input = window.prompt('Wklej klucz service_role (Supabase → Settings → API):');
-        if (!input?.trim()) return;
-        key = input.trim();
-        sessionStorage.setItem('sb_service_key', key);
-      }
-    
       setKomunikat('Dodaję kursanta i wysyłam zaproszenie...');
-      const SUPABASE_URL = 'https://bksebyxrknubyokwuaby.supabase.co';
     
       try {
-        // 1. Zaproś przez invite — tworzy konto + wysyła email z linkiem do hasła
-        const res = await fetch(`${SUPABASE_URL}/auth/v1/invite`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'apikey': key, 'Authorization': `Bearer ${key}` },
-          body: JSON.stringify({ email: nowyKursant.email }),
+        const { data, error } = await supabase.functions.invoke('zapros-kursanta', {
+          body: {
+            email: nowyKursant.email,
+            imie: nowyKursant.imie,
+            nazwisko: nowyKursant.nazwisko,
+            grupa_id: rola === 'kursant' && nowyKursant.grupa_id ? parseInt(nowyKursant.grupa_id) : null,
+            rola,
+          },
         });
-        const authUser = await res.json();
     
-        if (!res.ok || !authUser.id) {
-          setKomunikat('Błąd: ' + (authUser.msg || authUser.message || res.status));
-          return;
-        }
+        if (error) { setKomunikat('Błąd: ' + error.message); return; }
+        if (data?.error) { setKomunikat('Błąd: ' + data.error); return; }
     
-        // 2. Dodaj rekord kursanta z prawdziwym UUID
-        const { error } = await supabase.from('kursanci').insert([{
-          imie: nowyKursant.imie,
-          nazwisko: nowyKursant.nazwisko,
-          email: nowyKursant.email,
-          grupa_id: rola === 'kursant' ? parseInt(nowyKursant.grupa_id) : null,
-          user_id: authUser.id,
-          rola,
-        }]);
-    
-        if (error) { setKomunikat('Błąd zapisu: ' + error.message); return; }
-    
-        setKomunikat(`✓ Kursant dodany, zaproszenie wysłane na ${nowyKursant.email}`);
+        setKomunikat(`✓ ${data?.message || 'Kursant dodany, zaproszenie wysłane'} — ${nowyKursant.email}`);
         setNowyKursant({ imie: '', nazwisko: '', email: '', grupa_id: '' });
-        const { data } = await supabase.from('kursanci').select('id, imie, nazwisko, email, telefon, grupa_id, user_id, certyfikat_url, nr_certyfikatu, notatki, dofinansowanie, folder_prywatny, data_urodzenia, miejsce_urodzenia, adres_wysylka, dane_fv');
-        setKursanci((data || []) as unknown as KursantAdmin[]);
+        const { data: lista } = await supabase.from('kursanci').select('id, imie, nazwisko, email, telefon, grupa_id, user_id, certyfikat_url, nr_certyfikatu, notatki, dofinansowanie, folder_prywatny, data_urodzenia, miejsce_urodzenia, adres_wysylka, dane_fv');
+        setKursanci((lista || []) as unknown as KursantAdmin[]);
       } catch (err: any) {
         setKomunikat('Błąd sieci: ' + err.message);
       }
