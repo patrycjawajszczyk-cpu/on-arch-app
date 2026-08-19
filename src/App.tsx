@@ -3802,12 +3802,11 @@ function urlBase64ToUint8Array(base64String: string) {
       const channel = supabase.channel('biuro-globalne-powiadomienia')
         .on('postgres_changes', {
           event: 'INSERT', schema: 'public', table: 'wiadomosci',
-          filter: `kanal=eq.biuro`,
         }, (payload) => {
           const msg = payload.new as any;
           console.log('BIURO listener złapał wiadomość:', msg);
-          // Wiadomość od kursanta (nie od biura) → pokaż kropkę
-          if (msg.imie !== 'Biuro ON-ARCH') {
+          // Tylko wiadomości na kanał biura, od kursanta (nie od biura)
+          if (msg.kanal === 'biuro' && msg.imie !== 'Biuro ON-ARCH') {
             setAktywnaZakladka(current => {
               if (current !== 'czat') setNoweWiadomosciBiuro(true);
               return current;
