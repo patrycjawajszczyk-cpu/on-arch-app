@@ -3805,6 +3805,7 @@ function urlBase64ToUint8Array(base64String: string) {
           filter: `kanal=eq.biuro`,
         }, (payload) => {
           const msg = payload.new as any;
+          console.log('BIURO listener złapał wiadomość:', msg);
           // Wiadomość od kursanta (nie od biura) → pokaż kropkę
           if (msg.imie !== 'Biuro ON-ARCH') {
             setAktywnaZakladka(current => {
