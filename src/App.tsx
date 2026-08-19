@@ -3779,6 +3779,7 @@ function urlBase64ToUint8Array(base64String: string) {
   }
   function PanelBiura({ onWyloguj, user }: { onWyloguj: () => void; user: User | null }) {
     const [aktywnaZakladka, setAktywnaZakladka] = useState('home');
+    const [noweWiadomosciBiuro, setNoweWiadomosciBiuro] = useState(false);
     const [grupy, setGrupy] = useState<Grupa[]>([]);
     const [kursanci, setKursanci] = useState<KursantAdmin[]>([]);
     const [ogloszenia, setOgloszenia] = useState<Ogloszenie[]>([]);
@@ -3797,7 +3798,23 @@ function urlBase64ToUint8Array(base64String: string) {
   
     const [noweOgl, setNoweOgl] = useState({ typ: 'Informacja', tytul: '', tresc: '', szczegoly: '', nowe: true, grupa_id: '' });
     const [nowyZjazd, setNowyZjazd] = useState({ nr: '', daty: '', sala: '', adres: '', tematy: '', status: 'nadchodzacy', typ: 'stacjonarny', link_online: '', data_zjazdu: '', data_dzien1: '', data_dzien2: '', grupa_id: '', prowadzacy_id: '' });
-
+    useEffect(() => {
+      const channel = supabase.channel('biuro-globalne-powiadomienia')
+        .on('postgres_changes', {
+          event: 'INSERT', schema: 'public', table: 'wiadomosci',
+          filter: `kanal=eq.biuro`,
+        }, (payload) => {
+          const msg = payload.new as any;
+          // Wiadomość od kursanta (nie od biura) → pokaż kropkę
+          if (msg.imie !== 'Biuro ON-ARCH') {
+            setAktywnaZakladka(current => {
+              if (current !== 'czat') setNoweWiadomosciBiuro(true);
+              return current;
+            });
+          }
+        }).subscribe();
+      return () => { supabase.removeChannel(channel); };
+    }, []);
     // Czy backup jest wymagany (piątek >= 14:00 i nie zrobiony w tym tygodniu)
     function czyBackupWymagany(): boolean {
       const ostatni = localStorage.getItem('onarch_backup_date');
