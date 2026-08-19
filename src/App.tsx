@@ -8106,13 +8106,6 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
 
     const maKislist = ['akademia', 'projektowanie_wnetrz'].includes(typKursu);
     const maPedagogium = typKursu === 'akademia';
-const [pedagogiumZainteresowanie, setPedagogiumZainteresowanie] = useState<'brak'|'wyższe'|'matura'|'wysłane'>('brak');
-const [pedagogiumLadowanie, setPedagogiumLadowanie] = useState(false);
-useEffect(() => {
-  if (!user?.id) return;
-  supabase.from('pedagogium_zainteresowanie').select('poziom').eq('user_id', user.id).maybeSingle()
-    .then(({ data }) => { if (data) setPedagogiumZainteresowanie(data.poziom as any); });
-}, [user?.id]);
     const ankietaDostepna = ostatniZjazd?.status === 'zakonczony';
     const praceZaliczeniowe = (zadania || []).filter(z => z.typ === 'praca_zaliczeniowa');
     const wyslanePrace = (odpowiedziZadan || []).filter(o => praceZaliczeniowe.some(z => z.id === o.zadanie_id)).length;
