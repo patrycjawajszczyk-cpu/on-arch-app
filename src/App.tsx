@@ -4378,7 +4378,7 @@ const [zwinieteZadania, setZwinieteZadania] = useState<Set<number>>(() => new Se
                 item.id === 'backup' && pokazBackupAlert ? { color: '#c62828', background: '#ffeaea' } :
                 item.id === 'aplikacje' ? { color: '#5c3d8f' } : {}
               }
-                onClick={() => { setKomunikat(''); setEdytowane(null); setEdytowanyZjazd(null); setAktywnaZakladka(item.id); }}>
+              onClick={() => { setKomunikat(''); setEdytowane(null); setEdytowanyZjazd(null); if (item.id === 'czat') setNoweWiadomosciBiuro(false); setAktywnaZakladka(item.id); }}>
                 {item.icon}
                 <span>{item.label}</span>
                 {item.id === 'backup' && pokazBackupAlert && (
