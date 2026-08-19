@@ -3807,10 +3807,8 @@ function urlBase64ToUint8Array(base64String: string) {
           console.log('BIURO listener złapał wiadomość:', msg);
           // Tylko wiadomości na kanał biura, od kursanta (nie od biura)
           if (msg.kanal === 'biuro' && msg.imie !== 'Biuro ON-ARCH') {
-            setAktywnaZakladka(current => {
-              if (current !== 'czat') setNoweWiadomosciBiuro(true);
-              return current;
-            });
+            console.log('Ustawiam kropkę na true');
+            setNoweWiadomosciBiuro(true);
           }
         }).subscribe();
       return () => { supabase.removeChannel(channel); };
