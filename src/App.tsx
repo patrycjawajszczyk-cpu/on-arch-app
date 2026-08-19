@@ -4387,6 +4387,9 @@ const [zwinieteZadania, setZwinieteZadania] = useState<Set<number>>(() => new Se
                 {item.id === 'aplikacje' && (
                   <span style={{ marginLeft: 'auto', fontSize: '9.5px', fontWeight: 700, background: '#5c3d8f', color: 'white', padding: '1px 6px', borderRadius: '999px', letterSpacing: '0.1em' }}>NEW</span>
                 )}
+                                {item.id === 'czat' && noweWiadomosciBiuro && (
+                  <span style={{ marginLeft: 'auto', width: '8px', height: '8px', borderRadius: '50%', background: '#1976d2', flexShrink: 0 }} />
+                )}
               </button>
             ))}
           </nav>
