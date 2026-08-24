@@ -3799,6 +3799,18 @@ function urlBase64ToUint8Array(base64String: string) {
     const [noweOgl, setNoweOgl] = useState({ typ: 'Informacja', tytul: '', tresc: '', szczegoly: '', nowe: true, grupa_id: '' });
     const [nowyZjazd, setNowyZjazd] = useState({ nr: '', daty: '', sala: '', adres: '', tematy: '', status: 'nadchodzacy', typ: 'stacjonarny', link_online: '', data_zjazdu: '', data_dzien1: '', data_dzien2: '', grupa_id: '', prowadzacy_id: '' });
     useEffect(() => {
+      const ostatnieSprawdzenie = localStorage.getItem('biuro_czat_ostatnie') || '2000-01-01';
+      supabase.from('wiadomosci')
+        .select('id, created_at, imie, kanal')
+        .eq('kanal', 'biuro')
+        .neq('imie', 'Biuro ON-ARCH')
+        .gt('created_at', ostatnieSprawdzenie)
+        .limit(1)
+        .then(({ data }) => {
+          if (data && data.length > 0) setNoweWiadomosciBiuro(true);
+        });
+    }, []);
+    seEffect(() => {
       const channel = supabase.channel('biuro-globalne-powiadomienia')
         .on('postgres_changes', {
           event: 'INSERT', schema: 'public', table: 'wiadomosci',
@@ -4374,7 +4386,7 @@ const [zwinieteZadania, setZwinieteZadania] = useState<Set<number>>(() => new Se
                 item.id === 'backup' && pokazBackupAlert ? { color: '#c62828', background: '#ffeaea' } :
                 item.id === 'aplikacje' ? { color: '#5c3d8f' } : {}
               }
-              onClick={() => { setKomunikat(''); setEdytowane(null); setEdytowanyZjazd(null); if (item.id === 'czat') setNoweWiadomosciBiuro(false); setAktywnaZakladka(item.id); }}>
+              onClick={() => { setKomunikat(''); setEdytowane(null); setEdytowanyZjazd(null); if (item.id === 'czat') { setNoweWiadomosciBiuro(false); localStorage.setItem('biuro_czat_ostatnie', new Date().toISOString()); } setAktywnaZakladka(item.id); }}>
                 {item.icon}
                 <span>{item.label}</span>
                 {item.id === 'backup' && pokazBackupAlert && (
@@ -4469,8 +4481,8 @@ const [zwinieteZadania, setZwinieteZadania] = useState<Set<number>>(() => new Se
                     { id: 'backup',     label: 'Backup',     opis: 'Pobierz kopię bazy',                  icon: <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> },
                   ].map(k => (
                     <div key={k.id} onClick={() => setAktywnaZakladka(k.id)}
-                    className="biuro-kafelek"
-                    onClickCapture={() => { if (k.id === 'czat') setNoweWiadomosciBiuro(false); }}
+                    className="biuro-kafelek"onClickCapture={() => { if (k.id === 'czat') { setNoweWiadomosciBiuro(false); localStorage.setItem('biuro_czat_ostatnie', new Date().toISOString()); } }}
+                    
                     style={{
                       position: 'relative',
                       ...(k.id === 'czat' && noweWiadomosciBiuro ? { borderColor: '#66bb6a', background: 'linear-gradient(135deg, #e8f5e9 0%, #dcedc8 100%)', borderWidth: '1px' } :
