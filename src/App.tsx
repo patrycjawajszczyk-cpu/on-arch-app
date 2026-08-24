@@ -4473,7 +4473,8 @@ const [zwinieteZadania, setZwinieteZadania] = useState<Set<number>>(() => new Se
                     onClickCapture={() => { if (k.id === 'czat') setNoweWiadomosciBiuro(false); }}
                     style={{
                       position: 'relative',
-                      ...(k.id === 'backup' && pokazBackupAlert ? { borderColor: '#ffcdd2', background: '#fff5f5' } :
+                      ...(k.id === 'czat' && noweWiadomosciBiuro ? { borderColor: '#66bb6a', background: 'linear-gradient(135deg, #e8f5e9 0%, #dcedc8 100%)', borderWidth: '1px' } :
+                      k.id === 'backup' && pokazBackupAlert ? { borderColor: '#ffcdd2', background: '#fff5f5' } :
                       k.id === 'aplikacje' ? { borderColor: '#c9b8e8', background: 'linear-gradient(135deg, #f8f3ff 0%, #f3eefe 100%)', borderWidth: '1px' } : {})
                     }}>
                                             {k.id === 'czat' && noweWiadomosciBiuro && (
