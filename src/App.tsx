@@ -4472,10 +4472,15 @@ const [zwinieteZadania, setZwinieteZadania] = useState<Set<number>>(() => new Se
                   ].map(k => (
                     <div key={k.id} onClick={() => setAktywnaZakladka(k.id)}
                     className="biuro-kafelek"
-                    style={
-                      k.id === 'backup' && pokazBackupAlert ? { borderColor: '#ffcdd2', background: '#fff5f5' } :
-                      k.id === 'aplikacje' ? { borderColor: '#c9b8e8', background: 'linear-gradient(135deg, #f8f3ff 0%, #f3eefe 100%)', borderWidth: '1px' } : {}
-                    }>
+                    onClickCapture={() => { if (k.id === 'czat') setNoweWiadomosciBiuro(false); }}
+                    style={{
+                      position: 'relative',
+                      ...(k.id === 'backup' && pokazBackupAlert ? { borderColor: '#ffcdd2', background: '#fff5f5' } :
+                      k.id === 'aplikacje' ? { borderColor: '#c9b8e8', background: 'linear-gradient(135deg, #f8f3ff 0%, #f3eefe 100%)', borderWidth: '1px' } : {})
+                    }}>
+                                            {k.id === 'czat' && noweWiadomosciBiuro && (
+                        <span style={{ position: 'absolute', top: '12px', right: '12px', width: '10px', height: '10px', borderRadius: '50%', background: '#1976d2' }} />
+                      )}
                       <div className="biuro-kafelek-icon" style={k.id === 'backup' && pokazBackupAlert ? { color: '#c62828' } : k.id === 'aplikacje' ? { color: '#5c3d8f' } : {}}>{k.icon}</div>
                       <div>
                         <div className="biuro-kafelek-label">{k.label}</div>
