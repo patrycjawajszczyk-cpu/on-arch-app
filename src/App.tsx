@@ -4442,14 +4442,21 @@ const [zwinieteZadania, setZwinieteZadania] = useState<Set<number>>(() => new Se
               {aktywnaZakladka === 'pytania' && 'Tablica pytań'}
               
             </div>
-            {pokazBackupAlert && (
-              <div onClick={() => setAktywnaZakladka('backup')}
-                style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#ffeaea', border: '0.5px solid #ffcdd2', borderRadius: '10px', padding: '8px 14px', cursor: 'pointer', animation: 'pulse-red 2s infinite' }}>
-                <span style={{ fontSize: '16px' }}>💾</span>
-                <span style={{ fontSize: '12px', fontWeight: 600, color: '#c62828' }}>Pobierz backup bazy danych</span>
-                <span style={{ fontSize: '11px', color: '#e57373' }}>→</span>
-              </div>
-            )}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginLeft: 'auto' }}>
+              {pokazBackupAlert && (
+                <div onClick={() => setAktywnaZakladka('backup')}
+                  style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#ffeaea', border: '0.5px solid #ffcdd2', borderRadius: '10px', padding: '8px 14px', cursor: 'pointer', animation: 'pulse-red 2s infinite' }}>
+                  <span style={{ fontSize: '16px' }}>💾</span>
+                  <span style={{ fontSize: '12px', fontWeight: 600, color: '#c62828' }}>Pobierz backup bazy danych</span>
+                  <span style={{ fontSize: '11px', color: '#e57373' }}>→</span>
+                </div>
+              )}
+              <button onClick={onWyloguj}
+                style={{ display: 'flex', alignItems: 'center', gap: '7px', background: 'white', border: '0.5px solid var(--border)', borderRadius: '10px', padding: '8px 16px', cursor: 'pointer', color: 'var(--text-muted)', fontSize: '13px', fontFamily: 'Jost, sans-serif', fontWeight: 500 }}>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                Wyloguj
+              </button>
+            </div>
           </div>
 
           <main className="biuro-main">
