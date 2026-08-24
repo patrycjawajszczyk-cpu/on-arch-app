@@ -3810,7 +3810,7 @@ function urlBase64ToUint8Array(base64String: string) {
           if (data && data.length > 0) setNoweWiadomosciBiuro(true);
         });
     }, []);
-    seEffect(() => {
+    useEffect(() => {
       const channel = supabase.channel('biuro-globalne-powiadomienia')
         .on('postgres_changes', {
           event: 'INSERT', schema: 'public', table: 'wiadomosci',
