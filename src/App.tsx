@@ -2532,48 +2532,58 @@ function urlBase64ToUint8Array(base64String: string) {
                                 </div>
                               </div>
                               {odp.length > 0 && (
-                                <div style={{ borderTop: '0.5px solid var(--border-soft)', background: 'var(--bg)' }}>
-                                  {odp.map((o, oi) => (
-                                    <div key={o.id} style={{ padding: '10px 14px', borderBottom: oi < odp.length - 1 ? '0.5px solid var(--border-soft)' : 'none' }}>
-                                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-                                        <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text)', minWidth: '120px' }}>{o.imie} {o.nazwisko}</span>
-                                        <a href={o.link_pracy} target="_blank" rel="noopener noreferrer" style={{ fontSize: '11px', color: 'var(--brand)', textDecoration: 'none', fontWeight: 500 }}>→ Otwórz pracę</a>
-                                        {o.komentarz && <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontStyle: 'normal' }}>{o.komentarz}</span>}
-                                        {/* Status sprawdzenia */}
-                                        <button onClick={async () => {
-                                          const { error } = await supabase.from('zadania_odpowiedzi').update({ sprawdzona: !o.sprawdzona }).eq('id', o.id);
-                                          if (error) { setKomunikat('Błąd: ' + error.message); return; }
-                                          const { data } = await supabase.from('zadania_odpowiedzi').select('*').in('zadanie_id', zadania.map(zz => zz.id));
-                                          setOdpowiedziZadan(data || []);
-                                          setKomunikat(o.sprawdzona ? 'Oznaczono jako: do sprawdzenia' : 'Oznaczono jako: sprawdzona ✓');
-                                        }} style={{ fontSize: '10px', fontWeight: 700, padding: '2px 8px', borderRadius: '8px', border: 'none', cursor: 'pointer', fontFamily: 'Lato, sans-serif',
-                                          background: o.sprawdzona ? '#e8f5e9' : '#fff8e1',
-                                          color: o.sprawdzona ? '#2e7d32' : '#c8a84b' }}>
-                                          {o.sprawdzona ? '✓ Sprawdzona' : '· Do sprawdzenia'}
-                                        </button>
-                                      </div>
-                                      {/* Uwagi prowadzącego */}
-                                      <div style={{ marginTop: '6px', display: 'flex', gap: '6px', alignItems: 'flex-start' }}>
-                                        <input type="text"
-                                          defaultValue={o.uwagi_prowadzacego || ''}
-                                          placeholder="Dodaj uwagi do pracy…"
-                                          onBlur={async e => {
-                                            const val = e.target.value.trim();
-                                            if (val !== (o.uwagi_prowadzacego || '').trim()) {
-                                              const { error } = await supabase.from('zadania_odpowiedzi').update({ uwagi_prowadzacego: val || null }).eq('id', o.id);
-                                              if (error) { setKomunikat('Błąd: ' + error.message); return; }
-                                              const { data } = await supabase.from('zadania_odpowiedzi').select('*').in('zadanie_id', zadania.map(zz => zz.id));
-                                              setOdpowiedziZadan(data || []);
-                                              setKomunikat('Uwagi zapisane');
-                                            }
-                                          }}
-                                          style={{ flex: 1, fontSize: '11px', padding: '5px 8px', border: '0.5px solid var(--border)', borderRadius: '7px', fontFamily: 'Lato, sans-serif', background: 'white' }} />
-                                      </div>
-                                      {o.uwagi_prowadzacego && <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '2px' }}>💬 {o.uwagi_prowadzacego}</div>}
-                                    </div>
-                                  ))}
+                          <div style={{ borderTop: '0.5px solid var(--border-soft)', background: '#faf8f5', padding: '10px 14px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                            <div style={{ fontSize: '10px', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                              Przesłane prace ({odp.length})
+                            </div>
+                            {odp.map((o) => (
+                              <div key={o.id} style={{ background: 'white', borderRadius: '10px', border: '0.5px solid var(--border)', borderLeft: `3px solid ${o.sprawdzona ? '#66bb6a' : '#e6b800'}`, padding: '12px 14px' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', flexWrap: 'wrap', marginBottom: '8px' }}>
+                                  <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text)' }}>{o.imie} {o.nazwisko}</span>
+                                  <button onClick={async () => {
+                                    const { error } = await supabase.from('zadania_odpowiedzi').update({ sprawdzona: !o.sprawdzona }).eq('id', o.id);
+                                    if (error) { setKomunikat('Błąd: ' + error.message); return; }
+                                    const { data } = await supabase.from('zadania_odpowiedzi').select('*').in('zadanie_id', zadania.map(zz => zz.id));
+                                    setOdpowiedziZadan(data || []);
+                                    setKomunikat(o.sprawdzona ? 'Oznaczono jako: do sprawdzenia' : 'Oznaczono jako: sprawdzona ✓');
+                                  }} style={{ fontSize: '11px', fontWeight: 700, padding: '4px 12px', borderRadius: '20px', border: 'none', cursor: 'pointer', fontFamily: 'Lato, sans-serif', background: o.sprawdzona ? '#e8f5e9' : '#fff8e1', color: o.sprawdzona ? '#2e7d32' : '#b8860b' }}>
+                                    {o.sprawdzona ? '✓ Sprawdzona' : '● Do sprawdzenia'}
+                                  </button>
                                 </div>
-                              )}
+                                {o.komentarz && (
+                                  <div style={{ fontSize: '12px', color: '#4b5563', fontStyle: 'italic', background: 'var(--bg)', borderRadius: '8px', padding: '8px 10px', marginBottom: '8px' }}>
+                                    „{o.komentarz}"
+                                  </div>
+                                )}
+                                {o.link_pracy && (
+                                  <a href={o.link_pracy} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '12px', fontWeight: 600, color: 'white', background: 'var(--brand)', padding: '7px 14px', borderRadius: '8px', textDecoration: 'none', marginBottom: '10px' }}>
+                                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                                    Otwórz pracę
+                                  </a>
+                                )}
+                                <div>
+                                  <div style={{ fontSize: '10px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '4px' }}>Twoje uwagi</div>
+                                  <textarea
+                                    defaultValue={o.uwagi_prowadzacego || ''}
+                                    placeholder="Napisz uwagi do pracy kursanta..."
+                                    rows={2}
+                                    onBlur={async e => {
+                                      const val = e.target.value.trim();
+                                      if (val !== (o.uwagi_prowadzacego || '').trim()) {
+                                        const { error } = await supabase.from('zadania_odpowiedzi').update({ uwagi_prowadzacego: val || null }).eq('id', o.id);
+                                        if (error) { setKomunikat('Błąd: ' + error.message); return; }
+                                        const { data } = await supabase.from('zadania_odpowiedzi').select('*').in('zadanie_id', zadania.map(zz => zz.id));
+                                        setOdpowiedziZadan(data || []);
+                                        setKomunikat('Uwagi zapisane ✓');
+                                      }
+                                    }}
+                                    style={{ width: '100%', fontSize: '12px', padding: '8px 10px', border: '0.5px solid var(--border)', borderRadius: '8px', fontFamily: 'Lato, sans-serif', background: o.uwagi_prowadzacego ? '#f0faf4' : 'white', resize: 'vertical', lineHeight: 1.5 }}
+                                  />
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
                             </div>
                           );
                         })}
@@ -4401,6 +4411,10 @@ const [zwinieteZadania, setZwinieteZadania] = useState<Set<number>>(() => new Se
               </button>
             ))}
           </nav>
+          <button onClick={onWyloguj} className="biuro-sidebar-wyloguj">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            Wyloguj
+          </button>
         </aside>
 
         {/* ── MAIN CONTENT ── */}
