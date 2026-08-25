@@ -1326,7 +1326,7 @@ function urlBase64ToUint8Array(base64String: string) {
       e.preventDefault();
       setLadowanie(true); setBlad('');
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: 'https://on-arch-akademia.vercel.app',
+        redirectTo: 'https://student.on-arch.pl/',
       });
       if (error) {
         setBlad('Blad: ' + error.message);
@@ -4340,7 +4340,7 @@ const [zwinieteZadania, setZwinieteZadania] = useState<Set<number>>(() => new Se
     
           // Wyślij email z ustawieniem hasła
           await supabase.auth.resetPasswordForEmail(kursant.email ?? '', {
-            redirectTo: 'https://on-arch-akademia.vercel.app',
+            redirectTo: 'https://student.on-arch.pl/',
           });
           setKomunikat(`✓ UUID naprawiony + email z hasłem wysłany → ${kursant.email}`);
           return;
