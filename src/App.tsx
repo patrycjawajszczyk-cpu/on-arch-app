@@ -4138,6 +4138,15 @@ const [zwinieteZadania, setZwinieteZadania] = useState<Set<number>>(() => new Se
       setKomunikat('Dodaję kursanta i wysyłam zaproszenie...');
     
       try {
+        console.log('WYSYŁAM ZAPROSZENIE:', {
+          email: nowyKursant.email,
+          imie: nowyKursant.imie,
+          nazwisko: nowyKursant.nazwisko,
+          grupa_id: rola === 'kursant' && nowyKursant.grupa_id
+            ? parseInt(nowyKursant.grupa_id)
+            : null,
+          rola,
+        });
         const { data, error } = await supabase.functions.invoke('zapros-kursanta', {
           body: {
             email: nowyKursant.email,
@@ -4147,6 +4156,7 @@ const [zwinieteZadania, setZwinieteZadania] = useState<Set<number>>(() => new Se
             rola,
           },
         });
+        console.log('ODPOWIEDŹ Z EDGE FUNCTION:', { data, error });
     
         if (error) { setKomunikat('Błąd: ' + error.message); return; }
         if (data?.error) { setKomunikat('Błąd: ' + data.error); return; }
