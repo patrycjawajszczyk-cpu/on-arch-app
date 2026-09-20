@@ -3789,6 +3789,7 @@ function urlBase64ToUint8Array(base64String: string) {
   }
   function PanelBiura({ onWyloguj, user }: { onWyloguj: () => void; user: User | null }) {
     const [aktywnaZakladka, setAktywnaZakladka] = useState('home');
+    
     const [noweWiadomosciBiuro, setNoweWiadomosciBiuro] = useState(false);
     const [grupy, setGrupy] = useState<Grupa[]>([]);
     const [kursanci, setKursanci] = useState<KursantAdmin[]>([]);
@@ -5733,7 +5734,41 @@ setKomunikat(`Notatka zapisana — ${k.imie} ${k.nazwisko}`);
                     {/* TAB: ZJAZDY */}
                     {zakladkaGrupy === 'zjazdy' && (
                       <>
-                        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '10px' }}>
+                                               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginBottom: '10px', flexWrap: 'wrap' }}>
+                          <button
+                            disabled={wysylanieSketchup === g.id}
+                            onClick={async () => {
+                              const ilu = kursanciGrupy.filter(k => k.email).length;
+                              if (!window.confirm(`Wysłać przypomnienie o instalacji SketchUp do ${ilu} kursantów grupy ${g.nazwa}?`)) return;
+                              setWysylanieSketchup(g.id);
+                              const tresc = `
+                                <div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;">
+                                  <div style="background:#1C2B3A;padding:24px;text-align:center;border-radius:14px 14px 0 0;">
+                                    <img src="https://on-arch.pl/wp-content/uploads/2026/09/MIEDZYNARODOWA-SZKOLA-PROJEKTOWANIA-600-x-800-px.png" alt="ON-ARCH Student" width="220" style="max-width:220px;height:auto;">
+                                  </div>
+                                  <div style="background:#ffffff;padding:28px 26px;border:1px solid #E5E7EB;border-top:none;border-radius:0 0 14px 14px;">
+                                    <h1 style="margin:0 0 14px;font-size:20px;color:#1C2B3A;">Przygotuj się na zajęcia SketchUp</h1>
+                                    <p style="margin:0 0 14px;font-size:15px;line-height:1.65;color:#374151;">Cześć {{imie}},</p>
+                                    <p style="margin:0 0 14px;font-size:15px;line-height:1.65;color:#374151;">już wkrótce zaczynacie moduł <strong>SketchUp</strong>. Aby w pełni skorzystać z zajęć, zainstaluj program <strong>przed pierwszym spotkaniem</strong> z tej tematyki.</p>
+                                    <p style="margin:0 0 24px;font-size:15px;line-height:1.65;color:#374151;">Instrukcję instalacji krok po kroku znajdziesz tutaj:</p>
+                                    <div style="text-align:center;margin-bottom:24px;">
+                                      <a href="https://drive.google.com/file/d/12OG2R6fHW2jCNNvj4m4M88b_BaZ93gwv/view" style="display:inline-block;background:#7d3f3f;color:#ffffff;font-size:15px;font-weight:bold;padding:14px 30px;border-radius:10px;text-decoration:none;">Pobierz instrukcję instalacji</a>
+                                    </div>
+                                    <p style="margin:0;font-size:13px;line-height:1.6;color:#9CA3AF;">W razie problemów z instalacją napisz do biura lub prowadzącego.</p>
+                                  </div>
+                                  <p style="text-align:center;font-size:12px;color:#9CA3AF;margin:16px 0 0;">ON-ARCH | Międzynarodowa Szkoła Architektury</p>
+                                </div>`;
+                              const { data, error } = await supabase.functions.invoke('wyslij-mail-grupa', {
+                                body: { grupa_id: g.id, temat: 'Przygotuj się na zajęcia SketchUp — instrukcja instalacji', tresc_html: tresc },
+                              });
+                              setWysylanieSketchup(null);
+                              if (error) { setKomunikat('Błąd: ' + error.message); return; }
+                              if (data?.error) { setKomunikat('Błąd: ' + data.error); return; }
+                              setKomunikat(`✓ Wysłano przypomnienie SketchUp: ${data.wyslane} z ${data.lacznie} kursantów`);
+                            }}
+                            style={{ fontSize: '12px', padding: '7px 16px', border: '0.5px solid #d84315', borderRadius: '9px', background: wysylanieSketchup === g.id ? '#ffe0d0' : '#fff3ec', color: '#d84315', cursor: wysylanieSketchup === g.id ? 'wait' : 'pointer', fontFamily: 'Lato, sans-serif', fontWeight: 600 }}>
+                            {wysylanieSketchup === g.id ? 'Wysyłam...' : '📐 Wyślij przypomnienie SketchUp'}
+                          </button>
                           <button onClick={() => { setAktywnaZakladka('zjazdy'); setTabelaGrupa(String(g.id)); }}
                             style={{ fontSize: '12px', padding: '7px 16px', border: 'none', borderRadius: '9px', background: 'var(--brand)', color: 'white', cursor: 'pointer', fontFamily: 'Lato, sans-serif', fontWeight: 600 }}>
                             + Dodaj zjazdy dla tej grupy →
