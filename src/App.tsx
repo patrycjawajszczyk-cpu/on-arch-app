@@ -3925,6 +3925,7 @@ const [zwinieteZadania, setZwinieteZadania] = useState<Set<number>>(() => new Se
     const [noweZadanie, setNoweZadanie] = useState({ tytul: '', opis: '', termin: '', link_materialow: '', grupa_id: '', typ: 'zadanie', zdjecie_url: '' });
     const [komunikat, setKomunikat] = useState('');
     const [pedLista, setPedLista] = useState<any[]>([]);
+    const [wysylanieSketchup, setWysylanieSketchup] = useState<number | null>(null);
     const [wysylanieZaproszenia, setWysylanieZaproszenia] = useState<number | null>(null);
     const [importStatus, setImportStatus] = useState<{ imie: string; nazwisko: string; email: string; status: string }[]>([]);
     const [importowanie, setImportowanie] = useState(false);
