@@ -6841,6 +6841,18 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
     }, []);
 
     const najblizszy = zjazdy.find(z => z.status === 'nadchodzacy');
+    const zjazdSketchup = zjazdy.find(z =>
+      z.status === 'nadchodzacy' &&
+      (z.tematy || '').toLowerCase().includes('sketchup')
+    );
+    const sketchupDni = (() => {
+      if (!zjazdSketchup?.data_dzien1) return null;
+      const dzis = new Date(); dzis.setHours(0, 0, 0, 0);
+      const target = new Date(zjazdSketchup.data_dzien1 + 'T00:00:00'); target.setHours(0, 0, 0, 0);
+      return Math.round((target.getTime() - dzis.getTime()) / 86400000);
+    })();
+    const pokazSketchup = sketchupDni !== null && sketchupDni >= 0 && sketchupDni <= 4;
+  
     const imie = kursant?.imie || user.email.split('@')[0];
     const edycja = kursant?.grupy?.edycja || '';
     const wszystkieZjazdy = zjazdy.length;
@@ -7514,21 +7526,7 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
       .then(({ data }) => { if (data && data.length > 0) setDbPhotos(data.map(z => z.url)); });
   }, []);
     const najblizszy = zjazdy.find(z => z.status === 'nadchodzacy');
-    // Zjazd SketchUp — najbliższy nadchodzący z "SketchUp" w temacie
-const zjazdSketchup = zjazdy.find(z =>
-  z.status === 'nadchodzacy' &&
-  (z.tematy || '').toLowerCase().includes('sketchup')
-);
-const sketchupDni = (() => {
-  if (!zjazdSketchup?.data_dzien1) return null;
-  const dzis = new Date(); dzis.setHours(0, 0, 0, 0);
-  const target = new Date(zjazdSketchup.data_dzien1 + 'T00:00:00'); target.setHours(0, 0, 0, 0);
-  const diff = Math.round((target.getTime() - dzis.getTime()) / 86400000);
-  return diff;
-})();
-// Pokaż kartę jeśli do zjazdu SketchUp zostało 0–7 dni
-const pokazSketchup = sketchupDni !== null && sketchupDni >= 0 && sketchupDni <= 4;
-    const filtered = filter === 'all' ? zjazdy
+     const filtered = filter === 'all' ? zjazdy
       : filter === 'upcoming' ? zjazdy.filter(z => z.status === 'nadchodzacy')
       : zjazdy.filter(z => z.status === 'zakonczony');
   
