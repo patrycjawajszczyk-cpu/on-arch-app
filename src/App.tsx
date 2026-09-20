@@ -5759,7 +5759,7 @@ setKomunikat(`Notatka zapisana — ${k.imie} ${k.nazwisko}`);
                                     <p style="margin:0;font-size:14px;line-height:1.6;color:#8a3a17;">Pobieramy wersję <strong>SketchUp 2026 edukacyjną</strong> (ważna 7 dni) — instalujemy <strong>nie wcześniej niż 2 dni</strong> przed pierwszymi zajęciami.</p>
                                   </div>
                                   <div style="background:#eef4fb;border-left:4px solid #1565c0;border-radius:8px;padding:12px 14px;margin-bottom:20px;">
-                                  <p style="margin:0;font-size:14px;line-height:1.6;color:#0d4a85;"><strong>ⓘ Ważne:</strong> W pierwszym tygodniu zajęć ON-ARCH wyda Państwu indywidualne licencje ważne na cały pozostały czas kursu i przygotowania pracy zaliczeniowej (licencje zostaną automatycznie podpięte do stworzonych przez Państwa kont na Trimble).</p>
+                                  <p style="margin:0;font-size:14px;line-height:1.6;color:#0d4a85;"><strong>ⓘ Ważne:</strong> W pierwszym tygodniu zajęć ON-ARCH wyda Państwu indywidualne licencje ważne na cały pozostały czas kursu i do 14 dni od jego zakończenia (licencje zostaną automatycznie podpięte do stworzonych przez Państwa kont na Trimble).</p>
                                 </div>
                                     <p style="margin:0;font-size:13px;line-height:1.6;color:#9CA3AF;">W razie problemów z instalacją napisz do biura: info@on-arch.pl.</p>
                                   </div>
