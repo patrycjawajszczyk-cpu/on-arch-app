@@ -5763,7 +5763,7 @@ setKomunikat(`Notatka zapisana — ${k.imie} ${k.nazwisko}`);
                                 </div>
                                     <p style="margin:0;font-size:13px;line-height:1.6;color:#9CA3AF;">W razie problemów z instalacją napisz do biura: info@on-arch.pl.</p>
                                   </div>
-                                  <p style="text-align:center;font-size:12px;color:#9CA3AF;margin:16px 0 0;">ON-ARCH | Międzynarodowa Szkoła Architektury</p>
+                                  <p style="text-align:center;font-size:12px;color:#9CA3AF;margin:16px 0 0;">ON-ARCH | Międzynarodowa Szkoła Architektury <www className="on-arch pl"></www></p>
                                 </div>`;
                               const { data, error } = await supabase.functions.invoke('wyslij-mail-grupa', {
                                 body: { grupa_id: g.id, temat: 'Przygotuj się na zajęcia SketchUp — instrukcja instalacji', tresc_html: tresc },
