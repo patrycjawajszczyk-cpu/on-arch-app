@@ -6988,10 +6988,46 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
               Twój <strong style={{ color: 'var(--text)' }}>{najblizszy.nr}. zjazd</strong>{' '}
               {countdown.dni === 0 ? 'zaczyna się dziś!' : countdown.dni === 1 ? 'zaczyna się jutro.' : `zaczyna się za ${countdown.dni} dni.`}
             </div>
-          )}
-        </div>
-
-        {/* ── ZJAZD + POSTĘP ── */}
+                  )}
+                  </div>
+          
+                  {/* ── KARTA SKETCHUP ── */}
+                  {pokazSketchup && (
+                    <div style={{
+                      background: 'linear-gradient(135deg, #eb5b26 0%, #d84315 100%)',
+                      borderRadius: '18px', padding: '20px 22px', marginBottom: '20px',
+                      position: 'relative', overflow: 'hidden',
+                      boxShadow: '0 12px 28px -12px rgba(216,67,21,0.5)',
+                    }}>
+                      <div style={{ position: 'absolute', top: -20, right: -20, width: 120, height: 120, borderRadius: '50%', background: 'rgba(255,255,255,0.08)' }} />
+                      <div style={{ position: 'relative' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
+                          <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: 'rgba(255,255,255,0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: '22px' }}>📐</div>
+                          <div>
+                            <div style={{ fontSize: '9px', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.75)', fontWeight: 700, marginBottom: '2px' }}>
+                              Przygotuj się na zajęcia
+                            </div>
+                            <div style={{ fontSize: '17px', fontWeight: 700, color: 'white', lineHeight: 1.15 }}>
+                              {sketchupDni === 0 ? 'Dziś zaczynasz SketchUp' : sketchupDni === 1 ? 'Jutro zaczynasz SketchUp' : `Za ${sketchupDni} dni zaczynasz SketchUp`}
+                            </div>
+                          </div>
+                        </div>
+                        <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.92)', lineHeight: 1.6, marginBottom: '16px' }}>
+                          Zainstaluj program <strong>SketchUp</strong> przed pierwszym spotkaniem z tej tematyki. Instrukcję krok po kroku znajdziesz poniżej.
+                        </div>
+                        <a href="https://drive.google.com/file/d/12OG2R6fHW2jCNNvj4m4M88b_BaZ93gwv/view" target="_blank" rel="noopener noreferrer"
+                          style={{
+                            display: 'inline-flex', alignItems: 'center', gap: '8px',
+                            background: 'white', color: '#d84315', fontSize: '13px', fontWeight: 700,
+                            padding: '11px 20px', borderRadius: '10px', textDecoration: 'none',
+                          }}>
+                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                          Pobierz instrukcję instalacji
+                        </a>
+                      </div>
+                    </div>
+          
+                  {/* ── ZJAZD + POSTĘP ── */}
         <div style={{ display: 'grid', marginBottom: '12px' }}>
           {/* Karta zjazdu */}
           {najblizszy ? (
@@ -7477,6 +7513,20 @@ function EkranGlowny({ ogloszenia, zjazdy, user, kursant, onNavigate, zadania, o
       .then(({ data }) => { if (data && data.length > 0) setDbPhotos(data.map(z => z.url)); });
   }, []);
     const najblizszy = zjazdy.find(z => z.status === 'nadchodzacy');
+    // Zjazd SketchUp — najbliższy nadchodzący z "SketchUp" w temacie
+const zjazdSketchup = zjazdy.find(z =>
+  z.status === 'nadchodzacy' &&
+  (z.tematy || '').toLowerCase().includes('sketchup')
+);
+const sketchupDni = (() => {
+  if (!zjazdSketchup?.data_dzien1) return null;
+  const dzis = new Date(); dzis.setHours(0, 0, 0, 0);
+  const target = new Date(zjazdSketchup.data_dzien1 + 'T00:00:00'); target.setHours(0, 0, 0, 0);
+  const diff = Math.round((target.getTime() - dzis.getTime()) / 86400000);
+  return diff;
+})();
+// Pokaż kartę jeśli do zjazdu SketchUp zostało 0–7 dni
+const pokazSketchup = sketchupDni !== null && sketchupDni >= 0 && sketchupDni <= 4;
     const filtered = filter === 'all' ? zjazdy
       : filter === 'upcoming' ? zjazdy.filter(z => z.status === 'nadchodzacy')
       : zjazdy.filter(z => z.status === 'zakonczony');
