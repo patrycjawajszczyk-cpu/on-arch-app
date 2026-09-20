@@ -5752,10 +5752,16 @@ setKomunikat(`Notatka zapisana — ${k.imie} ${k.nazwisko}`);
                                     <p style="margin:0 0 14px;font-size:15px;line-height:1.65;color:#374151;">Cześć {{imie}},</p>
                                     <p style="margin:0 0 14px;font-size:15px;line-height:1.65;color:#374151;">już wkrótce zaczynacie moduł <strong>SketchUp</strong>. Aby w pełni skorzystać z zajęć, zainstaluj program <strong>przed pierwszym spotkaniem</strong> z tej tematyki.</p>
                                     <p style="margin:0 0 24px;font-size:15px;line-height:1.65;color:#374151;">Instrukcję instalacji krok po kroku znajdziesz tutaj:</p>
-                                    <div style="text-align:center;margin-bottom:24px;">
-                                      <a href="https://drive.google.com/file/d/12OG2R6fHW2jCNNvj4m4M88b_BaZ93gwv/view" style="display:inline-block;background:#7d3f3f;color:#ffffff;font-size:15px;font-weight:bold;padding:14px 30px;border-radius:10px;text-decoration:none;">Pobierz instrukcję instalacji</a>
-                                    </div>
-                                    <p style="margin:0;font-size:13px;line-height:1.6;color:#9CA3AF;">W razie problemów z instalacją napisz do biura lub prowadzącego.</p>
+                                    <div style="text-align:center;margin-bottom:16px;">
+                                    <a href="https://drive.google.com/file/d/12OG2R6fHW2jCNNvj4m4M88b_BaZ93gwv/view" style="display:inline-block;background:#7d3f3f;color:#ffffff;font-size:15px;font-weight:bold;padding:14px 30px;border-radius:10px;text-decoration:none;">Pobierz instrukcję instalacji</a>
+                                  </div>
+                                  <div style="background:#fff3ec;border-left:4px solid #d84315;border-radius:8px;padding:12px 14px;margin-bottom:24px;">
+                                    <p style="margin:0;font-size:14px;line-height:1.6;color:#8a3a17;">Pobieramy wersję <strong>SketchUp 2026 edukacyjną</strong> (ważna 7 dni) — instalujemy <strong>nie wcześniej niż 2 dni</strong> przed pierwszymi zajęciami.</p>
+                                  </div>
+                                  <div style="background:#eef4fb;border-left:4px solid #1565c0;border-radius:8px;padding:12px 14px;margin-bottom:20px;">
+                                  <p style="margin:0;font-size:14px;line-height:1.6;color:#0d4a85;"><strong>ⓘ Ważne:</strong> W pierwszym tygodniu zajęć ON-ARCH wyda Państwu indywidualne licencje ważne na cały pozostały czas kursu i przygotowania pracy zaliczeniowej (licencje zostaną automatycznie podpięte do stworzonych przez Państwa kont na Trimble).</p>
+                                </div>
+                                    <p style="margin:0;font-size:13px;line-height:1.6;color:#9CA3AF;">W razie problemów z instalacją napisz do biura: info@on-arch.pl.</p>
                                   </div>
                                   <p style="text-align:center;font-size:12px;color:#9CA3AF;margin:16px 0 0;">ON-ARCH | Międzynarodowa Szkoła Architektury</p>
                                 </div>`;
